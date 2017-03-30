@@ -1,5 +1,5 @@
 cc_binary(
-    name = "eigen_temp_issue",
-    srcs = glob(["**/*.cc"]),
+    name = "main",
+    srcs = ["main.cc"]
     deps = ["@eigen//:eigen"]
 )
