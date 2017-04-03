@@ -16,7 +16,7 @@ public:
   Binding(const Binding<U>& b,
     typename std::enable_if<std::is_convertible<
     U*, C*>::value>::type* = nullptr)
-    : value_(dynamic_cast<C*>(b.value_))
+    : value_(dynamic_cast<C*>(b.get()))
   { }
 
   C* get() const {
@@ -37,9 +37,9 @@ public:
     base_.push_back(Binding<Base>(value));
     return base_.back();
   }
-  const Binding<Child>& Add(Child* value) {
+  const Binding<Base>& Add(Child* value) {
     child_.push_back(Binding<Child>(value));
-      return child_.back();
+    return child_.back();
   }
 private:
   template<typename C>
