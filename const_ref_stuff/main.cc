@@ -34,14 +34,19 @@ class Child : public Base { };
 class Container {
 public:
   const Binding<Base>& Add(Base* value) {
-    bindings_.push_back(Binding<Base>(value));
-    return bindings_.back();
+    base_.push_back(Binding<Base>(value));
+    return base_.back();
   }
   const Binding<Base>& Add(Child* value) {
-    return Add(dynamic_cast<Base*>(value));
+    child_.push_back(Binding<Child>(value));
+      return child_.back();
   }
 private:
-  std::vector<Binding<Base>> bindings_;
+  template<typename C>
+  using BindingList = std::vector<Binding<C>>;
+
+  BindingList<Base> base_;
+  BindingList<Child> child_;
 };
 
 int main() {
