@@ -37,7 +37,7 @@ public:
     base_.push_back(Binding<Base>(value));
     return base_.back();
   }
-  const Binding<Base>& Add(Child* value) {
+  const Binding<Child>& Add(Child* value) {
     child_.push_back(Binding<Child>(value));
       return child_.back();
   }
