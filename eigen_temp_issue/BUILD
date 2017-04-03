@@ -1,5 +1,5 @@
 cc_binary(
     name = "main",
-    srcs = ["main.cc"]
-    deps = ["@eigen//:eigen"]
+    srcs = ["main.cc"],
+    deps = ["@eigen//:eigen"],
 )
