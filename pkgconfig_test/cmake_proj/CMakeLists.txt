@@ -1,7 +1,10 @@
+cmake_minimum_required(VERSION 3.5)
 project(cmake_proj)
 
-find_package(lib)
+include(FindPkgConfig)
+pkg_check_modules(lib REQUIRED)
 
 # Example of using pkgconfig generated from Bazel
-add_binary(main main.cc)
-target_link_libraries(main lib)
+include_directories(${LIB_INCLUDES_DIRS})
+add_executable(main main.cc)
+target_link_libraries(main ${LIB_LIBRARIES})

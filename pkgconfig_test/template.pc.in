@@ -4,8 +4,8 @@
 
 prefix=@CMAKE_INSTALL_PREFIX@
 exec_prefix=${prefix}
-libdir=${prefix}/@DRAKE_INSTALL_LIBRARY_DIR@
-includedir=${prefix}/@DRAKE_INSTALL_INCLUDE_DIR@
+libdir=${prefix}/@_LIBRARY@
+includedir=${prefix}/@_INCLUDE@
 
 Name: @_NAME@
 Description: @_DESCRIPTION@
@@ -14,4 +14,3 @@ Version: @_VERSION@
 Requires: @_requires@
 Libs: @_libs@
 Cflags: -I${includedir} @_cflags@
-@_classpath@
