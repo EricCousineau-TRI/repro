@@ -1,0 +1,25 @@
+PASSED: //env_behavior:main (see /home/.cache/bazel/_bazel_user/4bfeaeef7a21f92da79b50fef77b3ca6/execroot/repro/bazel-out/clang-3.9-linux-opt/testlogs/env_behavior/main/test.log)
+INFO: From Testing //env_behavior:main
+==================== Test output for //env_behavior:main:
+declare -x GTEST_TMP_DIR="/home/.cache/bazel/_bazel_user/4bfeaeef7a21f92da79b50fef77b3ca6/bazel-sandbox/92d024ed-b121-446f-970b-01f8578c7e22-2/execroot/repro/_tmp/main_1"
+declare -x JAVA_RUNFILES="/home/.cache/bazel/_bazel_user/4bfeaeef7a21f92da79b50fef77b3ca6/bazel-sandbox/92d024ed-b121-446f-970b-01f8578c7e22-2/execroot/repro/bazel-out/clang-3.9-linux-opt/bin/env_behavior/main.runfiles"
+declare -x LD_LIBRARY_PATH="ld_library_path"
+declare -x OLDPWD
+declare -x PATH=".:path"
+declare -x PWD="/home/.cache/bazel/_bazel_user/4bfeaeef7a21f92da79b50fef77b3ca6/bazel-sandbox/92d024ed-b121-446f-970b-01f8578c7e22-2/execroot/repro/bazel-out/clang-3.9-linux-opt/bin/env_behavior/main.runfiles/repro"
+declare -x PYTHON_RUNFILES="/home/.cache/bazel/_bazel_user/4bfeaeef7a21f92da79b50fef77b3ca6/bazel-sandbox/92d024ed-b121-446f-970b-01f8578c7e22-2/execroot/repro/bazel-out/clang-3.9-linux-opt/bin/env_behavior/main.runfiles"
+declare -x RUNFILES_MANIFEST_FILE="/home/.cache/bazel/_bazel_user/4bfeaeef7a21f92da79b50fef77b3ca6/bazel-sandbox/92d024ed-b121-446f-970b-01f8578c7e22-2/execroot/repro/bazel-out/clang-3.9-linux-opt/bin/env_behavior/main.runfiles/MANIFEST"
+declare -x SHLVL="2"
+declare -x TEST_SIZE="medium"
+declare -x TEST_SRCDIR="/home/.cache/bazel/_bazel_user/4bfeaeef7a21f92da79b50fef77b3ca6/bazel-sandbox/92d024ed-b121-446f-970b-01f8578c7e22-2/execroot/repro/bazel-out/clang-3.9-linux-opt/bin/env_behavior/main.runfiles"
+declare -x TEST_TIMEOUT="300"
+declare -x TEST_TMPDIR="/home/.cache/bazel/_bazel_user/4bfeaeef7a21f92da79b50fef77b3ca6/bazel-sandbox/92d024ed-b121-446f-970b-01f8578c7e22-2/execroot/repro/_tmp/main_1"
+declare -x TEST_WORKSPACE="repro"
+declare -x TZ="UTC"
+declare -x XML_OUTPUT_FILE="/home/.cache/bazel/_bazel_user/4bfeaeef7a21f92da79b50fef77b3ca6/bazel-sandbox/92d024ed-b121-446f-970b-01f8578c7e22-2/execroot/repro/bazel-out/clang-3.9-linux-opt/testlogs/env_behavior/main/test.xml"
+declare -x _="/home/.cache/bazel/_bazel_user/4bfeaeef7a21f92da79b50fef77b3ca6/bazel-sandbox/92d024ed-b121-446f-970b-01f8578c7e22-2/execroot/repro/bazel-out/clang-3.9-linux-opt/bin/env_behavior/main.runfiles/repro/env_behavior/main"
+================================================================================
+//env_behavior:main                                             (cached) PASSED in 0.1s
+
+Executed 0 out of 1 test: 1 test passes.
+There were tests whose specified size is too big. Use the --test_verbose_timeout_warnings command line option to see which ones these are.
