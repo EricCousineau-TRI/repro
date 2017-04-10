@@ -1,6 +1,7 @@
 #!/bin/bash
 
-bazel test --test_output=all :main | \
+bazel clean
+bazel test --test_output=all --action_env="LCM_DEFAULT_URL=udpm://239.255.67.70:7668?ttl=0" :main | \
     sed "
         s#$PATH#path#g
         s#$LD_LIBRARY_PATH#ld_library_path#g
