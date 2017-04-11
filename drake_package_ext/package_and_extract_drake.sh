@@ -26,6 +26,11 @@ drake=$1
 build_dir=$(mkcd $2 && pwd)
 install_dir=$(mkcd $3 && pwd)
 
+# HACK: Ensure that CMake's find_package will search PATH, detect ./bin/, 
+# and resolve to parent directory to search in lib/cmake/
+# See: https://cmake.org/cmake/help/v3.0/command/find_package.html
+mkdir -p $install_dir/bin
+
 drake_build=$build_dir/drake
 mkdir -p $drake_build
 # HACK: Use git-checkout to handle hashing artifacts and check if things
