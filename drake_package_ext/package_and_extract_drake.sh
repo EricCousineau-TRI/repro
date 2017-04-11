@@ -99,8 +99,8 @@ git commit --quiet -m \
         exit 0;
     }
 
-echo "Checkout and allow Git to handle deltas" \
-    "  (be conservative on changing timestamps)"
+echo "Checkout and allow Git to handle deltas"
+echo "  (be conservative on changing timestamps)"
 git --work-tree=$install_dir checkout --quiet -f HEAD -- .
 
 # On success, dump the git status

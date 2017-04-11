@@ -11,7 +11,7 @@ echo "[ Before ]"
 
 echo "[ During ]"
 # rm -rf build
-./package_and_extract_drake.sh $DRAKE build/ build/install
+./compile.sh
 
 echo "[ After ]"
 ls -l build/install
