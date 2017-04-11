@@ -8,7 +8,6 @@ set -e -u
 # TODO(eric.cousineau): See if there is a mechanism to hash or dump a
 # dependency to selectively trigger compilation via [c]make, rather than rely 
 # on Git dirtyness
-# TODO(eric.cousineau): Consider using rsync to simplify delta process.
 
 usage() {
     echo "Usage: $(basename $0) <DRAKE_DIR> <BUILD_DIR> <INSTALL_DIR>"
@@ -27,23 +26,9 @@ drake=$1
 build_dir=$(mkcd $2 && pwd)
 install_dir=$(mkcd $3 && pwd)
 
-# HACK: Ensure that CMake's find_package will search PATH, detect ./bin/, 
-# and resolve to parent directory to search in lib/cmake/
-# See: https://cmake.org/cmake/help/v3.0/command/find_package.html
-mkdir -p $install_dir/bin
-
 drake_build=$build_dir/drake
-mkdir -p $drake_build
-# HACK: Use git-checkout to handle hashing artifacts and check if things
-# need to be updated
-# Will use one repository for staging, and then a second for "deploying"
-# with minimal timestamp changes
-drake_git=$drake_build/package-git
-[[ -d $drake_git ]] || (
-        mkcd $drake_git;
-        git init --quiet .;
-        echo "!*" > .gitignore # Ignore nothing, override user ~/.gitignore
-    )
+drake_package_dir=$drake_build/package
+mkdir -p $drake_package_dir
 
 # Only rebuild if either (a) git was previously or currently dirty, or
 # (b) if the SHAs do not match
@@ -84,57 +69,21 @@ echo "Generate package artifact from //drake/tools"
 package=$drake_build/package.tar.gz
 $drake/tools/package_drake.sh $package
 
-cd $drake_git
+cd $drake_package_dir
 # Remove prior files
 rm -rf ./*
 
 echo "Extract and commit current version"
 tar xfz $package
-git add -A :/
-git commit --quiet -m \
-    "Package artifacts for drake (status: $cur_git_status)" || {
-        echo "No artifact difference detected." \
-            "Skipping the rest of the rebuild.";
-        echo "$cur_git_status" > $drake_git_status_file;
-        exit 0;
-    }
+# HACK: Ensure that CMake's find_package will search PATH, detect ./bin/, 
+# and resolve to parent directory to search in lib/cmake/
+# See: https://cmake.org/cmake/help/v3.0/command/find_package.html
+mkdir -p bin
 
-echo "Checkout and allow Git to handle deltas" \
-    "  (be conservative on changing timestamps)"
-drake_git_checkout=$drake_build/package-git-checkout
-[[ -d "$drake_git_checkout" ]] || (
-        git clone --quiet $drake_git $drake_git_checkout
-    )
-cd $drake_git_checkout
-git pull --quiet origin master
-
-# Symlink all non-hidden artifacts into the install directory
-# NOTE: This will leave additional artifacts if the drake tree changes
-symlink_relative() {
-    local source_dir=$1
-    local target_dir=$2
-    shift; shift;
-    local rel_file
-    for rel_file in $@; do
-        local rel_dir=$(dirname $rel_file)
-        local target_file=$target_dir/$rel_file
-        mkdir -p $(dirname $target_file)
-        if [[ -e $target_file ]]; then
-            if [[ ! -L $target_file ]]; then
-                # Target file is a symlink, it should be point to the same file
-                # NOTE: This will break if this script changes directory names
-                # later on. Meh.
-                error "Target file exists and is not a symlink: $target_file"
-                exit 1
-            fi
-        else
-            ln -s $source_dir/$rel_file $target_file
-        fi
-    done
-}
-echo "Symlink checkout artifacts"
-files=$(find . -name '.git*' -prune -o -type f -print)
-symlink_relative $drake_git_checkout $install_dir $files
+# Synchronize with install/
+# TODO(eric.cousineau) Consider adding command-line argument to provide
+# an isolated install/, such that rsync --del can be used to maximize integrity
+rsync --checksum -a $drake_package_dir/ $install_dir/
 
 # On success, dump the git status
 echo "$cur_git_status" > $drake_git_status_file
