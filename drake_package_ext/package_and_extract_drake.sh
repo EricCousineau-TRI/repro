@@ -83,7 +83,7 @@ mkdir -p bin
 # Synchronize with install/
 # TODO(eric.cousineau) Consider adding command-line argument to provide
 # an isolated install/, such that rsync --del can be used to maximize integrity
-rsync --checksum -a $drake_package_dir/ $install_dir/
+rsync --checksum -t -a $drake_package_dir/ $install_dir/
 
 # On success, dump the git status
 echo "$cur_git_status" > $drake_git_status_file
