@@ -42,7 +42,7 @@ drake_package_git=$drake_build/package-git
 [[ -d $drake_package_git ]] || (
         mkcd $drake_package_git;
         git init --quiet .;
-        echo "!*" > .gitignore # Ignore nothing, override user ~/.gitignore
+        git config core.excludesfile '' # Ignore nothing, override user ~/.gitignore
     )
 
 # Only rebuild if either (a) git was previously or currently dirty, or
