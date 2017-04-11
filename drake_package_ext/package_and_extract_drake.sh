@@ -42,7 +42,7 @@ drake_package_git=$drake_build/package-git
 [[ -d $drake_package_git ]] || (
         mkcd $drake_package_git;
         git init --quiet .;
-        git config core.excludesfile '' # Ignore nothing, override user ~/.gitignore
+        # git config core.excludesfile '' # Ignore nothing, override user ~/.gitignore
     )
 
 # Only rebuild if either (a) git was previously or currently dirty, or
@@ -90,7 +90,7 @@ rm -rf ./*
 
 echo "Extract and commit current version"
 tar xfz $package
-git add -A :/
+git add -fA :/
 git commit --quiet -m \
     "Package artifacts for drake (status: $cur_git_status)" || {
         echo "No artifact difference detected." \

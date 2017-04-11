@@ -6,7 +6,7 @@ suffix=${1-}
 echo "[[ Suffix: $suffix ]]"
 echo "[ Before ]"
 # Check timestamps before/after
-[[ -d build$suffix ]] && (
+[[ -d build$suffix/install ]] && (
     cd build$suffix
     find . | xargs touch -h -t 201701010500
     ls -l install
