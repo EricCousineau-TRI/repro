@@ -2,10 +2,10 @@
 set -e -u
 
 # Check timestamps before/after
-[[ -d build/install ]] && (
-    cd build/install
-    find . | xargs touch -t 201701010500
-    ls -l .
+[[ -d build ]] && (
+    cd build
+    find . | xargs touch -h -t 201701010500
+    ls -l install
     )
 
 # rm -rf build
