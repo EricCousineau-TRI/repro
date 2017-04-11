@@ -8,6 +8,7 @@ set -e -u
 # TODO(eric.cousineau): See if there is a mechanism to hash or dump a
 # dependency to selectively trigger compilation via [c]make, rather than rely 
 # on Git dirtyness
+# TODO(eric.cousineau): Consider using rsync to simplify delta process.
 
 usage() {
     echo "Usage: $(basename $0) <DRAKE_DIR> <BUILD_DIR> <INSTALL_DIR>"
@@ -59,31 +60,35 @@ cur_git_status=$(cd $drake && git_ref)
 need_rebuild=1
 if [[ -e $drake_git_status_file ]]; then
     prev_git_status=$(cat $drake_git_status_file)
+    echo "Prior build exists ($prev_git_status). Check against current ($prev_git_status)"
     if [[ -z $cur_git_status || -z $prev_git_status \
             || $cur_git_status = "dirty" || $prev_git_status = "dirty" ]]; then
-        # Rebuild needed: was or is dirty
+        echo "Rebuild needed: current or previous build was dirty"
         need_rebuild=1
     elif [[ $cur_git_status != $prev_git_status ]]; then
-        # Rebuild needed: different commits packaged
+        echo "Rebuild needed: current and previous build on different commits"
         need_rebuild=1
     else
+        echo "No rebuild needed"
         need_rebuild=
     fi
+else
+    echo "First build"
 fi
 
 if [[ -z "$need_rebuild" ]]; then
-    echo "No rebuild needed"
     exit 0;
 fi
 
-# Generate package artifact from //drake/tools
+echo "Generate package artifact from //drake/tools"
 package=$drake_build/package.tar.gz
 $drake/tools/package_drake.sh $package
 
 cd $drake_git
 # Remove prior files
 rm -rf ./*
-# Extract and commit current version
+
+echo "Extract and commit current version"
 tar xfz $package
 git add -A :/
 git commit --quiet -m \
@@ -94,7 +99,8 @@ git commit --quiet -m \
         exit 0;
     }
 
-# Go to second repository and checkout to allow Git to handle deltas
+echo "Checkout and allow Git to handle deltas" \
+    "  (be conservative on changing timestamps)"
 drake_git_checkout=$drake_build/package-git-checkout
 [[ -d "$drake_git_checkout" ]] || (
         git clone --quiet $drake_git $drake_git_checkout
@@ -126,8 +132,10 @@ symlink_relative() {
         fi
     done
 }
+echo "Symlink checkout artifacts"
 files=$(find . -name '.git*' -prune -o -type f -print)
 symlink_relative $drake_git_checkout $install_dir $files
 
 # On success, dump the git status
 echo "$cur_git_status" > $drake_git_status_file
+echo "Done"
