@@ -17,3 +17,5 @@ time ./package_and_extract_drake$suffix.sh $DRAKE build$suffix/ build$suffix/ins
 
 echo "[ After ]"
 ls -l build$suffix/install
+
+echo -e "\n"
