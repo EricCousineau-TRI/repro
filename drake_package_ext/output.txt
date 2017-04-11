@@ -1,19 +1,57 @@
+[[ Suffix:  ]]
 [ Before ]
 total 16
 drwxrwxr-x 2 user user 4096 Jan  1 05:00 bin
 drwxrwxr-x 4 user user 4096 Jan  1 05:00 include
 drwxrwxr-x 3 user user 4096 Jan  1 05:00 lib
--rw-rw-r-- 1 user user 1698 Jan  1 05:00 LICENSE.TXT
+-rwxr-xr-x 1 user user 1698 Jan  1 05:00 LICENSE.TXT
 [ During ]
-Prior build exists (fcb296c). Check against current (0676624)
-Rebuild needed: current and previous build on different commits
+Prior build exists (dirty). Check against current (dirty)
+Rebuild needed: current or previous build was dirty
 Generate package artifact from //drake/tools
+____Loading complete.  Analyzing...
+____Found 3 targets...
+____[0 / 1] BazelWorkspaceStatusAction stable-status.txt
+____Elapsed time: 0.419s, Critical Path: 0.01s
 Extract and commit current version
-Checkout and allow Git to handle deltas   (be conservative on changing timestamps)
-Done
+On branch master
+nothing to commit, working directory clean
+No artifact difference detected. Skipping the rest of the rebuild.
+
+real    0m1.999s
+user    0m1.224s
+sys 0m0.216s
 [ After ]
 total 16
 drwxrwxr-x 2 user user 4096 Jan  1 05:00 bin
 drwxrwxr-x 4 user user 4096 Jan  1 05:00 include
-drwxrwxr-x 3 user user 4096 Apr 11 13:32 lib
--rw-rw-r-- 1 user user 1698 Apr 11 13:32 LICENSE.TXT
+drwxrwxr-x 3 user user 4096 Jan  1 05:00 lib
+-rwxr-xr-x 1 user user 1698 Jan  1 05:00 LICENSE.TXT
+[[ Suffix: _install_compare ]]
+[ Before ]
+total 16
+drwxrwxr-x 2 user user 4096 Jan  1 05:00 bin
+drwxrwxr-x 4 user user 4096 Jan  1 05:00 include
+drwxrwxr-x 3 user user 4096 Jan  1 05:00 lib
+-rwxr-xr-x 1 user user 1698 Jan  1 05:00 LICENSE.TXT
+[ During ]
+Prior build exists (dirty). Check against current (dirty)
+Rebuild needed: current or previous build was dirty
+Generate package artifact from //drake/tools
+____Loading complete.  Analyzing...
+____Found 3 targets...
+____[0 / 1] BazelWorkspaceStatusAction stable-status.txt
+____Elapsed time: 0.481s, Critical Path: 0.01s
+Extract and commit current version
+Install artifacts
+Done
+
+real    0m6.037s
+user    0m1.324s
+sys 0m0.772s
+[ After ]
+total 16
+drwxrwxr-x 2 user user 4096 Jan  1 05:00 bin
+drwxrwxr-x 4 user user 4096 Jan  1 05:00 include
+drwxrwxr-x 3 user user 4096 Apr 11 15:45 lib
+-rwxr-xr-x 1 user user 1698 Apr 11 15:45 LICENSE.TXT
