@@ -91,10 +91,17 @@ rm -rf ./*
 echo "Extract and commit current version"
 tar xfz $package
 git add -A :/
+git commit --quiet -m \
+    "Package artifacts for drake (status: $cur_git_status)" || {
+        echo "No artifact difference detected." \
+            "Skipping the rest of the rebuild.";
+        echo "$cur_git_status" > $drake_git_status_file;
+        exit 0;
+    }
 
 echo "Checkout and allow Git to handle deltas"
 echo "  (be conservative on changing timestamps)"
-git --work-tree=$install_dir checkout --quiet -f -- .
+git --work-tree=$install_dir checkout --quiet -f HEAD -- .
 
 # On success, dump the git status
 echo "$cur_git_status" > $drake_git_status_file
