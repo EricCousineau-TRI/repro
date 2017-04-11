@@ -38,9 +38,9 @@ mkdir -p $drake_build
 # need to be updated
 # Will use one repository for staging, and then a second for "deploying"
 # with minimal timestamp changes
-drake_git=$drake_build/package-git
-[[ -d $drake_git ]] || (
-        mkcd $drake_git;
+drake_package_git=$drake_build/package-git
+[[ -d $drake_package_git ]] || (
+        mkcd $drake_package_git;
         git init --quiet .;
         echo "!*" > .gitignore # Ignore nothing, override user ~/.gitignore
     )
@@ -60,7 +60,7 @@ cur_git_status=$(cd $drake && git_ref)
 need_rebuild=1
 if [[ -e $drake_git_status_file ]]; then
     prev_git_status=$(cat $drake_git_status_file)
-    echo "Prior build exists ($prev_git_status). Check against current ($prev_git_status)"
+    echo "Prior build exists ($prev_git_status). Check against current ($cur_git_status)"
     if [[ -z $cur_git_status || -z $prev_git_status \
             || $cur_git_status = "dirty" || $prev_git_status = "dirty" ]]; then
         echo "Rebuild needed: current or previous build was dirty"
@@ -84,7 +84,7 @@ echo "Generate package artifact from //drake/tools"
 package=$drake_build/package.tar.gz
 $drake/tools/package_drake.sh $package
 
-cd $drake_git
+cd $drake_package_git
 # Remove prior files
 rm -rf ./*
 
@@ -101,40 +101,7 @@ git commit --quiet -m \
 
 echo "Checkout and allow Git to handle deltas" \
     "  (be conservative on changing timestamps)"
-drake_git_checkout=$drake_build/package-git-checkout
-[[ -d "$drake_git_checkout" ]] || (
-        git clone --quiet $drake_git $drake_git_checkout
-    )
-cd $drake_git_checkout
-git pull --quiet origin master
-
-# Symlink all non-hidden artifacts into the install directory
-# NOTE: This will leave additional artifacts if the drake tree changes
-symlink_relative() {
-    local source_dir=$1
-    local target_dir=$2
-    shift; shift;
-    local rel_file
-    for rel_file in $@; do
-        local rel_dir=$(dirname $rel_file)
-        local target_file=$target_dir/$rel_file
-        mkdir -p $(dirname $target_file)
-        if [[ -e $target_file ]]; then
-            if [[ ! -L $target_file ]]; then
-                # Target file is a symlink, it should be point to the same file
-                # NOTE: This will break if this script changes directory names
-                # later on. Meh.
-                error "Target file exists and is not a symlink: $target_file"
-                exit 1
-            fi
-        else
-            ln -s $source_dir/$rel_file $target_file
-        fi
-    done
-}
-echo "Symlink checkout artifacts"
-files=$(find . -name '.git*' -prune -o -type f -print)
-symlink_relative $drake_git_checkout $install_dir $files
+git --work-tree=$install_dir checkout --quiet -f HEAD -- .
 
 # On success, dump the git status
 echo "$cur_git_status" > $drake_git_status_file
