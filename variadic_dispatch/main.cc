@@ -33,6 +33,12 @@ template<typename ... Ts>
 auto impl(Ts ... args) {
   return overload_not_implemented(args...);
 }
+/* Can't get this to work
+template<typename ... Ts>
+std::enable_if<false>::type* impl(Ts ... args) {
+  return nullptr;
+}
+*/
 
 template<typename T>
 auto impl(shared_ptr<T> ptr) {
@@ -49,6 +55,23 @@ auto variadic_dispatch(Ts ... args) {
   return impl(args...);
 }
 
+#define PRINT(expr) #expr ": " << (expr) << endl
+
+void container_stuff();
+
+int main() {
+  cout
+    << PRINT(get_value())
+    << PRINT(variadic_dispatch(1, 2))
+    << PRINT(variadic_dispatch(make_shared<int>(10)))
+    << PRINT(variadic_dispatch("bad overload"));
+
+  // container_stuff();
+
+  return 0;
+}
+
+
 
 
 template<typename C>
@@ -62,8 +85,7 @@ public:
 
   template<typename U>
   Binding(const Binding<U>& b,
-    typename std::enable_if<std::is_convertible<
-    U*, C*>::value>::type* = nullptr)
+    typename std::enable_if<std::is_convertible<U*, C*>::value>::type* = nullptr)
     : value_(dynamic_cast<C*>(b.get()))
   { }
 
@@ -97,9 +119,7 @@ private:
   BindingList<Child> child_;
 };
 
-#define PRINT(expr) #expr ": " << (expr) << endl
-
-int main() {
+void container_stuff() {
   Base a;
   Child b;
 
@@ -109,11 +129,5 @@ int main() {
 
   cout
     << PRINT(r1.get())
-    << PRINT(r2.get())
-    << PRINT(get_value())
-    << PRINT(variadic_dispatch(1, 2))
-    << PRINT(variadic_dispatch(make_shared<int>(10)))
-    << "Done" << endl;
-
-  return 0;
+    << PRINT(r2.get());
 }

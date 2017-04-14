@@ -1,0 +1,11 @@
+$ bazel build :main
+...
+variadic_dispatch/main.cc:34:10: error: use of undeclared identifier 'overload_not_implemented'
+  return overload_not_implemented(args...);
+         ^
+variadic_dispatch/main.cc:55:10: note: in instantiation of function template specialization 'impl<const char *>' requested here
+  return impl(args...);
+         ^
+variadic_dispatch/main.cc:67:14: note: in instantiation of function template specialization 'variadic_dispatch<const char *>' requested here
+    << PRINT(variadic_dispatch("bad overload"));
+...
