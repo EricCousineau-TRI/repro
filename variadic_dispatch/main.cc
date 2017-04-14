@@ -66,7 +66,7 @@ int main() {
     << PRINT(variadic_dispatch(make_shared<int>(10)));
     // << PRINT(variadic_dispatch("bad overload"));
 
-  // container_stuff();
+  container_stuff();
 
   return 0;
 }
@@ -120,21 +120,21 @@ private:
 template<typename C>
 using BindingList = std::vector<Binding<C>>;
 
-template<typename ... Ts>
-auto create_binding_impl(Ts ... args) {
-  return overload_not_implemented(args...);
-}
+// template<typename ... Ts>
+// auto create_binding_impl(Ts ... args) {
+//   return overload_not_implemented(args...);
+// }
 
-template<>
-auto create_binding_impl(int x) {
-  return 1;
-}
+// template<>
+// auto create_binding_impl(int x) {
+//   return 1;
+// }
 
-template<typename ... Ts>
-class create_binding_traits {
-  // typedef std::result_of<create_binding_impl(Ts...)>::type return_type;
-  typedef std::result_of<create_binding_impl, int>::type return_type;
-};
+// template<typename ... Ts>
+// class create_binding_traits {
+//   // typedef std::result_of<create_binding_impl(Ts...)>::type return_type;
+//   typedef std::result_of<create_binding_impl, int>::type return_type;
+// };
 
 class ConstraintContainer {
 public:
@@ -142,7 +142,7 @@ public:
   //   base_.push_back(Binding<Constraint>(value));
   //   return base_.back();
   // }
-private:
+public:
 
   BindingList<Constraint> generic_constraints_;
   BindingList<LinearConstraint> linear_constraints_;
@@ -151,7 +151,7 @@ private:
   // Can't change return type? Have to use type traits... :(
 
   template<typename C>
-  BindingList<C>& GetList();
+  auto& GetList();
   // template<typename L
   // auto& GetList() { return linear_constraints_; }
   // auto& GetList() { return quadratic_constraints_; }
@@ -159,15 +159,15 @@ private:
 
 // Can't use auto& :(
 template<>
-BindingList<Constraint>& ConstraintContainer::GetList<Constraint>() {
+auto& ConstraintContainer::GetList<Constraint>() {
   return generic_constraints_;
 }
 template<>
-BindingList<LinearConstraint>& ConstraintContainer::GetList<LinearConstraint>() {
+auto& ConstraintContainer::GetList<LinearConstraint>() {
   return linear_constraints_;
 }
 template<>
-BindingList<QuadraticConstraint>& ConstraintContainer::GetList<QuadraticConstraint>() {
+auto& ConstraintContainer::GetList<QuadraticConstraint>() {
   return quadratic_constraints_;
 }
 
@@ -176,6 +176,10 @@ void container_stuff() {
   LinearConstraint b(1, 2);
 
   ConstraintContainer c;
+
+  cout
+    << PRINT(&c.GetList<QuadraticConstraint>() == &c.quadratic_constraints_);
+
   // auto r1 = c.Add(&a);
   // auto r2 = c.Add(&b);
 
