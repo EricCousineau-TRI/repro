@@ -144,10 +144,10 @@ template<typename ... Ts>
 auto create_binding_impl(Ts ... args) {
   return overload_not_implemented(args...);
 }
-template<>
-auto create_binding_impl(int x) {
+template<typename List>
+auto create_binding_impl(int x, List var_list) {
   // Will be LinearConstriant
-  return Binding<LinearConstraint>(new LinearConstraint(x), {"x"});
+  return Binding<LinearConstraint>(new LinearConstraint(x), var_list);
 }
 template<>
 auto create_binding_impl(int x, int y) {
@@ -267,7 +267,7 @@ void container_stuff() {
 
   cout
     << PRINT(&c.GetList<QuadraticConstraint>() == &c.quadratic_constraints_)
-    << PRINT(c.AddConstraint(1))
+    << PRINT(c.AddConstraint(1, VarList{"x"})) // Can't do just {"x"}
     << PRINT(c.AddConstraint(1, 2));
 
   // auto r1 = c.Add(&a);
