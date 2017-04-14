@@ -11,6 +11,8 @@ using std::string;
 using std::vector;
 using std::shared_ptr;
 using std::make_shared;
+using std::declval;
+// using std::decltype;
 
 /*
 Goal: Consolidate constraint adding
@@ -120,20 +122,47 @@ private:
 template<typename C>
 using BindingList = std::vector<Binding<C>>;
 
-// template<typename ... Ts>
-// auto create_binding_impl(Ts ... args) {
-//   return overload_not_implemented(args...);
+template<typename ... Ts>
+auto create_binding_impl(Ts ... args) {
+  return overload_not_implemented(args...);
+}
+
+template<>
+auto create_binding_impl(int x) {
+  return 1;
+}
+
+template<typename ... Ts>
+class create_binding_traits {
+  // typedef std::result_of<create_binding_impl(Ts...)>::type return_type;
+  // typedef std::result_of<create_binding_impl, int>::type return_type;
+  typedef void* return_type;
+
+  static return_type call(Ts ... args) {
+    return invalid_overload(args ...);
+  }
+};
+
+// template<typename Func, typename ... Args>
+// using return_type_of = decltype(Func(declval<Args...>()));
+// typedef return_type_of<create_binding_impl, int> return_type_cur;
+
+typedef decltype(create_binding_impl(declval<int>())) return_type_simple;
+return_type_simple test_value;
+
+// template<typename F, typename ... Args>
+// auto return_type_of(F&& f, Args... args) {
+//   typedef decltype(F(decltype<Args...>())) return_type;
+//   return declval<return_type>();
 // }
+
+// typedef std::return_of<create_binding_impl, int>::type return_type;
 
 // template<>
-// auto create_binding_impl(int x) {
-//   return 1;
-// }
-
-// template<typename ... Ts>
 // class create_binding_traits {
-//   // typedef std::result_of<create_binding_impl(Ts...)>::type return_type;
-//   typedef std::result_of<create_binding_impl, int>::type return_type;
+//   typedef Binding<Constraint> return_type;
+//   static return_type call(int x, int y) {
+//   }
 // };
 
 class ConstraintContainer {
