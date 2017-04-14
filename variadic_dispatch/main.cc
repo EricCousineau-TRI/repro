@@ -1,7 +1,16 @@
 #include "main.h"
 
+#include <string>
 #include <vector>
 #include <iostream>
+#include <memory>
+
+using std::cout;
+using std::endl;
+using std::string;
+using std::vector;
+using std::shared_ptr;
+using std::make_shared;
 
 /*
 Goal: Consolidate constraint adding
@@ -18,6 +27,29 @@ AddLinearConstraint(T&& ...)
 auto get_value() {
   return 2;
 }
+
+// Definte base, for later specialization
+template<typename ... Ts>
+auto impl(Ts ... args) {
+  return overload_not_implemented(args...);
+}
+
+template<typename T>
+auto impl(shared_ptr<T> ptr) {
+  return string("impl(shared_ptr<T>)");
+}
+
+template<>
+auto impl(int x, int y) {
+  return static_cast<const char*>("impl(x, y)");
+}
+
+template<typename ... Ts>
+auto variadic_dispatch(Ts ... args) {
+  return impl(args...);
+}
+
+
 
 template<typename C>
 class Binding {
@@ -65,6 +97,8 @@ private:
   BindingList<Child> child_;
 };
 
+#define PRINT(expr) #expr ": " << (expr) << endl
+
 int main() {
   Base a;
   Child b;
@@ -73,11 +107,13 @@ int main() {
   auto r1 = c.Add(&a);
   auto r2 = c.Add(&b);
 
-  std::cout
-    << "r1: " << r1.get() << std::endl
-    << "r2: " << r2.get() << std::endl
-    << "value: " << get_value() << std::endl
-    << "Done" << std::endl;
+  cout
+    << PRINT(r1.get())
+    << PRINT(r2.get())
+    << PRINT(get_value())
+    << PRINT(variadic_dispatch(1, 2))
+    << PRINT(variadic_dispatch(make_shared<int>(10)))
+    << "Done" << endl;
 
   return 0;
 }
