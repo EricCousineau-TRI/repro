@@ -80,6 +80,8 @@ class Binding {
 public:
   DRAKE_DEFAULT_COPY_AND_MOVE_AND_ASSIGN(Binding)
 
+  typedef C ContraintType;
+
   Binding(C* value, const VarList& var_list)
     : value_(value), var_list_(var_list)
   { }
@@ -137,16 +139,17 @@ auto create_binding_impl(int x, int y) {
   return string("hello");
 }
 
-template<typename ... Ts>
-class create_binding_traits {
-  // typedef std::result_of<create_binding_impl(Ts...)>::type return_type;
-  // typedef std::result_of<create_binding_impl, int>::type return_type;
-  typedef void* return_type;
+// // This would be redundant - would need to specialize template twice :(
+// template<typename ... Ts>
+// class create_binding_traits {
+//   // typedef std::result_of<create_binding_impl(Ts...)>::type return_type;
+//   // typedef std::result_of<create_binding_impl, int>::type return_type;
+//   typedef void* return_type;
 
-  static return_type call(Ts ... args) {
-    return invalid_overload(args ...);
-  }
-};
+//   static return_type call(Ts ... args) {
+//     return invalid_overload(args ...);
+//   }
+// };
 
 // template<typename Func, typename ... Args>
 // using return_type_of = decltype(Func(declval<Args...>()));
@@ -155,7 +158,7 @@ class create_binding_traits {
 typedef decltype(create_binding_impl(declval<int>())) return_type_simple;
 return_type_simple test_value;
 
-
+// This isn't really needed
 template<typename ... Args>
 using create_binding_return_type = decltype(create_binding_impl(declval<Args>()...));
 
@@ -197,6 +200,14 @@ public:
 
   template<typename C>
   auto& GetList();
+
+  template<typename ... Args>
+  auto AddBinding(Args ... args) {
+    auto binding = create_binding_impl(args...);
+    // auto list = GetList<decltype<binding>();
+    return binding;
+  }
+
   // template<typename L
   // auto& GetList() { return linear_constraints_; }
   // auto& GetList() { return quadratic_constraints_; }
@@ -223,7 +234,9 @@ void container_stuff() {
   ConstraintContainer c;
 
   cout
-    << PRINT(&c.GetList<QuadraticConstraint>() == &c.quadratic_constraints_);
+    << PRINT(&c.GetList<QuadraticConstraint>() == &c.quadratic_constraints_)
+    << PRINT(c.AddBinding(1))
+    << PRINT(c.AddBinding(1, 2));
 
   // auto r1 = c.Add(&a);
   // auto r2 = c.Add(&b);
