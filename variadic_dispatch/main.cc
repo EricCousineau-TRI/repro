@@ -270,6 +270,10 @@ auto tpl_check(const vector<string>& test_list) {
   return "yup";
 }
 template<>
+auto tpl_check(std::initializer_list<string> list) {
+  return "yup init";
+}
+template<>
 auto tpl_check(int x) {
   return "nope";
 }
@@ -282,7 +286,8 @@ void container_stuff() {
   ConstraintContainer c;
   
   // Can deduce as such
-  cout << quick_check({"hello"}) << endl << tpl_check(vector<string>{"good"}) << endl; //tpl_check({"good"}) << endl;
+  cout << quick_check({"hello"}) << endl << tpl_check(vector<string>{"good"}) << endl;
+    //tpl_check({"good"}) << endl; // Can't infer T for initializer list
 
   cout
     << PRINT(&c.GetList<QuadraticConstraint>() == &c.quadratic_constraints_)
