@@ -132,6 +132,11 @@ auto create_binding_impl(int x) {
   return 1;
 }
 
+template<>
+auto create_binding_impl(int x, int y) {
+  return string("hello");
+}
+
 template<typename ... Ts>
 class create_binding_traits {
   // typedef std::result_of<create_binding_impl(Ts...)>::type return_type;
@@ -149,6 +154,10 @@ class create_binding_traits {
 
 typedef decltype(create_binding_impl(declval<int>())) return_type_simple;
 return_type_simple test_value;
+
+template<typename ... Args>
+using return_type_complex = decltype(create_binding_impl(declval<Args>()...));
+return_type_complex<int, int> other_value;
 
 // template<typename F, typename ... Args>
 // auto return_type_of(F&& f, Args... args) {
