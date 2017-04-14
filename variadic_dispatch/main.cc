@@ -155,9 +155,16 @@ class create_binding_traits {
 typedef decltype(create_binding_impl(declval<int>())) return_type_simple;
 return_type_simple test_value;
 
+
 template<typename ... Args>
-using return_type_complex = decltype(create_binding_impl(declval<Args>()...));
-return_type_complex<int, int> other_value;
+using create_binding_return_type = decltype(create_binding_impl(declval<Args>()...));
+
+create_binding_return_type<int, int> other_value;
+
+// // Note sure how to make this work
+// template<typename F, typename ... Args>
+// using return_type_complex = decltype(F(declval<Args>()...));
+// return_type_complex<decltype(create_binding_impl), int, int> other_value;
 
 // template<typename F, typename ... Args>
 // auto return_type_of(F&& f, Args... args) {
