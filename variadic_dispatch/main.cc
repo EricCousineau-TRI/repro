@@ -57,6 +57,11 @@ auto variadic_dispatch(Ts ... args) {
   return impl(args...);
 }
 
+template<typename ... Args>
+using variadic_dispatch_return_type = decltype(variadic_dispatch(declval<Args>()...));
+typedef variadic_dispatch_return_type<int, int> basic_return_type;
+
+
 #define PRINT(expr) #expr ": " << (expr) << endl
 
 void container_stuff();
@@ -92,6 +97,12 @@ public:
     : value_(dynamic_cast<C*>(b.get()))
   { }
 
+  // Pass through to the specific constraint type
+  template<typename ... Args>
+  Binding(Args ... args, const VarList& var_list)
+    : value_(new C(args...)), var_list_(var_list)
+  { }
+
   C* get() const {
     return value_;
   }
@@ -105,14 +116,14 @@ private:
 class Constraint { };
 class LinearConstraint : public Constraint {
 public:
-  LinearConstraint(int A, int b)
-    : A_(A), b_(b)
+  LinearConstraint(int a)
+    : a_(a)
   { }
 private:
-  int A_;
-  int b_;
+  int a_;
 };
 class QuadraticConstraint : public Constraint {
+public:
   QuadraticConstraint(int Q, int f)
     : Q_(Q), f_(f)
   { }
@@ -121,23 +132,42 @@ private:
   int f_;
 };
 
+std::ostream& operator<<(std::ostream& os, const Binding<Constraint>& c) {
+  return os << "Constraint";
+}
+std::ostream& operator<<(std::ostream& os, const Binding<LinearConstraint>& c) {
+  return os << "LinearConstraint";
+}
+std::ostream& operator<<(std::ostream& os, const Binding<QuadraticConstraint>& c) {
+  return os << "QuadraticConstraint";
+}
+
 template<typename C>
 using BindingList = std::vector<Binding<C>>;
 
+
+// For minor inference when the structure is clear
 template<typename ... Ts>
 auto create_binding_impl(Ts ... args) {
   return overload_not_implemented(args...);
 }
-
 template<>
-auto create_binding_impl(int x) {
-  return 1;
+auto create_binding_impl(int x) { // , const VarList& var_list) {
+  // Will be LinearConstriant
+  return Binding<LinearConstraint>(new LinearConstraint(x), {"x"}); //var_list);, var_list);
+}
+template<>
+auto create_binding_impl(int x, int y) { //, const VarList& var_list) {
+  // Will be quadratic constraint
+  return Binding<QuadraticConstraint>(new QuadraticConstraint(x, y), {"x"}); //var_list);
 }
 
-template<>
-auto create_binding_impl(int x, int y) {
-  return string("hello");
+// For robustnesss
+template<typename C, typename ... Args>
+auto create_binding_specific_impl(Args ... args) {
+  return Binding<C>(args..., {"x"});
 }
+
 
 // // This would be redundant - would need to specialize template twice :(
 // template<typename ... Ts>
@@ -155,14 +185,14 @@ auto create_binding_impl(int x, int y) {
 // using return_type_of = decltype(Func(declval<Args...>()));
 // typedef return_type_of<create_binding_impl, int> return_type_cur;
 
-typedef decltype(create_binding_impl(declval<int>())) return_type_simple;
-return_type_simple test_value;
+// typedef decltype(create_binding_impl(declval<int>())) return_type_simple;
+// // return_type_simple test_value;
 
-// This isn't really needed
-template<typename ... Args>
-using create_binding_return_type = decltype(create_binding_impl(declval<Args>()...));
+// // This isn't really needed
+// template<typename ... Args>
+// using create_binding_return_type = decltype(create_binding_impl(declval<Args>()...));
 
-create_binding_return_type<int, int> other_value;
+// create_binding_return_type<int, int> other_value;
 
 // // Note sure how to make this work
 // template<typename F, typename ... Args>
@@ -202,10 +232,19 @@ public:
   auto& GetList();
 
   template<typename ... Args>
-  auto AddBinding(Args ... args) {
+  auto AddConstraint(Args ... args) {
     auto binding = create_binding_impl(args...);
     // auto list = GetList<decltype<binding>();
     return binding;
+  }
+  template<typename C, typename ... Args>
+  auto AddConstraintSpecific(Args ... args) {
+    auto binding = create_binding_specific_impl<C>(args...);
+  }
+
+  template<typename ... Args>
+  auto AddLinearConstraint(Args ... args) {
+    return AddConstraintSpecific<LinearConstraint, Args...>(args...);
   }
 
   // template<typename L
@@ -229,14 +268,16 @@ auto& ConstraintContainer::GetList<QuadraticConstraint>() {
 
 void container_stuff() {
   Constraint a;
-  LinearConstraint b(1, 2);
+  LinearConstraint b(1);
+  QuadraticConstraint b2(1, 2);
 
   ConstraintContainer c;
 
   cout
     << PRINT(&c.GetList<QuadraticConstraint>() == &c.quadratic_constraints_)
-    << PRINT(c.AddBinding(1))
-    << PRINT(c.AddBinding(1, 2));
+    << PRINT(c.AddConstraint(1)) //, VarList{"x"}))
+    << PRINT(c.AddConstraint(1, 2)) //, VarList{"y"}))
+    << PRINT(c.AddLinearConstraint(1)) //, VarList{"z"}));
 
   // auto r1 = c.Add(&a);
   // auto r2 = c.Add(&b);
