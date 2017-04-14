@@ -282,7 +282,7 @@ void container_stuff() {
   ConstraintContainer c;
   
   // Can deduce as such
-  cout << quick_check({"hello"}) << endl << tpl_check({"good"}) << endl;
+  cout << quick_check({"hello"}) << endl << tpl_check(vector<string>{"good"}) << endl; //tpl_check({"good"}) << endl;
 
   cout
     << PRINT(&c.GetList<QuadraticConstraint>() == &c.quadratic_constraints_)
