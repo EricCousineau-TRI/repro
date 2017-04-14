@@ -63,28 +63,27 @@ int main() {
   cout
     << PRINT(get_value())
     << PRINT(variadic_dispatch(1, 2))
-    << PRINT(variadic_dispatch(make_shared<int>(10)))
-    << PRINT(variadic_dispatch("bad overload"));
+    << PRINT(variadic_dispatch(make_shared<int>(10)));
+    // << PRINT(variadic_dispatch("bad overload"));
 
   // container_stuff();
 
   return 0;
 }
 
-
-
+typedef vector<string> VarList;
 
 template<typename C>
 class Binding {
 public:
   DRAKE_DEFAULT_COPY_AND_MOVE_AND_ASSIGN(Binding)
 
-  Binding(C* value)
-    : value_(value)
+  Binding(C* value, const VarList& var_list)
+    : value_(value), var_list_(var_list)
   { }
 
   template<typename U>
-  Binding(const Binding<U>& b,
+  Binding(const Binding<U>& b, 
     typename std::enable_if<std::is_convertible<U*, C*>::value>::type* = nullptr)
     : value_(dynamic_cast<C*>(b.get()))
   { }
@@ -95,39 +94,63 @@ public:
 
 private:
   C* value_;
+  VarList var_list_;
 };
 
 // Goal: Check to see to what limit we can use "const Binding<T>&" forwarding
-class Base { };
-class Child : public Base { };
-
-class Container {
+class Constraint { };
+class LinearConstraint : public Constraint {
 public:
-  const Binding<Base>& Add(Base* value) {
-    base_.push_back(Binding<Base>(value));
-    return base_.back();
-  }
-  const Binding<Child>& Add(Child* value) {
-    child_.push_back(Binding<Child>(value));
-    return child_.back();
-  }
+  LinearConstraint(int A, int b)
+    : A_(A), b_(b)
+  { }
+private:
+  int A_;
+  int b_;
+};
+class QuadraticConstraint : public Constraint {
+  QuadraticConstraint(int Q, int f)
+    : Q_(Q), f_(f)
+  { }
+private:
+  int Q_;
+  int f_;
+};
+
+class ConstraintContainer {
+public:
+  // const Binding<Constraint>& Add(Constraint* value) {
+  //   base_.push_back(Binding<Constraint>(value));
+  //   return base_.back();
+  // }
 private:
   template<typename C>
   using BindingList = std::vector<Binding<C>>;
 
-  BindingList<Base> base_;
-  BindingList<Child> child_;
+  BindingList<Constraint> generic_constraints_;
+  BindingList<LinearConstraint> linear_constraints_;
+  BindingList<QuadraticConstraint> quadratic_constraints_;
+
+  template<typename C>
+  BindingList<C> GetList() {
+    return nullptr;
+  }
+  template<>
+  BindingList<Constraint> GetList<Constraint>() { return generic_constraints_; }
+  // template<typename L
+  // auto& GetList() { return linear_constraints_; }
+  // auto& GetList() { return quadratic_constraints_; }
 };
 
 void container_stuff() {
-  Base a;
-  Child b;
+  Constraint a;
+  LinearConstraint b(1, 2);
 
-  Container c;
-  auto r1 = c.Add(&a);
-  auto r2 = c.Add(&b);
+  ConstraintContainer c;
+  // auto r1 = c.Add(&a);
+  // auto r2 = c.Add(&b);
 
-  cout
-    << PRINT(r1.get())
-    << PRINT(r2.get());
+  // cout
+  //   << PRINT(r1.get())
+  //   << PRINT(r2.get());
 }
