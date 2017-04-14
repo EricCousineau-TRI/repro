@@ -120,6 +120,22 @@ private:
 template<typename C>
 using BindingList = std::vector<Binding<C>>;
 
+template<typename ... Ts>
+auto create_binding_impl(Ts ... args) {
+  return overload_not_implemented(args...);
+}
+
+template<>
+auto create_binding_impl(int x) {
+  return 1;
+}
+
+template<typename ... Ts>
+class create_binding_traits {
+  // typedef std::result_of<create_binding_impl(Ts...)>::type return_type;
+  typedef std::result_of<create_binding_impl, int>::type return_type;
+};
+
 class ConstraintContainer {
 public:
   // const Binding<Constraint>& Add(Constraint* value) {
@@ -145,6 +161,14 @@ private:
 template<>
 BindingList<Constraint>& ConstraintContainer::GetList<Constraint>() {
   return generic_constraints_;
+}
+template<>
+BindingList<LinearConstraint>& ConstraintContainer::GetList<LinearConstraint>() {
+  return linear_constraints_;
+}
+template<>
+BindingList<QuadraticConstraint>& ConstraintContainer::GetList<QuadraticConstraint>() {
+  return quadratic_constraints_;
 }
 
 void container_stuff() {
