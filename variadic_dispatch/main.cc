@@ -144,8 +144,8 @@ template<typename ... Ts>
 auto create_binding_impl(Ts ... args) {
   return overload_not_implemented(args...);
 }
-template<typename List>
-auto create_binding_impl(int x, List var_list) {
+
+auto create_binding_impl(int x, const VarList &var_list) {
   // Will be LinearConstriant
   return Binding<LinearConstraint>(new LinearConstraint(x), var_list);
 }
