@@ -3,3 +3,9 @@ cc_binary(
     srcs = ["main.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "coeffwise",
+    srcs = ["coeffwise.cc"],
+    deps = ["@eigen//:eigen"],
+)
