@@ -145,7 +145,7 @@ auto create_binding_impl(Ts ... args) {
   return overload_not_implemented(args...);
 }
 
-auto create_binding_impl(int x, const VarList &var_list) {
+auto create_binding_impl(int x, std::initializer_list<string> var_list) {
   // Will be LinearConstriant
   return Binding<LinearConstraint>(new LinearConstraint(x), var_list);
 }
@@ -258,16 +258,35 @@ auto& ConstraintContainer::GetList<QuadraticConstraint>() {
   return quadratic_constraints_;
 }
 
+string quick_check(const vector<string>& test_list) {
+  return "yup";
+}
+template<typename T>
+auto tpl_check(T value) {
+  return 0;
+}
+template<>
+auto tpl_check(const vector<string>& test_list) {
+  return "yup";
+}
+template<>
+auto tpl_check(int x) {
+  return "nope";
+}
+
 void container_stuff() {
   Constraint a;
   LinearConstraint b(1);
   QuadraticConstraint b2(1, 2);
 
   ConstraintContainer c;
+  
+  // Can deduce as such
+  cout << quick_check({"hello"}) << endl << tpl_check({"good"}) << endl;
 
   cout
     << PRINT(&c.GetList<QuadraticConstraint>() == &c.quadratic_constraints_)
-    << PRINT(c.AddConstraint(1, VarList{"x"})) // Can't do just {"x"}
+    // << PRINT(c.AddConstraint(1, {string("x")})) // Can't do just {"x"}
     << PRINT(c.AddConstraint(1, 2));
 
   // auto r1 = c.Add(&a);
