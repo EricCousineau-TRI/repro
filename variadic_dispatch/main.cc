@@ -97,12 +97,6 @@ public:
     : value_(dynamic_cast<C*>(b.get()))
   { }
 
-  // Pass through to the specific constraint type
-  template<typename ... Args>
-  Binding(Args ... args, const VarList& var_list)
-    : value_(new C(args...)), var_list_(var_list)
-  { }
-
   C* get() const {
     return value_;
   }
@@ -146,26 +140,24 @@ template<typename C>
 using BindingList = std::vector<Binding<C>>;
 
 
-// For minor inference when the structure is clear
 template<typename ... Ts>
 auto create_binding_impl(Ts ... args) {
   return overload_not_implemented(args...);
 }
 template<>
-auto create_binding_impl(int x) { // , const VarList& var_list) {
+auto create_binding_impl(int x) {
   // Will be LinearConstriant
-  return Binding<LinearConstraint>(new LinearConstraint(x), {"x"}); //var_list);, var_list);
+  return Binding<LinearConstraint>(new LinearConstraint(x), {"x"});
 }
 template<>
-auto create_binding_impl(int x, int y) { //, const VarList& var_list) {
-  // Will be quadratic constraint
-  return Binding<QuadraticConstraint>(new QuadraticConstraint(x, y), {"x"}); //var_list);
+auto create_binding_impl(int x, int y) {
+  // By default will be quadratic constraint
+  return Binding<QuadraticConstraint>(new QuadraticConstraint(x, y), {"x"});
 }
 
-// For robustnesss
 template<typename C, typename ... Args>
 auto create_binding_specific_impl(Args ... args) {
-  return Binding<C>(args..., {"x"});
+  return Binding<C>(args...);
 }
 
 
@@ -275,9 +267,8 @@ void container_stuff() {
 
   cout
     << PRINT(&c.GetList<QuadraticConstraint>() == &c.quadratic_constraints_)
-    << PRINT(c.AddConstraint(1)) //, VarList{"x"}))
-    << PRINT(c.AddConstraint(1, 2)) //, VarList{"y"}))
-    << PRINT(c.AddLinearConstraint(1)) //, VarList{"z"}));
+    << PRINT(c.AddConstraint(1))
+    << PRINT(c.AddConstraint(1, 2));
 
   // auto r1 = c.Add(&a);
   // auto r2 = c.Add(&b);
