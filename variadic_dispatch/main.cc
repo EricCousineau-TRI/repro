@@ -117,6 +117,9 @@ private:
   int f_;
 };
 
+template<typename C>
+using BindingList = std::vector<Binding<C>>;
+
 class ConstraintContainer {
 public:
   // const Binding<Constraint>& Add(Constraint* value) {
@@ -124,23 +127,25 @@ public:
   //   return base_.back();
   // }
 private:
-  template<typename C>
-  using BindingList = std::vector<Binding<C>>;
 
   BindingList<Constraint> generic_constraints_;
   BindingList<LinearConstraint> linear_constraints_;
   BindingList<QuadraticConstraint> quadratic_constraints_;
 
+  // Can't change return type? Have to use type traits... :(
+
   template<typename C>
-  BindingList<C> GetList() {
-    return nullptr;
-  }
-  template<>
-  BindingList<Constraint> GetList<Constraint>() { return generic_constraints_; }
+  BindingList<C>& GetList();
   // template<typename L
   // auto& GetList() { return linear_constraints_; }
   // auto& GetList() { return quadratic_constraints_; }
 };
+
+// Can't use auto& :(
+template<>
+BindingList<Constraint>& ConstraintContainer::GetList<Constraint>() {
+  return generic_constraints_;
+}
 
 void container_stuff() {
   Constraint a;
