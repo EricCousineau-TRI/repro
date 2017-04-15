@@ -12,5 +12,7 @@ void tpl_func(const T& x) {
     std::cout << "template: " << tpl_traits<T>::name() << std::endl;
 }
 
-void tpl_func(const int& x);
-void tpl_func(const double& x);
+template<>
+void tpl_func<int>(const int& x);
+template<>
+void tpl_func<double>(const double& x);
