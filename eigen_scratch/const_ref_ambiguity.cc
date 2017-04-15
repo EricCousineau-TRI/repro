@@ -39,11 +39,11 @@ auto vec_ref_explicit(const Eigen::Ref<const AutoDiffVecXd> &x) {
 }
 
 template<typename Vector>
-struct vec_trait { };
+struct vec_trait { Vector invalid; };
 template<>
-struct vec_trait<Eigen::VectorXd> { static constexpr char name[] = "Eigen::VectorXd"; };
+struct vec_trait<Eigen::VectorXd> { static constexpr char name[] {"Eigen::VectorXd"}; };
 template<>
-struct vec_trait<AutoDiffVecXd> { static constexpr char name[] = "AutoDiffVecXd"; };
+struct vec_trait<AutoDiffVecXd> { static constexpr char name[] { "AutoDiffVecXd" }; };
 
 // http://stackoverflow.com/questions/4933056/how-do-i-explicitly-instantiate-a-template-function
 
@@ -52,8 +52,8 @@ template<typename Vector>
 auto vec_ref_template(const Eigen::Ref<const Vector> &x) {
     return string("templated ") + vec_trait<Vector>::name;
 }
-template<>
-auto vec_ref_template<Eigen::VectorXd>(const Eigen::Ref<const Eigen::VectorXd> &x);
+// template<>
+// auto vec_ref_template<Eigen::VectorXd>(const Eigen::Ref<const Eigen::VectorXd> &x);
 /*
 // Does not work
 template<typename Derived>
@@ -61,6 +61,11 @@ auto vec_ref_template(const Eigen::Ref<const Eigen::DenseBase<Derived>> &x) {
     return string("templated ") + vec_trait<Eigen::DenseBase<Derived>>::name;
 }
 */
+// Does not work
+template<typename Derived>
+auto vec_ref_template(const Eigen::MatrixBase<Derived> &x) {
+    return string("templated ") + vec_trait<Derived>::name;
+}
 
 #define PRINT(x) #x ": " << (x) << endl
 
