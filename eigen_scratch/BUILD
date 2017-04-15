@@ -9,3 +9,9 @@ cc_binary(
     srcs = ["coeffwise.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "const_ref_ambiguity",
+    srcs = ["const_ref_ambiguity.cc"],
+    deps = ["@eigen//:eigen"],
+)
