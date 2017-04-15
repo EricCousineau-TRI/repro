@@ -1,5 +1,11 @@
 // Purpose: Try to address issue with needing to explicitly overload Eigen::VectorXd AutoDiffVecXd
 
+/* <example from="drake-distro:5729940:drake/solvers/constraint.h:89">
+// If trying to templatize these, errors about ambiguity occur
+  void Eval(const Eigen::Ref<const Eigen::VectorXd>& x, ...) const ...
+  void Eval(const Eigen::Ref<const AutoDiffVecXd>& x, ...) const ...
+   </example> */
+
 #include <iostream>
 #include <string>
 using std::cout;
@@ -7,7 +13,7 @@ using std::endl;
 using std::string;
 
 
-/* <snippet from="//drake/common/eigen_autodiff_types.h"> */
+/* <snippet from="drake-distro:5729940:drake/common/eigen_autodiff_types.h"> */
 #include <Eigen/Dense>
 #include <unsupported/Eigen/AutoDiff>
 
@@ -32,6 +38,18 @@ auto vec_ref_explicit(const Eigen::Ref<const AutoDiffVecXd> &x) {
     return string("AutoDiffVecXd");
 }
 
+template<typename Vector>
+struct vec_trait { };
+template<>
+struct vec_trait<Eigen::VectorXd> { static constexpr char name[] = "Eigen::VectorXd"; };
+template<>
+struct vec_trait<AutoDiffVecXd> { static constexpr char name[] = "AutoDiffVecXd"; };
+
+template<typename Vector>
+auto vec_ref_template(const Eigen::Ref<const Vector> &x) {
+    return string("templated ") + vec_trait<Vector>::name;
+}
+
 #define PRINT(x) #x ": " << (x) << endl
 
 int main() {
@@ -40,6 +58,8 @@ int main() {
 
     cout
         << PRINT(vec_ref_explicit(x))
-        << PRINT(vec_ref_explicit(x_taylor));
+        << PRINT(vec_ref_explicit(x_taylor))
+        << PRINT(vec_ref_template(x))
+        << PRINT(vec_ref_template(x_taylor))
     return 0;
 }

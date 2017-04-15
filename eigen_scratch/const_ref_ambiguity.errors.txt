@@ -1,0 +1,20 @@
+eigen_scratch/const_ref_ambiguity.cc:56:18: error: no matching function for call to 'vec_ref_template'
+        << PRINT(vec_ref_template(x))
+                 ^~~~~~~~~~~~~~~~
+eigen_scratch/const_ref_ambiguity.cc:47:30: note: expanded from macro 'PRINT'
+#define PRINT(x) #x ": " << (x) << endl
+                             ^
+eigen_scratch/const_ref_ambiguity.cc:43:6: note: candidate template ignored: could not match 'Ref' against 'Matrix'
+auto vec_ref_template(const Eigen::Ref<const Vector> &x) {
+     ^
+eigen_scratch/const_ref_ambiguity.cc:57:18: error: no matching function for call to 'vec_ref_template'
+        << PRINT(vec_ref_template(x_taylor))
+                 ^~~~~~~~~~~~~~~~
+eigen_scratch/const_ref_ambiguity.cc:47:30: note: expanded from macro 'PRINT'
+#define PRINT(x) #x ": " << (x) << endl
+                             ^
+eigen_scratch/const_ref_ambiguity.cc:43:6: note: candidate template ignored: could not match 'Ref' against 'Matrix'
+auto vec_ref_template(const Eigen::Ref<const Vector> &x) {
+     ^
+2 errors generated.
+Target //eigen_scratch:const_ref_ambiguity failed to build
