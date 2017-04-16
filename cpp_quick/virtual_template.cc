@@ -19,9 +19,16 @@ cpp_quick/virtual_template.cc:16:5: error: 'virtual' cannot be specified on memb
 // Adaptation of Visitor Pattern / CRTP from:
 // http://stackoverflow.com/a/5872633/170413
 
+class Base {
+public:
+    virtual void tpl(int x) = 0;
+    virtual void tpl(double x) = 0;
+};
+
+// Generics for display
 template<typename T>
 struct trait {
-    static inline const char* name() { return "generic"; }
+    static inline const char* name() { return "T"; }
 };
 template<>
 struct trait<int> {
@@ -32,14 +39,10 @@ struct trait<double> {
     static inline const char* name() { return "double"; }
 };
 
-class Base {
-public:
-    virtual void tpl(int x) = 0;
-    virtual void tpl(double x) = 0;
-};
-
-template<typename Base, typename Derived>
-class BaseImpl : public Base {
+// Use CRTP for dispatch
+// Also specify base type to allow for multiple generations
+template<typename BaseType, typename DerivedType>
+class BaseImpl : public BaseType {
 public:
     void tpl(int x) override {
         derived()->tpl_impl(x);
@@ -48,14 +51,16 @@ public:
         derived()->tpl_impl(x);
     }
 private:
-    inline Derived* derived() {
-        return static_cast<Derived*>(this);
+    // Eigen-style
+    inline DerivedType* derived() {
+        return static_cast<DerivedType*>(this);
     }
-    inline const Derived* derived() const {
-        return static_cast<const Derived*>(this);
+    inline const DerivedType* derived() const {
+        return static_cast<const DerivedType*>(this);
     }
 };
 
+// Have Child extend indirectly from Base
 class Child : public BaseImpl<Base, Child> {
 protected:
     friend class BaseImpl<Base, Child>;
@@ -65,6 +70,7 @@ protected:
     }
 };
 
+// Have SubChild extend indirectly from Child
 class SubChild : public BaseImpl<Child, SubChild> {
 protected:
     friend class BaseImpl<Child, SubChild>;
@@ -75,8 +81,8 @@ protected:
 };
 
 
-template<typename Base>
-void example(Base *p) {
+template<typename BaseType>
+void example(BaseType *p) {
     p->tpl(2);
     p->tpl(3.0);
 }
