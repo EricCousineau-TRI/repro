@@ -15,3 +15,9 @@ cc_binary(
     srcs = ["const_ref_ambiguity.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "eigen_bug279_followup",
+    srcs = ["eigen_bug279_followup.cc"],
+    deps = ["@eigen//:eigen"],
+)
