@@ -8,6 +8,7 @@
 struct A {
     A(int&& n) { std::cout << "rvalue overload, n=" << n << "\n"; }
     A(int& n)  { std::cout << "lvalue overload, n=" << n << "\n"; }
+    A(const int& n)  { std::cout << "const lvalue overload, n=" << n << "\n"; }
 };
  
 class B {
@@ -43,5 +44,6 @@ int main()
     auto p2 = make_unique1<A>(i); // lvalue
  
     std::cout << "B\n";
-    auto t = make_unique<B>(2, i, 3);
+    const int j = i + 1;
+    auto t = make_unique<B>(2, j, i);
 }
