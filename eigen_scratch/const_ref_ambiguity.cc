@@ -1,5 +1,7 @@
 // Purpose: Try to address issue with needing to explicitly overload Eigen::VectorXd AutoDiffVecXd
 
+// Alejandro mentioned this here: https://forum.kde.org/viewtopic.php?f=74&t=133499&p=358803
+
 /* <example from="drake-distro:5729940:drake/solvers/constraint.h:89">
 // If trying to templatize these, errors about ambiguity occur
   void Eval(const Eigen::Ref<const Eigen::VectorXd>& x, ...) const ...
@@ -41,11 +43,13 @@ auto vec_ref_explicit(const Eigen::Ref<const AutoDiffVecXd> &x) {
 template<typename Vector>
 struct vec_trait { Vector invalid; };
 template<>
-struct vec_trait<Eigen::VectorXd> { static constexpr char name[] {"Eigen::VectorXd"}; };
+struct vec_trait<Eigen::VectorXd> {
+    static const char* name() { return "Eigen::VectorXd"; };
+};
 template<>
-struct vec_trait<AutoDiffVecXd> { static constexpr char name[] { "AutoDiffVecXd" }; };
-
-// http://stackoverflow.com/questions/4933056/how-do-i-explicitly-instantiate-a-template-function
+struct vec_trait<AutoDiffVecXd> {
+    static const char* name() { return "AutoDiffVecXd"; };
+};
 
 // Does not work
 template<typename Vector>
