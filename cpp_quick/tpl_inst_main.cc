@@ -6,5 +6,8 @@ int main() {
 
     tpl_func(x);
     tpl_func(y);
+
+    test t;
+    t.tpl_method(x);
     return 0;
 }

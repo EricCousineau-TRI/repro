@@ -12,3 +12,9 @@ struct tpl_traits {
 
 template<typename T>
 void tpl_func(const T& x);
+
+// Specialized methods
+struct test {
+    template<typename T>
+    void tpl_method(const T& x);
+};
