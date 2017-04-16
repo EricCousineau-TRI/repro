@@ -119,11 +119,11 @@ int main() {
     dderiv.resize(1);
     auto& xddot = dderiv(0);
 
-    x = pi / 3;
-    xdot = 2;
-    xddot = 10;
+    x = 2;
+    xdot = 5;
+    xddot = 1;
 
-    auto expr = sin(x_taylor(0));
+    auto expr = x_taylor(0) * x_taylor(0); //pow(x_taylor(0), 2); //sin(x_taylor(0));
 
     cout
         << PRINT(expr.value().value())
