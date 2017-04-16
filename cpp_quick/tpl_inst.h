@@ -21,3 +21,6 @@ struct test {
     template<typename T>
     void tpl_method(const T& x);
 };
+
+template<typename ... Args>
+void tpl_func_var(Args ... args);

@@ -10,5 +10,7 @@ int main() {
     test t;
     t.tpl_method(x);
     // t.tpl_method(y);
+
+    tpl_func_var(x, y);
     return 0;
 }

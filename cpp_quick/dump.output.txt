@@ -1,4 +1,3 @@
-+ objdump -t -C tpl_inst_main.o
 
 tpl_inst_main.o:     file format elf64-x86-64
 
@@ -9,6 +8,7 @@ SYMBOL TABLE:
 0000000000000000 l    d  .text.main	0000000000000000 .text.main
 0000000000000000 l    d  .text.startup	0000000000000000 .text.startup
 0000000000000000 l    d  .bss._ZStL8__ioinit	0000000000000000 .bss._ZStL8__ioinit
+0000000000000000         *UND*	0000000000000000 void tpl_func_var<int, double>(int, double)
 0000000000000000         *UND*	0000000000000000 void tpl_func<double>(double const&)
 0000000000000000         *UND*	0000000000000000 void tpl_func<int>(int const&)
 0000000000000000         *UND*	0000000000000000 void test::tpl_method<int>(int const&)
@@ -16,10 +16,9 @@ SYMBOL TABLE:
 0000000000000000         *UND*	0000000000000000 std::ios_base::Init::~Init()
 0000000000000000         *UND*	0000000000000000 __cxa_atexit
 0000000000000000         *UND*	0000000000000000 __dso_handle
-0000000000000000 g     F .text.main	0000000000000042 main
+0000000000000000 g     F .text.main	000000000000004f main
 
 
-+ objdump -t -C tpl_inst.o
 
 tpl_inst.o:     file format elf64-x86-64
 
@@ -30,9 +29,11 @@ SYMBOL TABLE:
 0000000000000000 l    d  .text._Z8tpl_funcIiEvRKT_	0000000000000000 .text._Z8tpl_funcIiEvRKT_
 0000000000000000 l    d  .text._Z8tpl_funcIdEvRKT_	0000000000000000 .text._Z8tpl_funcIdEvRKT_
 0000000000000000 l    d  .text._ZN4test10tpl_methodIiEEvRKT_	0000000000000000 .text._ZN4test10tpl_methodIiEEvRKT_
+0000000000000000 l    d  .text._Z12tpl_func_varIJidEEvDpT_	0000000000000000 .text._Z12tpl_func_varIJidEEvDpT_
 0000000000000000 l    d  .text.startup	0000000000000000 .text.startup
 0000000000000000 l    d  .bss._ZStL8__ioinit	0000000000000000 .bss._ZStL8__ioinit
 0000000000000000 l    d  .rodata.str1.1	0000000000000000 .rodata.str1.1
+0000000000000000  w    F .text._Z12tpl_func_varIJidEEvDpT_	0000000000000072 void tpl_func_var<int, double>(int, double)
 0000000000000000  w    F .text._Z8tpl_funcIdEvRKT_	0000000000000086 void tpl_func<double>(double const&)
 0000000000000000  w    F .text._Z8tpl_funcIiEvRKT_	0000000000000086 void tpl_func<int>(int const&)
 0000000000000000  w    F .text._ZN4test10tpl_methodIiEEvRKT_	0000000000000086 void test::tpl_method<int>(int const&)

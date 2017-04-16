@@ -21,3 +21,10 @@ void test::tpl_method(const T& x) {
     std::cout << "method template: " << tpl_traits<T>::name() << std::endl;
 }
 template void test::tpl_method<int>(const int& x);
+
+
+template<typename ... Args>
+void tpl_func_var(Args ... args) {
+    std::cout << "variadic" << std::endl;
+}
+template void tpl_func_var(int x, double y);
