@@ -12,3 +12,8 @@ cc_binary(
     name = "virtual_template",
     srcs = ["virtual_template.cc"],
 )
+
+cc_binary(
+    name = "forward",
+    srcs = ["forward.cc"],
+)
