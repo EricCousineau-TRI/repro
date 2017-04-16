@@ -7,3 +7,8 @@ cc_binary(
     name = "tpl_inst",
     srcs = ["tpl_inst_main.cc", "tpl_inst.cc", "tpl_inst.h"],
 )
+
+cc_binary(
+    name = "virtual_template",
+    srcs = ["virtual_template.cc"],
+)
