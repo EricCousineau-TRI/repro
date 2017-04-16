@@ -57,13 +57,13 @@ struct node<0> {
     { }
 };
 
+// Distraction:
 // For nth order derivative, per Alexander Werner's post:
 // https://forum.kde.org/viewtopic.php?f=74&t=110376#p268948
 // and per Hongkai's TODO
-
-// Static assert for order <= 0?
 template <int order>
 struct AutoDiffNdTraits {
+    static_assert(order > 0 && order < 5, "Must have order between 1 and 4");
     // Previous order
     typedef AutoDiffNdTraits<order - 1> Prev;
     template <int num_vars>
@@ -77,8 +77,6 @@ struct AutoDiffNdTraits {
     using Vector = Eigen::Matrix<Scalar<num_vars>, rows, 1>;
 
     typedef Vector<Eigen::Dynamic, Eigen::Dynamic> VectorXd;
-
-    static_assert(order > 0 && order < 5, "Must have a positive order");
 };
 
 template<>
@@ -90,9 +88,14 @@ struct AutoDiffNdTraits<1> {
     using VectorXd = AutoDiffVecXd;
 };
 
+template <int order, int num_vars>
+using AutoDiffNd = typename AutoDiffNdTraits<order>::template Scalar<num_vars>;
 
-// template <int num_vars>
-// using AutoDiffNd<1, num_vars> = AutoDiffd;
+template <int order, int num_vars, int rows>
+using AutoDiffNVecd = typename AutoDiffNdTraits<order>::template Vector<num_vars, rows>;
+
+template <int order>
+using AutoDiffNVecXd = typename AutoDiffNdTraits<order>::VectorXd;
 
 // template <int order, int num_vars, int rows>
 // using AutoDiffNVecd = Eigen::Matrix<AutoDiffNd<order, num_vars>, rows, 1>;
@@ -119,6 +122,8 @@ int main() {
 
     node<5> tree;
     cout << tree.next.next.next.next.next.value << endl;
+
+    // AutoDiffNVecXd<0> x_bad(1); // Fails as expected
 
     return 0;
 }
