@@ -60,9 +60,37 @@ struct node<0> {
 // For nth order derivative, per Alexander Werner's post:
 // https://forum.kde.org/viewtopic.php?f=74&t=110376#p268948
 // and per Hongkai's TODO
-// template <int order, int num_vars>
-// using AutoDiffNd = Eigen::AutoDiffScalar<Eigen::Matrix<AutoDiffNd<order - 1, num_vars>>>;
-// // Static assert for order <= 0?
+
+// Static assert for order <= 0?
+template <int order>
+struct AutoDiffNdTraits {
+    // Previous order
+    typedef AutoDiffNdTraits<order - 1> Prev;
+    template <int num_vars>
+    using PrevScalar = typename Prev::template Scalar<num_vars>;
+
+    template <int num_vars>
+    using Scalar = Eigen::AutoDiffScalar<Eigen::Matrix<PrevScalar<num_vars>, num_vars, 1> >;
+
+    // Not necessary to place these here, but keeping for simplicity
+    template <int num_vars, int rows>
+    using Vector = Eigen::Matrix<Scalar<num_vars>, rows, 1>;
+
+    typedef Vector<Eigen::Dynamic, Eigen::Dynamic> VectorXd;
+
+    static_assert(order > 0 && order < 5, "Must have a positive order");
+};
+
+template<>
+struct AutoDiffNdTraits<1> {
+    template <int num_vars>
+    using Scalar = AutoDiffd<num_vars>;
+    template <int num_vars, int rows>
+    using Vector = AutoDiffVecd<num_vars, rows>;
+    using VectorXd = AutoDiffVecXd;
+};
+
+
 // template <int num_vars>
 // using AutoDiffNd<1, num_vars> = AutoDiffd;
 
