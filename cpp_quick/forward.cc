@@ -6,7 +6,10 @@
 #include <array>
  
 struct A {
-    A(int&& n) { std::cout << "rvalue overload, n=" << n << "\n"; }
+    A(int&& n) { std::cout << "rvalue overload, n=" << n << "\n";
+        // Hacky
+        int z = std::move(n); n = 0; std::cout << "  post move: n=" << n << " z=" << z << "\n";
+    }
     A(int& n)  { std::cout << "lvalue overload, n=" << n << "\n"; }
     A(const int& n)  { std::cout << "const lvalue overload, n=" << n << "\n"; }
 };
