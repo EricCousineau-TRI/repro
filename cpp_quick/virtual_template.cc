@@ -65,10 +65,30 @@ protected:
     }
 };
 
+class SubChild : public BaseImpl<Child, SubChild> {
+protected:
+    friend class BaseImpl<Child, SubChild>;
+    template<typename T>
+    void tpl_impl(T x) {
+        cout << "SubChild::tpl_impl<" << trait<T>::name() << ">(" << x << ")" << endl;
+    }
+};
+
+
+template<typename Base>
+void example(Base *p) {
+    p->tpl(2);
+    p->tpl(3.0);
+}
+
 int main() {
     Child c;
-    Base *b = &c;
-    b->tpl(2);
-    b->tpl(3.0);
+    SubChild sc;
+
+    // Polymorphism works for Base as base type
+    example<Base>(&c);
+    example<Base>(&sc);
+    // Polymorphism works for Child as base type
+    example<Child>(&sc);
     return 0;
 }
