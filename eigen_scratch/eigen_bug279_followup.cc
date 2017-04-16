@@ -108,17 +108,27 @@ using AutoDiffNVecXd = typename AutoDiffNdTraits<order>::VectorXd;
 
 int main() {
     auto pi = numeric_const<double>::pi;
-    AutoDiffVecXd x_taylor(1);
-    auto& value = x_taylor(0).value();
+    AutoDiffNVecXd<2> x_taylor(1);
+    auto& x = x_taylor(0).value().value();
+    // First order
     auto& deriv = x_taylor(0).derivatives();
-    value = pi / 3;
-    // Second-order derivatives???
-    deriv.resize(2);
-    deriv << 10, 100;
+    deriv.resize(1);
+    auto& xdot = deriv(0).value();
+    // Second order
+    auto& dderiv = deriv(0).derivatives();
+    dderiv.resize(1);
+    auto& xddot = dderiv(0);
+
+    x = pi / 3;
+    xdot = 2;
+    xddot = 10;
 
     auto expr = sin(x_taylor(0));
 
-    cout << PRINT(expr.value()) << PRINT(expr.derivatives().transpose()) << endl;
+    cout
+        << PRINT(expr.value().value())
+        << PRINT(expr.derivatives()(0).value())
+        << PRINT(expr.derivatives()(0).derivatives()(0));
 
     node<5> tree;
     cout << tree.next.next.next.next.next.value << endl;
