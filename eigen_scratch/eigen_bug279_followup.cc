@@ -41,6 +41,22 @@ using AutoDiffVecd = Eigen::Matrix<AutoDiffd<num_vars>, rows, 1>;
 typedef AutoDiffVecd<Eigen::Dynamic, Eigen::Dynamic> AutoDiffVecXd;
 /* </snippet> */
 
+// For nth order derivative, per Alexander Werner's post:
+// https://forum.kde.org/viewtopic.php?f=74&t=110376#p268948
+// and per Hongkai's TODO
+template <int order, int num_vars>
+using AutoDiffNd = Eigen::AutoDiffScalar<Eigen::Matrix<AutoDiffNd<order - 1, num_vars>>>;
+// Static assert for order <= 0?
+template <int num_vars>
+using AutoDiffNd<1, num_vars> = AutoDiffd;
+
+template <int order, int num_vars, int rows>
+using AutoDiffNVecd = Eigen::Matrix<AutoDiffNd<order, num_vars>, rows, 1>;
+
+template <int order>
+typedef AutoDiffNVecd<order, Eigen::Dynamic, Eigen::Dynamic> AutoDiffNVecXd;
+
+
 #define PRINT(x) #x ": " << (x) << endl
 
 int main() {
