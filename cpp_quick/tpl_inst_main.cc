@@ -9,5 +9,6 @@ int main() {
 
     test t;
     t.tpl_method(x);
+    // t.tpl_method(y);
     return 0;
 }

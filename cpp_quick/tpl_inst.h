@@ -10,8 +10,13 @@ struct tpl_traits {
     }
 };
 
+// Providing definition here prevents other implementations of tpl_traits from being used
+// Example: move this definiton here, and observe that the traits are still generic
+// Does this mean it isn't using the specializations from `tpl_inst.cc`? How do I inspect this?
 template<typename T>
-void tpl_func(const T& x);
+void tpl_func(const T& x) {
+    std::cout << "template: " << tpl_traits<T>::name() << std::endl;
+}
 
 // Specialized methods
 struct test {
