@@ -7,6 +7,11 @@ struct tpl_traits<int> {
     }
 };
 
+template<typename T>
+void tpl_func(const T& x) {
+    std::cout << "template: " << tpl_traits<T>::name() << std::endl;
+}
+
 template void tpl_func<int>(const int& x);
 template void tpl_func<double>(const double& x);
 

@@ -14,9 +14,7 @@ struct tpl_traits {
 // Example: move this definiton here, and observe that the traits are still generic
 // Does this mean it isn't using the specializations from `tpl_inst.cc`? How do I inspect this?
 template<typename T>
-void tpl_func(const T& x) {
-    std::cout << "template: " << tpl_traits<T>::name() << std::endl;
-}
+void tpl_func(const T& x);
 
 // Specialized methods
 struct test {

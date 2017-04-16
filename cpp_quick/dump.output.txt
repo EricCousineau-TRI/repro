@@ -1,0 +1,50 @@
++ objdump -t -C tpl_inst_main.o
+
+tpl_inst_main.o:     file format elf64-x86-64
+
+SYMBOL TABLE:
+0000000000000000 l    df *ABS*	0000000000000000 cpp_quick/tpl_inst_main.cc
+0000000000000000 l     F .text.startup	0000000000000023 _GLOBAL__sub_I_tpl_inst_main.cc
+0000000000000000 l     O .bss._ZStL8__ioinit	0000000000000001 std::__ioinit
+0000000000000000 l    d  .text.main	0000000000000000 .text.main
+0000000000000000 l    d  .text.startup	0000000000000000 .text.startup
+0000000000000000 l    d  .bss._ZStL8__ioinit	0000000000000000 .bss._ZStL8__ioinit
+0000000000000000         *UND*	0000000000000000 void tpl_func<double>(double const&)
+0000000000000000         *UND*	0000000000000000 void tpl_func<int>(int const&)
+0000000000000000         *UND*	0000000000000000 void test::tpl_method<int>(int const&)
+0000000000000000         *UND*	0000000000000000 std::ios_base::Init::Init()
+0000000000000000         *UND*	0000000000000000 std::ios_base::Init::~Init()
+0000000000000000         *UND*	0000000000000000 __cxa_atexit
+0000000000000000         *UND*	0000000000000000 __dso_handle
+0000000000000000 g     F .text.main	0000000000000042 main
+
+
++ objdump -t -C tpl_inst.o
+
+tpl_inst.o:     file format elf64-x86-64
+
+SYMBOL TABLE:
+0000000000000000 l    df *ABS*	0000000000000000 cpp_quick/tpl_inst.cc
+0000000000000000 l     F .text.startup	0000000000000023 _GLOBAL__sub_I_tpl_inst.cc
+0000000000000000 l     O .bss._ZStL8__ioinit	0000000000000001 std::__ioinit
+0000000000000000 l    d  .text._Z8tpl_funcIiEvRKT_	0000000000000000 .text._Z8tpl_funcIiEvRKT_
+0000000000000000 l    d  .text._Z8tpl_funcIdEvRKT_	0000000000000000 .text._Z8tpl_funcIdEvRKT_
+0000000000000000 l    d  .text._ZN4test10tpl_methodIiEEvRKT_	0000000000000000 .text._ZN4test10tpl_methodIiEEvRKT_
+0000000000000000 l    d  .text.startup	0000000000000000 .text.startup
+0000000000000000 l    d  .bss._ZStL8__ioinit	0000000000000000 .bss._ZStL8__ioinit
+0000000000000000 l    d  .rodata.str1.1	0000000000000000 .rodata.str1.1
+0000000000000000  w    F .text._Z8tpl_funcIdEvRKT_	0000000000000086 void tpl_func<double>(double const&)
+0000000000000000  w    F .text._Z8tpl_funcIiEvRKT_	0000000000000086 void tpl_func<int>(int const&)
+0000000000000000  w    F .text._ZN4test10tpl_methodIiEEvRKT_	0000000000000086 void test::tpl_method<int>(int const&)
+0000000000000000         *UND*	0000000000000000 std::ctype<char>::_M_widen_init() const
+0000000000000000         *UND*	0000000000000000 std::ostream::put(char)
+0000000000000000         *UND*	0000000000000000 std::ostream::flush()
+0000000000000000         *UND*	0000000000000000 std::ios_base::Init::Init()
+0000000000000000         *UND*	0000000000000000 std::ios_base::Init::~Init()
+0000000000000000         *UND*	0000000000000000 std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)
+0000000000000000         *UND*	0000000000000000 std::__throw_bad_cast()
+0000000000000000         *UND*	0000000000000000 std::cout
+0000000000000000         *UND*	0000000000000000 __cxa_atexit
+0000000000000000         *UND*	0000000000000000 __dso_handle
+
+
