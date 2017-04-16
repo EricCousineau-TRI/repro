@@ -41,20 +41,36 @@ using AutoDiffVecd = Eigen::Matrix<AutoDiffd<num_vars>, rows, 1>;
 typedef AutoDiffVecd<Eigen::Dynamic, Eigen::Dynamic> AutoDiffVecXd;
 /* </snippet> */
 
+template<int order>
+struct node {
+    node<order - 1> next;
+    double value;
+    node(double value = 0)
+        : next(value + 2), value(value)
+    { }
+};
+template<>
+struct node<0> {
+    double value;
+    node(double value = 0)
+        : value(value)
+    { }
+};
+
 // For nth order derivative, per Alexander Werner's post:
 // https://forum.kde.org/viewtopic.php?f=74&t=110376#p268948
 // and per Hongkai's TODO
-template <int order, int num_vars>
-using AutoDiffNd = Eigen::AutoDiffScalar<Eigen::Matrix<AutoDiffNd<order - 1, num_vars>>>;
-// Static assert for order <= 0?
-template <int num_vars>
-using AutoDiffNd<1, num_vars> = AutoDiffd;
+// template <int order, int num_vars>
+// using AutoDiffNd = Eigen::AutoDiffScalar<Eigen::Matrix<AutoDiffNd<order - 1, num_vars>>>;
+// // Static assert for order <= 0?
+// template <int num_vars>
+// using AutoDiffNd<1, num_vars> = AutoDiffd;
 
-template <int order, int num_vars, int rows>
-using AutoDiffNVecd = Eigen::Matrix<AutoDiffNd<order, num_vars>, rows, 1>;
+// template <int order, int num_vars, int rows>
+// using AutoDiffNVecd = Eigen::Matrix<AutoDiffNd<order, num_vars>, rows, 1>;
 
-template <int order>
-typedef AutoDiffNVecd<order, Eigen::Dynamic, Eigen::Dynamic> AutoDiffNVecXd;
+// template <int order>
+// typedef AutoDiffNVecd<order, Eigen::Dynamic, Eigen::Dynamic> AutoDiffNVecXd;
 
 
 #define PRINT(x) #x ": " << (x) << endl
@@ -72,6 +88,9 @@ int main() {
     auto expr = sin(x_taylor(0));
 
     cout << PRINT(expr.value()) << PRINT(expr.derivatives().transpose()) << endl;
+
+    node<5> tree;
+    cout << tree.next.next.next.next.next.value << endl;
 
     return 0;
 }
