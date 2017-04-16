@@ -53,8 +53,8 @@ struct vec_trait<AutoDiffVecXd> {
 
 // Does not work
 template<typename Vector>
-auto vec_ref_template(const Eigen::Ref<const Vector> &x) {
-    return string("templated ") + vec_trait<Vector>::name;
+auto vec_ref_template_ref(const Eigen::Ref<const Vector> &x) {
+    return string("Ref ") + vec_trait<Vector>::name();
 }
 // template<>
 // auto vec_ref_template<Eigen::VectorXd>(const Eigen::Ref<const Eigen::VectorXd> &x);
@@ -65,10 +65,12 @@ auto vec_ref_template(const Eigen::Ref<const Eigen::DenseBase<Derived>> &x) {
     return string("templated ") + vec_trait<Eigen::DenseBase<Derived>>::name;
 }
 */
-// Does not work
+// Works, but not worthwhile?
 template<typename Derived>
 auto vec_ref_template(const Eigen::MatrixBase<Derived> &x) {
-    return string("templated ") + vec_trait<Derived>::name;
+    // https://forum.kde.org/viewtopic.php?f=74&t=117572&p=313833
+    typedef typename std::remove_cv<typename std::remove_reference<decltype(x.derived())>::type>::type Vector;
+    return vec_ref_template_ref<Vector>(x);
 }
 
 #define PRINT(x) #x ": " << (x) << endl
@@ -80,7 +82,8 @@ int main() {
     cout
         << PRINT(vec_ref_explicit(x))
         << PRINT(vec_ref_explicit(x_taylor))
-        << PRINT(vec_ref_template(x));
+        << PRINT(vec_ref_template(x))
+        << PRINT(vec_ref_template(x_taylor));
         // << PRINT(vec_ref_template(x_taylor));
     return 0;
 }
