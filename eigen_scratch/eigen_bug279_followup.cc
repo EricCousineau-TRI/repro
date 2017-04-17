@@ -87,6 +87,13 @@ struct AutoDiffNdTraits<1> {
     using Vector = AutoDiffVecd<num_vars, rows>;
     using VectorXd = AutoDiffVecXd;
 };
+/* Alternative:
+template<>
+struct AutoDiffNdTraits<0> {
+    template <int nm_vars>
+    using Scalar = double;
+};
+*/
 
 template <int order, int num_vars>
 using AutoDiffNd = typename AutoDiffNdTraits<order>::template Scalar<num_vars>;
@@ -110,6 +117,10 @@ int main() {
     auto pi = numeric_const<double>::pi;
     AutoDiffNVecXd<2> x_taylor(1);
     auto& x = x_taylor(0).value().value();
+    // Self Partials (maintain tree structure?)
+    auto& x_partial = x_taylor(0).value().derivatives();
+    x_partial.resize(1);
+    x_partial(0) = 1;
     // First order
     auto& deriv = x_taylor(0).derivatives();
     deriv.resize(1);
@@ -123,7 +134,8 @@ int main() {
     xdot = 5;
     xddot = 1;
 
-    auto expr = x_taylor(0) * x_taylor(0); //pow(x_taylor(0), 2); //sin(x_taylor(0));
+    // pow(x_taylor(0), 2) - not happy with nested?
+    auto expr = x_taylor(0) * x_taylor(0); ; //sin(x_taylor(0));
 
     cout
         << PRINT(expr.value().value())
