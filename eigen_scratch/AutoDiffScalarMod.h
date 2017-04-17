@@ -556,9 +556,10 @@ struct ScalarBinaryOpTraits<typename DerType::Scalar,AutoDiffScalar<Scalar, DerT
   inline const Eigen::AutoDiffScalar<Scalar, \
   EIGEN_EXPR_BINARYOP_SCALAR_RETURN_TYPE(typename Eigen::internal::remove_all<DerType>::type, typename Eigen::internal::traits<typename Eigen::internal::remove_all<DerType>::type>::Scalar, product) > \
   FUNC(const Eigen::AutoDiffScalar<Scalar, DerType>& x) { \
-    using namespace Eigen; \ //    EIGEN_UNUSED typedef typename Eigen::internal::remove_all<Scalar>::type Scalar; \
+    using namespace Eigen; \
     CODE; \
   }
+//    EIGEN_UNUSED typedef typename Eigen::internal::remove_all<Scalar>::type Scalar;
 
 template<typename Scalar, typename DerType>
 inline const AutoDiffScalar<Scalar, DerType>& conj(const AutoDiffScalar<Scalar, DerType>& x)  { return x; }
