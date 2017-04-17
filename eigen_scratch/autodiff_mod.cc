@@ -24,17 +24,38 @@ using AutoDiff2d = AutoDiffdBase<AutoDiffd<num_vars>, num_vars>;
 
 #define PRINT(x) #x ": " << (x) << endl
 
-int main() {
+template<typename Scalar>
+Scalar myfun(const Scalar &x) {
+    return x * x;
+}
+
+void first_deriv() {
+    AutoDiffd<1> x;
+    x.value() = 4;
+    x.derivatives()(0) = 1;
+
+    auto expr = myfun(x);
+    cout
+        << PRINT(expr.value())
+        << PRINT(expr.derivatives());
+}
+
+void second_deriv() {
     AutoDiff2d<1> x;
     x.value() = 4;
-//    x.derivatives()(0).value() = 1;
-//    x.derivatives()(0).derivatives() = 1;
+    auto& deriv = x.derivatives()(0);
+    deriv.value() = 1.;
+    deriv.derivatives()(0) = 1.;
 
-//    auto expr = x * x;
-//    cout
-//        << PRINT(expr.value())
-//        << PRINT(expr.derivatives().value())
-//        << PRINT(expr.derivatives().derivatives());
+    auto expr = myfun(x);
+    cout
+        << PRINT(expr.value())
+        << PRINT(expr.derivatives().value())
+        << PRINT(expr.derivatives()(0).derivatives());
+}
 
+int main() {
+    first_deriv();
+    second_deriv();
     return 0;
 }
