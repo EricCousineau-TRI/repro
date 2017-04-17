@@ -633,7 +633,7 @@ EIGEN_AUTODIFF_DECLARE_GLOBAL_UNARY(log,
 template<typename Scalar, typename DerType>
 inline const Eigen::AutoDiffScalar<Scalar,
 EIGEN_EXPR_BINARYOP_SCALAR_RETURN_TYPE(typename internal::remove_all<DerType>::type,typename internal::traits<typename internal::remove_all<DerType>::type>::Scalar,product) >
-pow(const Eigen::AutoDiffScalar<Scalar,DerType> &x, const typename typename internal::remove_all<Scalar>::type &y)
+pow(const Eigen::AutoDiffScalar<Scalar,DerType> &x, const typename internal::remove_all<Scalar>::type &y)
 {
   using namespace Eigen;
   using std::pow;
