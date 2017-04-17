@@ -116,15 +116,19 @@ using AutoDiffNVecXd = typename AutoDiffNdTraits<order>::VectorXd;
 int main() {
     auto pi = numeric_const<double>::pi;
     AutoDiffNVecXd<2> x_taylor(1);
+    /* Storage:
+        [ x   dx  ]
+        [ dx  ddx ]
+    */
     auto& x = x_taylor(0).value().value();
-    // Self Partials (maintain tree structure?)
-    auto& x_partial = x_taylor(0).value().derivatives();
-    x_partial.resize(1);
-    x_partial(0) = 1;
     // First order
     auto& deriv = x_taylor(0).derivatives();
     deriv.resize(1);
     auto& xdot = deriv(0).value();
+    // Symmetric derivative (maintain tree structure...)
+    auto& deriv_sym = x_taylor(0).value().derivatives();
+    deriv_sym.resize(1);
+    auto& xdot_sym = deriv_sym(0);
     // Second order
     auto& dderiv = deriv(0).derivatives();
     dderiv.resize(1);
@@ -132,15 +136,17 @@ int main() {
 
     x = 2;
     xdot = 5;
+    xdot_sym = xdot;
     xddot = 1;
 
     // pow(x_taylor(0), 2) - not happy with nested?
-    auto expr = x_taylor(0) * x_taylor(0); ; //sin(x_taylor(0));
+    auto expr = x_taylor(0) * x_taylor(0); //sin(x_taylor(0));
 
     cout
         << PRINT(expr.value().value())
+        << PRINT(expr.value().derivatives())
         << PRINT(expr.derivatives()(0).value())
-        << PRINT(expr.derivatives()(0).derivatives()(0));
+        << PRINT(expr.derivatives()(0).derivatives());
 
     node<5> tree;
     cout << tree.next.next.next.next.next.value << endl;
