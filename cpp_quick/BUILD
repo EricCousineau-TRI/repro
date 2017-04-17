@@ -22,3 +22,8 @@ cc_binary(
     name = "recursive_template",
     srcs = ["recursive_template.cc"],
 )
+
+cc_binary(
+    name = "name_trait",
+    srcs = ["name_trait.cc"],
+)
