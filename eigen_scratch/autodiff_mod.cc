@@ -22,14 +22,14 @@ using AutoDiff2d = Eigen::AutoDiffScalar<double, AutoDiffd<num_vars>>;
 int main() {
     AutoDiff2d<1> x;
     x.value() = 4;
-    x.derivatives()(0).value() = 1;
-    x.derivatives()(0).derivatives() = 1;
+//    x.derivatives()(0).value() = 1;
+//    x.derivatives()(0).derivatives() = 1;
 
-    auto expr = x * x;
-    cout
-        << PRINT(expr.value())
-        << PRINT(expr.derivatives().value())
-        << PRINT(expr.derivatives().derivatives());
+//    auto expr = x * x;
+//    cout
+//        << PRINT(expr.value())
+//        << PRINT(expr.derivatives().value())
+//        << PRINT(expr.derivatives().derivatives());
 
     return 0;
 }
