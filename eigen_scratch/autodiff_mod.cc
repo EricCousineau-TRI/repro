@@ -4,8 +4,8 @@ using std::cout;
 using std::endl;
 
 #include <Eigen/Dense>
-// // #include <unsupported/Eigen/AutoDiff>
-// #include "AutoDiffScalarMod.h"
+// #include <unsupported/Eigen/AutoDiff>
+#include "AutoDiffScalarMod.h"
 
 /* <snippet from="drake-distro:5729940:drake/common/eigen_autodiff_types.h"> */
 // // An autodiff variable with `num_vars` partials.

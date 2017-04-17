@@ -33,7 +33,7 @@ template<typename _Scalar, typename _DerType, bool Enable> struct auto_diff_spec
 template<typename _Scalar, typename _DerType> class AutoDiffScalar;
 
 template<typename NewScalar, typename NewDerType>
-inline AutoDiffScalar<NewScalar, NewDerType> MakeAutoDiffScalar(const typename NewScalar& value, const NewDerType &der) {
+inline AutoDiffScalar<NewScalar, NewDerType> MakeAutoDiffScalar(const NewScalar& value, const NewDerType &der) {
   return AutoDiffScalar<NewScalar, NewDerType>(value,der);
 }
 
@@ -63,12 +63,13 @@ inline AutoDiffScalar<NewScalar, NewDerType> MakeAutoDiffScalar(const typename N
   *
   */
 
-// Note: For this hack, care must be taken such that _Scalar and _DerType are coincident (Real + Complex)
+// NOTE(eric.cousineau): For this hack, care must be taken such that _Scalar and _DerType are coincident (Real + Complex)
 template<typename _Scalar, typename _DerType>
 class AutoDiffScalar
   : public internal::auto_diff_special_op
-            <_Scalar, _DerType, !internal::is_same<typename typename internal::remove_all<_Scalar>::type,
-                                          typename NumTraits<typename internal::remove_all<_Scalar>::type::Real>::value>>
+            <_Scalar, _DerType, !internal::is_same<
+                                          typename internal::remove_all<_Scalar>::type,
+                                          typename NumTraits<typename internal::remove_all<_Scalar>::type::Real>::value >
 {
   public:
     typedef internal::auto_diff_special_op
