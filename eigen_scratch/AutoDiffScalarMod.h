@@ -112,9 +112,9 @@ class AutoDiffScalar
 
     template<typename OtherScalar, typename OtherDerType>
     AutoDiffScalar(const AutoDiffScalar<OtherScalar, OtherDerType>& other
-#ifndef EIGEN_PARSED_BY_DOXYGEN
-    , typename internal::enable_if<internal::is_same<Scalar, typename internal::remove_all<OtherScalar>::type>::value>
-#endif
+//#ifndef EIGEN_PARSED_BY_DOXYGEN
+//    , typename internal::enable_if<internal::is_same<Scalar, typename internal::remove_all<OtherScalar>::type>::value>
+//#endif
     )
       : m_value(other.value()), m_derivatives(other.derivatives())
     {}
