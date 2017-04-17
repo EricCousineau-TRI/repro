@@ -26,7 +26,7 @@ using AutoDiff2d = AutoDiffdBase<AutoDiffd<num_vars>, num_vars>;
 
 template<typename Scalar>
 auto myfun(const Scalar &x) {
-    return x * x;
+    return 2 * x; // * x;
 }
 
 //void first_deriv() {
