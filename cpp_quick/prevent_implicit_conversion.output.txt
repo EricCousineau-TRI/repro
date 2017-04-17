@@ -1,0 +1,20 @@
+>>> overload_info(bc)
+overload: T&&
+
+>>> overload_info<Binding<Constraint>>(bc)
+overload: const Binding<Constraint>&
+
+>>> overload_info<Binding<LinearConstraint>>(blc)
+overload: const Binding<LinearConstraint>&
+
+>>> overload_info<Binding<Constraint>>(blc)
+implicit copy: Binding<LinearConstraint>  ->  Binding<Constraint>
+overload: Binding<Constraint>&&
+
+>>> overload_info<Binding<Constraint>>(bqc)
+implicit copy: Binding<QuadraticConstraint>  ->  Binding<Constraint>
+overload: Binding<Constraint>&&
+
+>>> disable_implicit_copy<Binding<Constraint>>(bc)
+[valid] overload: const Binding<Constraint>&
+
