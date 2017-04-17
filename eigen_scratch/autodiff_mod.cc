@@ -49,9 +49,9 @@ void second_deriv() {
 
     auto expr = myfun(x);
     cout
-        << PRINT(expr.value())
-        << PRINT(expr.derivatives()(0).value())
-        << PRINT(expr.derivatives()(0).derivatives());
+        << PRINT(expr.value());
+//        << PRINT(expr.derivatives()(0).value());
+//        << PRINT(expr.derivatives()(0).derivatives());
 }
 
 int main() {
