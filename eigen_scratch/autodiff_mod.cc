@@ -9,10 +9,21 @@ using std::endl;
 
 /* <snippet from="drake-distro:5729940:drake/common/eigen_autodiff_types.h"> */
 // // An autodiff variable with `num_vars` partials.
-// template <int num_vars>
-// using AutoDiffd = Eigen::AutoDiffScalar<double, Eigen::Matrix<double, num_vars, 1> >;
+ template <int num_vars>
+ using AutoDiffd = Eigen::AutoDiffScalar<double, Eigen::Matrix<double, num_vars, 1> >;
 /* </snippet> */
 
+#define PRINT(x) #x ": " << (x) << endl
+
 int main() {
+    AutoDiffd<1> x;
+    x.value() = 4;
+    x.derivatives()(0) = 1;
+
+    auto expr = x * x;
+    cout
+        << PRINT(expr.value())
+        << PRINT(expr.derivatives());
+
     return 0;
 }
