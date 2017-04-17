@@ -7,15 +7,20 @@ using std::endl;
 // #include <unsupported/Eigen/AutoDiff>
 #include "AutoDiffScalarMod.h"
 
+// https://eigen.tuxfamily.org/dox/TopicInsideEigenExample.html
+// - Explaining: internal::traits
+
+template <typename DerScalar, int num_vars>
+using AutoDiffdBase = Eigen::AutoDiffScalar<double, Eigen::Matrix<DerScalar, num_vars, 1> >;
+
 /* <snippet from="drake-distro:5729940:drake/common/eigen_autodiff_types.h"> */
 // // An autodiff variable with `num_vars` partials.
- template <int num_vars>
- using AutoDiffd = Eigen::AutoDiffScalar<double, Eigen::Matrix<double, num_vars, 1> >;
-
+template <int num_vars>
+using AutoDiffd = AutoDiffdBase<double, num_vars>;
+/* </snippet> */
 
 template<int num_vars>
-using AutoDiff2d = Eigen::AutoDiffScalar<double, AutoDiffd<num_vars>>;
-/* </snippet> */
+using AutoDiff2d = AutoDiffdBase<AutoDiffd<num_vars>, num_vars>;
 
 #define PRINT(x) #x ": " << (x) << endl
 
