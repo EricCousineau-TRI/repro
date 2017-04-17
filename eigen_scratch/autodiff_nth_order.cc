@@ -73,6 +73,7 @@ The extension to this is Pascal's triangle
 
 There will be symmetric duplication, as noted here:
 * https://en.wikipedia.org/wiki/Automatic_differentiation#High_order_and_many_variables
+* https://github.com/zigasajovic/dCpp
 
 You must manually maintain this duplication if you wish to use the existing implementation
 
