@@ -25,5 +25,5 @@ cc_binary(
 
 cc_binary(
     name = "name_trait",
-    srcs = ["name_trait.cc"],
+    srcs = ["name_trait.cc", "name_trait.h"],
 )
