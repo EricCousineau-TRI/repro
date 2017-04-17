@@ -63,6 +63,13 @@ Example: AutoDiffNd<3> will have 8 elements,
     dx:   3 - vvd vdv dvv
     ddx:  3 - vdd dvd ddv
     dddx: 1 - ddd
+The extension to this is Pascal's triangle
+      1
+     1 1
+    1 2 1
+   1 3 3 1
+  1 4 6 4 1
+     ...
 
 There will be symmetric duplication, as noted here:
 * https://en.wikipedia.org/wiki/Automatic_differentiation#High_order_and_many_variables
