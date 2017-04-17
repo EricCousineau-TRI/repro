@@ -27,3 +27,9 @@ cc_binary(
     srcs = ["autodiff_nth_order.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "autodiff_mod",
+    srcs = ["autodiff_mod.cc", "AutoDiffScalarMod.h"],
+    deps = ["@eigen//:eigen"],
+)
