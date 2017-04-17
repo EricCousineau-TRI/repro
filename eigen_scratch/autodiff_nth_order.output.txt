@@ -2,4 +2,3 @@ expr.value().value(): 4
 expr.value().derivatives(): 20
 expr.derivatives()(0).value(): 20
 expr.derivatives()(0).derivatives(): 54
-10

@@ -21,3 +21,9 @@ cc_binary(
     srcs = ["eigen_bug279_followup.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "autodiff_nth_order",
+    srcs = ["autodiff_nth_order.cc"],
+    deps = ["@eigen//:eigen"],
+)

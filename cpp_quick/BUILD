@@ -17,3 +17,8 @@ cc_binary(
     name = "forward",
     srcs = ["forward.cc"],
 )
+
+cc_binary(
+    name = "recursive_template",
+    srcs = ["recursive_template.cc"],
+)
