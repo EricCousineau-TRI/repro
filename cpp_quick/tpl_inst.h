@@ -34,23 +34,24 @@ struct test {
     }
 };
 
-// Do not instantiate here; explicitly instantiate in source file
+// - Do not instantiate here; explicitly instantiate in source file
 // Will use header definition
 extern template
 void test::tpl_method_source_spec<int>(const int& x);
 
-// // DOES NOT WORK: Try to urge compiler to use custom source definition
-// extern template
-// void test::tpl_method_source_spec<bool>(const bool& x);
-// // DOES NOT WORK: Specifying specialization causes multiple linker errors
+// - Forward declare specialization
 template<>
 void test::tpl_method_source_spec<bool>(const bool& x);
+
+// // - DOES NOT WORK: Forward declare using extern template
+// // Will require explicit instantiation of generic, not a specialization
 // extern template
 // void test::tpl_method_source_spec<bool>(const bool& x);
 
-// // DOES NOT WORK: Specialize in header
-// // Causes multiple definition errors. Makes sense, as this is fully specified.
-// template<>
-// void test::tpl_method_source_spec<double>(const double& x) {
-//     std::cout << "header impl: double" << std::endl;
-// }
+// - Specialize in header
+// Must use inlin in header, otherwise causes multiple definition errors.
+// @ref http://stackoverflow.com/q/1723537/7829525
+template<>
+inline void test::tpl_method_source_spec<double>(const double& x) {
+    std::cout << "header impl: double" << std::endl;
+}

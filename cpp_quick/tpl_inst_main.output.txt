@@ -1,0 +1,24 @@
+>>> tpl_func(x)
+template: int
+
+>>> tpl_func(y)
+template: double
+
+>>> (tpl_func_var(x, y))
+variadic source impl: int, double
+
+>>> t.tpl_method_source(x)
+source impl: int
+
+>>> t.tpl_method_source_spec(b)
+source specialization impl: bool
+
+>>> t.tpl_method_source_spec(c)
+header impl: generic <char>
+
+>>> t.tpl_method_source_spec(x)
+header impl: generic <int>
+
+>>> t.tpl_method_source_spec(y)
+header impl: double
+
