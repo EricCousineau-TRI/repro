@@ -15,12 +15,14 @@ closure=//drake/...
 branch=$(git rev-parse --abbrev-ref HEAD)
 files=$(git diff --name-only $(git merge-base master $branch) $branch)
 query=""
+depth=", 2" # ""
+kind="cc_test" # test
 
 echo "Building query based on bazel targets..."
 for file in $files; do
     # Super slow...
     target=$(bazel query $file)
-    rdep="rdeps($closure, $target)"
+    rdep="rdeps($closure, $target$depth)"
     if [[ -z "$query" ]]; then
         query="$rdep"
     else
@@ -29,7 +31,7 @@ for file in $files; do
     echo "+ $file"
 done
 
-query="$query intersect kind(\"test\", $closure)"
+query="$query intersect kind(\"$kind\", $closure)"
 
 echo "Execute query"
 set -x
