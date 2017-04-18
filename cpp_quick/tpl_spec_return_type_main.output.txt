@@ -1,0 +1,4 @@
+t.tpl_method_auto(x): int -> string
+t.tpl_method_auto(y): 4
+t.tpl_method_explicit(x): int -> string
+t.tpl_method_explicit(y): 4

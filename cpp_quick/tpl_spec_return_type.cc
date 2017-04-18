@@ -1,4 +1,4 @@
-#include "template_specialization.h"
+#include "tpl_spec_return_type.h"
 
 // [auto / delctype(auto), defined_in_source]
 
@@ -13,3 +13,8 @@
 // auto Test::tpl_method_auto<double>(const double& x) {
 //     return 2 * x;
 // }
+
+template<>
+std::string Test::tpl_method_explicit<int>(const int& x) {
+    return "int -> string";
+}

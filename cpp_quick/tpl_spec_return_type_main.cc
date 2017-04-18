@@ -10,17 +10,22 @@ Goal: Test template specialization with the following goals:
 #include <iostream>
 
 #include "name_trait.h"
-#include "template_specialization.h"
+#include "tpl_spec_return_type.h"
 
 using std::cout;
 using std::endl;
 
 int main() {
+    int x {2};
+    double y {2.};
+
     Test t;
 
     cout
-        << PRINT(t.tpl_method(2))
-        << PRINT(t.tpl_method(3.));
+        << PRINT(t.tpl_method_auto(x))
+        << PRINT(t.tpl_method_auto(y))
+        << PRINT(t.tpl_method_explicit(x))
+        << PRINT(t.tpl_method_explicit(y));
 
     return 0;
 }
