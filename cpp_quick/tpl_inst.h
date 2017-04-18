@@ -18,9 +18,26 @@ void tpl_func(const T& x);
 
 // Specialized methods
 struct test {
+    // Explicitly rely on external definition (in source file)
     template<typename T>
-    void tpl_method(const T& x);
+    void tpl_method_source(const T& x);
+
+    // Use header definition, but explicitly instantiate in source file
+    template<typename T>
+    void tpl_method_source_spec(const T& x) {
+        std::cout << "header default impl <" << tpl_traits<T>::name() << ">" << std::endl;
+    }
 };
 
 template<typename ... Args>
 void tpl_func_var(Args ... args);
+
+// Explicitly instantiate in source file
+extern template
+void test::tpl_method_source_spec<int>(const int& x);
+
+// Also use a header specialization
+template<>
+void test::tpl_method_source_spec<double>(const double& x) {
+    std::cout << "header double impl" << std::endl;
+}
