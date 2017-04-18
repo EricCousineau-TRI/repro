@@ -37,3 +37,8 @@ cc_binary(
     name = "prevent_implicit_conversion",
     srcs = ["prevent_implicit_conversion.cc", "name_trait.h", "drake_copy.h"],
 )
+
+cc_binary(
+    name = "template_specialization_main",
+    srcs = ["template_specialization_main.cc", "template_specialization.cc", "template_specialization.h", "name_trait.h"],
+)
