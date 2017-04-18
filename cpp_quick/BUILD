@@ -39,6 +39,6 @@ cc_binary(
 )
 
 cc_binary(
-    name = "template_specialization_main",
-    srcs = ["template_specialization_main.cc", "template_specialization.cc", "template_specialization.h", "name_trait.h"],
+    name = "template_spec_return_type_main",
+    srcs = ["template_spec_return_type_main.cc", "template_spec_return_type.cc", "template_spec_return_type.h", "name_trait.h"],
 )
