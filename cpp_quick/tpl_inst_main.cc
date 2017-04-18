@@ -1,6 +1,8 @@
 #include "tpl_inst.h"
 
 int main() {
+    bool b {};
+    char c {};
     int x {};
     double y {};
 
@@ -13,6 +15,8 @@ int main() {
     t.tpl_method_source(x);
     // t.tpl_method_source(y);
 
+    t.tpl_method_source_spec(b);
+    t.tpl_method_source_spec(c);
     t.tpl_method_source_spec(x);
     t.tpl_method_source_spec(y);
     return 0;

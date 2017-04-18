@@ -41,11 +41,12 @@ struct name_trait_list<T> {
       } \
   };
 
-// Can't handle literals...
+// Can't handle literals as template parameters...
+NAME_TRAIT(bool);
+NAME_TRAIT(char);
 NAME_TRAIT(int);
 NAME_TRAIT(double);
 NAME_TRAIT_TPL(name_trait);
 NAME_TRAIT_TPL(name_trait_list);
-
 
 #define PRINT(x) #x ": " << (x) << std::endl
