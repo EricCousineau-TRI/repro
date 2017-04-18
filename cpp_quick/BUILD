@@ -4,7 +4,7 @@ cc_binary(
 )
 
 cc_binary(
-    name = "tpl_inst",
+    name = "tpl_inst_main",
     srcs = ["tpl_inst_main.cc", "tpl_inst.cc", "tpl_inst.h"],
 )
 
@@ -29,8 +29,8 @@ cc_binary(
 )
 
 cc_binary(
-    name = "name_trait",
-    srcs = ["name_trait.cc", "name_trait.h"],
+    name = "name_trait_main",
+    srcs = ["name_trait_main.cc", "name_trait.h"],
 )
 
 cc_binary(
