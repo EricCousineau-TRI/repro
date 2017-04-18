@@ -25,8 +25,9 @@ template void test::tpl_method_source<int>(const int& x);
 
 
 // Explicitly instantiate in source file
-template
-void test::tpl_method_source_spec<int>(const int& x);
+template void test::tpl_method_source_spec<int>(const int& x);
+
+
 
 template<typename ... Args>
 void tpl_func_var(Args ... args) {
