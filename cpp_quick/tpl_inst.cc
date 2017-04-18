@@ -32,7 +32,7 @@ template void test::tpl_method_source<int>(const int& x);
 // Explicitly instantiate
 template void test::tpl_method_source_spec<int>(const int& x);
 
-// Explicitly specialize in source
+// COMPILES, IS NOT SEEN: Explicitly specialize in source
 template<>
 void test::tpl_method_source_spec<bool>(const bool& x) {
     std::cout << "source specialization impl: bool" << std::endl;

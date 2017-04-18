@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 
 #include "name_trait.h"
@@ -43,9 +45,12 @@ void test::tpl_method_source_spec<int>(const int& x);
 // // DOES NOT WORK: Specifying specialization causes multiple linker errors
 template<>
 void test::tpl_method_source_spec<bool>(const bool& x);
+// extern template
+// void test::tpl_method_source_spec<bool>(const bool& x);
 
-// Specialize in header
-template<>
-void test::tpl_method_source_spec<double>(const double& x) {
-    std::cout << "header impl: double" << std::endl;
-}
+// // DOES NOT WORK: Specialize in header
+// // Causes multiple definition errors. Makes sense, as this is fully specified.
+// template<>
+// void test::tpl_method_source_spec<double>(const double& x) {
+//     std::cout << "header impl: double" << std::endl;
+// }
