@@ -149,3 +149,31 @@ int main() {
 
     return 0;
 }
+
+/**
+// Example error
+func_reversed(1, 2, "oops");
+
+Output:
+    cpp_quick/tuple.cc:130:16: error: no matching function for call to 'func'
+            return func(std::forward<decltype(args)>(args)...);
+                   ^~~~
+    cpp_quick/tuple.cc:58:12: note: in instantiation of function template specialization 'main()::(anonymous class)::operator()<char const (&)[5], int &, int &>' requested here
+        return f(std::get<back_index - I>(std::forward<Tuple>(t))...);
+               ^
+    cpp_quick/tuple.cc:64:12: note: in instantiation of function template specialization 'apply_reversed_alt1_impl<const (lambda at cpp_quick/tuple.cc:129:26) &, std::tuple<int &, int &, char const (&)[5]>, 0, 1, 2>' requested here
+        return apply_reversed_alt1_impl(
+               ^
+    cpp_quick/tuple.cc:143:16: note: in instantiation of function template specialization 'apply_reversed_alt1<const (lambda at cpp_quick/tuple.cc:129:26) &, std::tuple<int &, int &, char const (&)[5]> >' requested here
+            return apply_reversed_alt1(func_callable,
+                   ^
+    cpp_quick/tuple.cc:151:18: note: in instantiation of function template specialization 'main()::(anonymous class)::operator()<int, int, char const (&)[5]>' requested here
+        func_reversed(1, 2, "oops");
+                     ^
+    cpp_quick/tuple.cc:113:8: note: candidate function not viable: requires 2 arguments, but 3 were provided
+    double func(double x, double y) {
+           ^
+    cpp_quick/tuple.cc:109:8: note: candidate function not viable: requires 2 arguments, but 3 were provided
+    double func(int x, double y) {
+           ^
+*/
