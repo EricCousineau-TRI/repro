@@ -109,7 +109,7 @@ struct reversed_index_sequence
 template<unsigned... I>
 struct reversed_index_sequence<0, I...>
     : std::index_sequence<I...> {
-    using sequence = std::index_sequence<I...>;
+    using sequence = std::index_sequence<I...>; // using type = seq
 };
 /*
 Example:
@@ -121,17 +121,8 @@ Example:
 */
 
 template<std::size_t N>
-struct reversed_index_sequence_trait {
-    template <std::size_t... I>
-    static auto get_reversed(std::index_sequence<I...>) {
-        return reversed_index_sequence<I...>{};
-    }
-    using type = decltype(get_reversed(std::make_index_sequence<N>{}));
-};
-
-template<std::size_t N>
 using make_reversed_index_sequence 
-    = typename reversed_index_sequence_trait<N>::type;
+    = typename reversed_index_sequence<N>::sequence;
 
 template <class F, class Tuple>
 constexpr decltype(auto) apply_reversed_alt(F &&f, Tuple &&t) 
@@ -174,7 +165,7 @@ int main() {
     cout
         << "Sequence: " << endl
         << PRINT(name_trait<decltype(std::make_index_sequence<5> {})>::name())
-        << PRINT(name_trait<reversed_index_sequence_trait<5>::type::sequence>::name())
+        << PRINT(name_trait<reversed_index_sequence<5>::sequence>::name())
         << endl;
 
     cout << endl;
