@@ -1,9 +1,10 @@
-#include "main.h"
-
 #include <string>
 #include <vector>
 #include <iostream>
 #include <memory>
+
+#include "cpp_quick/drake_copy.h"
+#include "cpp_quick/name_trait.h"
 
 using std::cout;
 using std::endl;
@@ -61,8 +62,6 @@ template<typename ... Args>
 using variadic_dispatch_return_type = decltype(variadic_dispatch(declval<Args>()...));
 typedef variadic_dispatch_return_type<int, int> basic_return_type;
 
-
-#define PRINT(expr) #expr ": " << (expr) << endl
 
 void container_stuff();
 
