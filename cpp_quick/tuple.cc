@@ -15,6 +15,8 @@ std::index_sequence
 using std::cout;
 using std::endl;
 
+// From potential implementations for C++17
+namespace future {
 /* <snippet from="http://en.cppreference.com/w/cpp/utility/apply"> */
 namespace detail {
 template <class F, class Tuple, std::size_t... I>
@@ -34,7 +36,26 @@ constexpr decltype(auto) apply(F &&f, Tuple &&t)
             std::tuple_size<std::decay_t<Tuple>>::value>{});
 }
 /* </snippet> */
+}
 
+template<unsigned N, unsigned... Indices>
+struct rgen_seq : rgen_seq<N-1, Is..., Indices-1>{};
+
+template<unsigned... Is>
+struct rgen_seq<0, Is...> : seq<Is...>{};
+
+template<std::size_t N>
+struct make_reversed_index_sequence
+    : rgen_seq<sizeof...N>
+
+template <class F, class Tuple>
+constexpr decltype(auto) apply_reversed(F &&f, Tuple &&t) 
+{
+    return detail::apply_impl(
+        std::forward<F>(f), std::forward<Tuple>(t),
+        make_reversed_index_sequence<
+            std::tuple_size<std::decay_t<Tuple>>::value>{});
+}
 
 
 double func(int x, double y) {
@@ -51,7 +72,7 @@ int main() {
     cout << func_callable(1, 2.0) << endl;
 
     auto t = std::make_tuple(1, 2.0);
-    apply(func_callable, t);
+    future::apply(func_callable, t);
 
     cout << endl;
     return 0;

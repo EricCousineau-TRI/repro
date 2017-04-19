@@ -16,7 +16,7 @@ void my_func(int x, int y) {
 // Alternative: Reverse argument, pop first few arguments, then pass reversed arguments
 // Most robust: Specific receivers for tuples sets, specific unpacking mechanisms
 // http://loungecpp.wikidot.com/tips-and-tricks%3aindices
-// http://stackoverflow.com/a/15908420/7829525
+// Reverse sequence: http://stackoverflow.com/a/15908420/7829525
 
 // reversed indices...
 template<unsigned... Is>
