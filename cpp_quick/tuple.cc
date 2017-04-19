@@ -49,6 +49,8 @@ constexpr decltype(auto) apply(F &&f, Tuple &&t)
 
 
 //// Alternative 1: Use folded expressions
+// @ref http://stackoverflow.com/a/31044718/7829525
+// Credit: Orient
 template <class F, class Tuple, std::size_t... I>
 constexpr decltype(auto) apply_reversed_alt1_impl(F &&f,
     Tuple &&t, std::index_sequence<I...>) 
@@ -69,7 +71,8 @@ constexpr decltype(auto) apply_reversed_alt1(F &&f, Tuple &&t)
 
 
 //// Alternative 2: Use reversed sequences
-// http://stackoverflow.com/a/31044718/7829525
+// @ref http://stackoverflow.com/a/31044718/7829525
+// Credit: Xeo
 template<unsigned N, unsigned... I>
 struct reversed_index_sequence
     : reversed_index_sequence<N - 1, I..., N - 1>
@@ -106,6 +109,10 @@ constexpr decltype(auto) apply_reversed_alt2(F &&f, Tuple &&t)
 //// Alternative 3: Reverse tuple, then use future::apply
 // @ref http://stackoverflow.com/questions/25119048/reversing-a-c-tuple
 // TODO(eric.cousineau): Try this out... Maybe
+
+
+// Example functions
+
 double func(int x, double y) {
     cout << "func(int, double)" << endl;
     return x + y;
@@ -145,7 +152,8 @@ int main() {
     };
 
     cout
-        << PRINT(func_reversed(1, 2.0));
+        << PRINT(func_reversed(1, 2.0)) // Reversed
+        << PRINT(func_reversed(2.0, 1)); // Original
 
     return 0;
 }
