@@ -143,8 +143,8 @@ template<typename ... Ts>
 auto create_binding_impl(Ts ... args) {
   return overload_not_implemented(args...);
 }
-
-auto create_binding_impl(int x, std::initializer_list<string> var_list) {
+template<>
+auto create_binding_impl(int x, const VarList& var_list) {
   // Will be LinearConstriant
   return Binding<LinearConstraint>(new LinearConstraint(x), var_list);
 }
@@ -223,8 +223,8 @@ public:
   auto& GetList();
 
   template<typename ... Args>
-  auto AddConstraint(Args ... args) {
-    auto binding = create_binding_impl(args...);
+  auto AddConstraint(Args ... args, const VarList& vars) {
+    auto binding = create_binding_impl(args..., vars);
     // auto list = GetList<decltype<binding>();
     return binding;
   }
@@ -237,13 +237,8 @@ public:
   auto AddLinearConstraint(Args ... args) {
     return AddConstraintSpecific<LinearConstraint, Args...>(args...);
   }
-
-  // template<typename L
-  // auto& GetList() { return linear_constraints_; }
-  // auto& GetList() { return quadratic_constraints_; }
 };
 
-// Can't use auto& :(
 template<>
 auto& ConstraintContainer::GetList<Constraint>() {
   return generic_constraints_;
@@ -256,6 +251,8 @@ template<>
 auto& ConstraintContainer::GetList<QuadraticConstraint>() {
   return quadratic_constraints_;
 }
+
+
 
 string quick_check(const vector<string>& test_list) {
   return "yup";
@@ -277,6 +274,7 @@ auto tpl_check(int x) {
   return "nope";
 }
 
+
 void container_stuff() {
   Constraint a;
   LinearConstraint b(1);
@@ -285,13 +283,16 @@ void container_stuff() {
   ConstraintContainer c;
   
   // Can deduce as such
-  cout << quick_check({"hello"}) << endl << tpl_check(vector<string>{"good"}) << endl;
+  // cout << quick_check({"hello"}) << endl << tpl_check(vector<string>{"good"}) << endl;
     //tpl_check({"good"}) << endl; // Can't infer T for initializer list
 
+  c.AddConstraint(1, VarList {string("x")});
+
   cout
-    << PRINT(&c.GetList<QuadraticConstraint>() == &c.quadratic_constraints_)
+    // << PRINT(&c.GetList<QuadraticConstraint>() == &c.quadratic_constraints_)
     // << PRINT(c.AddConstraint(1, {string("x")})) // Can't do just {"x"}
-    << PRINT(c.AddConstraint(1, 2));
+    // << PRINT(c.AddConstraint(1, 2));
+    ;
 
   // auto r1 = c.Add(&a);
   // auto r2 = c.Add(&b);
