@@ -26,6 +26,12 @@ int main() {
         << PRINT(t.tpl_method_auto(y))
         << PRINT(t.tpl_method_explicit(x))
         << PRINT(t.tpl_method_explicit(y));
+    cout << "---" << endl;
+    cout
+        << PRINT(create_value(x))
+        << PRINT(create_value<int>(x))
+        << PRINT(create_value<int>(1))
+        << PRINT((create_value<int, int>(1)));
 
     return 0;
 }

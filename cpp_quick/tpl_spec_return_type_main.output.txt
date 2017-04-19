@@ -2,3 +2,8 @@ t.tpl_method_auto(x): int -> string
 t.tpl_method_auto(y): 4
 t.tpl_method_explicit(x): int -> string
 t.tpl_method_explicit(y): 4
+---
+create_value(x): [ pass through: int ]   2
+create_value<int>(x): [ pass through: int ]   2
+create_value<int>(1): [ create: int + int ]   1
+(create_value<int, int>(1)): [ create: int + int ]   1

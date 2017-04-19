@@ -1,6 +1,9 @@
 #pragma once
 
 #include <string>
+#include <iostream>
+
+#include "name_trait.h"
 
 class Test {
 public:
@@ -60,3 +63,21 @@ struct Test::args<int> {
 
 template<>
 std::string Test::tpl_method_explicit<int>(const int& x);
+
+//// Function: Return direct reference (pass through) in certain overload
+template<typename C, typename T>
+auto create_value(const T& x) {
+    std::cout << "[ create: " << name_trait<C>::name()
+        << " + " << name_trait<T>::name() << " ]   ";
+    C out {};
+    return out + x;
+}
+
+// - Speciailize to return pass through
+// NOTE: This may not be viewed as a specialization, but rather
+// a separate template
+template<typename C>
+C& create_value(C& x) {
+    std::cout << "[ pass through: " << name_trait<C>::name() << " ]   ";
+    return x;
+}
