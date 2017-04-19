@@ -172,8 +172,9 @@ int main() {
     // apply_reversed_alt(func_callable, t);
 
     cout
-        << "Sequence: "
-        << name_trait<reversed_index_sequence_trait<5>::type::sequence>::name()
+        << "Sequence: " << endl
+        << PRINT(name_trait<decltype(std::make_index_sequence<5> {})>::name())
+        << PRINT(name_trait<reversed_index_sequence_trait<5>::type::sequence>::name())
         << endl;
 
     cout << endl;

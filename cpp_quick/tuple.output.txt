@@ -1,0 +1,9 @@
+func(int, double)
+3
+func(int, double)
+[reversed] func(double, int)
+Sequence: 
+name_trait<decltype(std::make_index_sequence<5> {})>::name(): std::index_sequence<0, 1, 2, 3, 4>
+name_trait<reversed_index_sequence_trait<5>::type::sequence>::name(): std::index_sequence<1, 2, 3, 4>
+
+
