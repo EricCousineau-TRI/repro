@@ -44,7 +44,7 @@ constexpr decltype(auto) apply_reversed_impl(F &&f,
     return f(std::get<back_index - I>(std::forward<Tuple>(t))...);
 }
 
-} // detail
+} // namespace detail
 
 /**
  * Apply a tuple of arguments to a callable object, F.

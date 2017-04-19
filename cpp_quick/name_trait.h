@@ -85,4 +85,4 @@ struct literal_trait_list<T> {
 NAME_TRAIT_TPL_LITERAL(std::index_sequence);
 
 // Random helper macros
-#define PRINT(x) ">>> " #x << endl << (x) << std::endl
+#define PRINT(x) ">>> " #x << std::endl << (x) << std::endl
