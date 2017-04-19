@@ -67,7 +67,6 @@ constexpr decltype(auto) apply_reversed(F &&f, Tuple &&t)
 
 
 //// Alternative 2: Use reversed sequences
-
 // http://stackoverflow.com/a/31044718/7829525
 template<unsigned N, unsigned... I>
 struct reversed_index_sequence
@@ -76,6 +75,14 @@ struct reversed_index_sequence
 template<unsigned... I>
 struct reversed_index_sequence<0, I...>
     : std::index_sequence<I...>{};
+/*
+Example:
+  rev<3>
+    : rev<2,  2>
+        : rev<1,  2, 1>
+            : rev<0,  2, 1, 0>
+                : seq<2, 1, 0>
+*/
 
 template<std::size_t N>
 struct reversed_index_sequence_trait {
