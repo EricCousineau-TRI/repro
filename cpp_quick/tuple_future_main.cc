@@ -30,16 +30,9 @@ void simple_example() {
         << PRINT(stdcustom::apply_reversed(my_func_callable, t));
 }
 
-template <typename F>
-auto make_callable_reversed(F&& f) {
-    return [] (auto&& ... revargs) {
-        return stdcustom::apply_reversed(my_func_callable,
-            std::forward_as_tuple(revargs...));
-     };
-}
-
 void advanced_example() {
-    auto my_func_reversed = make_callable_reversed(my_func_callable);
+    auto my_func_reversed =
+        stdcustom::make_callable_reversed(my_func_callable);
 
     cout
         << PRINT((my_func_reversed(2.0, 1)))

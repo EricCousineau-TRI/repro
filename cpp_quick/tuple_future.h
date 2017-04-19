@@ -48,6 +48,7 @@ constexpr decltype(auto) apply_reversed_impl(F &&f,
 
 /**
  * Apply a tuple of arguments to a callable object, F.
+ *
  * @param F Callable object, could be generated using variadic auto lambda
  * @param t Tuple of arguments, could be generated from std::forward_as_tuple
  * 
@@ -55,19 +56,6 @@ constexpr decltype(auto) apply_reversed_impl(F &&f,
  * 
  *    std::function<void(int, double)> my_func = ...;
  *    stdcustom::apply_reversed(my_func, std::make_tuple(1, 2.0));
- *
- * Extended Example:
- *
- *    void my_func(...) { ... }
- *    ...
- *    auto my_func_reversed = [] (auto&&... revargs) {
- *      auto my_func_callable = [] (auto&& ... args) {
- *        my_func(std::forward<decltype(args)>(args)...);
- *      }
- *      return stdcustom::apply_reversed(my_func_callable,
- *          std::forward_as_tuple(revargs...));
- *    }
- *  };
  */
 template <class F, class Tuple>
 constexpr decltype(auto) apply_reversed(F &&f, Tuple &&t) 
@@ -78,6 +66,31 @@ constexpr decltype(auto) apply_reversed(F &&f, Tuple &&t)
         std::forward<F>(f), std::forward<Tuple>(t),
         std::make_index_sequence<
             std::tuple_size<std::decay_t<Tuple>>::value>{});
+}
+
+/**
+ * Take a callable object and return any arbitrarily-argumented callable
+ * implemened as a variadic lambda
+ *
+ * @param F Callable object.
+ *
+ * Extended Example:
+ *
+ *    void my_func(...) { ... }
+ *    ...
+ *    auto my_func_callable = [] (auto&& ... args) {
+ *      my_func(std::forward<decltype(args)>(args)...);
+ *    }
+ *    auto my_func_reversed =
+ *      stdcustom::make_callable_reversed(my_func_callable);
+ */
+template <typename F>
+auto make_callable_reversed(F&& f) {
+    auto callable_reversed = [=] (auto&& ... revargs) {
+        return stdcustom::apply_reversed(f,
+            std::forward_as_tuple(revargs...));
+    };
+    return callable_reversed;
 }
 
 } // namespace stdcustom
