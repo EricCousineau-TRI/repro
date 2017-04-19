@@ -96,8 +96,13 @@ std::ostream& operator<<(std::ostream& os, const Container& c) {
     return os;
 }
 
+void add_item(Item&& item, string&& name, Container& c) {
+    cout << "add_item direct rvalue" << endl;
+    c.push_back(Entry(name, item));
+}
+
 void add_item(const Item& item, const string& name, Container& c) {
-    cout << "add_item direct" << endl;
+    cout << "add_item direct lvalue" << endl;
     c.push_back(Entry(name, item));
 }
 
@@ -117,7 +122,7 @@ void add_item_reversed(Container& c, const string& name, RevArgs&&... revargs)
     static auto ctor = VARIADIC_CALLABLE(Item,);
     static auto ctor_reversed = stdcustom::make_callable_reversed(ctor);
     auto item = ctor_reversed(std::forward<RevArgs>(revargs)...);
-    add_item(item, name, c);
+    add_item((const Item&)item, name, c);
 }
 
 void useful_example() {
