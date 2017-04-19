@@ -49,3 +49,8 @@ cc_binary(
     name = "auto_inference",
     srcs = ["auto_inference.cc", "name_trait.h"],
 )
+
+cc_binary(
+    name = "tpl_variadic_final",
+    srcs = ["tpl_variadic_final.cc", "name_trait.h"],
+)
