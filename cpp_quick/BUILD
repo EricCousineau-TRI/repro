@@ -69,3 +69,8 @@ cc_binary(
     name = "tpl_spec_greedy",
     srcs = ["tpl_spec_greedy.cc", "name_trait.h"],
 )
+
+cc_binary(
+    name = "overload_options",
+    srcs = ["overload_options.cc"],
+)
