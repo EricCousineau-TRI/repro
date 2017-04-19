@@ -36,7 +36,7 @@ constexpr decltype(auto) apply_reversed_impl(F &&f,
     Tuple &&t, std::index_sequence<I...>) 
 {
     // Reversed
-    constexpr std::size_t back_index = sizeof...(I);
+    constexpr std::size_t back_index = sizeof...(I) - 1;
     return f(std::get<back_index - I>(std::forward<Tuple>(t))...);
 }
 
