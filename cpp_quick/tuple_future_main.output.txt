@@ -1,4 +1,7 @@
 --- simple ---
+>>> my_func(1, 2.0)
+func(int, double)
+3
 >>> stdfuture::apply(my_func_callable, t)
 func(int, double)
 3

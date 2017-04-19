@@ -38,6 +38,7 @@ auto my_func_callable = [] (auto&& ... args) {
 void simple_example() {
     auto t = std::make_tuple(1, 2.0);
     cout
+        << PRINT(my_func(1, 2.0))
         << PRINT(stdfuture::apply(my_func_callable, t))
         << PRINT(stdcustom::apply_reversed(my_func_callable, t));
 }
