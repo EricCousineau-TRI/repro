@@ -6,6 +6,7 @@ std::index_sequence
 // @ref http://stackoverflow.com/questions/25885893/how-to-create-a-variadic-generic-lambda
     // auto variadic_generic_lambda = [] (auto&&... param) {};
 
+#include <sstream>
 #include <iostream>
 #include <utility>
 #include <tuple>
@@ -14,6 +15,39 @@ std::index_sequence
 
 using std::cout;
 using std::endl;
+
+// Specialize name_trait for std::size_t, and use different
+template<std::size_t T>
+struct literal_trait {
+  static std::string name() {
+    std::ostringstream os;
+    os << T;
+    return os.str();
+  }
+};
+template<std::size_t T, std::size_t ... Args>
+struct literal_trait_list {
+  static std::string join(const std::string& delim = ", ") {
+    return literal_trait<T>::name() + delim
+        + literal_trait_list<Args...>::join(delim);
+  }
+};
+template<std::size_t T>
+struct literal_trait_list<T> {
+  static std::string join(const std::string& delim = ", ") {
+    return literal_trait<T>::name();
+  }
+};
+
+#define NAME_TRAIT_TPL_LITERAL(TYPE) \
+  template<std::size_t ... Args> \
+  struct name_trait<TYPE<Args...>> { \
+    static std::string name() { \
+      return #TYPE "<" + \
+        literal_trait_list<Args...>::join() + ">"; \
+      } \
+  };
+NAME_TRAIT_TPL_LITERAL(std::index_sequence);
 
 // http://stackoverflow.com/questions/25885893/how-to-create-a-variadic-generic-lambda
 // http://stackoverflow.com/questions/15904288/how-to-reverse-the-order-of-arguments-of-a-variadic-template-function/15908420#15908420
@@ -74,7 +108,9 @@ struct reversed_index_sequence
 {};
 template<unsigned... I>
 struct reversed_index_sequence<0, I...>
-    : std::index_sequence<I...>{};
+    : std::index_sequence<I...> {
+    using sequence = std::index_sequence<I...>;
+};
 /*
 Example:
   rev<3>
@@ -133,7 +169,12 @@ int main() {
     auto t = std::make_tuple(1, 2.0);
     future::apply(func_callable, t);
     apply_reversed(func_callable, t);
-    apply_reversed_alt(func_callable, t);
+    // apply_reversed_alt(func_callable, t);
+
+    cout
+        << "Sequence: "
+        << name_trait<reversed_index_sequence_trait<5>::type::sequence>::name()
+        << endl;
 
     cout << endl;
     return 0;
