@@ -54,3 +54,8 @@ cc_binary(
     name = "tpl_variadic_final",
     srcs = ["tpl_variadic_final.cc", "name_trait.h"],
 )
+
+cc_binary(
+    name = "tuple",
+    srcs = ["tuple.cc", "name_trait.h"],
+)
