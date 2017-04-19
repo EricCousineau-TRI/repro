@@ -82,7 +82,7 @@ constexpr decltype(auto) apply(F &&f, Tuple &&t)
 
 //// Alternative 1: Use folded expressions
 template <class F, class Tuple, std::size_t... I>
-constexpr decltype(auto) apply_reversed_impl(F &&f,
+constexpr decltype(auto) apply_reversed_alt1_impl(F &&f,
     Tuple &&t, std::index_sequence<I...>) 
 {
     // Reversed
@@ -91,9 +91,9 @@ constexpr decltype(auto) apply_reversed_impl(F &&f,
 }
 
 template <class F, class Tuple>
-constexpr decltype(auto) apply_reversed(F &&f, Tuple &&t) 
+constexpr decltype(auto) apply_reversed_alt1(F &&f, Tuple &&t) 
 {
-    return apply_reversed_impl(
+    return apply_reversed_alt1_impl(
         std::forward<F>(f), std::forward<Tuple>(t),
         std::make_index_sequence<
             std::tuple_size<std::decay_t<Tuple>>::value>{});
@@ -125,7 +125,7 @@ using make_reversed_index_sequence
     = typename reversed_index_sequence<N>::sequence;
 
 template <class F, class Tuple>
-constexpr decltype(auto) apply_reversed_alt(F &&f, Tuple &&t) 
+constexpr decltype(auto) apply_reversed_alt2(F &&f, Tuple &&t) 
 {
     return future::detail::apply_impl(
         std::forward<F>(f), std::forward<Tuple>(t),
@@ -138,8 +138,6 @@ constexpr decltype(auto) apply_reversed_alt(F &&f, Tuple &&t)
 //// Alternative 3: Reverse tuple, then use future::apply
 // @ref http://stackoverflow.com/questions/25119048/reversing-a-c-tuple
 // TODO(eric.cousineau): Try this out... Maybe
-
-
 double func(int x, double y) {
     cout << "func(int, double)" << endl;
     return x + y;
@@ -149,25 +147,27 @@ double func(double x, double y) {
     return x - y;
 }
 
+#define CALL(x) cout << ">>> " #x << endl; x; cout << endl;
+
 int main() {
-    // Make function callable
-    // @ref http://nvwa.cvs.sourceforge.net/viewvc/nvwa/nvwa/functional.h?view=markup - Line 453 (lift_optional)
-    auto func_callable = [=] (auto&&... args) {
-        return func(std::forward<decltype(args)>(args)...);
-    };
-    cout << func_callable(1, 2.0) << endl;
 
-    auto t = std::make_tuple(1, 2.0);
-    future::apply(func_callable, t);
-    apply_reversed(func_callable, t);
-    // apply_reversed_alt(func_callable, t);
-
+    // Print example sequences
     cout
-        << "Sequence: " << endl
         << PRINT(name_trait<decltype(std::make_index_sequence<5> {})>::name())
         << PRINT(name_trait<reversed_index_sequence<5>::sequence>::name())
         << endl;
 
-    cout << endl;
+    // Make function callable by name... ish
+    // @ref http://nvwa.cvs.sourceforge.net/viewvc/nvwa/nvwa/functional.h?view=markup - Line 453 (lift_optional)
+    auto func_callable = [=] (auto&&... args) {
+        return func(std::forward<decltype(args)>(args)...);
+    };
+    auto t = std::make_tuple(1, 2.0);
+    cout
+        << PRINT((func_callable(1, 2.0)))
+        << PRINT((future::apply(func_callable, t)))
+        << PRINT((apply_reversed_alt1(func_callable, t)))
+        << PRINT((apply_reversed_alt2(func_callable, t)));
+
     return 0;
 }

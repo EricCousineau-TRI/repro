@@ -49,4 +49,4 @@ NAME_TRAIT(double);
 NAME_TRAIT_TPL(name_trait);
 NAME_TRAIT_TPL(name_trait_list);
 
-#define PRINT(x) #x ": " << (x) << std::endl
+#define PRINT(x) ">>> " #x << endl << (x) << std::endl
