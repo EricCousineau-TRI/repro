@@ -42,3 +42,8 @@ cc_binary(
     name = "tpl_spec_return_type_main",
     srcs = ["tpl_spec_return_type_main.cc", "tpl_spec_return_type.cc", "tpl_spec_return_type.h", "name_trait.h"],
 )
+
+cc_binary(
+    name = "auto_inference",
+    srcs = ["auto_inference.cc", "name_trait.h"],
+)
