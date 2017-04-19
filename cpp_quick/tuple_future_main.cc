@@ -12,6 +12,7 @@ using std::pair;
 using std::string;
 using std::ostringstream;
 
+#define EVAL(x) std::cout << ">>> " #x ";" << std::endl; x; cout << std::endl
 #define PRINT(x) ">>> " #x << std::endl << (x) << std::endl
 #define VARIADIC_CALLABLE(func, capture) \
     [capture] (auto&&... args) { \
@@ -96,23 +97,35 @@ std::ostream& operator<<(std::ostream& os, const Container& c) {
     return os;
 }
 
+// TODO(eric.cousinaeu): Is there a mechanism to define a type, and
+// then have the specialization greedy-match with any given comaptible type?
+// Example: Steal overloads if specified as string
 void add_item_direct(const Item& item, const string& name, Container& c) {
     cout << "add_item direct lvalue" << endl;
     c.push_back(Entry(name, item));
 }
+void add_item_direct(Item&& item, string&& name, Container& c) {
+    cout << "add_item direct rvalue" << endl;
+    c.push_back(Entry(name, item));
+}
 
-template<typename ... Args>
-void add_item(Args&& ... args) {
+template<typename... Args>
+Item create_item(Args&&... args) {
+    cout << "create_item: forward" << endl;
+    return Item(std::forward<Args>(args)...);
+}
+// Enable pass-through
+Item& create_item(Item& item) {
+    cout << "create_item: pass through" << endl;
+    return item;
+}
+
+template<typename... Args>
+void add_item(Args&&... args) {
     cout << "add_item variadic" << endl;
     static auto callable = VARIADIC_CALLABLE(add_item_reversed,);
     static auto reversed = stdcustom::make_callable_reversed(callable);
     reversed(std::forward<Args>(args)...);
-}
-
-// Specialize template so that it is less greedy
-template<>
-void add_item(Item&& item, string&& name, Container& c) {
-    add_item_direct(item, name, c);
 }
 
 template<typename ... RevArgs>
@@ -120,28 +133,31 @@ void add_item_reversed(Container& c, const string& name, RevArgs&&... revargs)
 {
     cout << "add_item_reversed" << endl;
     // NOTE: Could use explicit factory in this case
-    static auto ctor = VARIADIC_CALLABLE(Item,);
+    static auto ctor = VARIADIC_CALLABLE(create_item,);
     static auto ctor_reversed = stdcustom::make_callable_reversed(ctor);
     auto item = ctor_reversed(std::forward<RevArgs>(revargs)...);
-    add_item(item, name, c);
+    add_item_direct(item, name, c);
 }
 
 void useful_example() {
     Container c;
-    add_item(Item("attribute", 12), "bob", c);
-    add_item(Item(2, 2.5, "twelve"), "george", c);
-    add_item(Item("nothing", 15), "something", c);
-    add_item("nothing else", 16, "something", c);
-
+    EVAL((add_item(Item("attribute", 12), "bob", c)));
+    EVAL((add_item("attribute", 12, "bob", c)));
+    EVAL((add_item(Item(2, 2.5, "twelve"), "george", c)));
+    EVAL((add_item(2, 2.5, "twelve", "george", c)));
+    EVAL((add_item(Item(2, 15.), "again", c)));
+    EVAL((add_item(2, 15., "again", c)));
     cout << PRINT(c);
 }
 
 int main() {
     cout << "--- simple ---" << endl;
     simple_example();
-    cout << "--- advanced ---" << endl;
+
+    cout << endl << "--- advanced ---" << endl;
     advanced_example();
-    cout << "--- useful ---" << endl;
+
+    cout << endl << "--- useful ---" << endl;
     useful_example();
 
     return 0;

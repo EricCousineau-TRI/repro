@@ -1,0 +1,23 @@
+>>> name_trait<std::make_index_sequence<5>>::name()
+std::index_sequence<0, 1, 2, 3, 4>
+>>> name_trait<make_reversed_index_sequence<5>>::name()
+std::index_sequence<4, 3, 2, 1, 0>
+
+>>> (func_callable(1, 2.0))
+func(int, double)
+3
+>>> (future::apply(func_callable, t))
+func(int, double)
+3
+>>> (apply_reversed_alt1(func_callable, t))
+[reversed] func(double, int)
+1
+>>> (apply_reversed_alt2(func_callable, t))
+[reversed] func(double, int)
+1
+>>> func_reversed(1, 2.0)
+[reversed] func(double, int)
+1
+>>> func_reversed(2.0, 1)
+func(int, double)
+3

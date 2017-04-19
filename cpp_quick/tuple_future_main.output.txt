@@ -1,0 +1,61 @@
+--- simple ---
+>>> stdfuture::apply(my_func_callable, t)
+func(int, double)
+3
+>>> stdcustom::apply_reversed(my_func_callable, t)
+[ reversed ] func(double, int)
+1
+
+--- advanced ---
+>>> (my_func_reversed(2.0, 1))
+func(int, double)
+3
+>>> (my_func_reversed(1, 2.0))
+[ reversed ] func(double, int)
+1
+
+--- useful ---
+>>> (add_item(Item("attribute", 12), "bob", c));
+add_item variadic
+add_item_reversed
+create_item: pass through
+add_item direct lvalue
+
+>>> (add_item("attribute", 12, "bob", c));
+add_item variadic
+add_item_reversed
+create_item: forward
+add_item direct lvalue
+
+>>> (add_item(Item(2, 2.5, "twelve"), "george", c));
+add_item variadic
+add_item_reversed
+create_item: pass through
+add_item direct lvalue
+
+>>> (add_item(2, 2.5, "twelve", "george", c));
+add_item variadic
+add_item_reversed
+create_item: forward
+add_item direct lvalue
+
+>>> (add_item(Item(2, 15.), "again", c));
+add_item variadic
+add_item_reversed
+create_item: pass through
+add_item direct lvalue
+
+>>> (add_item(2, 15., "again", c));
+add_item variadic
+add_item_reversed
+create_item: forward
+add_item direct lvalue
+
+>>> c
+bob - ctor3: ctor3: ctor1: attribute (12, 10)
+bob - ctor3: ctor1: attribute (12, 10)
+george - ctor3: ctor3: ctor2: 2, 2.5 (twelve)
+george - ctor3: ctor2: 2, 2.5 (twelve)
+again - ctor3: ctor3: ctor2: 2, 15 ()
+again - ctor3: ctor2: 2, 15 ()
+
