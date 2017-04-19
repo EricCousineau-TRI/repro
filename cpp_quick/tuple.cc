@@ -16,39 +16,6 @@ std::index_sequence
 using std::cout;
 using std::endl;
 
-// Specialize name_trait for std::size_t, and use different
-template<std::size_t T>
-struct literal_trait {
-  static std::string name() {
-    std::ostringstream os;
-    os << T;
-    return os.str();
-  }
-};
-template<std::size_t T, std::size_t ... Args>
-struct literal_trait_list {
-  static std::string join(const std::string& delim = ", ") {
-    return literal_trait<T>::name() + delim
-        + literal_trait_list<Args...>::join(delim);
-  }
-};
-template<std::size_t T>
-struct literal_trait_list<T> {
-  static std::string join(const std::string& delim = ", ") {
-    return literal_trait<T>::name();
-  }
-};
-
-#define NAME_TRAIT_TPL_LITERAL(TYPE) \
-  template<std::size_t ... Args> \
-  struct name_trait<TYPE<Args...>> { \
-    static std::string name() { \
-      return #TYPE "<" + \
-        literal_trait_list<Args...>::join() + ">"; \
-      } \
-  };
-NAME_TRAIT_TPL_LITERAL(std::index_sequence);
-
 // http://stackoverflow.com/questions/25885893/how-to-create-a-variadic-generic-lambda
 // http://stackoverflow.com/questions/15904288/how-to-reverse-the-order-of-arguments-of-a-variadic-template-function/15908420#15908420
 
@@ -79,6 +46,7 @@ constexpr decltype(auto) apply(F &&f, Tuple &&t)
 
 /* </snippet> */
 }
+
 
 //// Alternative 1: Use folded expressions
 template <class F, class Tuple, std::size_t... I>
@@ -150,11 +118,10 @@ double func(double x, double y) {
 #define CALL(x) cout << ">>> " #x << endl; x; cout << endl;
 
 int main() {
-
-    // Print example sequences
+    //// Example sequences
     cout
-        << PRINT(name_trait<decltype(std::make_index_sequence<5> {})>::name())
-        << PRINT(name_trait<reversed_index_sequence<5>::sequence>::name())
+        << PRINT(name_trait<std::make_index_sequence<5>>::name())
+        << PRINT(name_trait<make_reversed_index_sequence<5>>::name())
         << endl;
 
     // Make function callable by name... ish
@@ -162,12 +129,23 @@ int main() {
     auto func_callable = [=] (auto&&... args) {
         return func(std::forward<decltype(args)>(args)...);
     };
+
+    //// Tuple invocations
     auto t = std::make_tuple(1, 2.0);
     cout
         << PRINT((func_callable(1, 2.0)))
         << PRINT((future::apply(func_callable, t)))
         << PRINT((apply_reversed_alt1(func_callable, t)))
         << PRINT((apply_reversed_alt2(func_callable, t)));
+
+    //// Via argument invocations
+    auto func_reversed = [=] (auto&&... args) {
+        return apply_reversed_alt1(func_callable,
+            std::forward_as_tuple(args...));
+    };
+
+    cout
+        << PRINT(func_reversed(1, 2.0));
 
     return 0;
 }
