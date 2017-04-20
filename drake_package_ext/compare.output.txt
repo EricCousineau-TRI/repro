@@ -1,0 +1,94 @@
+[[ Suffix:  ]]
+[ First Build ]
+- Done
+[ Before ]
+total 16
+drwxrwxr-x 2 user user 4096 Jan  1 05:00 bin
+drwxrwxr-x 4 user user 4096 Jan  1 05:00 include
+drwxrwxr-x 3 user user 4096 Jan  1 05:00 lib
+-rw-rw-r-- 1 user user 1698 Jan  1 05:00 LICENSE.TXT
+[ Second Build ]
+
+real    0m1.903s
+user    0m1.156s
+sys 0m0.244s
+- Done
+[ After ]
+total 16
+drwxrwxr-x 2 user user 4096 Jan  1 05:00 bin
+drwxrwxr-x 4 user user 4096 Jan  1 05:00 include
+drwxrwxr-x 3 user user 4096 Jan  1 05:00 lib
+-rw-rw-r-- 1 user user 1698 Jan  1 05:00 LICENSE.TXT
+[ Diff ]
+
+
+
+[[ Suffix: _install_compare ]]
+[ First Build ]
+- Done
+[ Before ]
+total 16
+drwxrwxr-x 2 user user 4096 Jan  1 05:00 bin
+drwxrwxr-x 4 user user 4096 Jan  1 05:00 include
+drwxrwxr-x 3 user user 4096 Jan  1 05:00 lib
+-rwxr-xr-x 1 user user 1698 Jan  1 05:00 LICENSE.TXT
+[ Second Build ]
+
+real    0m6.353s
+user    0m1.316s
+- Done
+sys 0m0.748s
+[ After ]
+total 16
+drwxrwxr-x 2 user user 4096 Jan  1 05:00 bin
+drwxrwxr-x 4 user user 4096 Jan  1 05:00 include
+drwxrwxr-x 3 user user 4096 Apr 20 13:01 lib
+-rwxr-xr-x 1 user user 1698 Apr 20 13:01 LICENSE.TXT
+[ Diff ]
+diff --git a/build_install_compare/before.txt b/build_install_compare/after.txt
+index 89b06e9..bcdb8f6 100644
+--- a/build_install_compare/before.txt
++++ b/build_install_compare/after.txt
+@@ -1,5 +1,5 @@
+total 16
+drwxrwxr-x 2 user user 4096 Jan  1 05:00 bin
+drwxrwxr-x 4 user user 4096 Jan  1 05:00 include
+drwxrwxr-x 3 user user 4096 [-Jan  1 05:00-]{+Apr 20 13:01+} lib
+-rwxr-xr-x 1 user user 1698 [-Jan  1 05:00-]{+Apr 20 13:01+} LICENSE.TXT
+Difference!
+
+
+
+[[ Suffix: _rsync ]]
+[ First Build ]
+- Done
+[ Before ]
+total 16
+drwxrwxr-x 2 user user 4096 Jan  1 05:00 bin
+drwxr-xr-x 4 user user 4096 Jan  1 05:00 include
+drwxr-xr-x 3 user user 4096 Jan  1 05:00 lib
+-rw-rw-r-- 1 user user 1698 Jan  1 05:00 LICENSE.TXT
+[ Second Build ]
+
+real    0m2.151s
+user    0m1.252s
+- Done
+sys 0m0.244s
+[ After ]
+total 16
+drwxrwxr-x 2 user user 4096 Apr 20 13:01 bin
+drwxr-xr-x 4 user user 4096 Apr 20 13:01 include
+drwxr-xr-x 3 user user 4096 Apr 20 13:01 lib
+-rw-rw-r-- 1 user user 1698 Apr 20 13:01 LICENSE.TXT
+[ Diff ]
+diff --git a/build_rsync/before.txt b/build_rsync/after.txt
+index 5fe29d7..76b69fe 100644
+--- a/build_rsync/before.txt
++++ b/build_rsync/after.txt
+@@ -1,5 +1,5 @@
+total 16
+drwxrwxr-x 2 user user 4096 [-Jan  1 05:00-]{+Apr 20 13:01+} bin
+drwxr-xr-x 4 user user 4096 [-Jan  1 05:00-]{+Apr 20 13:01+} include
+drwxr-xr-x 3 user user 4096 [-Jan  1 05:00-]{+Apr 20 13:01+} lib
+-rw-rw-r-- 1 user user 1698 [-Jan  1 05:00-]{+Apr 20 13:01+} LICENSE.TXT
+Difference!

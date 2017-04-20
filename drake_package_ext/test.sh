@@ -6,7 +6,7 @@ build_dir="build$suffix"
 install_dir="$build_dir/install"
 
 cmd() {
-    ./package_and_extract_drake$suffix.sh $build_dir/ $install_dir # > /dev/null 2> /dev/null
+    ./package_and_extract_drake$suffix.sh $build_dir/ $install_dir > /dev/null 2> /dev/null
     echo "- Done"
 }
 
@@ -20,7 +20,7 @@ find . | xargs touch -h -t 201701010500
 before_file=$build_dir/before.txt
 ls -l $install_dir | tee $before_file
 
-echo "[ During ]"
+echo "[ Second Build ]"
 time cmd
 
 echo "[ After ]"
@@ -28,6 +28,6 @@ after_file=$build_dir/after.txt
 ls -l $install_dir | tee $after_file
 
 echo "[ Diff ]"
-git diff --no-index $before_file $after_file
+git diff --no-index --word-diff $before_file $after_file || { echo "Difference!"; }
 
 echo -e "\n\n"
