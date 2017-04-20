@@ -14,10 +14,12 @@ struct is_compat : public std::false_type { };
 
 template<typename T, typename Arg>
 using compat_enable_t = typename std::enable_if<
-    is_compat<T, std::decay_t<Arg>>::value, void>::type;
+    is_compat<T, std::remove_cv_t<std::decay_t<Arg>>>::value, void>::type;
 
 // template<>
 // struct compat<string, const char[]> { using type = const char[]; };
+template<>
+struct is_compat<string, char*> : public std::true_type { };
 template<>
 struct is_compat<string, const char*> : public std::true_type { };
 // template<>
