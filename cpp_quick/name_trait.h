@@ -30,8 +30,17 @@ struct name_trait<T&&> {
   static std::string name() { return name_trait<T>::name() + "&&"; }
 };
 template<typename T>
+struct name_trait<T*> {
+  static std::string name() { return name_trait<T>::name() + "*"; }
+};
+template<typename T>
 struct name_trait<const T> {
   static std::string name() { return "const " + name_trait<T>::name(); }
+};
+// Not sure how to get this to work...
+template<typename T>
+struct name_trait<T const*> {
+  static std::string name() { return name_trait<T>::name() + " const*"; }
 };
 // // Handle empty case?
 // template<>
@@ -97,4 +106,5 @@ struct literal_trait_list<T> {
 NAME_TRAIT_TPL_LITERAL(std::index_sequence);
 
 // Random helper macros
+#define EVAL(x) std::cout << ">>> " #x ";" << std::endl; x; cout << std::endl
 #define PRINT(x) ">>> " #x << std::endl << (x) << std::endl

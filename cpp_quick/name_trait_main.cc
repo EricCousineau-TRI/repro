@@ -16,6 +16,9 @@ int main() {
     << PRINT(name_trait<name_trait<std::iostream>>::name())
     << PRINT(name_trait<int&>::name())
     << PRINT(name_trait<const double&>::name())
-    << PRINT(name_trait<string&&>::name());
+    << PRINT(name_trait<string&&>::name())
+    << PRINT(name_trait<int*>::name())
+    << PRINT(name_trait<const char*>::name())
+    << PRINT(name_trait<char * const&>::name());
   return 0;
 }
