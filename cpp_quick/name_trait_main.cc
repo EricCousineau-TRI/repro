@@ -13,6 +13,9 @@ int main() {
     << PRINT((name_trait<name_trait_list<int, double, name_trait<int>, name_trait_list<int, double>>>::name()))
     // For unknown, should print "T"
     << PRINT(name_trait<std::iostream>::name())
-    << PRINT(name_trait<name_trait<std::iostream>>::name());
+    << PRINT(name_trait<name_trait<std::iostream>>::name())
+    << PRINT(name_trait<int&>::name())
+    << PRINT(name_trait<const double&>::name())
+    << PRINT(name_trait<string&&>::name());
   return 0;
 }

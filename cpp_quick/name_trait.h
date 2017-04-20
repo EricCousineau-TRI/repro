@@ -21,6 +21,18 @@ struct name_trait_list<T> {
     return name_trait<T>::name();
   }
 };
+template<typename T>
+struct name_trait<T&> {
+  static std::string name() { return name_trait<T>::name() + "&"; }
+};
+template<typename T>
+struct name_trait<T&&> {
+  static std::string name() { return name_trait<T>::name() + "&&"; }
+};
+template<typename T>
+struct name_trait<const T> {
+  static std::string name() { return "const " + name_trait<T>::name(); }
+};
 // // Handle empty case?
 // template<>
 // struct name_trait_list<> {
