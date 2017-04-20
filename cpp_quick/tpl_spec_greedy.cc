@@ -29,6 +29,12 @@ struct enable_if_compat : std::enable_if<
 { };
 
 template<typename T, typename Arg>
+using is_compat_decay_v = typename is_compat<T, compat_decay_t<Arg>>::value;
+
+template<bool Expr, typename Result = void>
+using enable_if_t = typename std::enable_if<Expr, Result>::type;
+
+template<typename T, typename Arg>
 using enable_if_compat_t = typename enable_if_compat<T, Arg>::type;
 
 // Must explicitly specialize
@@ -62,11 +68,11 @@ void my_func(int y, T1&& z) {
 
 // Example using multiple types (let compiler handle the combinatorics)
 template<typename T1, typename T2,
-    typename C1 = enable_if_compat_t<string, T1>,
-    typename C2 = enable_if_compat_t<double, T2>>
+    typename C12 = enable_if_t<
+        is_compat_decay_v<string, T1> && is_compat_decay_v<double, T2>>>
 void my_func(int y, T1&& z, T2&& zz) {
     cout
-        << "3. my_func<C1, C2>(int, "
+        << "3. my_func<C12>(int, "
         << name_trait<decltype(z)>::name() << ", "
         << name_trait<decltype(zz)>::name() << ")" << endl
         << "  decay_t_1 = " << name_trait<compat_decay_t<T1>>::name() << endl
