@@ -35,14 +35,14 @@ set -e -u
 # `--preserve-timestamps` (which only preserves copying the source timestamp
 # to a destination file). Additionally, these are GNU options, and other
 # issues may be encountered with BSD tools on Mac OSX.
-#     * Attempt: https://git.io/v9eQQ
+#     * Attempt: https://git.io/v9eNf
 # 
 # * rsync - This also does not preserve timestamps.
-#     * Attempt: https://git.io/v9eQb
+#     * Attempt: https://git.io/v9eNI
 # 
 # These alternatives were tested with this comparison script:
 # 
-# * https://git.io/v9e9D - Modifies timestamps in INSTALL_DIR directory to be
+# * https://git.io/v9ebp - Modifies timestamps in INSTALL_DIR directory to be
 # to be older than BUILD_DIR, and then prints the timestamps after install.
 # This test script tests the three methods: (1) git, (2) install, and
 # (3) rsync.
@@ -50,7 +50,7 @@ set -e -u
 # (INSTALL_DIR timestamps will new), and second to check the timestamp after
 # (INSTALL_DIR timestamps should be older than BUILD_DIR's).
 # 
-# * https://git.io/v9eQ2 - Example output from running
+# * https://git.io/v9ebN - Example output from running
 
 usage() {
     echo "Usage: $(basename $0) <BUILD_DIR> <INSTALL_DIR>"
@@ -70,8 +70,9 @@ drake=$DRAKE # HACK(eric.cousineau)
 build_dir=$(mkcd $1 && pwd)
 install_dir=$(mkcd $2 && pwd)
 
-# TODO(eric.cousineau) Consider a less hacky-method to ensure that CMake's find_package will search PATH, detect ./bin/, 
-# and resolve to parent directory to search in lib/cmake/
+# TODO(eric.cousineau) Consider a less hacky-method to ensure that CMake's
+# find_package will search PATH, detect ./bin/, and resolve to parent
+# directory to search in lib/cmake/
 # @ref https://cmake.org/cmake/help/v3.0/command/find_package.html
 mkdir -p $install_dir/bin
 
@@ -90,8 +91,9 @@ drake_package_git=$drake_build/package-git
         git config core.excludesfile ''
     )
 
-# Only rebuild if either (a) git was previously or currently dirty, or
-# (b) if the SHAs do not match
+# Only rebuild if either (a) $drake git was previously or currently dirty, or
+# (b) if the SHAs in $drake git do not match those in $drake_git_status_file
+# stored in BUILD_DIR
 git_ref() {
     # http://stackoverflow.com/a/5737794/7829525
     if [[ -n "$(git status --porcelain)" ]]; then
@@ -110,10 +112,8 @@ if [[ -e $drake_git_status_file ]]; then
     if [[ -z $cur_git_status || -z $prev_git_status \
             || $cur_git_status = "dirty" || $prev_git_status = "dirty" ]]; then
         echo "Rebuild needed: current or previous build was dirty"
-        need_rebuild=1
     elif [[ $cur_git_status != $prev_git_status ]]; then
         echo "Rebuild needed: current and previous build on different commits"
-        need_rebuild=1
     else
         echo "No rebuild needed"
         need_rebuild=
@@ -148,6 +148,14 @@ git commit --quiet -m \
 echo "Checkout and allow Git to handle deltas"
 echo "  Be conservative on changing timestamps."
 git --work-tree=$install_dir checkout --quiet -f HEAD -- .
+
+# TODO(eric.cousineau): If space usage is an issue, then the following can be
+# done:
+# 
+# 1. Delete existing .git/ directory
+# 2. Reinitialize, and recommit
+# 
+# This will get rid of unused history.
 
 # On success, dump the git status
 echo "$cur_git_status" > $drake_git_status_file
