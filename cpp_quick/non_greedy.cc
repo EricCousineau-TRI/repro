@@ -12,6 +12,10 @@ using std::endl;
 template<typename T, typename Arg>
 struct is_compat : public std::false_type { };
 
+// Idempotent case is true
+template<typename T>
+struct is_compat<T, T> : public std::true_type { };
+
 template<typename T>
 using compat_decay_t = std::remove_cv_t<std::decay_t<T>>;
 
@@ -21,46 +25,63 @@ using compat_enable_t = typename std::enable_if<
         compat_decay_t<Arg> // Return decayed type so that it is visible
     >::type;
 
-// Must specialize
+// Must explicitly specialize
 template<>
 struct is_compat<string, char*> : public std::true_type { };
 template<>
 struct is_compat<string, const char*> : public std::true_type { };
-// template<>
-// struct compat<string, const char*> { using type = const char*; };
+
+template<>
+struct is_compat<double, int> : public std::true_type { };
+
 
 template<typename ... Args>
 void my_func(Args&& ... args) {
-    cout << "1. my_func<variadic>(" << name_trait_list<Args&&...>::join() << ")" << endl;
+    cout << "my_func<variadic>(" << name_trait_list<Args&&...>::join() << ")" << endl;
 }
 
-// void my_func(const int& x, const string& y) {
-//     cout << "2. my_func(const int&, const string&)" << endl;
+// Use template with enable_if to catch as many types as possible
+template<typename T1,
+    typename C1 = compat_enable_t<string, T1>>
+void my_func(int y, T1&& z) {
+    cout << "my_func<cond>(int, " << name_trait<decltype(z)>::name() << ")" << endl;
+    cout << "  decay_t = " << name_trait<C1>::name() << endl;
+}
+
+// Example using multiple types (let compiler handle the combinatorics)
+template<typename T1, typename T2,
+    typename C1 = compat_enable_t<string, T1>, typename C2 = compat_enable_t<double, T2>>
+void my_func(int y, T1&& z, T2&& zz) {
+    cout
+        << "my_func<cond_2>(int, "
+        << name_trait<decltype(z)>::name() << ", "
+        << name_trait<decltype(zz)>::name() << ", " << endl
+        << "  decay_t_1 = " << name_trait<C1>::name() << endl
+        << "  decay_t_2 = " << name_trait<C2>::name() << endl;
+}
+
+// // // This alone does not catch string literal
+// void my_func(int y, string&& z) {
+//     cout << "my_func(int, string&&)" << endl;
 // }
 
-// Does not catch string literal...
-void my_func(int y, string&& z) {
-    cout << "3. my_func(int, string&&)" << endl;
-}
-
-// // Still does not catch string literal...
+// // Cannot use condition as argument type
 // template<typename T>
 // void my_func(int y, compat_enable_t<string, T>&& z) {
 //     cout << "4. my_func(int, " << name_trait<T>::name() << ")" << endl;
 // }
 
-template<typename T, typename Cond = compat_enable_t<string, T>>
-void my_func(int y, T&& z) {
-    cout << "4. my_func<cond>(int, " << name_trait<T>::name() << ")" << endl;
-    cout << "  decay_t = " << name_trait<Cond>::name() << endl;
-}
-
 int main() {
     char var[] = "howdy";
-    EVAL(( my_func(1, 2, string("!!!")) ));
-    EVAL(( my_func(2, string("Hello")) ));
-    EVAL(( my_func(3, "World") ));
-    EVAL(( my_func(3, var) ));
+    EVAL(( my_func(1, 2, 5, string("!!!")) ));
+    EVAL(( my_func(6, 12.0) ));
+    EVAL(( my_func(3, string("Hello")) ));
+    EVAL(( my_func(4, (const string&)string("kinda")) ));
+    EVAL(( my_func(5, "World") ));
+    EVAL(( my_func(6, var) ));
+    EVAL(( my_func(7, var, 12) ));
+    EVAL(( my_func(9, var, 12.0) ));
+    EVAL(( my_func(9, var, var, 12.5) ));
     
     return 0;
 }

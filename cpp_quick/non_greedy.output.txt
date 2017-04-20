@@ -1,0 +1,35 @@
+>>> ( my_func(1, 2, 5, string("!!!")) );
+my_func<variadic>(int&&, int&&, int&&, std::string&&)
+
+>>> ( my_func(6, 12.0) );
+my_func<variadic>(int&&, double&&)
+
+>>> ( my_func(3, string("Hello")) );
+my_func<cond>(int, std::string&&)
+  decay_t = std::string
+
+>>> ( my_func(4, (const string&)string("kinda")) );
+my_func<cond>(int, const std::string&)
+  decay_t = std::string
+
+>>> ( my_func(5, "World") );
+my_func<cond>(int, const char[6]&)
+  decay_t = char const*
+
+>>> ( my_func(6, var) );
+my_func<cond>(int, char[6]&)
+  decay_t = char*
+
+>>> ( my_func(7, var, 12) );
+my_func<cond_2>(int, char[6]&, int&&, 
+  decay_t_1 = char*
+  decay_t_2 = int
+
+>>> ( my_func(9, var, 12.0) );
+my_func<cond_2>(int, char[6]&, double&&, 
+  decay_t_1 = char*
+  decay_t_2 = double
+
+>>> ( my_func(9, var, var, 12.5) );
+my_func<variadic>(int&&, char[6]&, char[6]&, double&&)
+
