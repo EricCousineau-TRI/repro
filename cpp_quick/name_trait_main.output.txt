@@ -1,0 +1,26 @@
+>>> name_trait<int>::name()
+int
+>>> (name_trait<name_trait_list<int, double, name_trait<int>, name_trait_list<int, double>>>::name())
+name_trait_list<int, double, name_trait<int, void>, name_trait_list<int, double>>
+>>> name_trait<std::iostream>::name()
+T
+>>> name_trait<name_trait<std::iostream>>::name()
+name_trait<T, void>
+>>> name_trait<int&>::name()
+int&
+>>> name_trait<const double&>::name()
+const double&
+>>> name_trait<string&&>::name()
+std::string&&
+>>> name_trait<int*>::name()
+int*
+>>> name_trait<const char*>::name()
+char const*
+>>> name_trait<char * const&>::name()
+const char*&
+>>> name_trait<decltype("Hello")>::name()
+const char[6]&
+>>> name_trait<decltype("Hello"[0])>::name()
+const char&
+>>> name_trait<int[]>::name()
+int[]

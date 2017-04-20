@@ -4,7 +4,12 @@
 #include <utility>
 #include <sstream>
 
-template<typename T>
+// Need to specify extra argument to permit partial specializaiton matching
+// for enable_if<>
+// @ref http://stackoverflow.com/a/42679086/170413
+// @note This actually causes an issue, where an extra type is appended
+// when name_trait is called on the default version of itself
+template<typename T, typename Cond = void>
 struct name_trait {
   static std::string name() { return "T"; }
 };
@@ -30,6 +35,10 @@ struct name_trait<T[N]> {
   }
 };
 template<typename T>
+struct name_trait<T[]> {
+  static std::string name() { return name_trait<T>::name() + "[]"; }
+};
+template<typename T>
 struct name_trait<T&> {
   static std::string name() { return name_trait<T>::name() + "&"; }
 };
@@ -41,8 +50,9 @@ template<typename T>
 struct name_trait<T*> {
   static std::string name() { return name_trait<T>::name() + "*"; }
 };
+// This specialization conflicts with the array specialization... somehow
 template<typename T>
-struct name_trait<const T> {
+struct name_trait<const T, typename std::enable_if<!std::is_array<T>::value>::type> {
   static std::string name() { return "const " + name_trait<T>::name(); }
 };
 // Not sure how to get this to work...
@@ -72,6 +82,7 @@ struct name_trait<T const*> {
   };
 
 // Can't automatically handle literals as template parameters...
+NAME_TRAIT(void);
 NAME_TRAIT(bool);
 NAME_TRAIT(char);
 NAME_TRAIT(int);
