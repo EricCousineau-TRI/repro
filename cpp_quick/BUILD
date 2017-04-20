@@ -66,6 +66,6 @@ cc_binary(
 )
 
 cc_binary(
-    name = "non_greedy",
-    srcs = ["non_greedy.cc", "name_trait.h"],
+    name = "tpl_spec_greedy",
+    srcs = ["tpl_spec_greedy.cc", "name_trait.h"],
 )
