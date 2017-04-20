@@ -1,40 +1,83 @@
 #!/bin/bash
 ### Wraps drake/tools/package_drake.sh such that it (a) provides artifacts in 
-### a BUILD and INSTALL directory, and (b) will only update those artifacts
-### only if they change.
-### This mechanism is very unforgiving if you have a dirty Drake module.
+### BUILD_DIR and INSTALL_DIR, and (b) will incrementally update
+### the artifacts in INSTALL_DIR based on what is present in BUILD_DIR, and
+### (c) it will only update the artifacts in BUILD_DIR if there is a detected
+### change in the Drake git repository (a dirty repository means it will always
+### regenerate the build artifacts).
+###
+### Motivation: Alleviate the fact that Bazel does not readily provide an
+### incremental installation mechanism to aid downstream users in their
+### development process.
+###
+### Usage:
+###     package_and_install_drake.sh <BUILD_DIR> <INSTALL_DIR>
+### 
+### @param BUILD_DIR The build / staging directory to place the artifacts to
+### be installed. This will be created if it does not exist.
+### You may use $(mktemp -d) if you do not need incremental 
+### build; however, in this case, you should just use package_drake.sh 
+### directly.
+### @param INSTALL_DIR The directory to which artifacts will be incrementally
+### installed (i.e., their timestamp will only change if their content has
+### changed). This will be created if it does not exist.
+###
+### Example:
+###   $ ./package_and_install_drake.sh /tmp/build /tmp/build/install
 set -e -u
 
-# TODO(eric.cousineau): See if there is a mechanism to hash or dump a
-# dependency to selectively trigger compilation via [c]make, rather than rely 
-# on Git dirtyness
-# TODO(eric.cousineau): Consider using rsync to simplify delta process.
+# This uses git to incrementally change the timestamps, due to its
+# effectiveness and portability.
+# 
+# The following alternatives were considered:
+# 
+# * install - This does not preserve the timestamps, even with `--compare` and
+# `--preserve-timestamps` (which only preserves copying the source timestamp
+# to a destination file). Additionally, these are GNU options, and other
+# issues may be encountered with BSD tools on Mac OSX.
+#     * Attempt: https://git.io/v9eQQ
+# 
+# * rsync - This also does not preserve timestamps.
+#     * Attempt: https://git.io/v9eQb
+# 
+# These alternatives were tested with this comparison script:
+# 
+# * https://git.io/v9e9D - Modifies timestamps in INSTALL_DIR directory to be
+# to be older than BUILD_DIR, and then prints the timestamps after install.
+# This test script tests the three methods: (1) git, (2) install, and
+# (3) rsync.
+# This test script should be executed twice, first to get the baseline content
+# (INSTALL_DIR timestamps will new), and second to check the timestamp after
+# (INSTALL_DIR timestamps should be older than BUILD_DIR's).
+# 
+# * https://git.io/v9eQ2 - Example output from running
 
 usage() {
-    echo "Usage: $(basename $0) <DRAKE_DIR> <BUILD_DIR> <INSTALL_DIR>"
+    echo "Usage: $(basename $0) <BUILD_DIR> <INSTALL_DIR>"
 }
 error() {
     echo "$@" >&2
 }
 
-[[ $# -eq 3 ]] || { error "Incorrect arguments specified"; usage; exit 1; }
+[[ $# -eq 2 ]] || { error "Incorrect arguments specified"; usage; exit 1; }
 
 mkcd() {
-    mkdir -p $1 && cd $1;
+    mkdir -p "$1" && cd "$1";
 }
 
-drake=$1
-build_dir=$(mkcd $2 && pwd)
-install_dir=$(mkcd $3 && pwd)
+drake=$(cd $(dirname $BASH_SOURCE) && git rev-parse --show-toplevel)
+build_dir=$(mkcd $1 && pwd)
+install_dir=$(mkcd $2 && pwd)
 
-# HACK: Ensure that CMake's find_package will search PATH, detect ./bin/, 
+# TODO(eric.cousineau) Consider a less hacky-method to ensure that CMake's find_package will search PATH, detect ./bin/, 
 # and resolve to parent directory to search in lib/cmake/
-# See: https://cmake.org/cmake/help/v3.0/command/find_package.html
+# @ref https://cmake.org/cmake/help/v3.0/command/find_package.html
 mkdir -p $install_dir/bin
 
 drake_build=$build_dir/drake
 mkdir -p $drake_build
-# HACK: Use git-checkout to handle hashing artifacts and check if things
+
+# Use git-checkout to handle hashing artifacts and check if things
 # need to be updated
 # Will use one repository for staging, and then a second for "deploying"
 # with minimal timestamp changes
@@ -42,7 +85,8 @@ drake_package_git=$drake_build/package-git
 [[ -d $drake_package_git ]] || (
         mkcd $drake_package_git;
         git init --quiet .;
-        # git config core.excludesfile '' # Ignore nothing, override user ~/.gitignore
+        # Ignore nothing, override user ~/.gitignore
+        git config core.excludesfile ''
     )
 
 # Only rebuild if either (a) git was previously or currently dirty, or
@@ -60,7 +104,8 @@ cur_git_status=$(cd $drake && git_ref)
 need_rebuild=1
 if [[ -e $drake_git_status_file ]]; then
     prev_git_status=$(cat $drake_git_status_file)
-    echo "Prior build exists ($prev_git_status). Check against current ($cur_git_status)"
+    echo "Prior build exists ($prev_git_status)."
+    echo "  Check against current ($cur_git_status)"
     if [[ -z $cur_git_status || -z $prev_git_status \
             || $cur_git_status = "dirty" || $prev_git_status = "dirty" ]]; then
         echo "Rebuild needed: current or previous build was dirty"
@@ -90,7 +135,7 @@ rm -rf ./*
 
 echo "Extract and commit current version"
 tar xfz $package
-git add -fA :/
+git add -A :/
 git commit --quiet -m \
     "Package artifacts for drake (status: $cur_git_status)" || {
         echo "No artifact difference detected." \
@@ -100,7 +145,7 @@ git commit --quiet -m \
     }
 
 echo "Checkout and allow Git to handle deltas"
-echo "  (be conservative on changing timestamps)"
+echo "  Be conservative on changing timestamps."
 git --work-tree=$install_dir checkout --quiet -f HEAD -- .
 
 # On success, dump the git status
