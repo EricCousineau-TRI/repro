@@ -19,11 +19,13 @@ struct is_compat<T, T> : public std::true_type { };
 template<typename T>
 using compat_decay_t = std::remove_cv_t<std::decay_t<T>>;
 
+template<typename T, typename Arg, typename Result = void>
+struct compat_enable : std::enable_if<
+    is_compat<T, compat_decay_t<Arg>>::value, Result>
+{ };
+
 template<typename T, typename Arg>
-using compat_enable_t = typename std::enable_if<
-        is_compat<T, compat_decay_t<Arg>>::value,
-        compat_decay_t<Arg> // Return decayed type so that it is visible
-    >::type;
+using compat_enable_t = typename compat_enable<T, Arg>::type;
 
 // Must explicitly specialize
 template<>
@@ -45,7 +47,7 @@ template<typename T1,
     typename C1 = compat_enable_t<string, T1>>
 void my_func(int y, T1&& z) {
     cout << "my_func<cond>(int, " << name_trait<decltype(z)>::name() << ")" << endl;
-    cout << "  decay_t = " << name_trait<C1>::name() << endl;
+    cout << "  decay_t = " << name_trait<compat_decay_t<T1>>::name() << endl;
 }
 
 // Example using multiple types (let compiler handle the combinatorics)
@@ -56,8 +58,8 @@ void my_func(int y, T1&& z, T2&& zz) {
         << "my_func<cond_2>(int, "
         << name_trait<decltype(z)>::name() << ", "
         << name_trait<decltype(zz)>::name() << ", " << endl
-        << "  decay_t_1 = " << name_trait<C1>::name() << endl
-        << "  decay_t_2 = " << name_trait<C2>::name() << endl;
+        << "  decay_t_1 = " << name_trait<compat_decay_t<T1>>::name() << endl
+        << "  decay_t_2 = " << name_trait<compat_decay_t<T2>>::name() << endl;
 }
 
 // // // This alone does not catch string literal
