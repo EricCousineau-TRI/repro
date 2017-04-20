@@ -64,3 +64,8 @@ cc_binary(
     name = "tuple_future_main",
     srcs = ["tuple_future_main.cc", "tuple_future.h"],
 )
+
+cc_binary(
+    name = "non_greedy",
+    srcs = ["non_greedy.cc", "name_trait.h"],
+)
