@@ -47,15 +47,17 @@ ADD_COMPAT(double, uint);
 
 template<typename ... Args>
 void my_func(Args&& ... args) {
-    cout << "my_func<variadic>(" << name_trait_list<Args&&...>::join() << ")" << endl;
+    cout << "1. my_func<Args...>(" << name_trait_list<Args&&...>::join() << ")" << endl;
 }
 
 // Use template with enable_if to catch as many types as possible
 template<typename T1,
     typename C1 = enable_if_compat_t<string, T1>>
 void my_func(int y, T1&& z) {
-    cout << "my_func<cond>(int, " << name_trait<decltype(z)>::name() << ")" << endl;
-    cout << "  decay_t = " << name_trait<compat_decay_t<T1>>::name() << endl;
+    cout
+        << "2. my_func<C1>(int, " << name_trait<decltype(z)>::name()
+        << ")" << endl
+        << "  decay_t = " << name_trait<compat_decay_t<T1>>::name() << endl;
 }
 
 // Example using multiple types (let compiler handle the combinatorics)
@@ -64,9 +66,9 @@ template<typename T1, typename T2,
     typename C2 = enable_if_compat_t<double, T2>>
 void my_func(int y, T1&& z, T2&& zz) {
     cout
-        << "my_func<cond_2>(int, "
+        << "3. my_func<C1, C2>(int, "
         << name_trait<decltype(z)>::name() << ", "
-        << name_trait<decltype(zz)>::name() << ", " << endl
+        << name_trait<decltype(zz)>::name() << ")" << endl
         << "  decay_t_1 = " << name_trait<compat_decay_t<T1>>::name() << endl
         << "  decay_t_2 = " << name_trait<compat_decay_t<T2>>::name() << endl;
 }
