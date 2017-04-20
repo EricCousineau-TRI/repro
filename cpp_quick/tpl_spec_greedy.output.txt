@@ -5,30 +5,22 @@
 1. my_func<Args...>(int&&, double&&)
 
 >>> ( my_func(3, string("Hello")) );
-2. my_func<C1>(int, std::string&&)
-  decay_t = std::string
+2. my_func<T1:string>(int, std::string&&)
 
 >>> ( my_func(4, (const string&)string("kinda")) );
-2. my_func<C1>(int, const std::string&)
-  decay_t = std::string
+2. my_func<T1:string>(int, const std::string&)
 
 >>> ( my_func(5, "World") );
-2. my_func<C1>(int, const char[6]&)
-  decay_t = char const*
+2. my_func<T1:string>(int, const char[6]&)
 
 >>> ( my_func(6, var) );
-2. my_func<C1>(int, char[6]&)
-  decay_t = char*
+2. my_func<T1:string>(int, char[6]&)
 
 >>> ( my_func(7, var, 12) );
-3. my_func<C1, C2>(int, char[6]&, int&&)
-  decay_t_1 = char*
-  decay_t_2 = int
+3. my_func<T1:string, T2:double>(int, char[6]&, int&&)
 
 >>> ( my_func(9, var, 12.0) );
-3. my_func<C1, C2>(int, char[6]&, double&&)
-  decay_t_1 = char*
-  decay_t_2 = double
+3. my_func<T1:string, T2:double>(int, char[6]&, double&&)
 
 >>> ( my_func(9, var, var, 12.5) );
 1. my_func<Args...>(int&&, char[6]&, char[6]&, double&&)

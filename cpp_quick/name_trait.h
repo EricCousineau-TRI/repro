@@ -4,6 +4,10 @@
 #include <utility>
 #include <sstream>
 
+// #include <typeinfo>
+// // typeinfo(T).name() - mangled
+// // typeid(std::declval<T>()).name() - mangled
+
 // Need to specify extra argument to permit partial specializaiton matching
 // for enable_if<>
 // @ref http://stackoverflow.com/a/42679086/170413
