@@ -6,25 +6,28 @@ build_dir="build$suffix"
 install_dir="$build_dir/install"
 
 cmd() {
-    ./package_and_extract_drake$suffix.sh $build_dir/ $install_dir
+    ./package_and_extract_drake$suffix.sh $build_dir/ $install_dir # > /dev/null 2> /dev/null
+    echo "- Done"
 }
 
+echo "[[ Suffix: $suffix ]]"
 echo "[ First Build ]"
 cmd
 
-echo "[[ Suffix: $suffix ]]"
 echo "[ Before ]"
 # Check timestamps before/after
-[[ -d $install_dir ]] && (
-    cd $build_dir
-    find . | xargs touch -h -t 201701010500
-    ls -l install
-    )
+find . | xargs touch -h -t 201701010500
+before_file=$build_dir/before.txt
+ls -l $install_dir | tee $before_file
 
 echo "[ During ]"
 time cmd
 
 echo "[ After ]"
-ls -l $install_dir
+after_file=$build_dir/after.txt
+ls -l $install_dir | tee $after_file
 
-echo -e "\n"
+echo "[ Diff ]"
+git diff --no-index $before_file $after_file
+
+echo -e "\n\n"
