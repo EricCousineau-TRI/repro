@@ -65,7 +65,8 @@ mkcd() {
     mkdir -p "$1" && cd "$1";
 }
 
-drake=$(cd $(dirname $BASH_SOURCE) && git rev-parse --show-toplevel)
+drake=$DRAKE # HACK(eric.cousineau)
+# drake=$(cd $(dirname $BASH_SOURCE) && git rev-parse --show-toplevel)
 build_dir=$(mkcd $1 && pwd)
 install_dir=$(mkcd $2 && pwd)
 

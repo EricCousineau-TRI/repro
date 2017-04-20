@@ -10,21 +10,22 @@ set -e -u
 # on Git dirtyness
 
 usage() {
-    echo "Usage: $(basename $0) <DRAKE_DIR> <BUILD_DIR> <INSTALL_DIR>"
+    echo "Usage: $(basename $0) <BUILD_DIR> <INSTALL_DIR>"
 }
 error() {
     echo "$@" >&2
 }
 
-[[ $# -eq 3 ]] || { error "Incorrect arguments specified"; usage; exit 1; }
+[[ $# -eq 2 ]] || { error "Incorrect arguments specified"; usage; exit 1; }
 
 mkcd() {
-    mkdir -p $1 && cd $1;
+    mkdir -p "$1" && cd "$1";
 }
 
-drake=$1
-build_dir=$(mkcd $2 && pwd)
-install_dir=$(mkcd $3 && pwd)
+drake=$DRAKE # HACK(eric.cousineau)
+# drake=$(cd $(dirname $BASH_SOURCE) && git rev-parse --show-toplevel)
+build_dir=$(mkcd $1 && pwd)
+install_dir=$(mkcd $2 && pwd)
 
 drake_build=$build_dir/drake
 drake_package_dir=$drake_build/package

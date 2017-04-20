@@ -5,6 +5,13 @@ suffix=${1-}
 build_dir="build$suffix"
 install_dir="$build_dir/install"
 
+cmd() {
+    ./package_and_extract_drake$suffix.sh $build_dir/ $install_dir
+}
+
+echo "[ First Build ]"
+cmd
+
 echo "[[ Suffix: $suffix ]]"
 echo "[ Before ]"
 # Check timestamps before/after
@@ -15,11 +22,7 @@ echo "[ Before ]"
     )
 
 echo "[ During ]"
-cur=$PWD
-(
-    cd $DRAKE
-    time $cur/package_and_extract_drake$suffix.sh $cur/$build_dir/ $cur/$install_dir
-)
+time cmd
 
 echo "[ After ]"
 ls -l $install_dir
