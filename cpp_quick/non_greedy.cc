@@ -9,23 +9,19 @@ using std::string;
 using std::cout;
 using std::endl;
 
-// By default, incompatible
 template<typename T, typename Arg>
-struct compat { using type = Arg; };
-
-template<typename T, typename Arg>
-using compat_t = typename compat<T, Arg>::type;
+struct is_compat : public std::false_type { };
 
 template<typename T, typename Arg>
 using compat_enable_t = typename std::enable_if<
-    std::is_same<compat_t<T, Arg>, Arg>::value, Arg>::type;
+    is_compat<T, std::decay_t<Arg>>::value, void>::type;
 
+// template<>
+// struct compat<string, const char[]> { using type = const char[]; };
 template<>
-struct compat<string, const char[]> { using type = const char[]; };
-template<std::size_t N>
-struct compat<string, const char[N]> { using type = const char[N]; };
-template<>
-struct compat<string, const char*> { using type = const char*; };
+struct is_compat<string, const char*> : public std::true_type { };
+// template<>
+// struct compat<string, const char*> { using type = const char*; };
 
 template<typename ... Args>
 void my_func(Args&& ... args) {
@@ -53,9 +49,11 @@ void my_func(int y, T&& z) {
 }
 
 int main() {
+    char var[] = "howdy";
     EVAL(( my_func(1, 2, string("!!!")) ));
     EVAL(( my_func(2, string("Hello")) ));
     EVAL(( my_func(3, "World") ));
+    EVAL(( my_func(3, var) ));
     
     return 0;
 }

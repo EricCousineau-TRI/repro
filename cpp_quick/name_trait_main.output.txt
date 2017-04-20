@@ -24,3 +24,7 @@ const char[6]&
 const char&
 >>> name_trait<int[]>::name()
 int[]
+>>> name_trait<std::decay_t<const char&>>::name()
+char
+>>> name_trait<std::decay_t<const char*&>>::name()
+char const*

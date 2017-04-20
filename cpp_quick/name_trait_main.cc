@@ -7,6 +7,8 @@ using std::cout;
 using std::endl;
 using std::string;
 
+// NAME_TRAIT_TPL(std::decay_t);
+
 int main() {
   cout
     << PRINT(name_trait<int>::name())
@@ -22,6 +24,9 @@ int main() {
     << PRINT(name_trait<char * const&>::name())
     << PRINT(name_trait<decltype("Hello")>::name())
     << PRINT(name_trait<decltype("Hello"[0])>::name())
-    << PRINT(name_trait<int[]>::name());
+    << PRINT(name_trait<int[]>::name())
+    << PRINT(name_trait<std::decay_t<const char&>>::name())
+    << PRINT(name_trait<std::decay_t<const char*&>>::name());
+    // << PRINT(name_trait<std::decay_t<std::remove_reference<const char*&>>>::name());
   return 0;
 }
