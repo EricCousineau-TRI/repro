@@ -19,6 +19,8 @@ int main() {
     << PRINT(name_trait<string&&>::name())
     << PRINT(name_trait<int*>::name())
     << PRINT(name_trait<const char*>::name())
-    << PRINT(name_trait<char * const&>::name());
+    << PRINT(name_trait<char * const&>::name())
+    << PRINT(name_trait<decltype("Hello")>::name())
+    << PRINT(name_trait<decltype("Hello")>::name());
   return 0;
 }

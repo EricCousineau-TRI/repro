@@ -21,6 +21,14 @@ struct name_trait_list<T> {
     return name_trait<T>::name();
   }
 };
+template<typename T, std::size_t N>
+struct name_trait<T[N]> {
+  static std::string name() {
+    std::ostringstream os;
+    os << name_trait<T>::name() << "[" << N << "]";
+    return os.str();
+  }
+};
 template<typename T>
 struct name_trait<T&> {
   static std::string name() { return name_trait<T>::name() + "&"; }
