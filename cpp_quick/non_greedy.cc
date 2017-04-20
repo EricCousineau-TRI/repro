@@ -12,12 +12,16 @@ using std::endl;
 template<typename T, typename Arg>
 struct is_compat : public std::false_type { };
 
+template<typename T>
+using compat_decay_t = std::remove_cv_t<std::decay_t<T>>;
+
 template<typename T, typename Arg>
 using compat_enable_t = typename std::enable_if<
-    is_compat<T, std::remove_cv_t<std::decay_t<Arg>>>::value, void>::type;
+        is_compat<T, compat_decay_t<Arg>>::value,
+        compat_decay_t<Arg> // Return decayed type so that it is visible
+    >::type;
 
-// template<>
-// struct compat<string, const char[]> { using type = const char[]; };
+// Must specialize
 template<>
 struct is_compat<string, char*> : public std::true_type { };
 template<>
@@ -48,6 +52,7 @@ void my_func(int y, string&& z) {
 template<typename T, typename Cond = compat_enable_t<string, T>>
 void my_func(int y, T&& z) {
     cout << "4. my_func<cond>(int, " << name_trait<T>::name() << ")" << endl;
+    cout << "  decay_t = " << name_trait<Cond>::name() << endl;
 }
 
 int main() {
