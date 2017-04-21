@@ -36,10 +36,18 @@ my_func(Args&&... args) {
 }
 
 int main() {
+    // Compilable:
     my_func(int{},
         string{},
         name_trait_list<int,string,double> {},
         2.0);
-        // double[]{2.0, 3.0});
+    // Output:
+    // int, std::string, name_trait_list<int, std::string, double>, double
+
+    double array[2] = {2.0, 3.0};
+    my_func(array);
+    cout
+        << is_good<double[2]>::value << endl
+        << is_all_good_unfriendly<double[2]>::value << endl;
     return 0;
 }
