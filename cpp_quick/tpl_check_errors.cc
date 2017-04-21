@@ -83,22 +83,32 @@ void my_func(Args&&... args) {
      ^
 */
 
+// NOTE: Could use future's `std::conjunction` or `std::disjunction`
+// Alternative: `std::conditional_t`
+
+// Simpler version of: http://en.cppreference.com/w/cpp/types/conjunction
 template<typename T, typename... Args>
-struct is_all_good {
+struct conjunction {
     static constexpr bool value =
-        is_all_good<T>::value ?
-            is_all_good<Args...>::value : false;
+        T::value ?
+            conjunction<Args...>::value : false;
 };
+template<typename T>
+struct conjunction<T> : T { };
+
 // Ensure that we decay the type
 // Use is_good_custom to demonstrate different failure mechanisms and
 // their respective visibility
-template<typename T>
-struct is_all_good<T>
+template<typename... Args>
+struct is_all_good
     // // Unfriendly
-    : is_good<typename std::remove_reference<T>::type>
+    // : conjunction<
+        // is_good<typename std::remove_reference<Args>::type>...>
     // Friendly
-    // : AssertionChecker<is_good<typename std::remove_reference<T>::type>>
+    : conjunction<AssertionChecker<
+        is_good<typename std::remove_reference<Args>::type>>...>
 { };
+
 
 // Ensure that name_trait_list is unfolded
 template<typename... Args>
