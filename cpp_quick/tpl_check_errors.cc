@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <string>
 using std::string;
@@ -14,19 +13,70 @@ struct is_good : std::true_type { };
 template<>
 struct is_good<double[2]> : std::false_type { };
 
-// Unfriendly version: just return false
-template<typename T>
-struct is_good_decay
-    : is_good<typename std::remove_reference<T>::type>
-{ };
-/*
-Error:
-cpp_quick/tpl_check_errors.cc:50:5: error: no matching function for call to 'my_func'
+
+/* Unfriendly version: just return false
+There will be fewer errors, but they won't pinpoint which type made the
+std::enable_if<> fail
+*/
+// template<typename T>
+// struct is_good_custom
+//     : is_good<T>
+// { };
+/* --- Error ---
+cpp_quick/tpl_check_errors.cc:110:5: error: no matching function for call to 'my_func'
     my_func(int{},
     ^~~~~~~
-cpp_quick/tpl_check_errors.cc:40:25: note: candidate template ignored: disabled by 'enable_if' [with Args = <int, std::__cxx11::basic_string<char>, name_trait_list<int, std::__cxx11::basic_string<char>, double>, double (&)[2], double>]
-typename std::enable_if<is_all_good<Args...>::value, void>::type
-                        ^
+cpp_quick/tpl_check_errors.cc:99:29: note: candidate template ignored: disabled by 'enable_if' [with Args = <int, std::__cxx11::basic_string<char>, name_trait_list<int, std::__cxx11::basic_string<char>, double>, double (&)[2], double>]
+    typename std::enable_if<is_all_good<Args...>::value>::type>
+                            ^
+*/
+
+
+/* Friendly(ish) version: Make assertion fail as closely as possible
+This explicit denotes that it failed on 
+
+NOTE: This only useful if you want to force an error when substitution
+failure occurring means that there will be an error.
+
+If you are trying to debug why you are not encountering the overload you
+want... Well... not sure how to handle that.
+
+@ref http://stackoverflow.com/a/13366183/7829525
+*/
+template<typename T>
+struct is_good_custom : std::true_type {
+    static_assert(is_good<T>::value, "Bad type");
+};
+/* --- Error ---
+cpp_quick/tpl_check_errors.cc:46:5: error: static_assert failed "Bad type"
+    static_assert(is_good<T>::value, "Bad type");
+    ^             ~~~~~~~~~~~~~~~~~
+cpp_quick/tpl_check_errors.cc:86:7: note: in instantiation of template class 'is_good_custom<double [2]>' requested here
+    : is_good_custom<typename std::remove_reference<T>::type> { };
+      ^
+cpp_quick/tpl_check_errors.cc:80:9: note: in instantiation of template class 'is_all_good<double (&)[2]>' requested here
+        is_all_good<T>::value ?
+        ^
+cpp_quick/tpl_check_errors.cc:81:13: note: in instantiation of template class 'is_all_good<double (&)[2], double>' requested here
+            is_all_good<Args...>::value : false;
+            ^
+cpp_quick/tpl_check_errors.cc:81:13: note: in instantiation of template class 'is_all_good<name_trait_list<int, std::__cxx11::basic_string<char>, double>, double (&)[2], double>' requested here
+cpp_quick/tpl_check_errors.cc:81:13: note: in instantiation of template class 'is_all_good<std::__cxx11::basic_string<char>, name_trait_list<int, std::__cxx11::basic_string<char>, double>, double (&)[2], double>' requested here
+cpp_quick/tpl_check_errors.cc:94:29: note: in instantiation of template class 'is_all_good<int, std::__cxx11::basic_string<char>, name_trait_list<int, std::__cxx11::basic_string<char>, double>, double (&)[2], double>' requested here
+    typename std::enable_if<is_all_good<Args...>::value>::type>
+                            ^
+cpp_quick/tpl_check_errors.cc:95:6: note: in instantiation of default argument for 'my_func<int, std::__cxx11::basic_string<char>, name_trait_list<int, std::__cxx11::basic_string<char>, double>, double (&)[2], double>' required here
+void my_func(Args&&... args) {
+     ^~~~~~~~~~~~~~~~~~~~~~~~~
+cpp_quick/tpl_check_errors.cc:105:5: note: while substituting deduced template arguments into function template 'my_func' [with Args = <int, std::__cxx11::basic_string<char>, name_trait_list<int, std::__cxx11::basic_string<char>, double>, double (&)[2], double>, Cond = (no value)]
+    my_func(int{},
+    ^
+cpp_quick/tpl_check_errors.cc:105:5: error: no matching function for call to 'my_func'
+    my_func(int{},
+    ^~~~~~~
+cpp_quick/tpl_check_errors.cc:95:6: note: candidate template ignored: substitution failure [with Args = <int, std::__cxx11::basic_string<char>, name_trait_list<int, std::__cxx11::basic_string<char>, double>, double (&)[2], double>]
+void my_func(Args&&... args) {
+     ^
 */
 
 template<typename T, typename... Args>
@@ -35,20 +85,24 @@ struct is_all_good {
         is_all_good<T>::value ?
             is_all_good<Args...>::value : false;
 };
+// Ensure that we decay the type
+// Use is_good_custom to demonstrate different failure mechanisms and
+// their respective visibility
 template<typename T>
 struct is_all_good<T>
-    : is_good_decay<T> { };
+    : is_good_custom<typename std::remove_reference<T>::type> { };
 
 // Ensure that name_trait_list is unfolded
 template<typename... Args>
 struct is_good<name_trait_list<Args...>>
     : is_all_good<Args...> { };
 
-template<typename... Args> 
-typename std::enable_if<is_all_good<Args...>::value, void>::type
-my_func(Args&&... args) {
+template<typename... Args, typename Cond =
+    typename std::enable_if<is_all_good<Args...>::value>::type>
+void my_func(Args&&... args) {
     cout
-        << name_trait_list<typename std::remove_reference<Args>::type...>::join()
+        << name_trait_list<
+            typename std::remove_reference<Args>::type...>::join()
         << endl;
 }
 
@@ -60,12 +114,7 @@ int main() {
         name_trait_list<int,string,double> {},
         array,
         2.0);
-    // Output:
-    // int, std::string, name_trait_list<int, std::string, double>, double
-    
-    // my_func<double[2]>(array);
-    cout
-        << is_good<double[2]>::value << endl
-        << is_all_good<double[2]>::value << endl;
+    // Output if is_good<double[2]>::value == true
+    //     int, std::string, name_trait_list<int, std::string, double>, double[2], double
     return 0;
 }
