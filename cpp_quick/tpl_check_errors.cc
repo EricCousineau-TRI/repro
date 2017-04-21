@@ -22,14 +22,12 @@ struct is_all_good_unfriendly {
 };
 template<typename T>
 struct is_all_good_unfriendly<T>
-    : is_good<T> { };
-
+    : is_good<typename std::remove_reference<T>::type> { };
 
 // Ensure that name_trait_list is unfolded
 template<typename... Args>
 struct is_good<name_trait_list<Args...>>
     : is_all_good_unfriendly<Args...> { };
-
 
 template<typename... Args> 
 typename std::enable_if<is_all_good_unfriendly<Args...>::value, void>::type
