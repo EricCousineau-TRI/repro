@@ -74,3 +74,8 @@ cc_binary(
     name = "overload_options",
     srcs = ["overload_options.cc"],
 )
+
+cc_binary(
+    name = "tpl_check_errors",
+    srcs = ["tpl_check_errors.cc", "name_trait.h"],
+)
