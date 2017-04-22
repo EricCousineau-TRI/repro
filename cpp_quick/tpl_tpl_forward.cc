@@ -24,10 +24,11 @@ struct is_nested<T<A>> : std::true_type {
 // behave the same as an bare type T with respect to
 // universal references, but this is not the case.
 //
-template <typename T_A, typename Result =
+template <typename T_A,
+    typename Result =
     typename std::enable_if<
-        is_nested<std::remove_reference<T_A>>::value,
-        is_nested<std::remove_reference<T_A>> // Return info so that we can extract it
+        is_nested<typename std::remove_reference<T_A>::type>::value,
+        is_nested<typename std::remove_reference<T_A>::type> // Return info so that we can extract it
         >::type>
 decltype(auto) f (T_A&& t)
 {
@@ -37,7 +38,7 @@ decltype(auto) f (T_A&& t)
     // template<typename B>
     // using T = Result::outer_type<B>;
 
-    // cout << "Default inner: " << A() << endl;
+    cout << "Default inner: " << A() << endl;
 
     // Reinstantiate the class of type double
     // using T_double = typename Result::template outer_type<double>;
