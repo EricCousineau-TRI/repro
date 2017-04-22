@@ -63,7 +63,7 @@ int main() {
 
   check<AUPtr, BPtr>();
   check<AUPtr, BUPtr>();
-  check<AUPtr, BSPtr>();
+  check<AUPtr, BSPtr>(); // Error
   cout << endl;
 
   check<ASPtr, BPtr>();

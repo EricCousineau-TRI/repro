@@ -252,7 +252,7 @@ auto& ConstraintContainer::GetList<QuadraticConstraint>() {
   return quadratic_constraints_;
 }
 
-
+// @ref http://en.cppreference.com/w/cpp/language/template_argument_deduction#Non-deduced_contexts
 
 string quick_check(const vector<string>& test_list) {
   return "yup";
