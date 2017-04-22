@@ -60,11 +60,13 @@ protected:
     }
 };
 
+// TODO: Review flexibility...
+
 int main() {
     Var var {"a"};
     Vars vars = {"a", "b"}; // {"a"} does not work
     vars.print();
-    Vars vars_nest = vector<Vars>({vars, vars, var, Var("a")});
+    Vars vars_nest = {vars, vars}; // , var, Var("a")};
     vars_nest.print();
     // Vars vars2("a"); // does not work
     return 0;
