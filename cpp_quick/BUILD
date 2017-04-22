@@ -89,3 +89,8 @@ cc_binary(
     name = "tpl_ref_greedy",
     srcs = ["tpl_ref_greedy.cc", "name_trait.h"],
 )
+
+cc_binary(
+    name = "tpl_tpl_forward",
+    srcs = ["tpl_tpl_forward.cc", "name_trait.h"],
+)
