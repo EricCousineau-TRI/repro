@@ -19,14 +19,16 @@ struct pack<T> {
     static constexpr std::size_t size = 1;
 };
 
+
 // Bug Workaround
 // Goal is to start with a parameter pack, and avoid having clang interpret an
 // empty parameter pack incorrectly
-template<template <typename...> class T, typename... Args>
+// NOTE: Was unable to place this in the struct definition...
+template<template <typename...> class T, typename... BArgs>
 struct nested_redecl {
-    using type = T<Args...>;
+    using type = T<BArgs...>;
 };
-
+// using nested_redecl = T<BArgs...>;
 
 // Base Case
 template<typename T>
@@ -87,12 +89,12 @@ decltype(auto) f (T_A&& t)
     cout << " - default inner: " << A() << endl;
     cout << " - pack size: " << Result::pack::size << endl;
 
-    // if (Result::pack::size == 1) {
-    //     // Reinstantiate the class with inner type double
-    //     using T_double = typename Result::template outer_template<double>;
-    //     T_double t_double { .bar = 0.5 * t.bar };
-    //     cout << " - t_double.bar: " << t_double.bar << endl;
-    // }
+    if (Result::pack::size == 1) {
+        // Reinstantiate the class with inner type double
+        using T_double = typename Result::template outer_template<double>;
+        T_double t_double { .bar = 0.5 * t.bar };
+        cout << " - t_double.bar: " << t_double.bar << endl;
+    }
 
     // Permit da forwarding
     return std::forward<T_A>(t);
@@ -123,8 +125,8 @@ int main() {
     auto r4 = f (x4);
     auto r5 = f (foo<double> {3.5});
 
-    struct baz<int, double> const&  x6 = { .bar = 1, .boo = 1.5 };
-    auto r6 = f (x6);
+    // struct baz<int, double> const&  x6 = { .bar = 1, .boo = 1.5 };
+    // auto r6 = f (x6);
 
     return 0;
 }
