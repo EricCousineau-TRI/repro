@@ -25,10 +25,11 @@ struct is_nested<T<A>> : std::true_type {
 // universal references, but this is not the case.
 //
 template <typename T_A,
+    typename T_A_rr = typename std::remove_reference<T_A>::type,
     typename Result =
     typename std::enable_if<
-        is_nested<typename std::remove_reference<T_A>::type>::value,
-        is_nested<typename std::remove_reference<T_A>::type> // Return info so that we can extract it
+        is_nested<T_A_rr>::value,
+        is_nested<T_A_rr> // Return info so that we can extract it
         >::type>
 decltype(auto) f (T_A&& t)
 {
