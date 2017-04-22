@@ -6,6 +6,17 @@
 using std::cout;
 using std::endl;
 
+template<typename T, typename... Args>
+struct pack {
+    using first = T;
+    using subpack = pack<Args...>;
+    static constexpr std::size_t subsize = sizeof...(Args);
+};
+template<typename T>
+struct pack<T> {
+    using first = T;
+};
+
 template<typename T>
 struct is_nested : std::false_type { };
 
