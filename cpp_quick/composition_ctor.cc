@@ -1,6 +1,6 @@
 // Goal: See if it's possible to have a class compose itself, and implicitly accept initializer lists
 // Purpose: See if its possible to simplify DecisionVariable stuff
-//  Explicitly constrian DecisionVar, such that that is not part of the template generalization
+//  Explicitly constrain DecisionVar, such that that is not part of the template generalization
 
 #include <iostream>
 #include <string>
@@ -30,24 +30,29 @@ public:
     // If we provide explicit overloads for the differnet ways we wish to consruct these
     // it does not puke
     inline VarList(const char* name)
-        : vars_{{name}}
-    { }
+        : vars_{{name}} {
+        cout << "VarList(const char*): " << name << endl;
+    }
     inline VarList(const string& name)
-        : vars_{{name}}
-    { }
+        : vars_{{name}} {
+        cout << "VarList(string): " << name << endl;
+    }
     inline VarList(const Var& var)
-        : vars_{var}
-    { }
+        : vars_{var} {
+        cout << "VarList(Var): " << var.name() << endl;
+    }
 
     // Provide generics
     template<typename T>
     inline VarList(const vector<T>& list) {
+        cout << "VarList(vector<T>)" << endl;
         for (const auto& item : list)
             append(item);
     }
     // We must expliclitly specify intializer_list compatibility
     template<typename T>
     inline VarList(std::initializer_list<T> list) {
+        cout << "VarList(initializer_list<T>): " << endl;
         for (const auto& item : list)
             append(item);
     }
@@ -59,9 +64,11 @@ public:
     // inline VarList(std::initializer_list<Var> list)
     //     : VarList(vector<Var>(list))
     // { }
-    inline VarList(std::initializer_list<VarList> list)
-        : VarList(vector<VarList>(list))
-    { }
+    inline VarList(std::initializer_list<VarList> list) {
+        cout << "VarList(initializer_list<VarList>): " << endl;
+        for (const auto& item : list)
+            append(item);
+    }
 
     void append(const VarList& other) {
         for (const auto& v : other.vars_)
@@ -69,9 +76,17 @@ public:
     }
 
     void print(ostream& os = cout) const {
+        bool is_first = true;
+        os << "(";
         for (const auto& var : vars_)
-            os << var.name() << ", ";
-        os << endl;
+        {
+            if (is_first)
+                is_first = false;
+            else
+                os << ", ";
+            os << var.name();
+        }
+        os << ")";
     }
 
 protected:
@@ -83,20 +98,26 @@ ostream& operator<<(ostream& os, const VarList &vars) {
     return os;
 }
 
-
-// TODO: Review flexibility...
+void print(const VarList& vars) {
+    cout << vars;
+}
 
 int main() {
-    string var {"a"};
-    VarList vars = {"a", "b"};
-    cout << vars << endl;
-    // VarList vars {"a"};
-    vars.print();
-    // Heterogeneous (VarList)
-    VarList vars_nest = {vars, vars, "a"};
-    vars_nest.print();
-    
-
-
+    // Strings
+    EVAL(( print("a") ));
+    EVAL(( print({"a"}) ));
+    EVAL(( print({"a", "b"}) ));
+    EVAL(( print({string("c")}) ));
+    VarList vars = {"x", "y", "z"};
+    EVAL(( print(vars) ));
+    // Heterogeneous
+    Var t("t");
+    // - VarList + other
+    EVAL(( print({vars, vars}) ));
+    EVAL(( print({vars, "a"}) ));
+    EVAL(( print({vars, "a"}) ));
+    // - string + other
+    EVAL(( print({"a", vars}) ));
+    // - 
     return 0;
 }
