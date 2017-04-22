@@ -19,6 +19,15 @@ struct pack<T> {
     static constexpr std::size_t size = 1;
 };
 
+// Bug Workaround
+// Goal is to start with a parameter pack, and avoid having clang interpret an
+// empty parameter pack incorrectly
+template<template <typename...> class T, typename... Args>
+struct nested_redecl {
+    using type = T<Args...>;
+};
+
+
 // Base Case
 template<typename T>
 struct is_nested : std::false_type { };
@@ -28,9 +37,24 @@ template<template <typename...> class T, typename A, typename... Args>
 struct is_nested<T<A, Args...>> : std::true_type {
     using pack = pack<A, Args...>;
 
+    using first_inner_type = A;
+
+    template<typename B, typename... BArgs>
+    using outer_template = typename nested_redecl<T, B, BArgs...>::type;
+
+    // See Bug Workaround:
+    // The following does not work:
+    /*
     template<typename B, typename... BArgs>
     using outer_type = T<B, BArgs...>;
-    using first_inner_type = A;
+
+    Error:
+    cpp_quick/tpl_tpl_forward.cc:32:24: error: too many template arguments for class template 'foo'
+        using outer_type = T<B, BArgs...>;
+                           ^    ~~~~~~~~~
+    
+    Ideally, should not happen, as BArgs is empty in this case
+    */
 };
 
 
@@ -57,16 +81,19 @@ decltype(auto) f (T_A&& t)
     using A = typename Result::first_inner_type;
     // // Cannot use template aliases directly :(
     // // @ref http://stackoverflow.com/q/34419603/170413
-    // using T = typename Info::outer_type;
+    // using T = typename Info::outer_template;
 
     cout << "t.bar = " << t.bar << endl;
     cout << " - default inner: " << A() << endl;
     cout << " - pack size: " << Result::pack::size << endl;
 
-    // Reinstantiate the class with inner type double
-    using T_double = typename Result::template outer_type<double>;
-    T_double c { .bar = 0.5 * t.bar };
-    cout << "T_double: " << c.bar << endl;
+    // if (Result::pack::size == 1) {
+    //     // Reinstantiate the class with inner type double
+    //     using T_double = typename Result::template outer_template<double>;
+    //     T_double t_double { .bar = 0.5 * t.bar };
+    //     cout << " - t_double.bar: " << t_double.bar << endl;
+    // }
+
     // Permit da forwarding
     return std::forward<T_A>(t);
 }
@@ -89,14 +116,15 @@ int main() {
     struct foo<int> const  x2 { .bar = 2 };
     struct foo<int> &      x3 = x1;
     struct foo<int> const& x4 = x2;
-    // struct baz<int, double> const&  x6 = { .bar = 1, .boo = 1.5 };
 
     auto r1 = f (x1);
     auto r2 = f (x2);
     auto r3 = f (x3);
     auto r4 = f (x4);
     auto r5 = f (foo<double> {3.5});
-    // auto r6 = f (x6);
+
+    struct baz<int, double> const&  x6 = { .bar = 1, .boo = 1.5 };
+    auto r6 = f (x6);
 
     return 0;
 }

@@ -1,0 +1,18 @@
+t.bar = 1
+ - default inner: 0
+ - pack size: 1
+t.bar = 2
+ - default inner: 0
+ - pack size: 1
+t.bar = 1
+ - default inner: 0
+ - pack size: 1
+t.bar = 2
+ - default inner: 0
+ - pack size: 1
+t.bar = 3.5
+ - default inner: 0
+ - pack size: 1
+t.bar = 1
+ - default inner: 0
+ - pack size: 2
