@@ -66,11 +66,11 @@ typedef variadic_dispatch_return_type<int, int> basic_return_type;
 void container_stuff();
 
 int main() {
-  cout
-    << PRINT(get_value())
-    << PRINT(variadic_dispatch(1, 2))
-    << PRINT(variadic_dispatch(make_shared<int>(10)));
-    // << PRINT(variadic_dispatch("bad overload"));
+  // cout
+  //   << PRINT(get_value())
+  //   << PRINT(variadic_dispatch(1, 2))
+  //   << PRINT(variadic_dispatch(make_shared<int>(10)));
+  //   // << PRINT(variadic_dispatch("bad overload"));
 
   container_stuff();
 
@@ -143,8 +143,8 @@ template<typename ... Ts>
 auto create_binding_impl(Ts ... args) {
   return overload_not_implemented(args...);
 }
-template<>
-auto create_binding_impl(int x, const VarList& var_list) {
+
+auto create_binding_impl(int x, std::initializer_list<string> var_list) {
   // Will be LinearConstriant
   return Binding<LinearConstraint>(new LinearConstraint(x), var_list);
 }
@@ -223,8 +223,8 @@ public:
   auto& GetList();
 
   template<typename ... Args>
-  auto AddConstraint(Args ... args, const VarList& vars) {
-    auto binding = create_binding_impl(args..., vars);
+  auto AddConstraint(Args ... args) {
+    auto binding = create_binding_impl(args...);
     // auto list = GetList<decltype<binding>();
     return binding;
   }
@@ -237,8 +237,13 @@ public:
   auto AddLinearConstraint(Args ... args) {
     return AddConstraintSpecific<LinearConstraint, Args...>(args...);
   }
+
+  // template<typename L
+  // auto& GetList() { return linear_constraints_; }
+  // auto& GetList() { return quadratic_constraints_; }
 };
 
+// Can't use auto& :(
 template<>
 auto& ConstraintContainer::GetList<Constraint>() {
   return generic_constraints_;
@@ -254,45 +259,69 @@ auto& ConstraintContainer::GetList<QuadraticConstraint>() {
 
 // @ref http://en.cppreference.com/w/cpp/language/template_argument_deduction#Non-deduced_contexts
 
-string quick_check(const vector<string>& test_list) {
-  return "yup";
-}
+// string quick_check(const vector<string>& test_list) {
+//   return "yup";
+// }
+
+// template<typename T>
+// auto tpl_check(T&& value) {
+//   return 0;
+// }
+
+
+
 template<typename T>
-auto tpl_check(T value) {
-  return 0;
-}
-template<>
-auto tpl_check(const vector<string>& test_list) {
-  return "yup";
-}
-template<>
-auto tpl_check(std::initializer_list<string> list) {
-  return "yup init";
-}
-template<>
-auto tpl_check(int x) {
-  return "nope";
+auto tpl_check(vector<T>&& test_list) {
+  return "tpl_check for list of " + name_trait<T>::name();
 }
 
+// // Too generic...
+// template<typename T,
+//     typename Cond = typename std::enable_if<
+//         std::is_convertible<T, string>::value>::type
+//     >
+auto tpl_check(std::initializer_list<string>&& test_list) {
+  return tpl_check(vector<string>(std::forward<decltype(test_list)>(test_list)));
+}
+
+template<typename T,
+    typename Cond = typename std::enable_if<
+        std::is_convertible<T, int>::value>::type,
+    typename Extra = void
+    >
+auto tpl_check(std::initializer_list<T>&& test_list) {
+  return tpl_check(vector<int>(test_list));
+}
+
+// template<>
+// auto tpl_check(std::initializer_list<string> list) {
+//   return "yup init";
+// }
+// template<>
+// auto tpl_check<int>(int x) {
+//   return "nope";
+// }
 
 void container_stuff() {
-  Constraint a;
-  LinearConstraint b(1);
-  QuadraticConstraint b2(1, 2);
+  // Constraint a;
+  // LinearConstraint b(1);
+  // QuadraticConstraint b2(1, 2);
 
-  ConstraintContainer c;
+  // ConstraintContainer c;
   
   // Can deduce as such
   // cout << quick_check({"hello"}) << endl << tpl_check(vector<string>{"good"}) << endl;
-    //tpl_check({"good"}) << endl; // Can't infer T for initializer list
 
-  c.AddConstraint(1, VarList {string("x")});
+  // auto values = {"good"};
+  // cout << PRINT(tpl_check(values));
 
   cout
-    // << PRINT(&c.GetList<QuadraticConstraint>() == &c.quadratic_constraints_)
-    // << PRINT(c.AddConstraint(1, {string("x")})) // Can't do just {"x"}
-    // << PRINT(c.AddConstraint(1, 2));
-    ;
+    << PRINT(tpl_check({"good",}));
+
+  // cout
+  //   << PRINT(&c.GetList<QuadraticConstraint>() == &c.quadratic_constraints_)
+  //   // << PRINT(c.AddConstraint(1, {string("x")})) // Can't do just {"x"}
+  //   << PRINT(c.AddConstraint(1, 2));
 
   // auto r1 = c.Add(&a);
   // auto r2 = c.Add(&b);
