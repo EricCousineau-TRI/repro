@@ -33,3 +33,9 @@ cc_binary(
     srcs = ["autodiff_mod.cc", "AutoDiffScalarMod.h"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "matrix_inheritance",
+    srcs = ["matrix_inheritance.cc", "//cpp_quick:name_trait.h"],
+    deps = ["@eigen//:eigen"],
+)
