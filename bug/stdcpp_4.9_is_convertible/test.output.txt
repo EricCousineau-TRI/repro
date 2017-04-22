@@ -1,0 +1,62 @@
++ ./build/test
+is_convertible: 0
+workaround: 0
+
+is_convertible: 0
+workaround: 0
+
+is_convertible: 0
+workaround: 0
+
+
+is_convertible: 0
+workaround: 0
+
+is_convertible: 0
+workaround: 0
+
+is_convertible: 0
+workaround: 0
+
+
+is_convertible: 0
+workaround: 0
+
+is_convertible: 0
+workaround: 0
+
+is_convertible: 0
+workaround: 0
+
+
++ build/test_bad
+is_convertible: 0
+workaround: 0
+
+is_convertible: 0
+workaround: 0
+
+is_convertible: 0
+workaround: 0
+
+
+is_convertible: 0
+workaround: 0
+
+is_convertible: 0
+workaround: 0
+
+is_convertible: 1
+workaround: 0
+
+
+is_convertible: 0
+workaround: 0
+
+is_convertible: 0
+workaround: 0
+
+is_convertible: 0
+workaround: 0
+
+
