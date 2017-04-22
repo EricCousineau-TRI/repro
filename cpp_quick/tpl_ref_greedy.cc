@@ -44,13 +44,40 @@ struct ChildDirect : public Base {
     // using Base::Base;
 };
 
+struct ChildWithConst : public Base {
+    template<typename T, typename Cond =
+        typename std::enable_if<std::is_convertible<T, int>::value>::type>
+    ChildWithConst(const T& x) {
+        cout << "ChildWithConst(const T&) [ T = " << name_trait<T>::name() << " ]" << endl;
+    }
+    using Base::Base;
+};
+
 int main() {
     int x = 1;
     const int y = 2;
     const double z = 1.5;
-    EVAL({ Child c(1); }); EVAL({ ChildDirect cd(1); });
-    EVAL({ Child c(x); }); EVAL({ ChildDirect cd(x); });
-    EVAL({ Child c(y); }); EVAL({ ChildDirect cd(y); });
-    EVAL({ Child c(z); }); EVAL({ ChildDirect cd(z); });
+
+    int _ {}; // For indentation
+
+    EVAL({ Child c(1); });
+    EVAL({ _; ChildDirect c(1); });
+    EVAL({ _; ChildWithConst c(1); });
+    cout << "---" << endl;
+
+    EVAL({ Child c(x); });
+    EVAL({ _; ChildDirect c(x); });
+    EVAL({ _; ChildWithConst c(x); });
+    cout << "---" << endl;
+
+    EVAL({ Child c(y); });
+    EVAL({ _; ChildDirect c(y); });
+    EVAL({ _; ChildWithConst c(y); });
+    cout << "---" << endl;
+
+    EVAL({ Child c(z); });
+    EVAL({ _; ChildDirect c(z); });
+    EVAL({ _; ChildWithConst c(z); });
+    cout << "---" << endl;
     return 0;
 }

@@ -2,29 +2,49 @@
 Base()
 Child(T&&) [ T = int ]
 
->>> { ChildDirect cd(1); };
+>>> { _; ChildDirect c(1); };
 Base()
 ChildDirect(T&&) [ T = int ]
 
+>>> { _; ChildWithConst c(1); };
+Base()
+ChildWithConst(const T&) [ T = int ]
+
+---
 >>> { Child c(x); };
 Base()
 Child(T&&) [ T = int& ]
 
->>> { ChildDirect cd(x); };
+>>> { _; ChildDirect c(x); };
 Base()
 ChildDirect(T&&) [ T = int& ]
 
+>>> { _; ChildWithConst c(x); };
+Base()
+ChildWithConst(const T&) [ T = int ]
+
+---
 >>> { Child c(y); };
 Base(const T&) [ T = int ]
 
->>> { ChildDirect cd(y); };
+>>> { _; ChildDirect c(y); };
 Base()
 ChildDirect(T&&) [ T = const int& ]
 
+>>> { _; ChildWithConst c(y); };
+Base()
+ChildWithConst(const T&) [ T = int ]
+
+---
 >>> { Child c(z); };
 Base(const T&) [ T = double ]
 
->>> { ChildDirect cd(z); };
+>>> { _; ChildDirect c(z); };
 Base()
 ChildDirect(T&&) [ T = const double& ]
 
+>>> { _; ChildWithConst c(z); };
+Base()
+ChildWithConst(const T&) [ T = double ]
+
+---
