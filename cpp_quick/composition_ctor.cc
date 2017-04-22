@@ -13,6 +13,7 @@ using std::string;
 using std::cout;
 using std::endl;
 using std::vector;
+using std::ostream;
 
 class Var {
 public:
@@ -38,6 +39,7 @@ public:
         : vars_{var}
     { }
 
+    // Provide generics
     template<typename T>
     inline VarList(const vector<T>& list) {
         for (const auto& item : list)
@@ -57,36 +59,44 @@ public:
     // inline VarList(std::initializer_list<Var> list)
     //     : VarList(vector<Var>(list))
     // { }
-    // inline VarList(std::initializer_list<VarList> list)
-    //     : VarList(vector<VarList>(list))
-    // { }
+    inline VarList(std::initializer_list<VarList> list)
+        : VarList(vector<VarList>(list))
+    { }
 
     void append(const VarList& other) {
         for (const auto& v : other.vars_)
             vars_.push_back(v);
     }
 
-    void print() {
+    void print(ostream& os = cout) const {
         for (const auto& var : vars_)
-            cout << var.name() << ", ";
-        cout << endl;
+            os << var.name() << ", ";
+        os << endl;
     }
 
 protected:
     vector<Var> vars_;
 };
 
-// template
-// VarList::VarList(std::initializer_list<string> list);
+ostream& operator<<(ostream& os, const VarList &vars) {
+    vars.print(os);
+    return os;
+}
+
 
 // TODO: Review flexibility...
 
 int main() {
     string var {"a"};
-    VarList vars = {"a", "b"}; // {"a"} does not work
+    VarList vars = {"a", "b"};
+    cout << vars << endl;
+    // VarList vars {"a"};
     vars.print();
-    VarList vars_nest = {vars, vars}; // , var, Var("a")};
+    // Heterogeneous (VarList)
+    VarList vars_nest = {vars, vars, "a"};
     vars_nest.print();
-    // VarList vars2("a"); // does not work
+    
+
+
     return 0;
 }
