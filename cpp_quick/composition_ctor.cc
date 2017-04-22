@@ -25,19 +25,35 @@ protected:
 
 class Vars {
 public:
-    inline Vars(const Var& var)
-        : vars_{var}
-    { }
-    inline Vars(const vector<Var>& vars)
-        : vars_{vars}
+    // inline Vars(const string& s)
+    //     : vars_{{s}}
+    // { }
+    // inline Vars(const Var& var)
+    //     : vars_{var}
+    // { }
+    template<typename T>
+    inline Vars(const vector<T>& items)
+    {
+        for (const auto& item : items)
+            add_var(item);
+    }
+    inline Vars(std::initializer_list<string> list)
+        : Vars(vector<string>(list))
     { }
 protected:
     vector<Var> vars_;
+    void add_var(const Var& v) {
+        vars_.push_back(v);
+    }
+    void add_var(const Vars& vs) {
+        for (const auto& v : vs.vars_)
+            vars_.push_back(v);
+    }
 };
 
 int main() {
     Var var {"a"};
-    Vars vars {{"a"}}; // {"a"} does not work
+    Vars vars = {"a", "b"}; // {"a"} does not work
     // Vars vars2("a"); // does not work
     return 0;
 }
