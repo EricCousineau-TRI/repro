@@ -18,8 +18,9 @@ using std::ostream;
 class Var {
 public:
     inline Var(const string& name)
-        : name_(name)
-    { }
+        : name_(name) {
+        cout << "  Var(string): " << name << endl;
+    }
     inline string name() const { return name_; }
 protected:
     string name_;
@@ -52,7 +53,7 @@ public:
     // We must expliclitly specify intializer_list compatibility
     template<typename T>
     inline VarList(std::initializer_list<T> list) {
-        cout << "VarList(initializer_list<T>): " << endl;
+        cout << "VarList(initializer_list<T>)" << endl;
         for (const auto& item : list)
             append(item);
     }
@@ -107,17 +108,42 @@ int main() {
     EVAL(( print("a") ));
     EVAL(( print({"a"}) ));
     EVAL(( print({"a", "b"}) ));
-    EVAL(( print({string("c")}) ));
-    VarList vars = {"x", "y", "z"};
+    EVAL(( print({string("c")}) ));    
+
+    cout << "[ Heterogeneous ]" << endl;
+    const char* cstr = "cstr";
+    string str("str");
+    Var var("var");
+    VarList vars = {"var[0]", "var[1]", "var[2]"};
+    cout << endl << "[ - VarList + other ]" << endl;
     EVAL(( print(vars) ));
-    // Heterogeneous
-    Var t("t");
-    // - VarList + other
     EVAL(( print({vars, vars}) ));
-    EVAL(( print({vars, "a"}) ));
-    EVAL(( print({vars, "a"}) ));
-    // - string + other
-    EVAL(( print({"a", vars}) ));
-    // - 
+    EVAL(( print({vars, var}) ));
+    EVAL(( print({vars, str}) ));
+    EVAL(( print({vars, cstr}) ));
+
+    cout << endl << "[ - Var + other ]" << endl;
+    EVAL(( print(var) ));
+    EVAL(( print({var, vars}) ));
+    EVAL(( print({var, var}) ));
+    EVAL(( print({var, str}) ));
+    EVAL(( print({var, cstr}) ));
+
+    cout << endl << "[ - string + other ]" << endl;
+    EVAL(( print(str) ));
+    EVAL(( print({str, vars}) ));
+    EVAL(( print({str, var}) ));
+    EVAL(( print({str, str}) ));
+    EVAL(( print({str, cstr}) ));
+
+    cout << endl << "[ - const char* + other ]" << endl;
+    EVAL(( print(cstr) ));
+    EVAL(( print({cstr, vars}) ));
+    EVAL(( print({cstr, var}) ));
+    EVAL(( print({cstr, str}) ));
+    EVAL(( print({cstr, cstr}) ));
+
+    cout << endl << "[ Composition ]" << endl;
+    EVAL(( print({var, {vars, vars, {"a", vars}}}) ));
     return 0;
 }

@@ -1,0 +1,149 @@
+>>> ( print("a") );
+  Var(string): a
+VarList(const char*): a
+(a)
+>>> ( print({"a"}) );
+VarList(initializer_list<T>): 
+  Var(string): a
+VarList(const char*): a
+(a)
+>>> ( print({"a", "b"}) );
+VarList(initializer_list<T>): 
+  Var(string): a
+VarList(const char*): a
+  Var(string): b
+VarList(const char*): b
+(a, b)
+>>> ( print({string("c")}) );
+VarList(initializer_list<T>): 
+  Var(string): c
+VarList(string): c
+(c)
+[ Heterogeneous ]
+  Var(string): var
+VarList(initializer_list<T>): 
+  Var(string): var[0]
+VarList(const char*): var[0]
+  Var(string): var[1]
+VarList(const char*): var[1]
+  Var(string): var[2]
+VarList(const char*): var[2]
+
+[ - VarList + other ]
+>>> ( print(vars) );
+(var[0], var[1], var[2])
+>>> ( print({vars, vars}) );
+VarList(initializer_list<VarList>): 
+(var[0], var[1], var[2], var[0], var[1], var[2])
+>>> ( print({vars, var}) );
+VarList(Var): var
+VarList(initializer_list<VarList>): 
+(var[0], var[1], var[2], var)
+>>> ( print({vars, str}) );
+  Var(string): str
+VarList(string): str
+VarList(initializer_list<VarList>): 
+(var[0], var[1], var[2], str)
+>>> ( print({vars, cstr}) );
+  Var(string): cstr
+VarList(const char*): cstr
+VarList(initializer_list<VarList>): 
+(var[0], var[1], var[2], cstr)
+
+[ - Var + other ]
+>>> ( print(var) );
+VarList(Var): var
+(var)
+>>> ( print({var, vars}) );
+VarList(Var): var
+VarList(initializer_list<VarList>): 
+(var, var[0], var[1], var[2])
+>>> ( print({var, var}) );
+VarList(initializer_list<T>): 
+VarList(Var): var
+VarList(Var): var
+(var, var)
+>>> ( print({var, str}) );
+VarList(Var): var
+  Var(string): str
+VarList(string): str
+VarList(initializer_list<VarList>): 
+(var, str)
+>>> ( print({var, cstr}) );
+VarList(Var): var
+  Var(string): cstr
+VarList(const char*): cstr
+VarList(initializer_list<VarList>): 
+(var, cstr)
+
+[ - string + other ]
+>>> ( print(str) );
+  Var(string): str
+VarList(string): str
+(str)
+>>> ( print({str, vars}) );
+  Var(string): str
+VarList(string): str
+VarList(initializer_list<VarList>): 
+(str, var[0], var[1], var[2])
+>>> ( print({str, var}) );
+  Var(string): str
+VarList(string): str
+VarList(Var): var
+VarList(initializer_list<VarList>): 
+(str, var)
+>>> ( print({str, str}) );
+VarList(initializer_list<T>): 
+  Var(string): str
+VarList(string): str
+  Var(string): str
+VarList(string): str
+(str, str)
+>>> ( print({str, cstr}) );
+  Var(string): str
+VarList(string): str
+  Var(string): cstr
+VarList(const char*): cstr
+VarList(initializer_list<VarList>): 
+(str, cstr)
+
+[ - const char* + other ]
+>>> ( print(cstr) );
+  Var(string): cstr
+VarList(const char*): cstr
+(cstr)
+>>> ( print({cstr, vars}) );
+  Var(string): cstr
+VarList(const char*): cstr
+VarList(initializer_list<VarList>): 
+(cstr, var[0], var[1], var[2])
+>>> ( print({cstr, var}) );
+  Var(string): cstr
+VarList(const char*): cstr
+VarList(Var): var
+VarList(initializer_list<VarList>): 
+(cstr, var)
+>>> ( print({cstr, str}) );
+  Var(string): cstr
+VarList(const char*): cstr
+  Var(string): str
+VarList(string): str
+VarList(initializer_list<VarList>): 
+(cstr, str)
+>>> ( print({cstr, cstr}) );
+VarList(initializer_list<T>): 
+  Var(string): cstr
+VarList(const char*): cstr
+  Var(string): cstr
+VarList(const char*): cstr
+(cstr, cstr)
+
+[ Composition ]
+>>> ( print({var, {vars, vars, {"a", vars}}}) );
+VarList(Var): var
+  Var(string): a
+VarList(const char*): a
+VarList(initializer_list<VarList>): 
+VarList(initializer_list<VarList>): 
+VarList(initializer_list<VarList>): 
+(var, var[0], var[1], var[2], var[0], var[1], var[2], a, var[0], var[1], var[2])
