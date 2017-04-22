@@ -20,20 +20,30 @@ class MyMat : public MatrixXd {
 public:
     // Specialize
     // NOTE: Must use greedy match to combat Eigen's template ctor
+    // Can't use rvalue? If I specify T&&, then it will resort to Matrix(const T&)
     template<typename T, typename Cond =
         typename std::enable_if<std::is_convertible<T, string>::value>::type>
     MyMat(const T& name)
         : MatrixXd() {
         string s(name);
         cout << "string: " << name << endl;
+
+        MatrixXd& value = *this;
+        value.resize(s.size(), 1);
+        for (int i = 0; i < rows(); ++i) {
+            value(i) = s[i];
+        }
     }
 
     using MatrixXd::MatrixXd;
-
 };
 
 int main() {
     MyMat x("bob");
+
+    cout << x.transpose() << endl;
+    MatrixXd y = x / 2;
+    cout << y.transpose() << endl;
 
     return 0;
 }
