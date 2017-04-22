@@ -24,34 +24,44 @@ protected:
     string name_;
 };
 
-class Vars {
+class VarList {
 public:
-    inline Vars(const string& name)
+    // If we provide explicit overloads for the differnet ways we wish to consruct these
+    // it does not puke
+    inline VarList(const char* name)
         : vars_{{name}}
     { }
-    inline Vars(const Var& var)
+    inline VarList(const string& name)
+        : vars_{{name}}
+    { }
+    inline VarList(const Var& var)
         : vars_{var}
     { }
 
     template<typename T>
-    inline Vars(const vector<T>& items)
-    {
-        for (const auto& item : items)
+    inline VarList(const vector<T>& list) {
+        for (const auto& item : list)
+            append(item);
+    }
+    // We must expliclitly specify intializer_list compatibility
+    template<typename T>
+    inline VarList(std::initializer_list<T> list) {
+        for (const auto& item : list)
             append(item);
     }
 
-    // Explicit, unambiguous intiailizer_list's for syntactic sugar
-    inline Vars(std::initializer_list<string> list)
-        : Vars(vector<string>(list))
-    { }
-    inline Vars(std::initializer_list<Var> list)
-        : Vars(vector<Var>(list))
-    { }
-    inline Vars(std::initializer_list<Vars> list)
-        : Vars(vector<Vars>(list))
-    { }
+    // // Explicit, unambiguous intiailizer_list's for syntactic sugar
+    // inline VarList(std::initializer_list<string> list)
+    //     : VarList(vector<string>(list))
+    // { }
+    // inline VarList(std::initializer_list<Var> list)
+    //     : VarList(vector<Var>(list))
+    // { }
+    // inline VarList(std::initializer_list<VarList> list)
+    //     : VarList(vector<VarList>(list))
+    // { }
 
-    void append(const Vars& other) {
+    void append(const VarList& other) {
         for (const auto& v : other.vars_)
             vars_.push_back(v);
     }
@@ -66,14 +76,17 @@ protected:
     vector<Var> vars_;
 };
 
+// template
+// VarList::VarList(std::initializer_list<string> list);
+
 // TODO: Review flexibility...
 
 int main() {
     string var {"a"};
-    Vars vars = {"a", "b"}; // {"a"} does not work
+    VarList vars = {"a", "b"}; // {"a"} does not work
     vars.print();
-    Vars vars_nest = {vars, vars}; // , var, Var("a")};
+    VarList vars_nest = {vars, vars}; // , var, Var("a")};
     vars_nest.print();
-    // Vars vars2("a"); // does not work
+    // VarList vars2("a"); // does not work
     return 0;
 }
