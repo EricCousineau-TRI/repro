@@ -55,7 +55,7 @@ protected:
 int main() {
     Var var {"a"};
     Vars vars = {"a", "b"}; // {"a"} does not work
-    // Vars vars_nest = vector<Vars>({vars, vars, "a"});
+    Vars vars_nest = vector<Vars>({vars, vars, var, Var("a")});
     // Vars vars2("a"); // does not work
     return 0;
 }
