@@ -1,11 +1,19 @@
-// Goal: Figure out how T&& works in forwarding. See if this can be generalized to a greedy is_convertible match
-// Purpose: In eigen_scratch/matrix_inheritance.cc, Eigen::Matrix's ctor has a the form
+// Goal:
+// Figure out how T&& works in forwarding. See if this can be generalized to a greedy is_convertible match
+// 
+// Purpose:
+// In eigen_scratch/matrix_inheritance.cc, Eigen::Matrix's ctor has a the form
 //   template<typename T> Matrix(const T& x)
 // When there is an attempt to override this, via
 //    template<typename T> MyMat(T&& x) { ... }
 //    using Matrix::Matrix
 // the Matrix version wins.
 // It'd be nice to figure out how generalize the child-class ctor to prevent greediness
+
+// @ref http://stackoverflow.com/a/27835982/170413
+// Mentions the ability to delegate via `std::forward` to a secondary
+// But we do not have that option, as reference collapsing cannot permit delegation to
+// a T&& overload since that would cretae a cycle.
 
 #include "name_trait.h"
 
