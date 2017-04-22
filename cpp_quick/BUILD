@@ -79,3 +79,8 @@ cc_binary(
     name = "tpl_check_errors",
     srcs = ["tpl_check_errors.cc", "name_trait.h"],
 )
+
+cc_binary(
+    name = "composition_ctor",
+    srcs = ["composition_ctor.cc", "name_trait.h"],
+)
