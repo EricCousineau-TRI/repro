@@ -28,7 +28,18 @@ template<template <typename...> class T, typename... BArgs>
 struct nested_redecl {
     using type = T<BArgs...>;
 };
-// using nested_redecl = T<BArgs...>;
+// This causes the same error as below:
+/*
+template<template <typename...> class T, typename... BArgs>
+using nested_redecl = T<BArgs...>;
+
+Error:
+cpp_quick/tpl_tpl_forward.cc:32:24: error: too many template arguments for class template 'foo'
+    using outer_type = T<B, BArgs...>;
+                       ^    ~~~~~~~~~
+
+Ideally, should not happen, as BArgs is empty in this case
+*/
 
 // Base Case
 template<typename T>
@@ -44,18 +55,11 @@ struct is_nested<T<A, Args...>> : std::true_type {
     template<typename B, typename... BArgs>
     using outer_template = typename nested_redecl<T, B, BArgs...>::type;
 
-    // See Bug Workaround:
-    // The following does not work:
+    // See Bug Workaround above for why this is needed
+    // The following does not work (see Bug Workaround for info)
     /*
     template<typename B, typename... BArgs>
     using outer_type = T<B, BArgs...>;
-
-    Error:
-    cpp_quick/tpl_tpl_forward.cc:32:24: error: too many template arguments for class template 'foo'
-        using outer_type = T<B, BArgs...>;
-                           ^    ~~~~~~~~~
-    
-    Ideally, should not happen, as BArgs is empty in this case
     */
 };
 
@@ -73,6 +77,14 @@ using enabel_if_nested_decay = enable_if_nested<
         typename std::decay<T>::type
         >;
 
+template<template <typename...> class T, typename A, typename... Args>
+void reinstantiate(const T<A, Args...>& t) {
+    // Reinstantiate the class with inner type double
+    using T_double = T<double, Args...>;
+    T_double t_double { .bar = 0.5 * t.bar };
+    cout << " - t_double.bar: " << t_double.bar << endl;
+}
+
 
 // Put it into use
 template <typename T_A, typename Result =
@@ -86,15 +98,10 @@ decltype(auto) f (T_A&& t)
     // using T = typename Info::outer_template;
 
     cout << "t.bar = " << t.bar << endl;
-    cout << " - default inner: " << A() << endl;
+    cout << " - first_inner_type default: " << A() << endl;
     cout << " - pack size: " << Result::pack::size << endl;
 
-    if (Result::pack::size == 1) {
-        // Reinstantiate the class with inner type double
-        using T_double = typename Result::template outer_template<double>;
-        T_double t_double { .bar = 0.5 * t.bar };
-        cout << " - t_double.bar: " << t_double.bar << endl;
-    }
+    reinstantiate(t);
 
     // Permit da forwarding
     return std::forward<T_A>(t);
@@ -125,8 +132,8 @@ int main() {
     auto r4 = f (x4);
     auto r5 = f (foo<double> {3.5});
 
-    // struct baz<int, double> const&  x6 = { .bar = 1, .boo = 1.5 };
-    // auto r6 = f (x6);
+    struct baz<int, double> const&  x6 = { .bar = 10, .boo = 15 };
+    auto r6 = f (x6);
 
     return 0;
 }

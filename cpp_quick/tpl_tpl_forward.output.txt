@@ -1,0 +1,24 @@
+t.bar = 1
+ - first_inner_type default: 0
+ - pack size: 1
+ - t_double.bar: 0.5
+t.bar = 2
+ - first_inner_type default: 0
+ - pack size: 1
+ - t_double.bar: 1
+t.bar = 1
+ - first_inner_type default: 0
+ - pack size: 1
+ - t_double.bar: 0.5
+t.bar = 2
+ - first_inner_type default: 0
+ - pack size: 1
+ - t_double.bar: 1
+t.bar = 3.5
+ - first_inner_type default: 0
+ - pack size: 1
+ - t_double.bar: 1.75
+t.bar = 10
+ - first_inner_type default: 0
+ - pack size: 2
+ - t_double.bar: 5
