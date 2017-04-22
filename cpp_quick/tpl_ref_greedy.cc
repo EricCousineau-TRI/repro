@@ -27,7 +27,8 @@ struct Base {
 };
 
 struct Child : public Base {
-    template<typename T>
+    template<typename T, typename Cond =
+        typename std::enable_if<std::is_convertible<T, int>::value>::type>
     Child(T&& x) {
         cout << "Child(T&&) [ T = " << name_trait<T>::name() << " ]" << endl;
     }
@@ -37,8 +38,10 @@ struct Child : public Base {
 int main() {
     int x = 1;
     const int y = 2;
+    const double z = 1.5;
     EVAL({ Child c(1); });
-    // EVAL( Child(x) );
-    // EVAL( CHild(y) );
+    EVAL({ Child c(x); });
+    EVAL({ Child c(y); });
+    EVAL({ Child c(z); });
     return 0;
 }

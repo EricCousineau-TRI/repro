@@ -1,0 +1,14 @@
+>>> { Child c(1); };
+Base()
+Child(T&&) [ T = int ]
+
+>>> { Child c(x); };
+Base()
+Child(T&&) [ T = int& ]
+
+>>> { Child c(y); };
+Base(const T&) [ T = int ]
+
+>>> { Child c(z); };
+Base(const T&) [ T = double ]
+
