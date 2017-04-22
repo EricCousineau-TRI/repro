@@ -53,6 +53,21 @@ struct ChildWithConst : public Base {
     using Base::Base;
 };
 
+struct ChildWithOverload : public Base {
+    template<typename T, typename Cond =
+        typename std::enable_if<std::is_convertible<T, int>::value>::type>
+    ChildWithOverload(T&& x) {
+        // Cannot delegate to (const T&) case...
+        cout << "ChildWithOverload(T&&) [ T = " << name_trait<T>::name() << " ]" << endl;
+    }
+    template<typename T, typename Cond =
+        typename std::enable_if<std::is_convertible<T, int>::value>::type>
+    ChildWithOverload(const T& x) {
+        cout << "ChildWithOverload(const T&) [ T = " << name_trait<T>::name() << " ]" << endl;
+    }
+    using Base::Base;
+};
+
 int main() {
     int x = 1;
     const int y = 2;
@@ -63,21 +78,25 @@ int main() {
     EVAL({ Child c(1); });
     EVAL({ _; ChildDirect c(1); });
     EVAL({ _; ChildWithConst c(1); });
+    EVAL({ _; ChildWithOverload c(1); });
     cout << "---" << endl;
 
     EVAL({ Child c(x); });
     EVAL({ _; ChildDirect c(x); });
     EVAL({ _; ChildWithConst c(x); });
+    EVAL({ _; ChildWithOverload c(x); });
     cout << "---" << endl;
 
     EVAL({ Child c(y); });
     EVAL({ _; ChildDirect c(y); });
     EVAL({ _; ChildWithConst c(y); });
+    EVAL({ _; ChildWithOverload c(y); });
     cout << "---" << endl;
 
     EVAL({ Child c(z); });
     EVAL({ _; ChildDirect c(z); });
     EVAL({ _; ChildWithConst c(z); });
+    EVAL({ _; ChildWithOverload c(z); });
     cout << "---" << endl;
     return 0;
 }

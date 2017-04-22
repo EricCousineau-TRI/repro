@@ -10,6 +10,10 @@ ChildDirect(T&&) [ T = int ]
 Base()
 ChildWithConst(const T&) [ T = int ]
 
+>>> { _; ChildWithOverload c(1); };
+Base()
+ChildWithOverload(T&&) [ T = int ]
+
 ---
 >>> { Child c(x); };
 Base()
@@ -23,6 +27,10 @@ ChildDirect(T&&) [ T = int& ]
 Base()
 ChildWithConst(const T&) [ T = int ]
 
+>>> { _; ChildWithOverload c(x); };
+Base()
+ChildWithOverload(T&&) [ T = int& ]
+
 ---
 >>> { Child c(y); };
 Base(const T&) [ T = int ]
@@ -35,6 +43,10 @@ ChildDirect(T&&) [ T = const int& ]
 Base()
 ChildWithConst(const T&) [ T = int ]
 
+>>> { _; ChildWithOverload c(y); };
+Base()
+ChildWithOverload(const T&) [ T = int ]
+
 ---
 >>> { Child c(z); };
 Base(const T&) [ T = double ]
@@ -46,5 +58,9 @@ ChildDirect(T&&) [ T = const double& ]
 >>> { _; ChildWithConst c(z); };
 Base()
 ChildWithConst(const T&) [ T = double ]
+
+>>> { _; ChildWithOverload c(z); };
+Base()
+ChildWithOverload(const T&) [ T = double ]
 
 ---
