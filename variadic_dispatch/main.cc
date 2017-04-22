@@ -275,13 +275,12 @@ auto tpl_check(vector<T>&& test_list) {
   return "tpl_check for list of " + name_trait<T>::name();
 }
 
-// // Too generic...
-// template<typename T,
-//     typename Cond = typename std::enable_if<
-//         std::is_convertible<T, string>::value>::type
-//     >
-auto tpl_check(std::initializer_list<string>&& test_list) {
-  return tpl_check(vector<string>(std::forward<decltype(test_list)>(test_list)));
+// Too generic...
+template<typename T>
+auto tpl_check(std::initializer_list<typename std::enable_if<
+        std::is_convertible<T, string>::value, string>::type>&& test_list) {
+  return tpl_check(
+      vector<string>(std::forward<decltype(test_list)>(test_list)));
 }
 
 template<typename T,
