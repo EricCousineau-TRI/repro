@@ -2,13 +2,29 @@
 Base()
 Child(T&&) [ T = int ]
 
+>>> { ChildDirect cd(1); };
+Base()
+ChildDirect(T&&) [ T = int ]
+
 >>> { Child c(x); };
 Base()
 Child(T&&) [ T = int& ]
 
+>>> { ChildDirect cd(x); };
+Base()
+ChildDirect(T&&) [ T = int& ]
+
 >>> { Child c(y); };
 Base(const T&) [ T = int ]
 
+>>> { ChildDirect cd(y); };
+Base()
+ChildDirect(T&&) [ T = const int& ]
+
 >>> { Child c(z); };
 Base(const T&) [ T = double ]
+
+>>> { ChildDirect cd(z); };
+Base()
+ChildDirect(T&&) [ T = const double& ]
 

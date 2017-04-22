@@ -35,13 +35,22 @@ struct Child : public Base {
     using Base::Base;
 };
 
+struct ChildDirect : public Base {
+    template<typename T, typename Cond =
+        typename std::enable_if<std::is_convertible<T, int>::value>::type>
+    ChildDirect(T&& x) {
+        cout << "ChildDirect(T&&) [ T = " << name_trait<T>::name() << " ]" << endl;
+    }
+    // using Base::Base;
+};
+
 int main() {
     int x = 1;
     const int y = 2;
     const double z = 1.5;
-    EVAL({ Child c(1); });
-    EVAL({ Child c(x); });
-    EVAL({ Child c(y); });
-    EVAL({ Child c(z); });
+    EVAL({ Child c(1); }); EVAL({ ChildDirect cd(1); });
+    EVAL({ Child c(x); }); EVAL({ ChildDirect cd(x); });
+    EVAL({ Child c(y); }); EVAL({ ChildDirect cd(y); });
+    EVAL({ Child c(z); }); EVAL({ ChildDirect cd(z); });
     return 0;
 }
