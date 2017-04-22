@@ -26,36 +26,44 @@ protected:
 
 class Vars {
 public:
-    inline Vars(const string& s)
-        : names_{{s}}
+    inline Vars(const string& name)
+        : vars_{{name}}
     { }
+    inline Vars(const Var& var)
+        : vars_{var}
+    { }
+
     template<typename T>
     inline Vars(const vector<T>& items)
     {
         for (const auto& item : items)
             append(item);
     }
-    // Explicit intiailizer_list for syntactic sugar
+
+    // Explicit, unambiguous intiailizer_list's for syntactic sugar
     inline Vars(std::initializer_list<string> list)
         : Vars(vector<string>(list))
+    { }
+    inline Vars(std::initializer_list<Var> list)
+        : Vars(vector<Var>(list))
     { }
     inline Vars(std::initializer_list<Vars> list)
         : Vars(vector<Vars>(list))
     { }
 
+    void append(const Vars& other) {
+        for (const auto& v : other.vars_)
+            vars_.push_back(v);
+    }
+
     void print() {
-        for (const auto& name : names_)
-            cout << name << ", ";
+        for (const auto& var : vars_)
+            cout << var.name() << ", ";
         cout << endl;
     }
 
 protected:
-    vector<string> names_;
-
-    void append(const Vars& vs) {
-        for (const auto& v : vs.names_)
-            names_.push_back(v);
-    }
+    vector<Var> vars_;
 };
 
 // TODO: Review flexibility...
@@ -64,8 +72,8 @@ int main() {
     string var {"a"};
     Vars vars = {"a", "b"}; // {"a"} does not work
     vars.print();
-    Vars names_nest = {vars, vars}; // , var, Var("a")};
-    names_nest.print();
+    Vars vars_nest = {vars, vars}; // , var, Var("a")};
+    vars_nest.print();
     // Vars vars2("a"); // does not work
     return 0;
 }
