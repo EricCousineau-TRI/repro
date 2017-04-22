@@ -73,7 +73,7 @@ using enable_if_nested = std::enable_if<
 
 // Helper 2: Connect to std::decay to remove const-ref stuff (will do other simplifications too)
 template<typename T>
-using enabel_if_nested_decay = enable_if_nested<
+using enable_if_nested_decay = enable_if_nested<
         typename std::decay<T>::type
         >;
 
@@ -88,7 +88,7 @@ void reinstantiate(const T<A, Args...>& t) {
 
 // Put it into use
 template <typename T_A, typename Result =
-    typename enabel_if_nested_decay<T_A>::type>
+    typename enable_if_nested_decay<T_A>::type>
 decltype(auto) f (T_A&& t)
 {
     // Blech, but necessary
