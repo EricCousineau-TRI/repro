@@ -19,6 +19,7 @@ public:
     inline Var(const string& name)
         : name_(name)
     { }
+    inline string name() const { return name_; }
 protected:
     string name_;
 };
@@ -41,6 +42,13 @@ public:
     inline Vars(std::initializer_list<string> list)
         : Vars(vector<string>(list))
     { }
+
+    void print() {
+        for (const auto& v : vars_)
+            cout << v.name() << ", ";
+        cout << endl;
+    }
+
 protected:
     vector<Var> vars_;
     // void add_var(const Var& v) {
@@ -55,7 +63,9 @@ protected:
 int main() {
     Var var {"a"};
     Vars vars = {"a", "b"}; // {"a"} does not work
+    vars.print();
     Vars vars_nest = vector<Vars>({vars, vars, var, Var("a")});
+    vars_nest.print();
     // Vars vars2("a"); // does not work
     return 0;
 }
