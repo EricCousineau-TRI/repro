@@ -84,3 +84,8 @@ cc_binary(
     name = "composition_ctor",
     srcs = ["composition_ctor.cc", "name_trait.h"],
 )
+
+cc_binary(
+    name = "tpl_ref_greedy",
+    srcs = ["tpl_ref_greedy.cc", "name_trait.h"],
+)
