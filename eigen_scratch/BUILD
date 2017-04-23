@@ -51,3 +51,9 @@ cc_binary(
     srcs = ["matrix_stack_xpr_tpl.cc", "//cpp_quick:name_trait.h"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "matrix_block",
+    srcs = ["matrix_block.cc", "//cpp_quick:name_trait.h"],
+    deps = ["@eigen//:eigen"],
+)
