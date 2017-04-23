@@ -39,3 +39,9 @@ cc_binary(
     srcs = ["matrix_inheritance.cc", "//cpp_quick:name_trait.h"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "matrix_stack",
+    srcs = ["matrix_stack.cc", "//cpp_quick:name_trait.h"],
+    deps = ["@eigen//:eigen"],
+)
