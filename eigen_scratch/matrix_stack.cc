@@ -1,5 +1,8 @@
 // @ref https://github.com/hauptmech/eigen-initializer_list
 
+// @ref ../cpp_quick/composition_ctor.cc
+// @ref ./matrix_inheritance.cc
+
 // Purpose: For fun
 
 /*
@@ -54,7 +57,16 @@ using std::cout;
 using std::endl;
 using std::string;
 
-using MatrixXc = Eigen::Matrix<string, Eigen::Dynamic, Eigen::Dynamic>;
+class MatrixXc : public Eigen::Matrix<string, Eigen::Dynamic, Eigen::Dynamic> {
+public:
+    using Matrix::Matrix;
+
+    using init_list = std::initializer_list<std::initializer_list<MatrixXc>>;
+
+    MatrixXc(init_list list) {
+        cout << "Stacked initialization" << endl;
+    }
+};
 
 void fill(MatrixXc& X, string prefix) {
     static const string hex = "01234566789abcdef";
@@ -81,6 +93,11 @@ int main() {
         << D << endl
         << E << endl
         << F << endl;
+
+    MatrixXc X = {
+            { {{A}, {B}}, C, {{D}, {E}} },
+            { F }
+        };  
 
     return 0;
 }
