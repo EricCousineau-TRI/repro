@@ -60,19 +60,39 @@ MatrixBase<Derived>&& fill(MatrixBase<Derived>&& x) {
     return to_rvalue(x);
 }
 
-// Useful application
-template<typename DerivedA, typename DerivedB>
-void evalTo(const MatrixBase<DerivedA>& x, MatrixBase<DerivedB>& y) {
-    // Do a lot of complex operations, dependent on a reference to y
-    //...
-    y += x;
-}
-template<typename DerivedA, typename DerivedB>
-void evalTo(const MatrixBase<DerivedA>& x, MatrixBase<DerivedB>&& y) {
-    // HACK: Localize only to where you do not store references to y externally
-    evalTo(x, to_lvalue(y));
-}
+// Base Case
+template<typename T>
+struct is_matrix : std::false_type { };
+// General Case
+template<typename T>
+struct is_matrix<MatrixBase<T>> : std::true_type {
+    using Derived = T;
+};
+// Helper 1: Connect to enable_if
+template<typename T>
+using enable_if_matrix = std::enable_if<
+    is_matrix<typename T::Base>::value,
+    typename is_matrix<typename T::Base>::Derived // Return the derived type
+    >;
 
+// // Useful application
+// template<typename DerivedA, typename DerivedB>
+// void evalTo(const MatrixBase<DerivedA>& x, MatrixBase<DerivedB>& y) {
+//     // Do a lot of complex operations, dependent on a reference to y
+//     //...
+//     y += x;
+// }
+// template<typename DerivedA, typename DerivedB>
+// void evalTo(const MatrixBase<DerivedA>& x, MatrixBase<DerivedB>&& y) {
+//     // HACK: Localize only to where you do not store references to y externally
+//     evalTo(x, to_lvalue(y));
+// }
+
+template<typename DerivedA, typename XprTypeB,
+    typename DerivedB = typename enable_if_matrix<std::decay_t<XprTypeB>>::type>
+void evalTo(const MatrixBase<DerivedA>& x, XprTypeB&& y) {
+    cout << "good" << endl;
+}
 
 Matrix3d example() {
     Matrix3d x;
@@ -110,11 +130,11 @@ int main() {
     cout << endl;
     // Example useful stuff
     VectorXd y(5);
-    // y.setConstant(2);
+    // // y.setConstant(2);
     evalTo(VectorXd::Ones(5), y);
-    evalTo(VectorXd::Ones(3), y.head(3));
-    evalTo(2 * Vector2d::Ones(), y.tail(2)); // (3, 0, 2, 1)); //y.tail(2));
-    cout << "y: " << y.transpose() << endl;
+    // evalTo(VectorXd::Ones(3), y.head(3));
+    // evalTo(5 * Vector2d::Ones(), y.tail(2)); // (3, 0, 2, 1)); //y.tail(2));
+    // cout << "y: " << y.transpose() << endl;
 
     return 0;
 }
