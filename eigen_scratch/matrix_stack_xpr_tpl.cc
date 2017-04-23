@@ -306,23 +306,36 @@ public:
     }
 };
 
+template<typename Derived,
+    typename Initializer = XprNode<DenseBase<Derived>> >
+void initialize(DenseBase<Derived>& X, typename Initializer::row_initializer_list row_list) {
+    // // Get variable for clarity
+    // auto& X = derived(); // Need 'this->' or other spec with class being template
+    // We now have our desired size
+    Initializer xpr(row_list);
+    X.resize(xpr.rows(), xpr.cols());
+    xpr.apply(X.block(0, 0, xpr.rows(), xpr.cols()));
+}
+
 template<typename Scalar>
 class MatrixX : public Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
 public:
     using Base = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
     using Base::Base;
 
-    using Initializer = XprNode<MatrixX>;
-    using InitializerList = typename Initializer::row_initializer_list;
+    // using Initializer = XprNode<MatrixX>;
+    // using InitializerList = typename Initializer::row_initializer_list;
 
-    MatrixX(InitializerList row_list) {
-        // Get variable for clarity
-        auto& X = Base::derived(); // Need 'this->' or other spec with class being template
-        // We now have our desired size
-        Initializer xpr(row_list);
-        X.resize(xpr.rows(), xpr.cols());
-        xpr.apply(X.block(0, 0, xpr.rows(), xpr.cols()));
-    }
+    // // Recursive templates if attempting to permit this in the constructor...
+    // // Would need a mechanism to prevent recursion between XprNode <-> MatrixType <-> XprNode
+    // MatrixX(InitializerList row_list) {
+    //     // Get variable for clarity
+    //     auto& X = Base::derived(); // Need 'this->' or other spec with class being template
+    //     // We now have our desired size
+    //     Initializer xpr(row_list);
+    //     X.resize(xpr.rows(), xpr.cols());
+    //     xpr.apply(X.block(0, 0, xpr.rows(), xpr.cols()));
+    // }
 
     // // Initializing a row
     // // Challenge: Permitting initializer lists for column Vectors, while avoiding
@@ -392,10 +405,15 @@ int main() {
         << s1 << ", " << s2 << ", " << s3 << ", " << s4
         << endl << endl;
 
-    MatrixXc X = {
+    // MatrixXc X = {
+    //         { {{A}, {B}}, C, {{D}, {E}} },
+    //         { F, {{s1, s2}, {s3, s4}} }
+    //     };
+    MatrixXc X;
+    initialize(X, {
             { {{A}, {B}}, C, {{D}, {E}} },
             { F, {{s1, s2}, {s3, s4}} }
-        };
+        });
 
     // cout
     //     << "X: " << endl << X << endl << endl;
