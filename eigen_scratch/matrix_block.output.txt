@@ -11,16 +11,3 @@ B:
 
 rvalue
 lvalue
-C: 
- 1  1
- 1  1
-20 20
-
-Semi-bad example: 
-rvalue
-lvalue
-1 1 1
-1 1 1
-1 1 1
-
-y: 3 3 3 5 5
