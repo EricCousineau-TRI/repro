@@ -42,7 +42,14 @@ void fill(MatrixBase<Derived>& x) {
 template<typename Derived>
 void fill(MatrixBase<Derived>&& x) {
     // Secondary hack (cleaner due to not fiddling with const, but still a hack)
+    // Cleaner alternative: Reimplement the functionality
     fill(to_reference(x));
+}
+
+Matrix3d example() {
+    Matrix3d x;
+    x.setConstant(10);
+    return x;
 }
 
 int main() {
@@ -53,6 +60,12 @@ int main() {
     fill(A);
     fill(B);
     fill(C.block(0, 0, 2, 2));
+
+    // // This fails
+    // fill(C + 5 * MatrixXd::Ones(3, 2));
+
+    // This does not
+    fill(example());
 
     // C.block(0, 0, 2, 2) << A; // This works because Eigen::Block can return a reference to itself
 
