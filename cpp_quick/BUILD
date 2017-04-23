@@ -94,3 +94,8 @@ cc_binary(
     name = "tpl_tpl_forward",
     srcs = ["tpl_tpl_forward.cc", "name_trait.h"],
 )
+
+cc_binary(
+    name = "tpl_ref",
+    srcs = ["tpl_ref.cc", "name_trait.h"],
+)
