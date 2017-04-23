@@ -34,8 +34,12 @@ Obtain lvalue reference from rvalue reference.
 Only use if you know what you are doing!
 */
 template<typename T>
-T& to_reference(T&& x) {
+T& to_lvalue(T&& x) {
     return static_cast<T&>(x);
+}
+template<typename T>
+T&& to_rvalue(T& x) {
+    return static_cast<T&&>(x);
 }
 
 template<typename Derived>
@@ -49,9 +53,11 @@ MatrixBase<Derived>&& fill(MatrixBase<Derived>&& x) {
     cout << "rvalue" << endl;
     // Secondary hack (cleaner due to not fiddling with const, but still a hack)
     // Cleaner alternative: Reimplement the functionality
-    fill(to_reference(x));
+    fill(to_lvalue(x));
     // If using this hack, and you are returning a reference, you should return to rvalue
-    return std::move(x);
+    // NOTE: Perhaps try avoiding `std::move`, as that may confuse people reviewing the code.
+    // Rather, explicitly show that you are returning to an rvalue (if need be)
+    return to_rvalue(x);
 }
 
 // Useful application
@@ -59,14 +65,12 @@ template<typename DerivedA, typename DerivedB>
 void evalTo(const MatrixBase<DerivedA>& x, MatrixBase<DerivedB>& y) {
     // Do a lot of complex operations, dependent on a reference to y
     //...
-    fill(y);
-    cout << "y: " << y.rows() << ", x: " << x.rows() << endl;
-    y += x; // This works???
+    y += x;
 }
 template<typename DerivedA, typename DerivedB>
 void evalTo(const MatrixBase<DerivedA>& x, MatrixBase<DerivedB>&& y) {
     // HACK: Localize only to where you do not store references to y externally
-    evalTo(x, to_reference(y));
+    evalTo(x, to_lvalue(y));
 }
 
 
@@ -102,13 +106,13 @@ int main() {
     // NOTE: Maybe this is OK? ... As long as a live reference is not stored
     cout << "Semi-bad example: " << endl << fill(example()) << endl;
 
+    cout << endl;
     // Example useful stuff
     VectorXd y(5);
-    y += Vector3d::Ones();
-    // evalTo(Vector3d::Ones(), y);
-    // // Not able to get this to work???
-    // evalTo(Vector2d::Ones(), y.tail(2)); // (3, 0, 2, 1)); //y.tail(2));
-    cout << "y: " << y << endl;
+    y.setConstant(2);
+    evalTo(Vector3d::Ones(), y.head(3));
+    evalTo(3 * Vector2d::Ones(), y.tail(2)); // (3, 0, 2, 1)); //y.tail(2));
+    cout << "y: " << y.transpose() << endl;
 
     return 0;
 }
