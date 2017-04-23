@@ -51,27 +51,28 @@ Achievable via:
 #include <string>
 #include <iostream>
 
+#include <Eigen/Core>
 #include <Eigen/Dense>
 
 using std::cout;
 using std::endl;
 using std::string;
 
-using Scalar = string;
-
-class MatrixXc : public Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
+template<typename Scalar>
+class MatrixX : public Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
 public:
-    using Matrix::Matrix;
+    using Base = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
+    using Base::Base;
 
-    using col_initializer_list = std::initializer_list<MatrixXc>;
+    using col_initializer_list = std::initializer_list<MatrixX>;
     using row_initializer_list = std::initializer_list<col_initializer_list>;
 
-    MatrixXc(row_initializer_list row_list) {
+    MatrixX(row_initializer_list row_list) {
         int rows = 0;
         int cols = -1;
 
         // Get variable for clarity
-        auto& X = derived();
+        auto& X = Base::derived(); // Need 'this->' or other spec with class being templated
 
         // First review size
         for (const auto& col_list : row_list) {
@@ -123,15 +124,21 @@ public:
     }
 
     // Permit scalars
-    MatrixXc(const Scalar& s) {
-        auto& X = derived();
+    MatrixX(const Scalar& s) {
+        // TODO: Somehow enable static-sized 1x1 matrices? Expression template magic?
+        auto& X = Base::derived();
         X.resize(1, 1);
         X(0) = s;
     }
 };
 
-void fill(MatrixXc& X, Scalar prefix) {
-    static const Scalar hex = "01234566789abcdef";
+
+using scalar_type = string;
+
+using MatrixXc = MatrixX<scalar_type>;
+
+void fill(MatrixXc& X, scalar_type prefix) {
+    static const scalar_type hex = "01234566789abcdef";
     for (int i = 0; i < X.size(); ++i)
         X(i) = prefix + "[" + hex[i] + "]";
 }
@@ -148,8 +155,8 @@ int main() {
     fill(E, "E");
     fill(F, "F");
 
-    Scalar s1 = "S[0]";
-    Scalar s2 = "S[1]";
+    scalar_type s1 = "s1";
+    scalar_type s2 = "s2";
 
     cout
         << "A: " << endl << A << endl << endl
