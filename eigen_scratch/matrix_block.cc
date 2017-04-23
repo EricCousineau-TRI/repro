@@ -23,16 +23,64 @@ using Eigen::VectorXd;
 
 // template<typename Derived>
 // void fill(MatrixBase<Derived> const& x_hack) {
-//     // Be wary!!! Using hack from:
+//     // C98: Be wary!!! Using hack from:
 //     // https://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html#title3
 //     auto& x = const_cast<MatrixBase<Derived>&>(x_hack);
 //     x.setConstant(1);
 // }
 
+
+// More direct method
+namespace detail {
+    /**
+     * For extracting Derived type with const-lvalue for maximum type affinity
+     * Leverage compiler's polymorphism semantics so we don't have to deal with it
+     * Define for only lvalue and rvalue references such that they are explicit mutable
+     *
+     * @note Cannot be used except for in the context of decltype()!
+     */
+    template<typename Derived>
+    Derived extract_mutable_derived(MatrixBase<Derived>& value) {
+        return std::declval<Derived>();
+    }
+    template<typename Derived>
+    Derived extract_mutable_derived(MatrixBase<Derived>&& value) {
+        return std::declval<Derived>();
+    }
+
+    /**
+     * Return the derived type of a given matrix, leveraging extract_derived
+     * to bypass intermediate polymorphism, but ensure that the expression is non-const
+     * Leverage matrix_derived_type with decltype() to implement SFINAE, such that
+     * you can (a) use a fully resolved type, which then means you can (b) use
+     * perfect forwarding to obtain lvalue or rvalue references (e.g., with Blocks)
+     */
+    template<typename T>
+    using mutable_matrix_derived_type = decltype(extract_mutable_derived(std::declval<T>()));
+}
+
+template<typename XprType,
+    typename Derived = detail::mutable_matrix_derived_type<XprType>>
+auto fill(XprType&& x) {
+    x.setConstant(1);
+    return std::forward<XprType>(x);
+}
+
+template<typename DerivedA, typename XprTypeB,
+    typename DerivedB = detail::mutable_matrix_derived_type<XprTypeB>> // Use for SFINAE
+void evalTo(const MatrixBase<DerivedA>& x, XprTypeB&& y) {
+    // Do a lot of complex operations
+    // Leverage direct typename to use perfect forwarding
+    y += x;
+}
+
+
+/*
+// -- HACK ---
 /**
 Obtain lvalue reference from rvalue reference.
 Only use if you know what you are doing!
-*/
+* /
 template<typename T>
 T& to_lvalue(T&& x) {
     return static_cast<T&>(x);
@@ -43,13 +91,13 @@ T&& to_rvalue(T& x) {
 }
 
 template<typename Derived>
-MatrixBase<Derived>& fill(MatrixBase<Derived>& x) {
+MatrixBase<Derived>& fillHack(MatrixBase<Derived>& x) {
     cout << "lvalue" << endl;
     x.setConstant(1);
     return x;
 }
 template<typename Derived>
-MatrixBase<Derived>&& fill(MatrixBase<Derived>&& x) {
+MatrixBase<Derived>&& fillHack(MatrixBase<Derived>&& x) {
     cout << "rvalue" << endl;
     // Secondary hack (cleaner due to not fiddling with const, but still a hack)
     // Cleaner alternative: Reimplement the functionality
@@ -59,29 +107,10 @@ MatrixBase<Derived>&& fill(MatrixBase<Derived>&& x) {
     // Rather, explicitly show that you are returning to an rvalue (if need be)
     return to_rvalue(x);
 }
+*/
 
-namespace detail {
-    // For extracting Derived type
-    template<typename Derived>
-    Derived extract_derived(const MatrixBase<Derived>& value) {
-        return std::declval<Derived>();
-    }
 
-    // Use 'decltype' and 'declval'
-    template<typename T>
-    using matrix_derived_type = decltype(extract_derived(std::declval<T>()));
-
-    // Leverage matrix_derived_type with decltype() to implement SFINAE
-}
-
-template<typename DerivedA, typename XprTypeB,
-    typename DerivedB = detail::matrix_derived_type<XprTypeB>> // Use for SFINAE
-void evalTo(const MatrixBase<DerivedA>& x, XprTypeB&& y) {
-    // Do a lot of complex operations
-    // Leverage direct typename to use perfect forwarding
-    y += x;
-}
-
+// Implicit rvalue
 Matrix3d example() {
     Matrix3d x;
     x.setConstant(10);
