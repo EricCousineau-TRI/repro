@@ -90,15 +90,17 @@ and then invoke magically...
         ImplSubXprNode<XprType, *this>(row_list)
 */
 
+using Eigen::DenseBase;
+
 template<typename XprType>
 class XprNode {
 public:
-    using Scalar = XprType::Scalar;
+    using Scalar = typename XprType::Scalar;
     // // Explicitly constrain to a block expression... ???
     // using Block = XprType::Block;
 
     // Initializing full matrix
-    using col_initializer_list = std::initializer_list<XprType>; // list of columns
+    using col_initializer_list = std::initializer_list<XprNode>; // list of columns
     using row_initializer_list = std::initializer_list<col_initializer_list>; // list of rows
 
     // Constructors
@@ -148,7 +150,7 @@ public:
         }
     }
 private:
-    typename<typename ImplType>
+    template<typename ImplType>
     ImplType* try_cast() {
         return dynamic_cast<ImplType*>(impl.get());
     }
@@ -161,6 +163,25 @@ private:
     template<typename ImplType, typename Derived>
     void apply_dense(ImplType* p, DenseBase<Derived>& block) {
         block = p->value;
+    }
+
+    template<typename Derived>
+    void apply_subxpr(ImplSubXprNode* p, DenseBase<Derived>& block) {
+        // Now fill in the data
+        // We know that our data is good, no further checks needed
+        int r = 0;
+        for (const auto& col_list : p->row_list) {
+            int c = 0;
+            int row_rows = 0;
+            for (const auto& item : col_list) {
+                int item_rows = item.rows();
+                int item_cols = item.cols();
+                item.apply(block.block(r, c, item_rows, item_cols));
+                row_rows = item_rows;
+                c += item_cols;
+            }
+            r += row_rows;
+        }
     }
 
     struct Impl {
@@ -208,19 +229,19 @@ private:
     template<typename Derived>
     struct ImplDenseRRef : public Impl {
         DenseBase<Derived> value;
-        ImplDenseCRef(DenseBase<Derived>&& value)
-            : s(std::move(value))
+        ImplDenseRRef(DenseBase<Derived>&& value)
+            : value(std::move(value))
         { }
         int rows() const { return value.rows(); }
         int cols() const { return value.cols(); }
     };
     // Store SubXpr
     struct ImplSubXprNode : public Impl {
-        XprNode value;
+        row_initializer_list row_list;
         int m_rows;
         int m_cols;
-        ImplSubXprNode(row_intializer_list row_list)
-            : value(row_list), m_rows(0), m_cols(-1) {
+        ImplSubXprNode(row_initializer_list row_list)
+            : row_list(row_list), m_rows(0), m_cols(-1) {
             // First review size
             for (const auto& col_list : row_list) {
                 // Construct row:
@@ -243,7 +264,7 @@ private:
                 else
                     // Already set, must match
                     eigen_assert(row_cols == m_cols);
-                rows += row_rows;
+                m_rows += row_rows;
             }
             if (m_cols == -1) {
                 // Ensure that we have a valid size
@@ -254,7 +275,7 @@ private:
         int cols() const { return m_cols; }
     };
     
-    unique_ptr<XprImpl> impl; // :(
+    unique_ptr<Impl> impl; // :(
 };
 
 template<typename Scalar>
@@ -273,21 +294,7 @@ public:
     //     // We now have our desired size
     //     X.resize(rows, cols);
 
-    //     // Now fill in the data
-    //     // We know that our data is good, no further checks needed
-    //     int r = 0;
-    //     for (const auto& col_list : row_list) {
-    //         int c = 0;
-    //         int row_rows = 0;
-    //         for (const auto& item : col_list) {
-    //             int item_rows = item.rows();
-    //             int item_cols = item.cols();
-    //             X.block(r, c, item_rows, item_cols) = item;
-    //             row_rows = item_rows;
-    //             c += item_cols;
-    //         }
-    //         r += row_rows;
-    //     }
+
     // }
 
     // // Initializing a row
