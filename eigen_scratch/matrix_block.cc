@@ -18,12 +18,22 @@ using Eigen::MatrixXd;
 using Eigen::Matrix3d;
 using Eigen::MatrixBase;
 
+// template<typename Derived>
+// void fill(MatrixBase<Derived> const& x_hack) {
+//     // Be wary!!! Using hack from:
+//     // https://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html#title3
+//     auto& x = const_cast<MatrixBase<Derived>&>(x_hack);
+//     x.setConstant(1);
+// }
+
 template<typename Derived>
-void fill(MatrixBase<Derived> const& x_hack) {
-    // Be wary!!! Using hack from:
-    // https://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html#title3
-    auto& x = const_cast<MatrixBase<Derived>&>(x_hack);
+void fill(MatrixBase<Derived>&& x) {
+    // Secondary hack (cleaner due to not fiddling with const, but still a hack)
     x.setConstant(1);
+}
+template<typename Derived>
+void fill(MatrixBase<Derived>& x) {
+    fill(std::move(x)); // HACK!!! :(
 }
 
 int main() {
