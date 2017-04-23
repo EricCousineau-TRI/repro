@@ -27,13 +27,13 @@ using Eigen::MatrixBase;
 // }
 
 template<typename Derived>
-void fill(MatrixBase<Derived>&& x) {
-    // Secondary hack (cleaner due to not fiddling with const, but still a hack)
+void fill(MatrixBase<Derived>& x) {
     x.setConstant(1);
 }
 template<typename Derived>
-void fill(MatrixBase<Derived>& x) {
-    fill(std::move(x)); // HACK!!! :(
+void fill(MatrixBase<Derived>&& x) {
+    // Secondary hack (cleaner due to not fiddling with const, but still a hack)
+    fill(static_cast<MatrixBase<Derived>&>(x));
 }
 
 int main() {
