@@ -64,8 +64,9 @@ public:
     using Base = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
     using Base::Base;
 
-    using col_initializer_list = std::initializer_list<MatrixX>;
-    using row_initializer_list = std::initializer_list<col_initializer_list>;
+    // Initializing full matrix
+    using col_initializer_list = std::initializer_list<MatrixX>; // list of columns
+    using row_initializer_list = std::initializer_list<col_initializer_list>; // list of rows
 
     MatrixX(row_initializer_list row_list) {
         int rows = 0;
@@ -123,6 +124,24 @@ public:
         }
     }
 
+    // // Initializing a row
+    // // Challenge: Permitting initializer lists for column Vectors, while avoiding
+    // // ambiguity...
+    // // Solution? Intepret scalar initializer list as column initializing if its column
+    // // dimension is static and singleton.
+    // // This should permit scalar lists within larger lists to still be interpreted as
+    // // row initialization
+
+    // using scalar_initializer_list = std::initializer_list<Scalar>; // row of scalars
+
+    // // Issue: Makes constructor ambiguous...
+    // MatrixX(scalar_initializer_list row) {
+    //     auto& X = Base::derived();
+    //     X.resize(row.size());
+    //     for (int i = 0; i < row.size(); ++i)
+    //         X(i) = row[i];
+    // }
+
     // Permit scalars
     MatrixX(const Scalar& s) {
         // TODO: Somehow enable static-sized 1x1 matrices? Expression template magic?
@@ -138,7 +157,7 @@ using scalar_type = string;
 using MatrixXc = MatrixX<scalar_type>;
 
 void fill(MatrixXc& X, scalar_type prefix) {
-    static const scalar_type hex = "01234566789abcdef";
+    static const scalar_type hex = "0123456789abcdef";
     for (int i = 0; i < X.size(); ++i)
         X(i) = prefix + "[" + hex[i] + "]";
 }
@@ -147,7 +166,7 @@ int main() {
     MatrixXc A(1, 2), B(1, 2),
         C(2, 1),
         D(1, 3), E(1, 3),
-        F(2, 5);
+        F(2, 4);
     fill(A, "A");
     fill(B, "B");
     fill(C, "C");
@@ -157,6 +176,8 @@ int main() {
 
     scalar_type s1 = "s1";
     scalar_type s2 = "s2";
+    scalar_type s3 = "s3";
+    scalar_type s4 = "s4";
 
     cout
         << "A: " << endl << A << endl << endl
@@ -167,11 +188,13 @@ int main() {
         << "F: " << endl << F << endl << endl;
 
     cout
-        << "Scalars: " << s1 << ", " << s2 << endl << endl;
+        << "Scalars: "
+        << s1 << ", " << s2 << ", " << s3 << ", " << s4
+        << endl << endl;
 
     MatrixXc X = {
             { {{A}, {B}}, C, {{D}, {E}} },
-            { F, {{s1}, {s2}} }
+            { F, {{s1, s2}, {s3, s4}} }
         };
 
     cout
