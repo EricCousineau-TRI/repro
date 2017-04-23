@@ -36,14 +36,19 @@ T& to_reference(T&& x) {
 }
 
 template<typename Derived>
-void fill(MatrixBase<Derived>& x) {
+MatrixBase<Derived>& fill(MatrixBase<Derived>& x) {
+    cout << "lvalue" << endl;
     x.setConstant(1);
+    return x;
 }
 template<typename Derived>
-void fill(MatrixBase<Derived>&& x) {
+MatrixBase<Derived>&& fill(MatrixBase<Derived>&& x) {
+    cout << "rvalue" << endl;
     // Secondary hack (cleaner due to not fiddling with const, but still a hack)
     // Cleaner alternative: Reimplement the functionality
     fill(to_reference(x));
+    // If using this hack, and you are returning a reference, you should return to rvalue
+    return std::move(x);
 }
 
 Matrix3d example() {
@@ -53,26 +58,30 @@ Matrix3d example() {
 }
 
 int main() {
-    MatrixXd A(2, 2);
-    Matrix3d B;
-    MatrixXd C(3, 2);
 
-    fill(A);
-    fill(B);
-    fill(C.block(0, 0, 2, 2));
 
     // // This fails
     // fill(C + 5 * MatrixXd::Ones(3, 2));
 
-    // This does not
-    fill(example());
-
     // C.block(0, 0, 2, 2) << A; // This works because Eigen::Block can return a reference to itself
 
-    cout
-        << "A: " << endl << A << endl << endl
-        << "B: " << endl << B << endl << endl
-        << "C: " << endl << C << endl << endl;
+
+    MatrixXd A(2, 2);
+    fill(A);
+    cout << "A: " << endl << A << endl << endl;
+
+    Matrix3d B;
+    fill(B);
+    cout << "B: " << endl << B << endl << endl;
+    MatrixXd C(3, 2);
+    fill(C.block(0, 0, 2, 2))
+        // Chain a statement afterwards, valid for rvalue
+        .block(2, 0, 1, 2).setConstant(20);
+    cout << "C: " << endl << C << endl << endl;
+
+    // This does not
+    // NOTE: Maybe this is OK? ... As long as a live reference is not stored
+    cout << "Semi-bad example: " << endl << fill(example()) << endl;
 
     return 0;
 }
