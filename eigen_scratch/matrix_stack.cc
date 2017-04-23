@@ -57,7 +57,9 @@ using std::cout;
 using std::endl;
 using std::string;
 
-class MatrixXc : public Eigen::Matrix<string, Eigen::Dynamic, Eigen::Dynamic> {
+using Scalar = string;
+
+class MatrixXc : public Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
 public:
     using Matrix::Matrix;
 
@@ -101,7 +103,7 @@ public:
             cols = 0;
 
         // We now have our desired size
-        resize(rows, cols);
+        X.resize(rows, cols);
 
         // Now fill in the data
         // We know that our data is good, no further checks needed
@@ -119,25 +121,35 @@ public:
             r += row_rows;
         }
     }
+
+    // Permit scalars
+    MatrixXc(const Scalar& s) {
+        auto& X = derived();
+        X.resize(1, 1);
+        X(0) = s;
+    }
 };
 
-void fill(MatrixXc& X, string prefix) {
-    static const string hex = "01234566789abcdef";
+void fill(MatrixXc& X, Scalar prefix) {
+    static const Scalar hex = "01234566789abcdef";
     for (int i = 0; i < X.size(); ++i)
-        X(i) = prefix + "[" + hex[i] + "] ";
+        X(i) = prefix + "[" + hex[i] + "]";
 }
 
 int main() {
     MatrixXc A(1, 2), B(1, 2),
         C(2, 1),
         D(1, 3), E(1, 3),
-        F(2, 6);
+        F(2, 5);
     fill(A, "A");
     fill(B, "B");
     fill(C, "C");
     fill(D, "D");
     fill(E, "E");
     fill(F, "F");
+
+    Scalar s1 = "S[0]";
+    Scalar s2 = "S[1]";
 
     cout
         << "A: " << endl << A << endl << endl
@@ -147,9 +159,12 @@ int main() {
         << "E: " << endl << E << endl << endl
         << "F: " << endl << F << endl << endl;
 
+    cout
+        << "Scalars: " << s1 << ", " << s2 << endl << endl;
+
     MatrixXc X = {
             { {{A}, {B}}, C, {{D}, {E}} },
-            { F }
+            { F, {{s1}, {s2}} }
         };
 
     cout
