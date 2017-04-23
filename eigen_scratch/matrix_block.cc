@@ -17,6 +17,9 @@ using Eigen::Block;
 using Eigen::MatrixXd;
 using Eigen::Matrix3d;
 using Eigen::MatrixBase;
+using Eigen::Vector2d;
+using Eigen::Vector3d;
+using Eigen::VectorXd;
 
 // template<typename Derived>
 // void fill(MatrixBase<Derived> const& x_hack) {
@@ -51,6 +54,21 @@ MatrixBase<Derived>&& fill(MatrixBase<Derived>&& x) {
     return std::move(x);
 }
 
+// Useful application
+template<typename DerivedA, typename DerivedB>
+void evalTo(const MatrixBase<DerivedA>& x, MatrixBase<DerivedB>& y) {
+    // Do a lot of complex operations, dependent on a reference to y
+    //...
+    fill(y);
+    y += x;
+}
+template<typename DerivedA, typename DerivedB>
+void evalTo(const MatrixBase<DerivedA>& x, MatrixBase<DerivedB>&& y) {
+    // HACK: Localize only to where you do not store references to y externally
+    evalTo(x, to_reference(x));
+}
+
+
 Matrix3d example() {
     Matrix3d x;
     x.setConstant(10);
@@ -82,6 +100,13 @@ int main() {
     // This does not
     // NOTE: Maybe this is OK? ... As long as a live reference is not stored
     cout << "Semi-bad example: " << endl << fill(example()) << endl;
+
+    // Example useful stuff
+    VectorXd y(5);
+    evalTo(Vector3d::Ones(), y);
+    // // Not able to get this to work???
+    // evalTo(3 * Vector2d::Ones(), y.block(3, 0, 2, 1)); //y.tail(2));
+    cout << "y: " << y << endl;
 
     return 0;
 }
