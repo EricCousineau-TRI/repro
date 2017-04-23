@@ -16,13 +16,15 @@ using Eigen::VectorXd;
 
 // Define toy inheritance
 
+template<typename T, typename To, typename Result = void>
+using enable_if_convertible = typename std::enable_if<std::is_convertible<T, To>::value>::type;
+
 class MyMat : public MatrixXd {
 public:
     // Specialize
     // NOTE: Must use greedy match to combat Eigen's template ctor
     // Can't use rvalue? If I specify T&&, then it will resort to Matrix(const T&)
-    template<typename T, typename Cond =
-        typename std::enable_if<std::is_convertible<T, string>::value>::type>
+    template<typename T, typename = enable_if_convertible<T, string>>
     MyMat(const T& name)
         : MatrixXd() {
         string s(name);
