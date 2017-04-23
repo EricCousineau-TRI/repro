@@ -60,38 +60,26 @@ MatrixBase<Derived>&& fill(MatrixBase<Derived>&& x) {
     return to_rvalue(x);
 }
 
-// Base Case
-template<typename T>
-struct is_matrix : std::false_type { };
-// General Case
-template<typename T>
-struct is_matrix<MatrixBase<T>> : std::true_type {
-    using Derived = T;
-};
-// Helper 1: Connect to enable_if
-template<typename T>
-using enable_if_matrix = std::enable_if<
-    is_matrix<typename T::Base>::value,
-    typename is_matrix<typename T::Base>::Derived // Return the derived type
-    >;
+namespace detail {
+    // For extracting Derived type
+    template<typename Derived>
+    Derived extract_derived(const MatrixBase<Derived>& value) {
+        return std::declval<Derived>();
+    }
 
-// // Useful application
-// template<typename DerivedA, typename DerivedB>
-// void evalTo(const MatrixBase<DerivedA>& x, MatrixBase<DerivedB>& y) {
-//     // Do a lot of complex operations, dependent on a reference to y
-//     //...
-//     y += x;
-// }
-// template<typename DerivedA, typename DerivedB>
-// void evalTo(const MatrixBase<DerivedA>& x, MatrixBase<DerivedB>&& y) {
-//     // HACK: Localize only to where you do not store references to y externally
-//     evalTo(x, to_lvalue(y));
-// }
+    // Use 'decltype' and 'declval'
+    template<typename T>
+    using matrix_derived_type = decltype(extract_derived(std::declval<T>()));
+
+    // Leverage matrix_derived_type with decltype() to implement SFINAE
+}
 
 template<typename DerivedA, typename XprTypeB,
-    typename DerivedB = typename enable_if_matrix<std::decay_t<XprTypeB>>::type>
+    typename DerivedB = detail::matrix_derived_type<XprTypeB>> // Use for SFINAE
 void evalTo(const MatrixBase<DerivedA>& x, XprTypeB&& y) {
-    cout << "good" << endl;
+    // Do a lot of complex operations
+    // Leverage direct typename to use perfect forwarding
+    y += x;
 }
 
 Matrix3d example() {
@@ -132,9 +120,9 @@ int main() {
     VectorXd y(5);
     // // y.setConstant(2);
     evalTo(VectorXd::Ones(5), y);
-    // evalTo(VectorXd::Ones(3), y.head(3));
-    // evalTo(5 * Vector2d::Ones(), y.tail(2)); // (3, 0, 2, 1)); //y.tail(2));
-    // cout << "y: " << y.transpose() << endl;
+    evalTo(VectorXd::Ones(3), y.head(3));
+    evalTo(5 * Vector2d::Ones(), y.tail(2)); // (3, 0, 2, 1)); //y.tail(2));
+    cout << "y: " << y.transpose() << endl;
 
     return 0;
 }
