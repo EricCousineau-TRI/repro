@@ -88,6 +88,9 @@ and then invoke magically...
         XprNode<XprType, *this>(row_list) 
     Sub-expression
         ImplSubXprNode<XprType, *this>(row_list)
+
+This would allow bottom-up knowledge of the expression to be assigned, and should
+sidestep the need for polymorphism
 */
 
 using Eigen::DenseBase;
@@ -133,23 +136,45 @@ private:
         int cols() const { return 1; }
     };
 
+    // // DOES NOT WORK: Will not have knowledge of the type at compile-time,
+    // // in between sizing and applicaiton / evaluation
+    // // This *might* be able to be solved with internal-linkage template references...
+    //
+    // // Try to reference the dense expression
+    // template<typename Derived>
+    // struct ImplDenseCRef : public Impl {
+    //     const DenseBase<Derived>& value;
+    //     ImplDenseCRef(const DenseBase<Derived>& value)
+    //         : value(value)
+    //     { }
+    //     int rows() const { return value.rows(); }
+    //     int cols() const { return value.cols(); }
+    // };
+    // // Store temporary
+    // // HOPE: That this temporary is an expression template type,
+    // // and its evaluation is defferred until 'apply'
+    // template<typename Derived>
+    // struct ImplDenseRRef : public Impl {
+    //     DenseBase<Derived> value;
+    //     ImplDenseRRef(DenseBase<Derived>&& value)
+    //         : value(std::move(value))
+    //     { }
+    //     int rows() const { return value.rows(); }
+    //     int cols() const { return value.cols(); }
+    // };
     // Try to reference the dense expression
-    template<typename Derived>
     struct ImplDenseCRef : public Impl {
-        const DenseBase<Derived>& value;
-        ImplDenseCRef(const DenseBase<Derived>& value)
+        const XprType& value;
+        ImplDenseCRef(const XprType& value)
             : value(value)
         { }
         int rows() const { return value.rows(); }
         int cols() const { return value.cols(); }
     };
     // Store temporary
-    // HOPE: That this temporary is an expression template type,
-    // and its evaluation is defferred until 'apply'
-    template<typename Derived>
     struct ImplDenseRRef : public Impl {
-        DenseBase<Derived> value;
-        ImplDenseRRef(DenseBase<Derived>&& value)
+        XprType value;
+        ImplDenseRRef(XprType&& value)
             : value(std::move(value))
         { }
         int rows() const { return value.rows(); }
@@ -195,24 +220,24 @@ private:
         int rows() const { return m_rows; }
         int cols() const { return m_cols; }
     };
-    
+
     template<typename ImplType>
-    ImplType* try_cast() {
-        return dynamic_cast<ImplType*>(impl.get());
+    const ImplType* try_cast() const {
+        return dynamic_cast<const ImplType*>(impl.get());
     }
 
     template<typename ImplType, typename Derived>
-    void apply_scalar(ImplType* p, DenseBase<Derived>& block) {
+    void apply_scalar(ImplType* p, DenseBase<Derived>& block) const {
         block.coeffRef(0, 0) = p->value;
     }
 
     template<typename ImplType, typename Derived>
-    void apply_dense(ImplType* p, DenseBase<Derived>& block) {
+    void apply_dense(ImplType* p, DenseBase<Derived>& block) const {
         block = p->value;
     }
 
     template<typename Derived>
-    void apply_subxpr(XprNode::ImplSubXprNode* p, DenseBase<Derived>& block) {
+    void apply_subxpr(const ImplSubXprNode* p, DenseBase<Derived>& block) const {
         // Now fill in the data
         // We know that our data is good, no further checks needed
         int r = 0;
@@ -239,13 +264,13 @@ public:
     XprNode(Scalar&& s)
         : impl(new ImplScalarRRef(s))
     { }
-    template<typename Derived>
-    XprNode(const DenseBase<Derived>& o)
-        : impl(new ImplDenseCRef<Derived>(o))
+    // template<typename Derived>
+    XprNode(const XprType& o)
+        : impl(new ImplDenseCRef(o))
     { }
-    template<typename Derived>
-    XprNode(DenseBase<Derived>&& o)
-        : impl(new ImplDenseRRef<Derived>(o))
+    // template<typename Derived>
+    XprNode(XprType&& o)
+        : impl(new ImplDenseRRef(o))
     { }
     XprNode(row_initializer_list row_list)
         : impl(new ImplSubXprNode(row_list))
@@ -259,7 +284,7 @@ public:
     }
 
     template<typename Derived>
-    void apply(int r, int c, DenseBase<Derived>& block) {
+    void apply(DenseBase<Derived>& block) const {
         eigen_assert(block.rows() == rows() && block.cols() == cols());
         // :(
         // Can't figure out how to get rid of polymorphism, or
@@ -295,7 +320,7 @@ public:
         // We now have our desired size
         Initializer xpr(row_list);
         X.resize(xpr.rows(), xpr.cols());
-        xpr.apply(0, 0, X);
+        xpr.apply(X);
     }
 
     // // Initializing a row
