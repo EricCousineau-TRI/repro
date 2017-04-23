@@ -94,6 +94,7 @@ sidestep the need for polymorphism
 */
 
 using Eigen::DenseBase;
+using Eigen::Block;
 
 template<typename XprType>
 class XprNode {
@@ -227,17 +228,17 @@ private:
     }
 
     template<typename ImplType, typename Derived>
-    void apply_scalar(ImplType* p, DenseBase<Derived>& block) const {
+    void apply_scalar(ImplType* p, Block<Derived> block) const {
         block.coeffRef(0, 0) = p->value;
     }
 
     template<typename ImplType, typename Derived>
-    void apply_dense(ImplType* p, DenseBase<Derived>& block) const {
+    void apply_dense(ImplType* p, Block<Derived> block) const {
         block = p->value;
     }
 
     template<typename Derived>
-    void apply_subxpr(const ImplSubXprNode* p, DenseBase<Derived>& block) const {
+    void apply_subxpr(const ImplSubXprNode* p, Block<Derived> block) const {
         // Now fill in the data
         // We know that our data is good, no further checks needed
         int r = 0;
@@ -284,7 +285,7 @@ public:
     }
 
     template<typename Derived>
-    void apply(DenseBase<Derived>& block) const {
+    void apply(Block<Derived> block) const {
         eigen_assert(block.rows() == rows() && block.cols() == cols());
         // :(
         // Can't figure out how to get rid of polymorphism, or
@@ -320,7 +321,7 @@ public:
         // We now have our desired size
         Initializer xpr(row_list);
         X.resize(xpr.rows(), xpr.cols());
-        xpr.apply(X);
+        xpr.apply(X.block(0, 0, xpr.rows(), xpr.cols()));
     }
 
     // // Initializing a row
