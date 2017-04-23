@@ -195,6 +195,7 @@ private:
         int rows() const { return m_rows; }
         int cols() const { return m_cols; }
     };
+    
     template<typename ImplType>
     ImplType* try_cast() {
         return dynamic_cast<ImplType*>(impl.get());
@@ -285,18 +286,17 @@ public:
     using Base = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
     using Base::Base;
 
-    // MatrixX(row_initializer_list row_list) {
+    using Initializer = XprNode<MatrixX>;
+    using InitializerList = typename Initializer::row_initializer_list;
 
-    //     // Get variable for clarity
-    //     auto& X = Base::derived(); // Need 'this->' or other spec with class being templated
-
-
-
-    //     // We now have our desired size
-    //     X.resize(rows, cols);
-
-
-    // }
+    MatrixX(InitializerList row_list) {
+        // Get variable for clarity
+        auto& X = Base::derived(); // Need 'this->' or other spec with class being template
+        // We now have our desired size
+        Initializer xpr(row_list);
+        X.resize(xpr.rows(), xpr.cols());
+        xpr.apply(0, 0, X);
+    }
 
     // // Initializing a row
     // // Challenge: Permitting initializer lists for column Vectors, while avoiding
@@ -366,10 +366,10 @@ int main() {
         << s1 << ", " << s2 << ", " << s3 << ", " << s4
         << endl << endl;
 
-    // MatrixXc X = {
-    //         { {{A}, {B}}, C, {{D}, {E}} },
-    //         { F, {{s1, s2}, {s3, s4}} }
-    //     };
+    MatrixXc X = {
+            { {{A}, {B}}, C, {{D}, {E}} },
+            { F, {{s1, s2}, {s3, s4}} }
+        };
 
     // cout
     //     << "X: " << endl << X << endl << endl;
