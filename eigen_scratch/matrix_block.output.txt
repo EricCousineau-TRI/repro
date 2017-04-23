@@ -1,0 +1,29 @@
+lvalue
+A: 
+1 1
+1 1
+
+lvalue
+B: 
+1 1 1
+1 1 1
+1 1 1
+
+rvalue
+lvalue
+C: 
+ 1  1
+ 1  1
+20 20
+
+Semi-bad example: 
+rvalue
+lvalue
+1 1 1
+1 1 1
+1 1 1
+lvalue
+y: 5, x: 3
+y: 1
+1
+1

@@ -60,12 +60,13 @@ void evalTo(const MatrixBase<DerivedA>& x, MatrixBase<DerivedB>& y) {
     // Do a lot of complex operations, dependent on a reference to y
     //...
     fill(y);
-    y += x;
+    cout << "y: " << y.rows() << ", x: " << x.rows() << endl;
+    y += x; // This works???
 }
 template<typename DerivedA, typename DerivedB>
 void evalTo(const MatrixBase<DerivedA>& x, MatrixBase<DerivedB>&& y) {
     // HACK: Localize only to where you do not store references to y externally
-    evalTo(x, to_reference(x));
+    evalTo(x, to_reference(y));
 }
 
 
@@ -105,7 +106,7 @@ int main() {
     VectorXd y(5);
     evalTo(Vector3d::Ones(), y);
     // // Not able to get this to work???
-    // evalTo(3 * Vector2d::Ones(), y.block(3, 0, 2, 1)); //y.tail(2));
+    // evalTo(Vector2d::Ones(), y.tail(2)); // (3, 0, 2, 1)); //y.tail(2));
     cout << "y: " << y << endl;
 
     return 0;
