@@ -60,17 +60,34 @@ MatrixBase<Derived>&& fill(MatrixBase<Derived>&& x) {
     return to_rvalue(x);
 }
 
+// Cleanest:
+template<typename XprTypeA, /* const T& */
+    typename XprTypeB /* T& or T&& */>
+void evalToImpl(XprTypeA x, XprTypeB y) {
+    y += x;
+}
+
+// Alternative: std::enable_if<>, ensuring that the resultant type is cable of being used wiht
+// MatrixBase.
+// See ../cpp_quick/tpl_tpl_forward.cc for determining if a template is nested
+// Could use:
+//   std::is_base<... MatrixBase<Derived>> -- will this be able to infer? or rather.
+// Or could define:
+//   typename Derived = std::get_inner_type<T, MatrixBase>::type
+// would act as both an blocker and type extraction
+// Could then combine with perfect-forwarding for templating
+
 // Useful application
 template<typename DerivedA, typename DerivedB>
 void evalTo(const MatrixBase<DerivedA>& x, MatrixBase<DerivedB>& y) {
     // Do a lot of complex operations, dependent on a reference to y
     //...
-    y += x;
+    evalToImpl(x, y);
 }
 template<typename DerivedA, typename DerivedB>
 void evalTo(const MatrixBase<DerivedA>& x, MatrixBase<DerivedB>&& y) {
     // HACK: Localize only to where you do not store references to y externally
-    evalTo(x, to_lvalue(y));
+    evalToImpl(x, y);
 }
 
 
@@ -111,8 +128,8 @@ int main() {
     // Example useful stuff
     VectorXd y(5);
     y.setConstant(2);
-    evalTo(Vector3d::Ones(), y.head(3));
-    evalTo(3 * Vector2d::Ones(), y.tail(2)); // (3, 0, 2, 1)); //y.tail(2));
+    evalTo(VectorXd::Ones(5), y.head(5));
+    // evalTo(3 * Vector2d::Ones(), y.tail(2)); // (3, 0, 2, 1)); //y.tail(2));
     cout << "y: " << y.transpose() << endl;
 
     return 0;
