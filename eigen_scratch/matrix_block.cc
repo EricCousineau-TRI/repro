@@ -104,7 +104,8 @@ int main() {
 
     // Example useful stuff
     VectorXd y(5);
-    evalTo(Vector3d::Ones(), y);
+    y += Vector3d::Ones();
+    // evalTo(Vector3d::Ones(), y);
     // // Not able to get this to work???
     // evalTo(Vector2d::Ones(), y.tail(2)); // (3, 0, 2, 1)); //y.tail(2));
     cout << "y: " << y << endl;
