@@ -264,12 +264,12 @@ public:
     XprNode(Scalar&& s)
         : impl(new ImplScalarRRef(s))
     { }
-    // template<typename Derived>
-    XprNode(const XprType& o)
+    template<typename Derived>
+    XprNode(const DenseBase<Derived>& o)
         : impl(new ImplDenseCRef(o))
     { }
-    // template<typename Derived>
-    XprNode(XprType&& o)
+    template<typename Derived>
+    XprNode(DenseBase<Derived>&& o) // Does this even work??? Use enable_if instead?
         : impl(new ImplDenseRRef(o))
     { }
     XprNode(row_initializer_list row_list)
