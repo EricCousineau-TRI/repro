@@ -103,87 +103,7 @@ public:
     using col_initializer_list = std::initializer_list<XprNode>; // list of columns
     using row_initializer_list = std::initializer_list<col_initializer_list>; // list of rows
 
-    // Constructors
-    XprNode(const Scalar& s)
-        : impl(new ImplScalarCRef(s))
-    { }
-    XprNode(Scalar&& s)
-        : impl(new ImplScalarRRef(s))
-    { }
-    template<typename Derived>
-    XprNode(const DenseBase<Derived>& o)
-        : impl(new ImplDenseCRef<Derived>(o))
-    { }
-    template<typename Derived>
-    XprNode(DenseBase<Derived>&& o)
-        : impl(new ImplDenseRRef<Derived>(o))
-    { }
-    XprNode(row_initializer_list row_list)
-        : impl(new ImplSubXprNode(row_list))
-    { }
-
-    int rows() const {
-        return impl->rows();
-    }
-    int cols() const {
-        return impl->cols();
-    }
-
-    template<typename Derived>
-    void apply(int r, int c, DenseBase<Derived>& block) {
-        eigen_assert(block.rows() == rows() && block.cols() == cols());
-        // :(
-        // Can't figure out how to get rid of polymorphism, or
-        // how to even virtualize this templated method...
-        // NOTE: Can get ride of polymorphism...
-        // But would need top-level determination of rows / cols
-        if (auto p = try_cast<ImplScalarCRef>()) {
-            apply_scalar(p, block);
-        } else if (auto p = try_cast<ImplScalarRRef>()) {
-            apply_scalar(p, block);
-        } else if (auto p = try_cast<ImplDenseCRef>()) {
-            apply_dense(p, block);
-        } else if (auto p = try_cast<ImplDenseRRef>()) {
-            apply_dense(p, block);
-        } else if (auto p = try_cast<ImplSubXprNode>()) {
-            apply_subxpr(p, block);
-        }
-    }
 private:
-    template<typename ImplType>
-    ImplType* try_cast() {
-        return dynamic_cast<ImplType*>(impl.get());
-    }
-
-    template<typename ImplType, typename Derived>
-    void apply_scalar(ImplType* p, DenseBase<Derived>& block) {
-        block.coeffRef(0, 0) = p->value;
-    }
-
-    template<typename ImplType, typename Derived>
-    void apply_dense(ImplType* p, DenseBase<Derived>& block) {
-        block = p->value;
-    }
-
-    template<typename Derived>
-    void apply_subxpr(ImplSubXprNode* p, DenseBase<Derived>& block) {
-        // Now fill in the data
-        // We know that our data is good, no further checks needed
-        int r = 0;
-        for (const auto& col_list : p->row_list) {
-            int c = 0;
-            int row_rows = 0;
-            for (const auto& item : col_list) {
-                int item_rows = item.rows();
-                int item_cols = item.cols();
-                item.apply(block.block(r, c, item_rows, item_cols));
-                row_rows = item_rows;
-                c += item_cols;
-            }
-            r += row_rows;
-        }
-    }
-
     struct Impl {
         // How to avoid 'virtual'???
         // Initializer list with differred construction???
@@ -235,6 +155,7 @@ private:
         int rows() const { return value.rows(); }
         int cols() const { return value.cols(); }
     };
+    
     // Store SubXpr
     struct ImplSubXprNode : public Impl {
         row_initializer_list row_list;
@@ -274,8 +195,88 @@ private:
         int rows() const { return m_rows; }
         int cols() const { return m_cols; }
     };
+    template<typename ImplType>
+    ImplType* try_cast() {
+        return dynamic_cast<ImplType*>(impl.get());
+    }
+
+    template<typename ImplType, typename Derived>
+    void apply_scalar(ImplType* p, DenseBase<Derived>& block) {
+        block.coeffRef(0, 0) = p->value;
+    }
+
+    template<typename ImplType, typename Derived>
+    void apply_dense(ImplType* p, DenseBase<Derived>& block) {
+        block = p->value;
+    }
+
+    template<typename Derived>
+    void apply_subxpr(XprNode::ImplSubXprNode* p, DenseBase<Derived>& block) {
+        // Now fill in the data
+        // We know that our data is good, no further checks needed
+        int r = 0;
+        for (const auto& col_list : p->row_list) {
+            int c = 0;
+            int row_rows = 0;
+            for (const auto& item : col_list) {
+                int item_rows = item.rows();
+                int item_cols = item.cols();
+                item.apply(block.block(r, c, item_rows, item_cols));
+                row_rows = item_rows;
+                c += item_cols;
+            }
+            r += row_rows;
+        }
+    }
     
     unique_ptr<Impl> impl; // :(
+public:
+    // Constructors
+    XprNode(const Scalar& s)
+        : impl(new ImplScalarCRef(s))
+    { }
+    XprNode(Scalar&& s)
+        : impl(new ImplScalarRRef(s))
+    { }
+    template<typename Derived>
+    XprNode(const DenseBase<Derived>& o)
+        : impl(new ImplDenseCRef<Derived>(o))
+    { }
+    template<typename Derived>
+    XprNode(DenseBase<Derived>&& o)
+        : impl(new ImplDenseRRef<Derived>(o))
+    { }
+    XprNode(row_initializer_list row_list)
+        : impl(new ImplSubXprNode(row_list))
+    { }
+
+    int rows() const {
+        return impl->rows();
+    }
+    int cols() const {
+        return impl->cols();
+    }
+
+    template<typename Derived>
+    void apply(int r, int c, DenseBase<Derived>& block) {
+        eigen_assert(block.rows() == rows() && block.cols() == cols());
+        // :(
+        // Can't figure out how to get rid of polymorphism, or
+        // how to even virtualize this templated method...
+        // NOTE: Can get ride of polymorphism...
+        // But would still need run-time top-level determination of rows / cols
+        if (auto p = try_cast<ImplScalarCRef>()) {
+            apply_scalar(p, block);
+        } else if (auto p = try_cast<ImplScalarRRef>()) {
+            apply_scalar(p, block);
+        } else if (auto p = try_cast<ImplDenseCRef>()) {
+            apply_dense(p, block);
+        } else if (auto p = try_cast<ImplDenseRRef>()) {
+            apply_dense(p, block);
+        } else if (auto p = try_cast<ImplSubXprNode>()) {
+            apply_subxpr(p, block);
+        }
+    }
 };
 
 template<typename Scalar>
