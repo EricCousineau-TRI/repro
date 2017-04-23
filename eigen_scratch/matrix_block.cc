@@ -26,6 +26,15 @@ using Eigen::MatrixBase;
 //     x.setConstant(1);
 // }
 
+/**
+Obtain lvalue reference from rvalue reference.
+Only use if you know what you are doing!
+*/
+template<typename T>
+T& to_reference(T&& x) {
+    return static_cast<T&>(x);
+}
+
 template<typename Derived>
 void fill(MatrixBase<Derived>& x) {
     x.setConstant(1);
@@ -33,7 +42,7 @@ void fill(MatrixBase<Derived>& x) {
 template<typename Derived>
 void fill(MatrixBase<Derived>&& x) {
     // Secondary hack (cleaner due to not fiddling with const, but still a hack)
-    fill(static_cast<MatrixBase<Derived>&>(x));
+    fill(to_reference(x));
 }
 
 int main() {
