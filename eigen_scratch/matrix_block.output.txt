@@ -11,3 +11,16 @@ B:
 
 rvalue
 lvalue
+C: 
+20  1
+ 1  1
+ 0  0
+
+Semi-bad example: 
+rvalue
+lvalue
+1 1 1
+1 1 1
+1 1 1
+
+y: 3 3 3 5 5
