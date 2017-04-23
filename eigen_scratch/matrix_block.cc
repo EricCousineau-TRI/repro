@@ -88,7 +88,7 @@ using matrix_type = decltype(exract_derived(std::declval<T>()));
 // Using mutable_matrix_derived_type:
 template<typename XprType,
     typename Derived = mutable_matrix_derived_type<XprType>>
-auto fill(XprType&& x) {
+auto&& fill(XprType&& x) {
     // cannot use decltype(x) on return type?
     x.setConstant(1);
     return std::forward<XprType>(x);
