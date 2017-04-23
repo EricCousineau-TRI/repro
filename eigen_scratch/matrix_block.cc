@@ -1,5 +1,8 @@
 // Purpose: Figure out how to generically use different expressions, to be compatible with assigning to blocks and what not
 
+// Better use of decltype?
+// @ref http://stackoverflow.com/a/22726414/170413
+
 #include "cpp_quick/name_trait.h"
 
 #include <string>
@@ -32,13 +35,9 @@ using Eigen::VectorXd;
  * @note Cannot be used except for in the context of decltype()!
  */
 template<typename Derived>
-Derived extract_mutable_derived(MatrixBase<Derived>&& value) {
-    return std::declval<Derived>();
-}
+Derived extract_mutable_derived_type(MatrixBase<Derived>&& value);
 template<typename Derived>
-Derived extract_mutable_derived(MatrixBase<Derived>& value) {
-    return std::declval<Derived>();
-}
+Derived extract_mutable_derived_type(MatrixBase<Derived>& value);
 
 /**
  * Return the derived type of a given matrix, leveraging extract_derived
@@ -51,7 +50,7 @@ Derived extract_mutable_derived(MatrixBase<Derived>& value) {
  * TODO: Figure out how to idenfity a type which fails SFINAE. Use AssertionChecker pattern?
  */
 template<typename T>
-using mutable_matrix_derived_type = decltype(extract_mutable_derived(std::declval<T>()));
+using mutable_matrix_derived_type = decltype(extract_mutable_derived_type(std::declval<T>()));
 
 /*
 // Can't get this to work as intended...
@@ -100,7 +99,8 @@ template<typename DerivedA, typename XprTypeB,
         // mutable_matrix_derived_type<XprTypeB>> // Use for SFINAE
 void evalTo(const MatrixBase<DerivedA>& x, XprTypeB&& y) {
     // Do a lot of complex operations
-    // Leverage direct typename to use perfect forwarding (but constrained
+    // Leverage direct typename to use perfect forwarding
+    // (but constrained to mutable references)
     y += x;
 }
 
@@ -177,7 +177,10 @@ int main() {
     evalTo(VectorXd::Ones(5), y);
     evalTo(VectorXd::Ones(3), y.head(3));
     evalTo(5 * Vector2d::Ones(), y.tail(2));
-    evalTo(5 * Vector2d::Ones(), 5);
+
+    // // Get prettier error?
+    // evalTo(5 * Vector2d::Ones(), 5);
+
     cout << "y: " << y.transpose() << endl;
 
     return 0;
