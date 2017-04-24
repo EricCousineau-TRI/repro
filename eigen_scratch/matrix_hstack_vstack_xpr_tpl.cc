@@ -77,26 +77,24 @@ template<typename Derived>
 struct stack_detail {
     template<typename T>
     using is_scalar = std::is_convertible<T, typename Derived::Scalar>;
+    template<typename T>
+    using is_hstack = is_specialization_of<T, hstack_tuple> { };
+    template<typename T>
+    using is_vstack = is_specialization_of<T, vstack_tuple> { };
 
     static constexpr int
         TMatrix = 0,
         TScalar = 1,
-        THStack = 2,
-        TVStack = 3;
+        TStack = 2;
 
     template<typename T>
-    struct info {
+    struct type_index {
+        static constexpr int value =
+            is_scalar<T>::value ? TScalar : (
+                is_hstack<T>::value || is_vstack<T>::value ? TStack :
+                    TMatrix
+                );
     };
-
-    // template<typename T>
-    // using is_hstack = is_specialization_of<T, hstack_tuple> { };
-    // template<typename T>
-    // using is_vstack = is_specialization_of<T, vstack_tuple> { };
-
-    // template<typename T>
-    // using enable_if_scalar = std::enable_if<
-    //     is_scalar<T>::value, typename Derived::Scalar>;
-
 
     template<typename XprType, int type = TMatrix>
     struct SubXpr {
@@ -134,12 +132,38 @@ struct stack_detail {
         }
     };
 
+    template<typename Stack>
+    struct SubXpr<Stack, TStack> {
+        const Stack& value;
+        SubXpr(const Stack& stack)
+            : value(value) {
+            value.init_if_needed<Derived>();
+        }
+        int rows() {
+            return value.m_rows;
+        }
+        int cols() {
+            return value.m_cols;
+        }
+        template<typename AssignXprType>
+        void assign(AssignXprType&& out) {
+            cout << "assign stack" << endl;
+            value.assign(out);
+        }
+    };
+
     template<typename T>
     using bare = std::remove_cv_t<std::decay_t<T>>;
 
     // More elegance???
     template<typename T>
-    using SubXprHelper = SubXpr<bare<T>, is_scalar<bare<T>>::value>;
+    using SubXprHelper = SubXpr<bare<T>, type_index<bare<T>>::value>::value>;
+
+    template<typename T>
+    static auto get_subxpr_helper(T&& x) {
+        using SubXpr = typename detail::template SubXprHelper<T>;
+        return SubXpr(std::forward<T>(x));
+    }
 };
 
 // First: Assume fixed-size, do assignment explicitly
@@ -158,11 +182,53 @@ struct stack_tuple : public std::tuple<Args...> {
     }
 };
 
+template<typename T>
+
+
 // Define distinct types for identification
 template<typename... Args>
 struct hstack_tuple : public stack_tuple<Args...> {
     using Base = stack_tuple<Args...>;
     using Base::Base;
+
+    int m_cols {-1};
+    int m_rows {-1};
+
+    template<typename Derived>
+    void init_if_needed() {
+        if (m_cols != -1) {
+            eigen_assert(m_rows != -1);
+            return;
+        }
+        // Need Derived type before use. Will defer until we 
+        m_cols = 0;
+        m_rows = -1;
+        auto f = [&](auto&& cur) {
+            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
+            if (m_rows == -1)
+                m_rows = subxpr.rows();
+            else
+                eigen_assert();
+            m_cols += subxpr.cols();
+        }
+    }
+
+    template<
+        typename XprType,
+        typename Derived = mutable_matrix_derived_type<XprType>
+        >
+    void assign(XprType&& xpr) {
+        init_if_needed<Derived>();
+        int col = 0;
+        auto f = [&](auto&& cur) {
+            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
+            cout << "col: " << col << endl;
+            subxpr.assign(xpr.middleCols(col, subxpr.cols()));
+            col += subxpr.cols();
+        };
+        visit(f);
+        eigen_assert(col == xpr.cols());
+    }
 };
 template<typename... Args>
 struct vstack_tuple : public stack_tuple<Args...> {
@@ -184,29 +250,6 @@ auto vstack(Args&&... args) {
 // auto make_vstack_tuple(Args&&... args) {
 //     return vstack_tuple<Args&&...>(std::forward<Args>(args)...);
 // }
-
-template<
-    typename XprType,
-    typename Derived = mutable_matrix_derived_type<XprType>,
-    typename... Args
-    >
-void hstack_into(XprType&& xpr, Args&&... args) {
-    using detail = stack_detail<Derived>;
-    int col = 0;
-    auto f = [&](auto&& cur) {
-        using T = std::remove_cv_t<std::decay_t<decltype(cur)>>;
-        using SubXpr = typename detail::template SubXprHelper<T>;
-        SubXpr subxpr(cur);
-        eigen_assert(xpr.rows() == subxpr.rows());
-        int sub_cols = subxpr.cols();
-        cout << "col: " << col << endl;
-        subxpr.assign(xpr.middleCols(col, sub_cols));
-        col += sub_cols;
-    };
-    visit_args(f, std::forward<Args>(args)...);
-
-    eigen_assert(col == xpr.cols());
-}
 
 template<
     typename XprType,
@@ -238,30 +281,31 @@ void vstack_into(XprType&& xpr, int row, T1&& t1, Args&&... args) {
 int main() {
     Eigen::Vector2d a(1, 2);
     Eigen::Matrix<double, 1, 3> x;
-    hstack_into(x,
-        // 1., 2., 3.);
-        10., a.transpose());
-
-    int i = 0;
-    auto f = [&](auto&& x) {
-        cout << "visit[" << i++ << "]: " << x << endl;
-    };
-
-    auto t = hstack(10, 2 * a.transpose());
-    t.visit(f);
-    auto t2 = vstack(10, a);
-    t2.visit(f);
+    // hstack(10., a.transpose).assign(x);
 
     cout << x << endl;
+    // hstack_into(x,
+    //     // 1., 2., 3.);
+    //     10., a.transpose());
 
-    Eigen::Matrix3d c;
-    Eigen::Vector3d c1;
-    c1.setConstant(1);
-    Eigen::Matrix<double, 2, 3> c2;
-    c2.setConstant(2);
+    // int i = 0;
+    // auto f = [&](auto&& x) {
+    //     cout << "visit[" << i++ << "]: " << x << endl;
+    // };
 
-    vstack_into(c, 0,
-        c1.transpose(), c2);
+    // auto t = hstack(10, 2 * a.transpose());
+    // t.visit(f);
+    // auto t2 = vstack(10, a);
+    // t2.visit(f);
+
+    // Eigen::Matrix3d c;
+    // Eigen::Vector3d c1;
+    // c1.setConstant(1);
+    // Eigen::Matrix<double, 2, 3> c2;
+    // c2.setConstant(2);
+
+    // vstack_into(c, 0,
+    //     c1.transpose(), c2);
 
     cout << c << endl;
     return 0;
