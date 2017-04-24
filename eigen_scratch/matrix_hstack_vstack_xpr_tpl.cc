@@ -139,8 +139,8 @@ struct stack_detail {
 
     template<typename Stack>
     struct SubXpr<Stack, TStack> {
-        const Stack& value;
-        SubXpr(const Stack& value)
+        Stack& value; // Mutable for now, for simplicity.
+        SubXpr(Stack& value)
             : value(value) {
             value.template init_if_needed<Derived>();
         }
@@ -332,6 +332,11 @@ int main() {
     // hstack(a.transpose(), b, b1, c).assign(d); // Will assert at check_size
     hstack(a.transpose(), b, b1, c).assign(d, true);
     cout << d << endl;
+
+    // Test nesting
+    Eigen::Matrix2d e;
+    hstack(vstack(1, 2), vstack(3, 4)).assign(e);
+    cout << e << endl;
 
     return 0;
 }
