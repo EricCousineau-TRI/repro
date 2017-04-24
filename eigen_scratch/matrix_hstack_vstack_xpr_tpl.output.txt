@@ -1,0 +1,8 @@
+assign scalar: 1
+col: 0
+assign scalar: 2
+col: 1
+assign scalar: 3
+col: 2
+done
+1 2 3

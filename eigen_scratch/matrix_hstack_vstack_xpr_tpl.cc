@@ -82,6 +82,7 @@ struct stack_detail {
         }
         template<typename AssignXprType>
         void assign(AssignXprType&& out) {
+            cout << "assign scalar: " << value << endl;
             out.coeffRef(0, 0) = value;
         }
     };
@@ -99,6 +100,7 @@ struct stack_detail {
         }
         template<typename AssignXprType>
         void assign(AssignXprType&& out) {
+            cout << "assign Xpr: " << value << endl;
             out = value;
         }
     };
@@ -134,9 +136,9 @@ void hstack_into(XprType&& xpr, int col, T1&& t1, Args&&... args) {
 
 
 int main() {
-    Eigen::Vector3d x;
+    Eigen::Matrix<double, 1, 3> x;
     hstack_into(x, 0, 1., 2., 3.);
 
-    cout << x.transpose() << endl;
+    cout << x << endl;
     return 0;
 }
