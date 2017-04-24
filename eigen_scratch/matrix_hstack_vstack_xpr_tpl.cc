@@ -65,7 +65,8 @@ template<typename Derived>
 struct stack_detail {
     template<typename T>
     using enable_if_scalar = std::enable_if<
-        std::is_convertible<T, typename Derived::Scalar>::value>;
+        std::is_convertible<T, typename Derived::Scalar>::value,
+        typename Derived::Scalar>;
 
     template<typename Scalar,
         typename Cond = typename enable_if_scalar<Scalar>::type>
@@ -83,7 +84,7 @@ struct stack_detail {
     };
 
     template<typename XprType>
-    struct SubXpr {
+    struct SubXpr<XprType, void> {
         int rows(const XprType& xpr) {
             return xpr.rows();
         }
