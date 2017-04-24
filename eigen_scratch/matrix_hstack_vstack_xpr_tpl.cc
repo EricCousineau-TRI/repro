@@ -64,31 +64,14 @@ struct is_convertible_eigen_matrix
 template<typename Derived>
 struct stack_detail {
     template<typename T>
+    using is_scalar = std::is_convertible<T, typename Derived::Scalar>;
+
+    template<typename T>
     using enable_if_scalar = std::enable_if<
-        std::is_convertible<T, typename Derived::Scalar>::value,
-        typename Derived::Scalar>;
+        is_scalar<T>::value, typename Derived::Scalar>;
 
-    template<typename Scalar,
-        typename Cond = typename enable_if_scalar<Scalar>::type>
+    template<typename XprType, typename = void>
     struct SubXpr {
-        const Scalar& value;
-        SubXpr(const Scalar& value)
-            : value(value) { }
-        int rows() {
-            return 1;
-        }
-        int cols() {
-            return 1;
-        }
-        template<typename AssignXprType>
-        void assign(AssignXprType&& out) {
-            cout << "assign scalar: " << value << endl;
-            out.coeffRef(0, 0) = value;
-        }
-    };
-
-    template<typename XprType>
-    struct SubXpr<XprType, void> {
         const XprType& value;
         SubXpr(const XprType& value)
             : value(value) { }
@@ -102,6 +85,24 @@ struct stack_detail {
         void assign(AssignXprType&& out) {
             cout << "assign Xpr: " << value << endl;
             out = value;
+        }
+    };
+
+    template<typename Scalar>
+    struct SubXpr<Scalar, typename enable_if_scalar<Scalar>::type> {
+        const Scalar& value;
+        SubXpr(const Scalar& value)
+            : value(value) { }
+        int rows() {
+            return 1;
+        }
+        int cols() {
+            return 1;
+        }
+        template<typename AssignXprType>
+        void assign(AssignXprType&& out) {
+            cout << "assign scalar: " << value << endl;
+            out.coeffRef(0, 0) = value;
         }
     };
 };
@@ -137,7 +138,7 @@ void hstack_into(XprType&& xpr, int col, T1&& t1, Args&&... args) {
 
 int main() {
     Eigen::Matrix<double, 1, 3> x;
-    hstack_into(x, 0, 1., 2., 3.);
+    hstack_into(x, 0, Eigen::Vector2d::Ones().transpose());
 
     cout << x << endl;
     return 0;
