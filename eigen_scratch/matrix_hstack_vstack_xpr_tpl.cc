@@ -79,12 +79,12 @@ struct stack_detail {
             return value.rows();
         }
         int cols() {
-            return value.rows();
+            return value.cols();
         }
         template<typename AssignXprType>
         void assign(AssignXprType&& out) {
             cout << "assign Xpr: " << value << endl;
-            out = value;
+            // out = value;
         }
     };
 
@@ -107,7 +107,10 @@ struct stack_detail {
     };
 };
 
-// First: Assume fixed-size
+// First: Assume fixed-size, do assignment explicitly
+// Next step: Collect into tuple, possibly accumulate size
+// Then dispatch based on assignment
+// operator<<
 
 template<
     typename XprType,
@@ -126,19 +129,21 @@ template<
     >
 void hstack_into(XprType&& xpr, int col, T1&& t1, Args&&... args) {
     using detail = stack_detail<Derived>;
-    using SubXpr = typename detail::template SubXpr<std::decay_t<T1>>;
+    using SubXpr = typename detail::template SubXpr<std::remove_cv_t<std::decay_t<T1>>>;
     auto subxpr = SubXpr(t1);
     eigen_assert(xpr.rows() == subxpr.rows());
     int sub_cols = subxpr.cols();
-    subxpr.assign(xpr.middleCols(col, sub_cols));
     cout << "col: " << col << endl;
+    subxpr.assign(xpr.middleCols(col, sub_cols));
     hstack_into(xpr, col + sub_cols, std::forward<Args>(args)...);
 }
 
 
 int main() {
     Eigen::Matrix<double, 1, 3> x;
-    hstack_into(x, 0, Eigen::Vector2d::Ones().transpose());
+    hstack_into(x, 0,
+        1., 2., 3.);
+        // 10., Eigen::Vector2d::Ones().transpose());
 
     cout << x << endl;
     return 0;
