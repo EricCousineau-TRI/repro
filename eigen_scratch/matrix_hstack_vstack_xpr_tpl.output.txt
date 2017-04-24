@@ -11,3 +11,10 @@ assign Xpr: 2 2 2
 1 1 1
 2 2 2
 2 2 2
+row: 0
+assign scalar: 3
+row: 1
+assign scalar: 2
+row: 2
+assign scalar: 1
+3 2 1

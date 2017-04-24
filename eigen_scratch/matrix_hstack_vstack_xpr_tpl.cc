@@ -289,20 +289,23 @@ auto vstack(Args&&... args) {
 
 
 int main() {
-    Eigen::Vector2d a(1, 2);
-    Eigen::Matrix<double, 1, 3> x;
-    hstack(10., a.transpose()).assign(x);
+    Eigen::Matrix<double, 1, 3> a;
+    Eigen::Vector2d a1(1, 2);
+    hstack(10., a1.transpose()).assign(a);
+    cout << a << endl;
 
-    cout << x << endl;
+    Eigen::Matrix3d b;
+    Eigen::Vector3d b1;
+    b1.setConstant(1);
+    Eigen::Matrix<double, 2, 3> b2;
+    b2.setConstant(2);
 
-    Eigen::Matrix3d c;
-    Eigen::Vector3d c1;
-    c1.setConstant(1);
-    Eigen::Matrix<double, 2, 3> c2;
-    c2.setConstant(2);
+    vstack(b1.transpose(), b2).assign(b);
+    cout << b << endl;
 
-    vstack(c1.transpose(), c2).assign(c);
-    cout << c << endl;
-    
+    Eigen::VectorXd c(3);
+    vstack(3, 2, 1).assign(c);
+    cout << c.transpose() << endl;
+
     return 0;
 }
