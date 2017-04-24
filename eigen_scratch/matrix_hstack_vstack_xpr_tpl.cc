@@ -22,17 +22,17 @@ using std::unique_ptr;
 using Eigen::MatrixBase;
 
 /* <snippet from="http://stackoverflow.com/a/22726414/170413"> */
-namespace is_eigen_matrix_detail {
-    // These functions are never defined.
-    template <typename T>
-    std::true_type test(const Eigen::MatrixBase<T>*);
+// namespace is_eigen_matrix_detail {
+//     // These functions are never defined.
+//     template <typename T>
+//     std::true_type test(const Eigen::MatrixBase<T>*);
 
-    std::false_type test(...);
-}
-template <typename T>
-struct is_eigen_matrix
-    : public decltype(is_eigen_matrix_detail::test(std::declval<T*>()))
-{ };
+//     std::false_type test(...);
+// }
+// template <typename T>
+// struct is_eigen_matrix
+//     : public decltype(is_eigen_matrix_detail::test(std::declval<T*>()))
+// { };
 /* </snippet> */
 
 
@@ -47,16 +47,16 @@ using mutable_matrix_derived_type = decltype(extract_mutable_derived_type(std::d
 
 
 
-// Extend to compatible matrix types
-namespace is_convertible_eigen_matrix_detail {
-    template<typename Derived>
-    std::true_type test(const Eigen::MatrixBase<Derived>&);
-    std::false_type test(...);
-};
-template<typename T, typename DerivedTo>
-struct is_convertible_eigen_matrix
-    : public decltype(is_convertible_eigen_matrix_detail::test<DerivedTo>(std::declval<T>()))
-{ };
+// // Extend to compatible matrix types
+// namespace is_convertible_eigen_matrix_detail {
+//     template<typename Derived>
+//     std::true_type test(const Eigen::MatrixBase<Derived>&);
+//     std::false_type test(...);
+// };
+// template<typename T, typename DerivedTo>
+// struct is_convertible_eigen_matrix
+//     : public decltype(is_convertible_eigen_matrix_detail::test<DerivedTo>(std::declval<T>()))
+// { };
 
 
 /* <snippet from="https://bitbucket.org/martinhofernandes/wheels/src/default/include/wheels/meta/type_traits.h%2B%2B?fileviewer=file-view-default#cl-161"> */
@@ -176,13 +176,16 @@ struct stack_detail {
 // operator<<
 
 template<typename... Args>
-struct stack_tuple : public std::tuple<Args...> {
-    using Base = std::tuple<Args...>;
-    using Base::Base;
+struct stack_tuple {
+    std::tuple<Args...> tuple;
+
+    stack_tuple(Args&&... args)
+        : tuple(std::forward<Args>(args)...)
+    { }
 
     template<typename F>
     void visit(F&& f) {
-        visit_tuple(std::forward<F>(f), static_cast<Base&>(*this));
+        visit_tuple(std::forward<F>(f), tuple);
     }
 };
 
