@@ -2,7 +2,6 @@ col: 0
 assign scalar: 10
 col: 1
 assign Xpr: 1 2
-done
 10  1  2
 row: 0
 assign Xpr: 1 1 1

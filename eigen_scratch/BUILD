@@ -60,6 +60,6 @@ cc_binary(
 
 cc_binary(
     name = "matrix_hstack_vstack_xpr_tpl",
-    srcs = ["matrix_hstack_vstack_xpr_tpl.cc", "//cpp_quick:name_trait.h"],
+    srcs = ["matrix_hstack_vstack_xpr_tpl.cc", "//cpp_quick:name_trait.h", "//cpp_quick:tuple_iter.h"],
     deps = ["@eigen//:eigen"],
 )
