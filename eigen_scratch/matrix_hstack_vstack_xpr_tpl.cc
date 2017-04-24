@@ -84,7 +84,7 @@ struct stack_detail {
         template<typename AssignXprType>
         void assign(AssignXprType&& out) {
             cout << "assign Xpr: " << value << endl;
-            // out = value;
+            out = value;
         }
     };
 
@@ -137,7 +137,7 @@ template<
 void hstack_into(XprType&& xpr, int col, T1&& t1, Args&&... args) {
     using detail = stack_detail<Derived>;
     using SubXpr = typename detail::template SubXprHelper<T1>;
-    auto subxpr = SubXpr(t1);
+    SubXpr subxpr(t1);
     eigen_assert(xpr.rows() == subxpr.rows());
     int sub_cols = subxpr.cols();
     cout << "col: " << col << endl;
@@ -149,8 +149,8 @@ void hstack_into(XprType&& xpr, int col, T1&& t1, Args&&... args) {
 int main() {
     Eigen::Matrix<double, 1, 3> x;
     hstack_into(x, 0,
-        1., 2., 3.);
-        // 10., Eigen::Vector2d::Ones().transpose());
+        // 1., 2., 3.);
+        10., Eigen::Vector2d::Ones().transpose());
 
     cout << x << endl;
     return 0;
