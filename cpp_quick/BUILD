@@ -107,5 +107,5 @@ cc_binary(
 
 cc_binary(
     name = "tuple_iter",
-    srcs = ["tuple_iter.cc", "name_trait.h", "tuple_future.h"],
+    srcs = ["tuple_iter.cc", "tuple_iter.h", "name_trait.h", "tuple_future.h"],
 )
