@@ -331,6 +331,9 @@ void fill(MatrixXs& X, string prefix) {
 int main() {
     Eigen::Matrix<double, 1, 3> a;
     Eigen::Vector2d a1(1, 2);
+    // Existing - better for non-ragged case.
+    a << 10, a1.transpose();
+    cout << "a: " << endl << a << endl << endl;
     hstack(10., a1.transpose()).assign(a);
     cout << "a: " << endl << a << endl << endl;
 
