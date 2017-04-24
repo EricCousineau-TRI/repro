@@ -1,56 +1,25 @@
-col: 0
-assign scalar: 10
-col: 1
-assign Xpr: 1 2
+a: 
 10  1  2
-row: 0
-assign Xpr: 1 1 1
-row: 1
-assign Xpr: 2 2 2
-2 2 2
+
+b: 
 1 1 1
 2 2 2
 2 2 2
-row: 0
-assign scalar: 3
-row: 1
-assign scalar: 2
-row: 2
-assign scalar: 1
-3 2 1
-col: 0
-assign Xpr: 10
- 1
- 2
-col: 1
-assign Xpr: 1 1 1
-2 2 2
-2 2 2
-col: 4
-assign Xpr: 1
-1
-1
-col: 5
-assign Xpr: 3
+
+c: 
+3
 2
 1
+
+d: 
 10  1  1  1  1  3
  1  2  2  2  1  2
  2  2  2  2  1  1
-col: 0
-assign stack
-row: 0
-assign scalar: 1
-row: 1
-assign scalar: 2
-col: 1
-assign stack
-row: 0
-assign scalar: 3
-row: 1
-assign scalar: 4
+
+e: 
 1 3
 2 4
+
 
 
 A: 
@@ -75,42 +44,6 @@ F[1] F[3] F[5] F[7]
 
 Scalars: s1, s2, s3, s4
 
-row: 0
-assign stack
-col: 0
-assign stack
-row: 0
-assign Xpr: A[0] A[1]
-row: 1
-assign Xpr: B[0] B[1]
-col: 2
-assign Xpr: C[0]
-C[1]
-col: 3
-assign stack
-row: 0
-assign Xpr: D[0] D[1] D[2]
-row: 1
-assign Xpr: E[0] E[1] E[2]
-row: 2
-assign stack
-col: 0
-assign Xpr: F[0] F[2] F[4] F[6]
-F[1] F[3] F[5] F[7]
-col: 4
-assign stack
-row: 0
-assign stack
-col: 0
-assign scalar: s1
-col: 1
-assign scalar: s2
-row: 1
-assign stack
-col: 0
-assign scalar: s3
-col: 1
-assign scalar: s4
 X: 
 A[0] A[1] C[0] D[0] D[1] D[2]
 B[0] B[1] C[1] E[0] E[1] E[2]

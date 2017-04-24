@@ -114,7 +114,6 @@ struct stack_detail {
         }
         template<typename AssignXprType>
         void assign(AssignXprType&& out) {
-            cout << "assign Xpr: " << value << endl;
             out = value;
         }
     };
@@ -132,7 +131,6 @@ struct stack_detail {
         }
         template<typename AssignXprType>
         void assign(AssignXprType&& out) {
-            cout << "assign scalar: " << value << endl;
             out.coeffRef(0, 0) = value;
         }
     };
@@ -152,7 +150,6 @@ struct stack_detail {
         }
         template<typename AssignXprType>
         void assign(AssignXprType&& out) {
-            cout << "assign stack" << endl;
             value.assign(out);
         }
     };
@@ -242,7 +239,6 @@ struct hstack_tuple : public stack_tuple<Args...> {
         int col = 0;
         auto f = [&](auto&& cur) {
             auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
-            cout << "col: " << col << endl;
             subxpr.assign(xpr.middleCols(col, subxpr.cols()));
             col += subxpr.cols();
         };
@@ -288,7 +284,6 @@ struct vstack_tuple : public stack_tuple<Args...> {
         int row = 0;
         auto f = [&](auto&& cur) {
             auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
-            cout << "row: " << row << endl;
             subxpr.assign(xpr.middleRows(row, subxpr.rows()));
             row += subxpr.rows();
         };
@@ -320,7 +315,7 @@ int main() {
     Eigen::Matrix<double, 1, 3> a;
     Eigen::Vector2d a1(1, 2);
     hstack(10., a1.transpose()).assign(a);
-    cout << a << endl;
+    cout << "a: " << endl << a << endl << endl;
 
     Eigen::Matrix3d b;
     Eigen::Vector3d b1;
@@ -329,23 +324,23 @@ int main() {
     b2.setConstant(2);
 
     vstack(b1.transpose(), b2).assign(b);
-    cout << b << endl;
+    cout << "b: " << endl << b << endl << endl;
 
     // Test for resize needed
     Eigen::VectorXd c;
     vstack(3, 2, 1).assign(c, true);
-    cout << c.transpose() << endl;
+    cout << "c: " << endl << c << endl << endl;
 
     // Test for resize for matrix
     Eigen::MatrixXd d;
     // hstack(a.transpose(), b, b1, c).assign(d); // Will assert at check_size
     hstack(a.transpose(), b, b1, c).assign(d, true);
-    cout << d << endl;
+    cout << "d: " << endl << d << endl << endl;
 
     // Test nesting
     Eigen::Matrix2d e;
     hstack(vstack(1, 2), vstack(3, 4)).assign(e);
-    cout << e << endl;
+    cout << "e: " << endl << e << endl << endl;
 
     cout << endl << endl;
 
