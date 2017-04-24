@@ -307,6 +307,17 @@ auto vstack(Args&&... args) {
     return vstack_tuple<Args&&...>(std::forward<Args>(args)...);
 }
 
+// Syntactic sugar
+template<
+    typename XprType,
+    typename Stack,
+    typename Derived = mutable_matrix_derived_type<XprType>,
+    typename Cond = typename std::enable_if<is_stack<bare<Stack>>::value>::type
+    >
+void operator<<(XprType&& xpr, Stack&& stack) {
+    // Permit resizing by default
+    stack.assign(xpr, true);
+}
 
 
 using MatrixXs = Eigen::Matrix<string, Eigen::Dynamic, Eigen::Dynamic>;
@@ -329,23 +340,23 @@ int main() {
     Eigen::Matrix<double, 2, 3> b2;
     b2.setConstant(2);
 
-    vstack(b1.transpose(), b2).assign(b);
+    b << vstack(b1.transpose(), b2);
     cout << "b: " << endl << b << endl << endl;
 
     // Test for resize needed
     Eigen::VectorXd c;
-    vstack(3, 2, 1).assign(c, true);
+    c << vstack(3, 2, 1);
     cout << "c: " << endl << c << endl << endl;
 
     // Test for resize for matrix
     Eigen::MatrixXd d;
     // hstack(a.transpose(), b, b1, c).assign(d); // Will assert at check_size
-    hstack(a.transpose(), b, b1, c).assign(d, true);
+    d << hstack(a.transpose(), b, b1, c);
     cout << "d: " << endl << d << endl << endl;
 
     // Test nesting
     Eigen::Matrix2d e;
-    hstack(vstack(1, 2), vstack(3, 4)).assign(e);
+    e << hstack(vstack(1, 2), vstack(3, 4));
     cout << "e: " << endl << e << endl << endl;
 
     cout << endl << endl;
@@ -382,10 +393,10 @@ int main() {
         << endl << endl;
 
     MatrixXs X;
-    vstack(
+    X << vstack(
         hstack( vstack(A, B), C, vstack(D, E) ),
         hstack( F, vstack(hstack(s1, s2), hstack(s3, s4)) )
-    ).assign(X, true);
+    );
 
     cout
         << "X: " << endl << X << endl << endl;
