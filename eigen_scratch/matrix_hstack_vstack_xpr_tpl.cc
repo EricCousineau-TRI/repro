@@ -191,9 +191,15 @@ struct stack_tuple {
         visit_tuple(std::forward<F>(f), tuple);
     }
     template<typename XprType>
-    void resize_if_needed(XprType&& xpr) {
+    void check_size(XprType&& xpr, bool allow_resize) {
         if (xpr.rows() != m_rows || xpr.cols() != m_cols)
-            xpr.derived().resize(m_rows, m_cols);
+        {
+            if (allow_resize)
+                xpr.derived().resize(m_rows, m_cols);
+            else
+                // Can I include a message here?
+                eigen_assert(xpr.rows() == m_rows && xpr.cols() == m_cols);
+        }
     }
 };
 
@@ -229,10 +235,9 @@ struct hstack_tuple : public stack_tuple<Args...> {
         typename XprType,
         typename Derived = mutable_matrix_derived_type<XprType>
         >
-    void assign(XprType&& xpr, bool resize = false) {
+    void assign(XprType&& xpr, bool allow_resize = false) {
         init_if_needed<Derived>();
-        if (resize)
-            Base::resize_if_needed(xpr);
+        Base::check_size(xpr, allow_resize);
 
         int col = 0;
         auto f = [&](auto&& cur) {
@@ -276,10 +281,9 @@ struct vstack_tuple : public stack_tuple<Args...> {
         typename XprType,
         typename Derived = mutable_matrix_derived_type<XprType>
         >
-    void assign(XprType&& xpr, bool resize = false) {
+    void assign(XprType&& xpr, bool allow_resize = false) {
         init_if_needed<Derived>();
-        if (resize)
-            Base::resize_if_needed(xpr);
+        Base::check_size(xpr, allow_resize);
 
         int row = 0;
         auto f = [&](auto&& cur) {
@@ -318,9 +322,16 @@ int main() {
     vstack(b1.transpose(), b2).assign(b);
     cout << b << endl;
 
-    Eigen::VectorXd c(3);
-    vstack(3, 2, 1).assign(c);
+    // Test for resize needed
+    Eigen::VectorXd c;
+    vstack(3, 2, 1).assign(c, true);
     cout << c.transpose() << endl;
+
+    // Test for resize for matrix
+    Eigen::MatrixXd d;
+    // hstack(a.transpose(), b, b1, c).assign(d); // Will assert at check_size
+    hstack(a.transpose(), b, b1, c).assign(d, true);
+    cout << d << endl;
 
     return 0;
 }

@@ -18,3 +18,22 @@ assign scalar: 2
 row: 2
 assign scalar: 1
 3 2 1
+col: 0
+assign Xpr: 10
+ 1
+ 2
+col: 1
+assign Xpr: 1 1 1
+2 2 2
+2 2 2
+col: 4
+assign Xpr: 1
+1
+1
+col: 5
+assign Xpr: 3
+2
+1
+10  1  1  1  1  3
+ 1  2  2  2  1  2
+ 2  2  2  2  1  1
