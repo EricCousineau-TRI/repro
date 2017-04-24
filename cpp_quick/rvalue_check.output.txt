@@ -1,0 +1,12 @@
+>>> my_func(x);
+lvalue reference
+
+>>> my_func(static_cast<const string>(string("wut")));
+const rvalue reference
+
+>>> my_func("hello");
+rvalue reference
+
+>>> my_func(cx);
+const lvalue reference
+

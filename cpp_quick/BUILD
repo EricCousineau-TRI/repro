@@ -99,3 +99,8 @@ cc_binary(
     name = "tpl_ref",
     srcs = ["tpl_ref.cc", "name_trait.h"],
 )
+
+cc_binary(
+    name = "rvalue_check",
+    srcs = ["rvalue_check.cc", "name_trait.h"],
+)
