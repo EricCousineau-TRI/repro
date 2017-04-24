@@ -147,6 +147,20 @@ struct stack_detail {
 // Then dispatch based on assignment
 // operator<<
 
+
+template<typename... Args>
+struct hstack_tuple : public std::tuple<Args...> {
+    using Base = std::tuple<Args...>;
+    using Base::Base;
+};
+
+// Actually leveraging std::forward_as_tuple
+template<typename... Args>
+auto make_hstack_tuple(Args&&... args) {
+    return hstack_tuple<Args&&...>(std::forward<Args>(args)...);
+}
+
+
 template<
     typename XprType,
     typename Derived = mutable_matrix_derived_type<XprType>,
@@ -203,6 +217,8 @@ int main() {
     hstack_into(x,
         // 1., 2., 3.);
         10., a.transpose());
+
+    auto t = make_hstack_tuple(10, a.transpose());
 
     cout << x << endl;
 
