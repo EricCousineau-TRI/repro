@@ -209,10 +209,10 @@ struct hstack_tuple : public stack_tuple<Args...> {
             if (m_rows == -1)
                 m_rows = subxpr.rows();
             else
-                eigen_assert(subxpr.rows() = m_rows);
+                eigen_assert(subxpr.rows() == m_rows);
             m_cols += subxpr.cols();
         };
-        visit(f);
+        Base::visit(f);
     }
 
     template<
@@ -228,7 +228,7 @@ struct hstack_tuple : public stack_tuple<Args...> {
             subxpr.assign(xpr.middleCols(col, subxpr.cols()));
             col += subxpr.cols();
         };
-        visit(f);
+        Base::visit(f);
         eigen_assert(col == xpr.cols());
     }
 };
@@ -283,7 +283,7 @@ void vstack_into(XprType&& xpr, int row, T1&& t1, Args&&... args) {
 int main() {
     Eigen::Vector2d a(1, 2);
     Eigen::Matrix<double, 1, 3> x;
-    // hstack(10., a.transpose).assign(x);
+    hstack(10., a.transpose()).assign(x);
 
     cout << x << endl;
     // hstack_into(x,
