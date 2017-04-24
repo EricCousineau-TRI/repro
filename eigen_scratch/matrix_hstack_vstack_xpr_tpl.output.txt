@@ -1,0 +1,19 @@
+col: 0
+assign scalar: 10
+col: 1
+assign Xpr: 1 2
+visit[0]: 10
+visit[1]: 2 4
+visit[2]: 10
+visit[3]: 1
+2
+10  1  2
+row: 0
+assign Xpr: 1 1 1
+row: 1
+assign Xpr: 2 2 2
+2 2 2
+done
+1 1 1
+2 2 2
+2 2 2

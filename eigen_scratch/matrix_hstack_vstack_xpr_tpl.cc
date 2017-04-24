@@ -147,19 +147,43 @@ struct stack_detail {
 // Then dispatch based on assignment
 // operator<<
 
-
 template<typename... Args>
-struct hstack_tuple : public std::tuple<Args...> {
+struct stack_tuple : public std::tuple<Args...> {
     using Base = std::tuple<Args...>;
+    using Base::Base;
+
+    template<typename F>
+    void visit(F&& f) {
+        visit_tuple(std::forward<F>(f), static_cast<Base&>(*this));
+    }
+};
+
+// Define distinct types for identification
+template<typename... Args>
+struct hstack_tuple : public stack_tuple<Args...> {
+    using Base = stack_tuple<Args...>;
+    using Base::Base;
+};
+template<typename... Args>
+struct vstack_tuple : public stack_tuple<Args...> {
+    using Base = stack_tuple<Args...>;
     using Base::Base;
 };
 
 // Actually leveraging std::forward_as_tuple
 template<typename... Args>
-auto make_hstack_tuple(Args&&... args) {
+auto hstack(Args&&... args) {
     return hstack_tuple<Args&&...>(std::forward<Args>(args)...);
 }
+template<typename... Args>
+auto vstack(Args&&... args) {
+    return vstack_tuple<Args&&...>(std::forward<Args>(args)...);
+}
 
+// template<typename... Args>
+// auto make_vstack_tuple(Args&&... args) {
+//     return vstack_tuple<Args&&...>(std::forward<Args>(args)...);
+// }
 
 template<
     typename XprType,
@@ -218,7 +242,15 @@ int main() {
         // 1., 2., 3.);
         10., a.transpose());
 
-    auto t = make_hstack_tuple(10, a.transpose());
+    int i = 0;
+    auto f = [&](auto&& x) {
+        cout << "visit[" << i++ << "]: " << x << endl;
+    };
+
+    auto t = hstack(10, 2 * a.transpose());
+    t.visit(f);
+    auto t2 = vstack(10, a);
+    t2.visit(f);
 
     cout << x << endl;
 
