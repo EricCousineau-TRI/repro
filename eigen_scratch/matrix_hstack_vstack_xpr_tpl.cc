@@ -66,11 +66,11 @@ struct stack_detail {
     template<typename T>
     using is_scalar = std::is_convertible<T, typename Derived::Scalar>;
 
-    template<typename T>
-    using enable_if_scalar = std::enable_if<
-        is_scalar<T>::value, typename Derived::Scalar>;
+    // template<typename T>
+    // using enable_if_scalar = std::enable_if<
+    //     is_scalar<T>::value, typename Derived::Scalar>;
 
-    template<typename XprType, typename = void>
+    template<typename XprType, bool isscalar = false>
     struct SubXpr {
         const XprType& value;
         SubXpr(const XprType& value)
@@ -89,7 +89,7 @@ struct stack_detail {
     };
 
     template<typename Scalar>
-    struct SubXpr<Scalar, typename enable_if_scalar<Scalar>::type> {
+    struct SubXpr<Scalar, true> {
         const Scalar& value;
         SubXpr(const Scalar& value)
             : value(value) { }
@@ -105,6 +105,13 @@ struct stack_detail {
             out.coeffRef(0, 0) = value;
         }
     };
+
+    template<typename T>
+    using bare = std::remove_cv_t<std::decay_t<T>>;
+
+    // More elegance???
+    template<typename T>
+    using SubXprHelper = SubXpr<bare<T>, is_scalar<bare<T>>::value>;
 };
 
 // First: Assume fixed-size, do assignment explicitly
@@ -129,7 +136,7 @@ template<
     >
 void hstack_into(XprType&& xpr, int col, T1&& t1, Args&&... args) {
     using detail = stack_detail<Derived>;
-    using SubXpr = typename detail::template SubXpr<std::remove_cv_t<std::decay_t<T1>>>;
+    using SubXpr = typename detail::template SubXprHelper<T1>;
     auto subxpr = SubXpr(t1);
     eigen_assert(xpr.rows() == subxpr.rows());
     int sub_cols = subxpr.cols();
