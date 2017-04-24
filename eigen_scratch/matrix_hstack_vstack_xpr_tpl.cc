@@ -179,6 +179,9 @@ template<typename... Args>
 struct stack_tuple {
     std::tuple<Args...> tuple;
 
+    int m_rows {-1};
+    int m_cols {-1};
+
     stack_tuple(Args&&... args)
         : tuple(std::forward<Args>(args)...)
     { }
@@ -187,6 +190,11 @@ struct stack_tuple {
     void visit(F&& f) {
         visit_tuple(std::forward<F>(f), tuple);
     }
+    template<typename XprType>
+    void resize_if_needed(XprType&& xpr) {
+        if (xpr.rows() != m_rows || xpr.cols() != m_cols)
+            xpr.derived().resize(m_rows, m_cols);
+    }
 };
 
 // Define distinct types for identification
@@ -194,9 +202,8 @@ template<typename... Args>
 struct hstack_tuple : public stack_tuple<Args...> {
     using Base = stack_tuple<Args...>;
     using Base::Base;
-
-    int m_cols {-1};
-    int m_rows {-1};
+    using Base::m_cols;
+    using Base::m_rows;
 
     template<typename Derived>
     void init_if_needed() {
@@ -222,8 +229,11 @@ struct hstack_tuple : public stack_tuple<Args...> {
         typename XprType,
         typename Derived = mutable_matrix_derived_type<XprType>
         >
-    void assign(XprType&& xpr) {
+    void assign(XprType&& xpr, bool resize = false) {
         init_if_needed<Derived>();
+        if (resize)
+            Base::resize_if_needed(xpr);
+
         int col = 0;
         auto f = [&](auto&& cur) {
             auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
@@ -239,9 +249,8 @@ template<typename... Args>
 struct vstack_tuple : public stack_tuple<Args...> {
     using Base = stack_tuple<Args...>;
     using Base::Base;
-
-    int m_cols {-1};
-    int m_rows {-1};
+    using Base::m_cols;
+    using Base::m_rows;
 
     template<typename Derived>
     void init_if_needed() {
@@ -267,8 +276,11 @@ struct vstack_tuple : public stack_tuple<Args...> {
         typename XprType,
         typename Derived = mutable_matrix_derived_type<XprType>
         >
-    void assign(XprType&& xpr) {
+    void assign(XprType&& xpr, bool resize = false) {
         init_if_needed<Derived>();
+        if (resize)
+            Base::resize_if_needed(xpr);
+
         int row = 0;
         auto f = [&](auto&& cur) {
             auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
