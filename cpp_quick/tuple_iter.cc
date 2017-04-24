@@ -19,8 +19,10 @@ void visit(Callable&& f, T1&& t1, Args&&... args) {
 
 int main() {
     // auto t = make_tuple(1, "hello");
-    auto f = [=](auto&& x) {
-        cout << "visit: " << x << endl;
+    int i = 0;
+    auto f = [&](auto&& x) {
+        cout << "visit[" << i << "]: " << x << endl;
+        i += 1;
     };
 
     visit(f, 1, "hello");
