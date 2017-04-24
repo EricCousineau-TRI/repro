@@ -2,7 +2,7 @@
 1. my_func<Args...>(int&&, int&&, int&&, std::string&&)
 
 >>> ( my_func(6, 12.0) );
-1. my_func<Args...>(int&&, double&&)
+3. my_func<T1:double>(int, double&&)
 
 >>> ( my_func(3, string("Hello")) );
 2. my_func<T1:string>(int, std::string&&)
@@ -17,10 +17,10 @@
 2. my_func<T1:string>(int, char[6]&)
 
 >>> ( my_func(7, var, 12) );
-3. my_func<T1:string, T2:double>(int, char[6]&, int&&)
+4. my_func<T1:string, T2:double>(int, char[6]&, int&&)
 
 >>> ( my_func(9, var, 12.0) );
-3. my_func<T1:string, T2:double>(int, char[6]&, double&&)
+4. my_func<T1:string, T2:double>(int, char[6]&, double&&)
 
 >>> ( my_func(9, var, var, 12.5) );
 1. my_func<Args...>(int&&, char[6]&, char[6]&, double&&)

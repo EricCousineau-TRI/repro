@@ -17,7 +17,7 @@ using std::is_convertible;
 template<bool Expr, typename Result = void>
 using enable_if_t = typename enable_if<Expr, Result>::type;
 template<typename From, typename To>
-using enable_if_convertible_t = enable_if_t<is_convertible<From, To>::value>;
+using enable_if_convertible_t = enable_if_t<is_convertible<From, To>::value, To>;
 
 template<typename ... Args>
 void my_func(Args&& ... args) {
@@ -26,10 +26,19 @@ void my_func(Args&& ... args) {
 
 // Use template with enable_if to catch as many types as possible
 template<typename T1,
-    typename = enable_if_convertible_t<T1, string>>
+    typename Cond = enable_if_convertible_t<T1, string>>
 void my_func(int y, T1&& z) {
     cout
         << "2. my_func<T1:string>(int, " << name_trait<decltype(z)>::name()
+        << ")" << endl;
+}
+
+// Use template with enable_if to catch as many types as possible
+template<typename T1,
+    typename Cond = enable_if_convertible_t<T1, double>>
+void my_func(int y, T1&& z, Cond* = nullptr) { // Have to do weird stuff to catch different templates...
+    cout
+        << "3. my_func<T1:double>(int, " << name_trait<decltype(z)>::name()
         << ")" << endl;
 }
 
@@ -39,7 +48,7 @@ template<typename T1, typename T2,
         is_convertible<T1, string>::value && is_convertible<T2, double>::value>>
 void my_func(int y, T1&& z, T2&& zz) {
     cout
-        << "3. my_func<T1:string, T2:double>(int, "
+        << "4. my_func<T1:string, T2:double>(int, "
         << name_trait<decltype(z)>::name() << ", "
         << name_trait<decltype(zz)>::name() << ")" << endl;
 }
