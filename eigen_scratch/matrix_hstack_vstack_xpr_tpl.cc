@@ -307,6 +307,15 @@ auto vstack(Args&&... args) {
 }
 
 
+
+using MatrixXs = Eigen::Matrix<string, Eigen::Dynamic, Eigen::Dynamic>;
+
+void fill(MatrixXs& X, string prefix) {
+    static const string hex = "0123456789abcdef";
+    for (int i = 0; i < X.size(); ++i)
+        X(i) = prefix + "[" + hex[i] + "]";
+}
+
 int main() {
     Eigen::Matrix<double, 1, 3> a;
     Eigen::Vector2d a1(1, 2);
@@ -337,6 +346,48 @@ int main() {
     Eigen::Matrix2d e;
     hstack(vstack(1, 2), vstack(3, 4)).assign(e);
     cout << e << endl;
+
+    cout << endl << endl;
+
+    // Use the test from `matrix_stack`, NumPy style
+    MatrixXs
+        A(1, 2), B(1, 2),
+        C(2, 1),
+        D(1, 3), E(1, 3),
+        F(2, 4);
+    fill(A, "A");
+    fill(B, "B");
+    fill(C, "C");
+    fill(D, "D");
+    fill(E, "E");
+    fill(F, "F");
+
+    string s1 = "s1";
+    string s2 = "s2";
+    string s3 = "s3";
+    string s4 = "s4";
+
+    cout
+        << "A: " << endl << A << endl << endl
+        << "B: " << endl << B << endl << endl
+        << "C: " << endl << C << endl << endl
+        << "D: " << endl << D << endl << endl
+        << "E: " << endl << E << endl << endl
+        << "F: " << endl << F << endl << endl;
+
+    cout
+        << "Scalars: "
+        << s1 << ", " << s2 << ", " << s3 << ", " << s4
+        << endl << endl;
+
+    MatrixXs X;
+    vstack(
+        hstack( vstack(A, B), C, vstack(D, E) ),
+        hstack( F, vstack(hstack(s1, s2), hstack(s3, s4)) )
+    ).assign(X, true);
+
+    cout
+        << "X: " << endl << X << endl << endl;
 
     return 0;
 }

@@ -163,7 +163,8 @@ void fill(MatrixXc& X, scalar_type prefix) {
 }
 
 int main() {
-    MatrixXc A(1, 2), B(1, 2),
+    MatrixXc
+        A(1, 2), B(1, 2),
         C(2, 1),
         D(1, 3), E(1, 3),
         F(2, 4);
