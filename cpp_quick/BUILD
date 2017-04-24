@@ -109,3 +109,8 @@ cc_binary(
     name = "tuple_iter",
     srcs = ["tuple_iter.cc", "tuple_iter.h", "name_trait.h", "tuple_future.h"],
 )
+
+cc_binary(
+    name = "make_shared_alias",
+    srcs = ["make_shared_alias.cc", "name_trait.h"],
+)
