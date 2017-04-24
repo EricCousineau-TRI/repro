@@ -71,29 +71,35 @@ struct stack_detail {
     template<typename Scalar,
         typename Cond = typename enable_if_scalar<Scalar>::type>
     struct SubXpr {
-        int rows(const Scalar& s) {
+        const Scalar& value;
+        SubXpr(const Scalar& value)
+            : value(value) { }
+        int rows() {
             return 1;
         }
-        int cols(const Scalar& s) {
+        int cols() {
             return 1;
         }
         template<typename AssignXprType>
-        void assign(const Scalar& in, AssignXprType&& out) {
-            out.coeffRef(0, 0) = in;
+        void assign(AssignXprType&& out) {
+            out.coeffRef(0, 0) = value;
         }
     };
 
     template<typename XprType>
     struct SubXpr<XprType, void> {
-        int rows(const XprType& xpr) {
-            return xpr.rows();
+        const XprType& value;
+        SubXpr(const XprType& value)
+            : value(value) { }
+        int rows() {
+            return value.rows();
         }
-        int cols(const XprType& xpr) {
-            return xpr.rows();
+        int cols() {
+            return value.rows();
         }
         template<typename AssignXprType>
-        void assign(const XprType& in, AssignXprType&& out) {
-            out = in;
+        void assign(AssignXprType&& out) {
+            out = value;
         }
     };
 };
@@ -105,12 +111,13 @@ template<
     typename T1,
     typename... Args
     >
-void hstack_into(XprType&& xpr, int col, T1&& subxpr, Args&&... args) {
+void hstack_into(XprType&& xpr, int col, T1&& t1, Args&&... args) {
     using detail = stack_detail<Derived>;
     using SubXpr = typename detail::template SubXpr<std::decay_t<T1>>;
-    eigen_assert(xpr.rows() == SubXpr::rows(subxpr));
-    int sub_cols = SubXpr::cols(subxpr);
-    SubXpr::assign(subxpr, xpr.middleCols(col, sub_cols));
+    auto subxpr = SubXpr(t1);
+    eigen_assert(xpr.rows() == subxpr.rows());
+    int sub_cols = subxpr.cols();
+    subxpr.assign(xpr.middleCols(col, sub_cols));
     hstack_into(xpr, col + sub_cols);
 }
 
