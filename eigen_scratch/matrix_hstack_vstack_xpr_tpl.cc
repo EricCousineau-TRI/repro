@@ -73,14 +73,19 @@ struct is_specialization_of<Template<Args...>, Template> : std::true_type {};
     // Issue: Need a mechanism to discrimnate based on a specific scalar type...
     // A failing case will be Matrix<Matrix<double, 2, 2>, ...> (e.g. tensor-ish stuff)
 
+template<typename... Args>
+struct hstack_tuple;
+template<typename... Args>
+struct vstack_tuple;
+
 template<typename Derived>
 struct stack_detail {
     template<typename T>
     using is_scalar = std::is_convertible<T, typename Derived::Scalar>;
     template<typename T>
-    using is_hstack = is_specialization_of<T, hstack_tuple> { };
+    using is_hstack = is_specialization_of<T, hstack_tuple>;
     template<typename T>
-    using is_vstack = is_specialization_of<T, vstack_tuple> { };
+    using is_vstack = is_specialization_of<T, vstack_tuple>;
 
     static constexpr int
         TMatrix = 0,
@@ -135,9 +140,9 @@ struct stack_detail {
     template<typename Stack>
     struct SubXpr<Stack, TStack> {
         const Stack& value;
-        SubXpr(const Stack& stack)
+        SubXpr(const Stack& value)
             : value(value) {
-            value.init_if_needed<Derived>();
+            value.template init_if_needed<Derived>();
         }
         int rows() {
             return value.m_rows;
@@ -157,12 +162,11 @@ struct stack_detail {
 
     // More elegance???
     template<typename T>
-    using SubXprHelper = SubXpr<bare<T>, type_index<bare<T>>::value>::value>;
+    using SubXprAlias = SubXpr<bare<T>, type_index<bare<T>>::value>;
 
     template<typename T>
     static auto get_subxpr_helper(T&& x) {
-        using SubXpr = typename detail::template SubXprHelper<T>;
-        return SubXpr(std::forward<T>(x));
+        return SubXprAlias<T>(std::forward<T>(x));
     }
 };
 
@@ -181,9 +185,6 @@ struct stack_tuple : public std::tuple<Args...> {
         visit_tuple(std::forward<F>(f), static_cast<Base&>(*this));
     }
 };
-
-template<typename T>
-
 
 // Define distinct types for identification
 template<typename... Args>
@@ -208,9 +209,10 @@ struct hstack_tuple : public stack_tuple<Args...> {
             if (m_rows == -1)
                 m_rows = subxpr.rows();
             else
-                eigen_assert();
+                eigen_assert(subxpr.rows() = m_rows);
             m_cols += subxpr.cols();
-        }
+        };
+        visit(f);
     }
 
     template<
@@ -268,7 +270,7 @@ template<
     >
 void vstack_into(XprType&& xpr, int row, T1&& t1, Args&&... args) {
     using detail = stack_detail<Derived>;
-    using SubXpr = typename detail::template SubXprHelper<T1>;
+    using SubXpr = typename detail::template SubXprAlias<T1>;
     SubXpr subxpr(t1);
     eigen_assert(xpr.cols() == subxpr.cols());
     int sub_rows = subxpr.rows();
@@ -307,6 +309,6 @@ int main() {
     // vstack_into(c, 0,
     //     c1.transpose(), c2);
 
-    cout << c << endl;
+    // cout << c << endl;
     return 0;
 }
