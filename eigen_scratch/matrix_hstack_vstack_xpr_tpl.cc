@@ -105,6 +105,16 @@ struct stack_detail {
 };
 
 // First: Assume fixed-size
+
+template<
+    typename XprType,
+    typename Derived = mutable_matrix_derived_type<XprType>
+    >
+void hstack_into(XprType&& xpr, int col) {
+    eigen_assert(xpr.cols() == col);
+    cout << "done" << endl;
+}
+
 template<
     typename XprType,
     typename Derived = mutable_matrix_derived_type<XprType>,
@@ -118,21 +128,15 @@ void hstack_into(XprType&& xpr, int col, T1&& t1, Args&&... args) {
     eigen_assert(xpr.rows() == subxpr.rows());
     int sub_cols = subxpr.cols();
     subxpr.assign(xpr.middleCols(col, sub_cols));
-    hstack_into(xpr, col + sub_cols);
+    cout << "col: " << col << endl;
+    hstack_into(xpr, col + sub_cols, std::forward<Args>(args)...);
 }
 
-template<
-    typename XprType,
-    typename Derived = mutable_matrix_derived_type<XprType>
-    >
-void hstack_into(XprType&& xpr, int col) {
-    eigen_assert(xpr.cols() == col);
-}
 
 int main() {
-    // Eigen::Vector3d x;
-    // hstack_into(x, 0, 1., 2., 3.);
+    Eigen::Vector3d x;
+    hstack_into(x, 0, 1., 2., 3.);
 
-    // cout << x.transpose() << endl;
+    cout << x.transpose() << endl;
     return 0;
 }
