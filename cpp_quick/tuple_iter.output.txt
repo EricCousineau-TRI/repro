@@ -3,3 +3,7 @@ visit[1]: hello
 visit[0]: 1
 visit[1]: hello
 visit[2]: 10.5
+>>> ( is_specialization_of<decltype(t), std::tuple>::value )
+1
+>>> ( is_specialization_of<decltype(i), std::tuple>::value )
+0
