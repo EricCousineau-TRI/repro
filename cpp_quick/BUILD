@@ -104,3 +104,8 @@ cc_binary(
     name = "rvalue_check",
     srcs = ["rvalue_check.cc", "name_trait.h"],
 )
+
+cc_binary(
+    name = "tuple_iter",
+    srcs = ["tuple_iter.cc", "name_trait.h", "tuple_future.h"],
+)
