@@ -73,19 +73,28 @@ struct is_specialization_of<Template<Args...>, Template> : std::true_type {};
     // Issue: Need a mechanism to discrimnate based on a specific scalar type...
     // A failing case will be Matrix<Matrix<double, 2, 2>, ...> (e.g. tensor-ish stuff)
 
+
+template<typename T>
+using bare = std::remove_cv_t<std::decay_t<T>>;
+
 template<typename... Args>
 struct hstack_tuple;
 template<typename... Args>
 struct vstack_tuple;
 
+template<typename T>
+using is_hstack = is_specialization_of<T, hstack_tuple>;
+template<typename T>
+using is_vstack = is_specialization_of<T, vstack_tuple>;
+template<typename T>
+struct is_stack {
+    static constexpr bool value = is_hstack<T>::value || is_vstack<T>::value;
+};
+
 template<typename Derived>
 struct stack_detail {
     template<typename T>
     using is_scalar = std::is_convertible<T, typename Derived::Scalar>;
-    template<typename T>
-    using is_hstack = is_specialization_of<T, hstack_tuple>;
-    template<typename T>
-    using is_vstack = is_specialization_of<T, vstack_tuple>;
 
     static constexpr int
         TMatrix = 0,
@@ -96,7 +105,7 @@ struct stack_detail {
     struct type_index {
         static constexpr int value =
             is_scalar<T>::value ? TScalar : (
-                is_hstack<T>::value || is_vstack<T>::value ? TStack :
+                is_stack<T>::value ? TStack :
                     TMatrix
                 );
     };
@@ -153,9 +162,6 @@ struct stack_detail {
             value.assign(out);
         }
     };
-
-    template<typename T>
-    using bare = std::remove_cv_t<std::decay_t<T>>;
 
     // More elegance???
     template<typename T>
