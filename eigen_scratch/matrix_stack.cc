@@ -31,7 +31,7 @@ Achievable via:
     Possible? with initializer lists:
        {
          { {{A}, {B}}, C, {{D}, {E}} },
-         { F} }
+         { F }
        }
 
     Grammar:

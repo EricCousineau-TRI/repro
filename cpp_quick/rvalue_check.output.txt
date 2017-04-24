@@ -10,3 +10,14 @@ rvalue reference
 >>> my_func(cx);
 const lvalue reference
 
+>>> name_trait<decltype(s)>::name()
+char const*
+>>> name_trait<decltype(sr)>::name()
+const char[6]&
+>>> name_trait<const int&&>::name()
+const int&&
+using const lvalue
+ + 
+ += 
+using const lvalue
+future
