@@ -57,6 +57,17 @@ struct is_convertible_eigen_matrix
     : public decltype(is_convertible_eigen_matrix_detail::test<DerivedTo>(std::declval<T>()))
 { };
 
+
+/* <snippet from="https://bitbucket.org/martinhofernandes/wheels/src/default/include/wheels/meta/type_traits.h%2B%2B?fileviewer=file-view-default#cl-161"> */
+// @ref http://stackoverflow.com/a/13101086/170413
+//! Tests if T is a specialization of Template
+template <typename T, template <typename...> class Template>
+struct is_specialization_of : std::false_type {};
+template <template <typename...> class Template, typename... Args>
+struct is_specialization_of<Template<Args...>, Template> : std::true_type {};
+/* </snippet> */
+
+
 // Specialize for non-matrix type
     // Issue: Need a mechanism to discrimnate based on a specific scalar type...
     // A failing case will be Matrix<Matrix<double, 2, 2>, ...> (e.g. tensor-ish stuff)
@@ -66,11 +77,22 @@ struct stack_detail {
     template<typename T>
     using is_scalar = std::is_convertible<T, typename Derived::Scalar>;
 
+    template<typename T>
+    using is_hstack = is_specialization_of<T, hstack_tuple> { };
+    template<typename T>
+    using is_vstack = is_specialization_of<T, vstack_tuple> { };
+
     // template<typename T>
     // using enable_if_scalar = std::enable_if<
     //     is_scalar<T>::value, typename Derived::Scalar>;
 
-    template<typename XprType, bool isscalar = false>
+    static constexpr int
+        TMatrix = 0,
+        TScalar = 1,
+        THStack = 2,
+        TVStack = 3;
+
+    template<typename XprType, int type = TMatrix>
     struct SubXpr {
         const XprType& value;
         SubXpr(const XprType& value)
@@ -89,7 +111,7 @@ struct stack_detail {
     };
 
     template<typename Scalar>
-    struct SubXpr<Scalar, true> {
+    struct SubXpr<Scalar, TScalar> {
         const Scalar& value;
         SubXpr(const Scalar& value)
             : value(value) { }
@@ -154,6 +176,13 @@ void vstack_into(XprType&& xpr, int row) {
     eigen_assert(xpr.rows() == row);
     cout << "done" << endl;
 }
+
+
+template<typename... Args>
+struct hstack_tuple : public std::tuple<Args...> {
+    using tuple;
+};
+
 
 template<
     typename XprType,
