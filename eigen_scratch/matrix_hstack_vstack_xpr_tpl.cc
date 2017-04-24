@@ -147,10 +147,11 @@ void hstack_into(XprType&& xpr, int col, T1&& t1, Args&&... args) {
 
 
 int main() {
+    Eigen::Vector2d a(1, 2);
     Eigen::Matrix<double, 1, 3> x;
     hstack_into(x, 0,
         // 1., 2., 3.);
-        10., Eigen::Vector2d::Ones().transpose());
+        10., a.transpose());
 
     cout << x << endl;
     return 0;
