@@ -135,3 +135,8 @@ cc_binary(
     srcs = ["benchmark_map_test.cc"],
     deps = ["//externals/benchmark"],
 )
+
+cc_binary(
+    name = "check_for_type",
+    srcs = ["check_for_type.cc", "name_trait.h"],
+)
