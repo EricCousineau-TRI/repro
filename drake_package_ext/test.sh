@@ -1,12 +1,18 @@
 #!/bin/bash
-set -e -u
+set -x -e -u
 
 suffix=${1-}
 build_dir="build$suffix"
 install_dir="$build_dir/install"
 
 cmd() {
-    ./package_and_extract_drake$suffix.sh $build_dir/ $install_dir > /dev/null 2> /dev/null
+    if [[ $suffix = "_pr" ]]; then
+        cd $DRAKE/tools
+        mkdir -p $install_dir
+        ./package_drake.sh -d $install_dir
+    else
+        ./package_and_extract_drake$suffix.sh $build_dir/ $install_dir > /dev/null 2> /dev/null
+    fi
     echo "- Done"
 }
 
