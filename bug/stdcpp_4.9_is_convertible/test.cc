@@ -49,6 +49,23 @@ void check() {
 }
 
 int main() {
+  cout
+      // https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
+#ifdef __clang__
+       << "__clang__: " << __clang__ << endl
+#endif // #ifdef __clang__
+       << "__GNUC__: " << __GNUC__ << endl
+       << "__GNUC_MINOR__: " << __GNUC_MINOR__ << endl
+       << "__GNUC_PATCHLEVEL__: " << __GNUC__ << endl
+      // https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_macros.html
+      // https://patchwork.ozlabs.org/patch/716321/
+       << "__GLIBCXX__: " << __GLIBCXX__ << endl;
+      // There is only a recent patch to include a richer version numbering 
+      // for libstdc++ (20170117)
+      // https://gcc.gnu.org/ml/libstdc++/2017-01/txtQphYvbjBvG.txt
+      // https://patchwork.ozlabs.org/patch/716321/
+       // << "_GLIBCXX_RELEASE: " << _GLIBCXX_RELEASE << endl;
+
   using APtr = A*;
   using AUPtr = std::unique_ptr<A>;
   using ASPtr = std::shared_ptr<A>;

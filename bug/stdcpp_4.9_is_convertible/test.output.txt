@@ -1,4 +1,9 @@
 + ./build/test
+__clang__: 1
+__GNUC__: 4
+__GNUC_MINOR__: 2
+__GNUC_PATCHLEVEL__: 4
+__GLIBCXX__: 20160609
 is_convertible: 0
 workaround: 0
 
@@ -30,6 +35,10 @@ workaround: 0
 
 
 + build/test_bad
+__GNUC__: 4
+__GNUC_MINOR__: 9
+__GNUC_PATCHLEVEL__: 4
+__GLIBCXX__: 20160413
 is_convertible: 0
 workaround: 0
 
