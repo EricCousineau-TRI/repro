@@ -114,3 +114,8 @@ cc_binary(
     name = "make_shared_alias",
     srcs = ["make_shared_alias.cc", "name_trait.h"],
 )
+
+cc_binary(
+    name = "tpl_friend",
+    srcs = ["tpl_friend.cc"],
+)
