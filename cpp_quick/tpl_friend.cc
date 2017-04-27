@@ -1,29 +1,31 @@
+// @ref http://en.cppreference.com/w/cpp/language/friend#Template_friends
+
 #include <iostream>
 
 using std::cout;
 using std::endl;
 
-template <typename T>
+template<typename T>
 struct A {
-public:
-    A(int value)
-        : value(value_) {}
-protected:
-    int value_;
+    void stuff(const T& x) {
+        cout << "value: " << x.value_ << endl;
+    }
 };
 
 struct B {
     template <typename T>
-    friend class A;
+    friend struct A;
 
-    void stuff(const A& x) {
-        cout << "value: " << x << endl;
-    }
+    public:
+    B(int value)
+        : value_(value) {}
+protected:
+    int value_;
 };
 
 int main() {
-    A a {2};
-    B b;
-    b.stuff(a);
+    B b {2};
+    A<B> a;
+    a.stuff(b);
     return 0;
 }
