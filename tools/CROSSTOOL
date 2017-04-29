@@ -325,6 +325,8 @@ toolchain {
   compilation_mode_flags {
     mode: DBG
     compiler_flag: "-g"
+    compiler_flag: "-O0"
+    compiler_flag: "-fno-inline"
   }
   compilation_mode_flags {
     mode: OPT

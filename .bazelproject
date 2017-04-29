@@ -10,9 +10,8 @@
 # https://ij.bazel.build/docs/project-views.html
 
 directories:
-  .
-  -externals
-  -build
+  ./bug
+  ./externals/eigen
 
 targets:
   //...:all
