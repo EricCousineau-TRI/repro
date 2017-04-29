@@ -27,10 +27,13 @@ void AppendToVector(const Scalar& s, Eigen::MatrixBase<Derived>* px) {
 }
 
 int main() {
-    using VectorXs = Eigen::Matrix<string, Eigen::Dynamic, 1>;
-    VectorXs a(2);
-    a << "x", "y";
-    AppendToVector("z", &a);
+    using VectorXd = Eigen::VectorXd;
+    using VectorXXd = Eigen::Matrix<VectorXd, Eigen::Dynamic, 1>;
+    VectorXXd a(2);
+//    a << VectorXd::Zero(1), VectorXd::Zero(2);
+    a(0) = VectorXd::Zero(1);
+    a(1) = VectorXd::Zero(2);
+    AppendToVector(VectorXd::Ones(3), &a);
 
     return 0;
 }
