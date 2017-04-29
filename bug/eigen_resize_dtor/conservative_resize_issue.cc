@@ -1,3 +1,5 @@
+#define EIGEN_DONT_INLINE
+
 #include <iostream>
 #include <string>
 #include <utility>
