@@ -1,4 +1,4 @@
 [submodule "externals/eigen"]
 	path = externals/eigen
 	url = git@github.com:EricCousineau-TRI/eigen-mirror.git
-	branch = master
+	branch = issue/eigen_override

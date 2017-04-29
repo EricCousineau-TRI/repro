@@ -27,6 +27,8 @@ void AppendToVector(const Scalar& s, VectorXs* px) {
 
 int main() {
 
+    cout << "RowMajor: " << VectorXs::IsRowMajor << endl;
+
     VectorXs a(2);
     a << "x", "y";
     AppendToVector("z", &a);
