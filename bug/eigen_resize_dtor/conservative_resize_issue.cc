@@ -17,7 +17,7 @@ void AppendToVector(const Scalar& s, Eigen::MatrixBase<Derived>* px) {
   int initial_size = derived.size();
 #ifdef USE_BAD
   // TODO(eric.cousineau): This causes a memory leak?
-  derived.conservativeResize(derived.size() + 1);
+  derived.conservativeResize(initial_size + 1);
 #else
   derived.conservativeResize(initial_size + 1, Eigen::NoChange);
 #endif // USE_BAD
