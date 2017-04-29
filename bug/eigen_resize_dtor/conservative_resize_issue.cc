@@ -27,13 +27,12 @@ void AppendToVector(const Scalar& s, Eigen::MatrixBase<Derived>* px) {
 }
 
 int main() {
-    using VectorXd = Eigen::VectorXd;
-    using VectorXXd = Eigen::Matrix<VectorXd, Eigen::Dynamic, 1>;
-    VectorXXd a(2);
-//    a << VectorXd::Zero(1), VectorXd::Zero(2);
-    a(0) = VectorXd::Zero(1);
-    a(1) = VectorXd::Zero(2);
-    AppendToVector(VectorXd::Ones(3), &a);
+    // Sidestep SSO
+    string s = "012345678901234567890123456789";
+    using VectorXs = Eigen::Matrix<string, Eigen::Dynamic, 1>;
+    VectorXs a(2);
+    a << s, s;
+    AppendToVector(s, &a);
 
     return 0;
 }
