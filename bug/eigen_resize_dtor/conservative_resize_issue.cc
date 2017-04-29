@@ -1,5 +1,3 @@
-#define EIGEN_DONT_INLINE
-
 #include <iostream>
 #include <string>
 #include <utility>
@@ -27,12 +25,10 @@ void AppendToVector(const Scalar& s, Eigen::MatrixBase<Derived>* px) {
 }
 
 int main() {
-    // Sidestep SSO
-    string s = "012345678901234567890123456789";
     using VectorXs = Eigen::Matrix<string, Eigen::Dynamic, 1>;
     VectorXs a(2);
-    a << s, s;
-    AppendToVector(s, &a);
+    a << "x", "y";
+    AppendToVector("z", &a);
 
     return 0;
 }
