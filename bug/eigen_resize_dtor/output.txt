@@ -1,0 +1,96 @@
+$ ./repro.sh 
++ target=:conservative_resize_issue
++ echo '[ Good ]'
+[ Good ]
++ bazel_run :conservative_resize_issue
++ bazel run -c dbg '--run_under=valgrind --tool=memcheck' :conservative_resize_issue
+INFO: Found 1 target...
+Target //bug/eigen_resize_dtor:conservative_resize_issue up-to-date:
+  bazel-bin/bug/eigen_resize_dtor/conservative_resize_issue
+INFO: Elapsed time: 1.848s, Critical Path: 1.51s
+
+INFO: Running command line: /bin/bash -c 'valgrind --tool=memcheck bazel-bin/bug/eigen_resize_dtor/conservative_resize_issue '
+==45934== Memcheck, a memory error detector
+==45934== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
+==45934== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
+==45934== Command: /home/eacousineau/.cache/bazel/_bazel_eacousineau/4bfeaeef7a21f92da79b50fef77b3ca6/execroot/repro/bazel-out/clang-3.9-linux-dbg/bin/bug/eigen_resize_dtor/conservative_resize_issue
+==45934== 
+==45934== 
+==45934== HEAP SUMMARY:
+==45934==     in use at exit: 72,704 bytes in 1 blocks
+==45934==   total heap usage: 3 allocs, 2 frees, 72,864 bytes allocated
+==45934== 
+==45934== LEAK SUMMARY:
+==45934==    definitely lost: 0 bytes in 0 blocks
+==45934==    indirectly lost: 0 bytes in 0 blocks
+==45934==      possibly lost: 0 bytes in 0 blocks
+==45934==    still reachable: 72,704 bytes in 1 blocks
+==45934==         suppressed: 0 bytes in 0 blocks
+==45934== Rerun with --leak-check=full to see details of leaked memory
+==45934== 
+==45934== For counts of detected and suppressed errors, rerun with: -v
+==45934== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
++ echo -e '\n\n\n'
+
+
+
+
++ echo '[ Bad ]'
+[ Bad ]
++ bazel_run --copt=-DUSE_BAD :conservative_resize_issue
++ bazel run -c dbg '--run_under=valgrind --tool=memcheck' --copt=-DUSE_BAD :conservative_resize_issue
+INFO: Found 1 target...
+Target //bug/eigen_resize_dtor:conservative_resize_issue up-to-date:
+  bazel-bin/bug/eigen_resize_dtor/conservative_resize_issue
+INFO: Elapsed time: 1.824s, Critical Path: 1.43s
+
+INFO: Running command line: /bin/bash -c 'valgrind --tool=memcheck bazel-bin/bug/eigen_resize_dtor/conservative_resize_issue '
+==46565== Memcheck, a memory error detector
+==46565== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
+==46565== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
+==46565== Command: /home/eacousineau/.cache/bazel/_bazel_eacousineau/4bfeaeef7a21f92da79b50fef77b3ca6/execroot/repro/bazel-out/clang-3.9-linux-dbg/bin/bug/eigen_resize_dtor/conservative_resize_issue
+==46565== 
+==46565== Invalid free() / delete / delete[] / realloc()
+==46565==    at 0x4C2F24B: operator delete(void*) (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==46565==    by 0x4015A6: void Eigen::internal::destruct_elements_of_array<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >*, unsigned long) (Memory.h:259)
+==46565==    by 0x40153C: void Eigen::internal::conditional_aligned_delete_auto<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, true>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >*, unsigned long) (Memory.h:415)
+==46565==    by 0x4014FA: Eigen::DenseStorage<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, -1, -1, 1, 0>::~DenseStorage() (in /home/eacousineau/.cache/bazel/_bazel_eacousineau/4bfeaeef7a21f92da79b50fef77b3ca6/execroot/repro/bazel-out/clang-3.9-linux-dbg/bin/bug/eigen_resize_dtor/conservative_resize_issue)
+==46565==    by 0x4014D4: Eigen::PlainObjectBase<Eigen::Matrix<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, -1, 1, 0, -1, 1> >::~PlainObjectBase() (in /home/eacousineau/.cache/bazel/_bazel_eacousineau/4bfeaeef7a21f92da79b50fef77b3ca6/execroot/repro/bazel-out/clang-3.9-linux-dbg/bin/bug/eigen_resize_dtor/conservative_resize_issue)
+==46565==    by 0x4014B4: Eigen::Matrix<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, -1, 1, 0, -1, 1>::~Matrix() (in /home/eacousineau/.cache/bazel/_bazel_eacousineau/4bfeaeef7a21f92da79b50fef77b3ca6/execroot/repro/bazel-out/clang-3.9-linux-dbg/bin/bug/eigen_resize_dtor/conservative_resize_issue)
+==46565==    by 0x4010F3: main (conservative_resize_issue.cc:34)
+==46565==  Address 0x5ab5cb0 is 48 bytes inside a block of size 64 free'd
+==46565==    at 0x4C2FD5F: realloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==46565==    by 0x4020AC: Eigen::internal::aligned_realloc(void*, unsigned long, unsigned long) (Memory.h:194)
+==46565==    by 0x402074: void* Eigen::internal::conditional_aligned_realloc<true>(void*, unsigned long, unsigned long) (in /home/eacousineau/.cache/bazel/_bazel_eacousineau/4bfeaeef7a21f92da79b50fef77b3ca6/execroot/repro/bazel-out/clang-3.9-linux-dbg/bin/bug/eigen_resize_dtor/conservative_resize_issue)
+==46565==    by 0x401F94: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >* Eigen::internal::conditional_aligned_realloc_new_auto<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, true>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >*, unsigned long, unsigned long) (Memory.h:396)
+==46565==    by 0x401ED3: Eigen::DenseStorage<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, -1, -1, 1, 0>::conservativeResize(long, long, long) (DenseStorage.h:541)
+==46565==    by 0x401E90: Eigen::internal::conservative_resize_like_impl<Eigen::Matrix<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, -1, 1, 0, -1, 1>, Eigen::Matrix<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, -1, 1, 0, -1, 1>, true>::run(Eigen::DenseBase<Eigen::Matrix<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, -1, 1, 0, -1, 1> >&, long) (PlainObjectBase.h:974)
+==46565==    by 0x401D47: Eigen::PlainObjectBase<Eigen::Matrix<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, -1, 1, 0, -1, 1> >::conservativeResize(long) (PlainObjectBase.h:428)
+==46565==    by 0x401474: void AppendToVector<Eigen::Matrix<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, -1, 1, 0, -1, 1>, char [2], void>(char const (&) [2], Eigen::MatrixBase<Eigen::Matrix<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, -1, 1, 0, -1, 1> >*) (conservative_resize_issue.cc:20)
+==46565==    by 0x4010DE: main (conservative_resize_issue.cc:31)
+==46565==  Block was alloc'd at
+==46565==    at 0x4C2DB8F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==46565==    by 0x401A19: Eigen::internal::aligned_malloc(unsigned long) (Memory.h:159)
+==46565==    by 0x4018E4: void* Eigen::internal::conditional_aligned_malloc<true>(unsigned long) (in /home/eacousineau/.cache/bazel/_bazel_eacousineau/4bfeaeef7a21f92da79b50fef77b3ca6/execroot/repro/bazel-out/clang-3.9-linux-dbg/bin/bug/eigen_resize_dtor/conservative_resize_issue)
+==46565==    by 0x401834: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >* Eigen::internal::conditional_aligned_new_auto<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, true>(unsigned long) (Memory.h:374)
+==46565==    by 0x4017AF: Eigen::DenseStorage<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, -1, -1, 1, 0>::resize(long, long, long) (DenseStorage.h:550)
+==46565==    by 0x40173E: Eigen::PlainObjectBase<Eigen::Matrix<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, -1, 1, 0, -1, 1> >::resize(long) (PlainObjectBase.h:313)
+==46565==    by 0x401678: _ZN5Eigen15PlainObjectBaseINS_6MatrixINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEELin1ELi1ELi0ELin1ELi1EEEE6_init1IiEEvlPNS_8internal9enable_ifIXaaooneLNS_9DenseBaseIS8_EUt_En1ELi1Entsr8internal14is_convertibleIT_S7_EE5valueoontLNSB_7is_sameINS_9MatrixXprENS_8ArrayXprEEUt_E0EeqLSF_n1EL_ZNS_L7DynamicEEESG_E4typeE (PlainObjectBase.h:769)
+==46565==    by 0x40121D: Eigen::Matrix<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, -1, 1, 0, -1, 1>::Matrix<int>(int const&) (Matrix.h:296)
+==46565==    by 0x400FFC: main (conservative_resize_issue.cc:29)
+==46565== 
+==46565== 
+==46565== HEAP SUMMARY:
+==46565==     in use at exit: 72,704 bytes in 1 blocks
+==46565==   total heap usage: 3 allocs, 4 frees, 72,864 bytes allocated
+==46565== 
+==46565== LEAK SUMMARY:
+==46565==    definitely lost: 0 bytes in 0 blocks
+==46565==    indirectly lost: 0 bytes in 0 blocks
+==46565==      possibly lost: 0 bytes in 0 blocks
+==46565==    still reachable: 72,704 bytes in 1 blocks
+==46565==         suppressed: 0 bytes in 0 blocks
+==46565== Rerun with --leak-check=full to see details of leaked memory
+==46565== 
+==46565== For counts of detected and suppressed errors, rerun with: -v
+==46565== ERROR SUMMARY: 2 errors from 1 contexts (suppressed: 0 from 0)
