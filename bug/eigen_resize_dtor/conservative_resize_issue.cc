@@ -10,12 +10,11 @@ using std::cout;
 using std::endl;
 using std::string;
 
-using Eigen::VectorXd;
+using Scalar = string;
+using VectorXs = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
-template<typename Derived, typename Scalar,
-    typename = typename std::enable_if<Derived::ColsAtCompileTime == 1>::type>
-void AppendToVector(const Scalar& s, Eigen::MatrixBase<Derived>* px) {
-  Derived& derived = px->derived();
+void AppendToVector(const Scalar& s, VectorXs* px) {
+  VectorXs& derived = *px;
   int initial_size = derived.size();
 #ifdef USE_BAD
   // TODO(eric.cousineau): This causes a memory leak?
@@ -27,7 +26,7 @@ void AppendToVector(const Scalar& s, Eigen::MatrixBase<Derived>* px) {
 }
 
 int main() {
-    using VectorXs = Eigen::Matrix<string, Eigen::Dynamic, 1>;
+
     VectorXs a(2);
     a << "x", "y";
     AppendToVector("z", &a);
