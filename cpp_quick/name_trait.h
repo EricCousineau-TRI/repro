@@ -130,4 +130,4 @@ NAME_TRAIT_TPL_LITERAL(std::index_sequence);
 
 // Random helper macros
 #define EVAL(x) std::cout << ">>> " #x ";" << std::endl; x; cout << std::endl
-#define PRINT(x) ">>> " #x << std::endl << (x) << std::endl
+#define PRINT(x) ">>> " #x << std::endl << (x) << std::endl << std::endl

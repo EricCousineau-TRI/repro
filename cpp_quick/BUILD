@@ -119,3 +119,8 @@ cc_binary(
     name = "tpl_friend",
     srcs = ["tpl_friend.cc"],
 )
+
+cc_binary(
+    name = "tpl_method_overload",
+    srcs = ["tpl_method_overload.cc", "name_trait.h", "drake_copy.h"],
+)
