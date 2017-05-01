@@ -133,16 +133,34 @@ public:
         return binding;
     }
   }
+
+  template <typename C>
+  Binding<C> AddConstraint(const Expression& e) {
+    // Default
+    auto binding = CreateBinding(make_shared<C>(e.a()), e.GetVars());
+    return binding;
+  }
 };
+
+template <>
+Binding<BConstraint> ConstraintContainer::AddConstraint<BConstraint>(
+    const Expression& e) {
+    auto binding = CreateBinding(make_shared<BConstraint>(2 * e.a()),
+                                 e.GetVars());
+    cout << "Specialized B" << endl;
+    return binding;
+}
 
 int main() {
     Expression e_a = -5;
     Expression e_b = 5;
 
-    ConstraintContainer container;
+    ConstraintContainer c;
     cout
-         << PRINT( container.AddConstraint(e_a).GetName() )
-         << PRINT( container.AddConstraint(e_b).GetName() );
+         << PRINT( c.AddConstraint(e_a).GetName() )
+         << PRINT( c.AddConstraint(e_b).GetName() )
+         << PRINT( c.AddConstraint<AConstraint>(e_a).GetName() )
+         << PRINT( c.AddConstraint<BConstraint>(e_b).GetName() );
 
     return 0;
 }

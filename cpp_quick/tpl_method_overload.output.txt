@@ -1,6 +1,13 @@
->>> container.AddConstraint(e_a).GetName()
+>>> c.AddConstraint(e_a).GetName()
 compile-time { Binding<Constraint> }, run-time { Binding<AConstraint> }
 
->>> container.AddConstraint(e_b).GetName()
+>>> c.AddConstraint(e_b).GetName()
 compile-time { Binding<Constraint> }, run-time { Binding<BConstraint> }
+
+>>> c.AddConstraint<AConstraint>(e_a).GetName()
+compile-time { Binding<AConstraint> }, run-time { Binding<AConstraint> }
+
+>>> c.AddConstraint<BConstraint>(e_b).GetName()
+Specialized B
+compile-time { Binding<BConstraint> }, run-time { Binding<BConstraint> }
 
