@@ -52,6 +52,14 @@ func_out_value
 4: ctor ()
 4: dtor
 
+>>> func_in_const_lvalue(func_out_value());
+func_out_value
+4: ctor ()
+3: ctor (Lifetime<4>&&)
+func_in_const_lvalue
+3: dtor
+4: dtor <-- was moved
+
 >>> scope { const Lifetime<4>& ref = func_out_value() ; }
 func_out_value
 4: ctor ()
@@ -64,15 +72,14 @@ func_out_value
    <<< [ exiting scope ]
 4: dtor
 
->>> scope { func_in_const_lvalue(func_out_value()) ; }
+>>> scope { const Lifetime<4>& ref = func_thru_const_lvalue(func_out_value()) ; }
 func_out_value
 4: ctor ()
-3: ctor (Lifetime<4>&&)
-func_in_const_lvalue
-3: dtor
-4: dtor <-- was moved
+func_thru_const_lvalue
+4: dtor
    <<< [ exiting scope ]
 
+  ^ loses lifetime
 
 --- Out: const T& ---
 
@@ -111,27 +118,17 @@ func_in_const_lvalue
 
 >>> func_thru_const_lvalue(Lifetime<3>());
 3: ctor ()
+4: ctor (Lifetime<3>&&)
 func_thru_const_lvalue
-3: dtor
+4: dtor
+3: dtor <-- was moved
 
 >>> scope { const auto& ref = func_thru_const_lvalue(Lifetime<3>()) ; }
 3: ctor ()
+4: ctor (Lifetime<3>&&)
 func_thru_const_lvalue
-3: dtor
-   <<< [ exiting scope ]
-
-
---- Thru: T&& ---
-
->>> func_thru_rvalue(Lifetime<3>());
-3: ctor ()
-func_thru_rvalue
-3: dtor
-
->>> scope { const auto& ref = func_thru_rvalue(Lifetime<3>()) ; }
-3: ctor ()
-func_thru_rvalue
-3: dtor
+4: dtor
+3: dtor <-- was moved
    <<< [ exiting scope ]
 
 2: dtor

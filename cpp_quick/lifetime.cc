@@ -73,14 +73,15 @@ Lifetime<4>&& func_out_rvalue() {
     return Lifetime<4>();
 }
 
-const Lifetime<3>& func_thru_const_lvalue(const Lifetime<3>& in) {
+const Lifetime<4>& func_thru_const_lvalue(const Lifetime<4>& in) {
     cout << "func_thru_const_lvalue" << endl;
     return in;
 }
-const Lifetime<3>& func_thru_rvalue(const Lifetime<3>& in) {
-    cout << "func_thru_rvalue" << endl;
-    return in;
-}
+// // Invalid
+// Lifetime<4>&& func_thru_rvalue(Lifetime<4>&& in) {
+//     cout << "func_thru_rvalue" << endl;
+//     return in;
+// }
 
 void section(const char* name) {
     cout << endl << "--- " << name << " ---" << endl << endl;
@@ -100,9 +101,11 @@ int main() {
     
     section("Out: T");
     EVAL( func_out_value() );
+    EVAL( func_in_const_lvalue(func_out_value()) );
     EVAL_SCOPED( const Lifetime<4>& ref = func_out_value() );
     EVAL_SCOPED( Lifetime<4>&& ref = func_out_value() );
-    EVAL_SCOPED( func_in_const_lvalue(func_out_value()) );
+    EVAL_SCOPED( const Lifetime<4>& ref = func_thru_const_lvalue(func_out_value()) );
+    cout << "  ^ loses lifetime" << endl;
 
     section("Out: const T&");
     EVAL( func_out_const_lvalue() );
@@ -118,9 +121,9 @@ int main() {
     EVAL( func_thru_const_lvalue(Lifetime<3>()) );
     EVAL_SCOPED( const auto& ref = func_thru_const_lvalue(Lifetime<3>()) );
 
-    section("Thru: T&&");
-    EVAL( func_thru_rvalue(Lifetime<3>()) );
-    EVAL_SCOPED( const auto& ref = func_thru_rvalue(Lifetime<3>()) );
+    // section("Thru: T&&");
+    // EVAL( func_thru_rvalue(Lifetime<4>()) );
+    // EVAL_SCOPED( const auto& ref = func_thru_rvalue(Lifetime<4>()) );
 
     return 0;
 }
