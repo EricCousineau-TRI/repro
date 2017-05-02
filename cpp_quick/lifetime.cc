@@ -24,29 +24,34 @@ template <int T>
 class Lifetime {
 public:
     Lifetime() {
-        cout << "ctor (default): " << T << endl;
+        cout << T << ": ctor ()" << endl;
     }
     Lifetime(const Lifetime&) {
-        cout << "copy ctor (const lvalue): " << T << endl;
+        cout << T << ": copy ctor (const lvalue)" << endl;
     }
-    Lifetime(Lifetime&&) {
-        cout << "copy ctor (rvalue): " << T << endl;
+    Lifetime(Lifetime&& other) {
+        cout << T << ": copy ctor (rvalue)" << endl;
+        other.moved = true;
     }
     template <int U>
     Lifetime(const Lifetime<U>&) {
         cout
-             << "ctor (const Lifetime<" << U << ">&): "
-             << T << endl;
+             << T << ": ctor (const Lifetime<" << U << ">&)" << endl;
     }
     template <int U>
-    Lifetime(Lifetime<U>&&) {
+    Lifetime(Lifetime<U>&& other) {
         cout
-             << "ctor (Lifetime<" << U << ">&&): "
-             << T << endl;
+             << T << ": ctor (Lifetime<" << U << ">&&)" << endl;
+        other.moved = true;
     }
     ~Lifetime() {
-        cout << "dtor: " << T << endl;
+        cout << T << ": dtor";
+        if (moved)
+            cout << " <-- was moved";
+        cout << endl;
     }
+
+    bool moved {false};
 protected:
     using Base = Lifetime<T>;
 };

@@ -2,100 +2,100 @@
 --- Standard ---
 
 >>> Lifetime<1> obj1{}; Lifetime<2> obj2{};
-ctor (default): 1
-ctor (default): 2
+1: ctor ()
+2: ctor ()
 
 >>> scope { Lifetime<1>(); Lifetime<2>() ; }
-ctor (default): 1
-dtor: 1
-ctor (default): 2
-dtor: 2
+1: ctor ()
+1: dtor
+2: ctor ()
+2: dtor
    <<< [ exiting scope ]
 
 >>> scope { Lifetime<2> copy = obj2 ; }
-copy ctor (const lvalue): 2
+2: copy ctor (const lvalue)
    <<< [ exiting scope ]
-dtor: 2
+2: dtor
 
 >>> scope { Lifetime<2> copy = obj1 ; }
-ctor (const Lifetime<1>&): 2
+2: ctor (const Lifetime<1>&)
    <<< [ exiting scope ]
-dtor: 2
+2: dtor
 
 >>> scope { Lifetime<2> copy = Lifetime<1>() ; }
-ctor (default): 1
-ctor (Lifetime<1>&&): 2
-dtor: 1
+1: ctor ()
+2: ctor (Lifetime<1>&&)
+1: dtor <-- was moved
    <<< [ exiting scope ]
-dtor: 2
+2: dtor
 
 
 --- In: const T& ---
 
 >>> func_in_const_lvalue(Lifetime<3>());
-ctor (default): 3
+3: ctor ()
 func_in_const_lvalue
-dtor: 3
+3: dtor
 
 
 --- Out: T ---
 
 >>> func_out_value();
 func_out_value
-ctor (default): 3
-dtor: 3
+3: ctor ()
+3: dtor
 
 >>> scope { const Lifetime<3>& ref = func_out_value() ; }
 func_out_value
-ctor (default): 3
+3: ctor ()
    <<< [ exiting scope ]
-dtor: 3
+3: dtor
 
 >>> scope { Lifetime<3>&& ref = func_out_value() ; }
 func_out_value
-ctor (default): 3
+3: ctor ()
    <<< [ exiting scope ]
-dtor: 3
+3: dtor
 
 
 --- Out: const T& ---
 
 >>> func_out_const_lvalue();
-ctor (default): 3
-dtor: 3
+3: ctor ()
+3: dtor
 
 >>> scope { const Lifetime<3>& ref = func_out_const_lvalue() ; }
-ctor (default): 3
-dtor: 3
+3: ctor ()
+3: dtor
    <<< [ exiting scope ]
 
 
 --- Thru: const T& ---
 
 >>> func_thru_const_lvalue(Lifetime<3>());
-ctor (default): 3
+3: ctor ()
 func_thru_const_lvalue
-dtor: 3
+3: dtor
 
 >>> scope { const auto& ref = func_thru_const_lvalue(Lifetime<3>()) ; }
-ctor (default): 3
+3: ctor ()
 func_thru_const_lvalue
-dtor: 3
+3: dtor
    <<< [ exiting scope ]
 
 
 --- Thru: T&& ---
 
 >>> func_thru_rvalue(Lifetime<3>());
-ctor (default): 3
+3: ctor ()
 func_thru_rvalue
-dtor: 3
+3: dtor
 
 >>> scope { const auto& ref = func_thru_rvalue(Lifetime<3>()) ; }
-ctor (default): 3
+3: ctor ()
 func_thru_rvalue
-dtor: 3
+3: dtor
    <<< [ exiting scope ]
 
-dtor: 2
-dtor: 1
+2: dtor
+1: dtor
