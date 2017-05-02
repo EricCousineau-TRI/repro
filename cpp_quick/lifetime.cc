@@ -51,20 +51,24 @@ protected:
     using Base = Lifetime<T>;
 };
 
-void func_in_const_lvalue(const Lifetime<1>&) {
+void func_in_const_lvalue(const Lifetime<3>&) {
     cout << "func_in_const_lvalue" << endl;
 }
 
-Lifetime<1> func_out_value() {
+Lifetime<3> func_out_value() {
     cout << "func_out_value" << endl;
-    return Lifetime<1>();
+    return Lifetime<3>();
 }
 
-const Lifetime<1>& func_thru_const_lvalue(const Lifetime<1>& in) {
+const Lifetime<3>& func_out_const_lvalue() {
+    return Lifetime<3>();
+}
+
+const Lifetime<3>& func_thru_const_lvalue(const Lifetime<3>& in) {
     cout << "func_thru_const_lvalue" << endl;
     return in;
 }
-const Lifetime<1>& func_thru_rvalue(const Lifetime<1>& in) {
+const Lifetime<3>& func_thru_rvalue(const Lifetime<3>& in) {
     cout << "func_thru_rvalue" << endl;
     return in;
 }
@@ -82,20 +86,24 @@ int main() {
     EVAL_SCOPED( Lifetime<2> copy = Lifetime<1>() );
 
     section("In: const T&");
-    EVAL_SCOPED( func_in_const_lvalue(Lifetime<2>()) );
+    EVAL( func_in_const_lvalue(Lifetime<3>()) );
     
     section("Out: T");
-    EVAL_SCOPED( func_out_value() );
-    EVAL_SCOPED( const Lifetime<1>& ref = func_out_value() );
-    EVAL_SCOPED( Lifetime<1>&& ref = func_out_value() );
+    EVAL( func_out_value() );
+    EVAL_SCOPED( const Lifetime<3>& ref = func_out_value() );
+    EVAL_SCOPED( Lifetime<3>&& ref = func_out_value() );
+
+    section("Out: const T&");
+    EVAL( func_out_const_lvalue() );
+    EVAL_SCOPED( const Lifetime<3>& ref = func_out_const_lvalue() );
 
     section("Thru: const T&");
-    EVAL_SCOPED( func_thru_const_lvalue(Lifetime<2>()) );
-    EVAL_SCOPED( const auto& ref = func_thru_const_lvalue(Lifetime<2>()) );
+    EVAL( func_thru_const_lvalue(Lifetime<3>()) );
+    EVAL_SCOPED( const auto& ref = func_thru_const_lvalue(Lifetime<3>()) );
 
     section("Thru: T&&");
-    EVAL_SCOPED( func_thru_rvalue(Lifetime<2>()) );
-    EVAL_SCOPED( const auto& ref = func_thru_rvalue(Lifetime<2>()) );
+    EVAL( func_thru_rvalue(Lifetime<3>()) );
+    EVAL_SCOPED( const auto& ref = func_thru_rvalue(Lifetime<3>()) );
 
     return 0;
 }

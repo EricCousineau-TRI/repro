@@ -32,71 +32,69 @@ dtor: 2
 
 --- In: const T& ---
 
->>> scope { func_in_const_lvalue(Lifetime<2>()) ; }
-ctor (default): 2
-ctor (Lifetime<2>&&): 1
+>>> func_in_const_lvalue(Lifetime<3>());
+ctor (default): 3
 func_in_const_lvalue
-dtor: 1
-dtor: 2
-   <<< [ exiting scope ]
+dtor: 3
 
 
 --- Out: T ---
 
->>> scope { func_out_value() ; }
+>>> func_out_value();
 func_out_value
-ctor (default): 1
-dtor: 1
-   <<< [ exiting scope ]
+ctor (default): 3
+dtor: 3
 
->>> scope { const Lifetime<1>& ref = func_out_value() ; }
+>>> scope { const Lifetime<3>& ref = func_out_value() ; }
 func_out_value
-ctor (default): 1
+ctor (default): 3
    <<< [ exiting scope ]
-dtor: 1
+dtor: 3
 
->>> scope { Lifetime<1>&& ref = func_out_value() ; }
+>>> scope { Lifetime<3>&& ref = func_out_value() ; }
 func_out_value
-ctor (default): 1
+ctor (default): 3
    <<< [ exiting scope ]
-dtor: 1
+dtor: 3
+
+
+--- Out: const T& ---
+
+>>> func_out_const_lvalue();
+ctor (default): 3
+dtor: 3
+
+>>> scope { const Lifetime<3>& ref = func_out_const_lvalue() ; }
+ctor (default): 3
+dtor: 3
+   <<< [ exiting scope ]
 
 
 --- Thru: const T& ---
 
->>> scope { func_thru_const_lvalue(Lifetime<2>()) ; }
-ctor (default): 2
-ctor (Lifetime<2>&&): 1
+>>> func_thru_const_lvalue(Lifetime<3>());
+ctor (default): 3
 func_thru_const_lvalue
-dtor: 1
-dtor: 2
-   <<< [ exiting scope ]
+dtor: 3
 
->>> scope { const auto& ref = func_thru_const_lvalue(Lifetime<2>()) ; }
-ctor (default): 2
-ctor (Lifetime<2>&&): 1
+>>> scope { const auto& ref = func_thru_const_lvalue(Lifetime<3>()) ; }
+ctor (default): 3
 func_thru_const_lvalue
-dtor: 1
-dtor: 2
+dtor: 3
    <<< [ exiting scope ]
 
 
 --- Thru: T&& ---
 
->>> scope { func_thru_rvalue(Lifetime<2>()) ; }
-ctor (default): 2
-ctor (Lifetime<2>&&): 1
+>>> func_thru_rvalue(Lifetime<3>());
+ctor (default): 3
 func_thru_rvalue
-dtor: 1
-dtor: 2
-   <<< [ exiting scope ]
+dtor: 3
 
->>> scope { const auto& ref = func_thru_rvalue(Lifetime<2>()) ; }
-ctor (default): 2
-ctor (Lifetime<2>&&): 1
+>>> scope { const auto& ref = func_thru_rvalue(Lifetime<3>()) ; }
+ctor (default): 3
 func_thru_rvalue
-dtor: 1
-dtor: 2
+dtor: 3
    <<< [ exiting scope ]
 
 dtor: 2
