@@ -66,11 +66,11 @@ Lifetime<4> func_out_value() {
 }
 
 const Lifetime<4>& func_out_const_lvalue() {
-    return Lifetime<4>();
+    return Lifetime<4>(); // Warning shown
 }
 
 Lifetime<4>&& func_out_rvalue() {
-    return Lifetime<4>();
+    return Lifetime<4>(); // Warning shown
 }
 
 const Lifetime<4>& func_thru_const_lvalue(const Lifetime<4>& in) {
@@ -104,8 +104,8 @@ int main() {
     EVAL( func_in_const_lvalue(func_out_value()) );
     EVAL_SCOPED( const Lifetime<4>& ref = func_out_value() );
     EVAL_SCOPED( Lifetime<4>&& ref = func_out_value() );
-    EVAL_SCOPED( const Lifetime<4>& ref = func_thru_const_lvalue(func_out_value()) );
-    cout << "  ^ loses lifetime" << endl;
+    EVAL_SCOPED( const Lifetime<4>& ref = func_thru_const_lvalue(func_out_value()); cout << &ref << endl; ); // No warning???
+    cout << "  ^ loses lifetime, no warning???" << endl;
 
     section("Out: const T&");
     EVAL( func_out_const_lvalue() );

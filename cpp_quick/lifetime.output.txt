@@ -72,14 +72,15 @@ func_out_value
    <<< [ exiting scope ]
 4: dtor
 
->>> scope { const Lifetime<4>& ref = func_thru_const_lvalue(func_out_value()) ; }
+>>> scope { const Lifetime<4>& ref = func_thru_const_lvalue(func_out_value()); cout << &ref << endl; ; }
 func_out_value
 4: ctor ()
 func_thru_const_lvalue
 4: dtor
+0x7ffcddced008
    <<< [ exiting scope ]
 
-  ^ loses lifetime
+  ^ loses lifetime, no warning???
 
 --- Out: const T& ---
 
