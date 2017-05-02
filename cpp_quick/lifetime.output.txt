@@ -1,0 +1,43 @@
+>>> Lifetime<1> obj1{};
+ctor (default): 1
+
+>>> { Lifetime<2>(); };
+ctor (default): 2
+dtor: 2
+
+>>> { Lifetime<3> obj3 = obj1; };
+ctor (const Lifetime<1>&): 3
+dtor: 3
+
+>>> { Lifetime<3> obj3 = Lifetime<1>(); };
+ctor (default): 1
+ctor (Lifetime<1>&&): 3
+dtor: 1
+dtor: 3
+
+>>> func_in(Lifetime<3>());
+ctor (default): 3
+ctor (Lifetime<3>&&): 1
+func_in(const Lifetime<1>&)
+dtor: 1
+dtor: 3
+
+>>> { func_out(); cout << "finish" << endl; };
+func_out()
+ctor (default): 4
+dtor: 4
+finish
+
+>>> { const Lifetime<4>& obj4 = func_out(); cout << "finish" << endl; };
+func_out()
+ctor (default): 4
+finish
+dtor: 4
+
+>>> { Lifetime<4>&& obj4 = func_out(); cout << "finish" << endl; };
+func_out()
+ctor (default): 4
+finish
+dtor: 4
+
+dtor: 1
