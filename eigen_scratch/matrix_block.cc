@@ -3,6 +3,11 @@
 // Better use of decltype?
 // @ref http://stackoverflow.com/a/22726414/170413
 
+// TODO: Determine if this is possible just with inference?
+//   is_base_of<MatrixBase<Derived>, Derived>
+// Would need additional decay_t, and ensure that it is non-const
+// See: http://en.cppreference.com/w/cpp/types/is_reference
+
 #include "cpp_quick/name_trait.h"
 
 #include <string>
