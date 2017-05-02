@@ -49,33 +49,63 @@ func_in_const_lvalue
 
 >>> func_out_value();
 func_out_value
-3: ctor ()
-3: dtor
+4: ctor ()
+4: dtor
 
->>> scope { const Lifetime<3>& ref = func_out_value() ; }
+>>> scope { const Lifetime<4>& ref = func_out_value() ; }
 func_out_value
-3: ctor ()
+4: ctor ()
    <<< [ exiting scope ]
-3: dtor
+4: dtor
 
->>> scope { Lifetime<3>&& ref = func_out_value() ; }
+>>> scope { Lifetime<4>&& ref = func_out_value() ; }
 func_out_value
-3: ctor ()
+4: ctor ()
    <<< [ exiting scope ]
+4: dtor
+
+>>> scope { func_in_const_lvalue(func_out_value()) ; }
+func_out_value
+4: ctor ()
+3: ctor (Lifetime<4>&&)
+func_in_const_lvalue
 3: dtor
+4: dtor <-- was moved
+   <<< [ exiting scope ]
 
 
 --- Out: const T& ---
 
 >>> func_out_const_lvalue();
-3: ctor ()
-3: dtor
+4: ctor ()
+4: dtor
 
->>> scope { const Lifetime<3>& ref = func_out_const_lvalue() ; }
-3: ctor ()
+>>> scope { const Lifetime<4>& ref = func_out_const_lvalue() ; }
+4: ctor ()
+4: dtor
+   <<< [ exiting scope ]
+
+
+--- Out: T&& ---
+
+>>> func_out_rvalue();
+4: ctor ()
+4: dtor
+
+>>> scope { Lifetime<4>&& ref = func_out_rvalue() ; }
+4: ctor ()
+4: dtor
+   <<< [ exiting scope ]
+
+>>> scope { func_in_const_lvalue(func_out_rvalue()) ; }
+4: ctor ()
+4: dtor
+3: ctor (Lifetime<4>&&)
+func_in_const_lvalue
 3: dtor
    <<< [ exiting scope ]
 
+  ^ undefined behavior, was warned
 
 --- Thru: const T& ---
 

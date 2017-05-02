@@ -60,13 +60,17 @@ void func_in_const_lvalue(const Lifetime<3>&) {
     cout << "func_in_const_lvalue" << endl;
 }
 
-Lifetime<3> func_out_value() {
+Lifetime<4> func_out_value() {
     cout << "func_out_value" << endl;
-    return Lifetime<3>();
+    return Lifetime<4>();
 }
 
-const Lifetime<3>& func_out_const_lvalue() {
-    return Lifetime<3>();
+const Lifetime<4>& func_out_const_lvalue() {
+    return Lifetime<4>();
+}
+
+Lifetime<4>&& func_out_rvalue() {
+    return Lifetime<4>();
 }
 
 const Lifetime<3>& func_thru_const_lvalue(const Lifetime<3>& in) {
@@ -96,12 +100,19 @@ int main() {
     
     section("Out: T");
     EVAL( func_out_value() );
-    EVAL_SCOPED( const Lifetime<3>& ref = func_out_value() );
-    EVAL_SCOPED( Lifetime<3>&& ref = func_out_value() );
+    EVAL_SCOPED( const Lifetime<4>& ref = func_out_value() );
+    EVAL_SCOPED( Lifetime<4>&& ref = func_out_value() );
+    EVAL_SCOPED( func_in_const_lvalue(func_out_value()) );
 
     section("Out: const T&");
     EVAL( func_out_const_lvalue() );
-    EVAL_SCOPED( const Lifetime<3>& ref = func_out_const_lvalue() );
+    EVAL_SCOPED( const Lifetime<4>& ref = func_out_const_lvalue() );
+
+    section("Out: T&&");
+    EVAL( func_out_rvalue() );
+    EVAL_SCOPED( Lifetime<4>&& ref = func_out_rvalue() );
+    EVAL_SCOPED( func_in_const_lvalue(func_out_rvalue()) );
+    cout << "  ^ undefined behavior, was warned" << endl;
 
     section("Thru: const T&");
     EVAL( func_thru_const_lvalue(Lifetime<3>()) );
