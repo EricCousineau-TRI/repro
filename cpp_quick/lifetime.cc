@@ -86,6 +86,7 @@ int main() {
     section("Standard");
     EVAL(Lifetime<1> obj1{}; Lifetime<2> obj2{} );
     EVAL_SCOPED( Lifetime<1>(); Lifetime<2>() );
+    EVAL_SCOPED( Lifetime<1> tmp1{}; Lifetime<2> tmp2{} );
     EVAL_SCOPED( Lifetime<2> copy = obj2 );
     EVAL_SCOPED( Lifetime<2> copy = obj1 );
     EVAL_SCOPED( Lifetime<2> copy = Lifetime<1>() );

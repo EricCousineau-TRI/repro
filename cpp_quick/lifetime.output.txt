@@ -12,6 +12,13 @@
 2: dtor
    <<< [ exiting scope ]
 
+>>> scope { Lifetime<1> tmp1{}; Lifetime<2> tmp2{} ; }
+1: ctor ()
+2: ctor ()
+   <<< [ exiting scope ]
+2: dtor
+1: dtor
+
 >>> scope { Lifetime<2> copy = obj2 ; }
 2: copy ctor (const lvalue)
    <<< [ exiting scope ]
