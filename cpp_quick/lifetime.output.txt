@@ -1,43 +1,103 @@
->>> Lifetime<1> obj1{};
-ctor (default): 1
 
->>> { Lifetime<2>(); };
+--- Standard ---
+
+>>> Lifetime<1> obj1{}; Lifetime<2> obj2{};
+ctor (default): 1
+ctor (default): 2
+
+>>> scope { Lifetime<1>(); Lifetime<2>() ; }
+ctor (default): 1
+dtor: 1
 ctor (default): 2
 dtor: 2
+   <<< [ exiting scope ]
 
->>> { Lifetime<3> obj3 = obj1; };
-ctor (const Lifetime<1>&): 3
-dtor: 3
+>>> scope { Lifetime<2> copy = obj2 ; }
+copy ctor (const lvalue): 2
+   <<< [ exiting scope ]
+dtor: 2
 
->>> { Lifetime<3> obj3 = Lifetime<1>(); };
+>>> scope { Lifetime<2> copy = obj1 ; }
+ctor (const Lifetime<1>&): 2
+   <<< [ exiting scope ]
+dtor: 2
+
+>>> scope { Lifetime<2> copy = Lifetime<1>() ; }
 ctor (default): 1
-ctor (Lifetime<1>&&): 3
+ctor (Lifetime<1>&&): 2
 dtor: 1
-dtor: 3
+   <<< [ exiting scope ]
+dtor: 2
 
->>> func_in(Lifetime<3>());
-ctor (default): 3
-ctor (Lifetime<3>&&): 1
-func_in(const Lifetime<1>&)
+
+--- In: const T& ---
+
+>>> scope { func_in_const_lvalue(Lifetime<2>()) ; }
+ctor (default): 2
+ctor (Lifetime<2>&&): 1
+func_in_const_lvalue
 dtor: 1
-dtor: 3
+dtor: 2
+   <<< [ exiting scope ]
 
->>> { func_out(); cout << "finish" << endl; };
-func_out()
-ctor (default): 4
-dtor: 4
-finish
 
->>> { const Lifetime<4>& obj4 = func_out(); cout << "finish" << endl; };
-func_out()
-ctor (default): 4
-finish
-dtor: 4
+--- Out: T ---
 
->>> { Lifetime<4>&& obj4 = func_out(); cout << "finish" << endl; };
-func_out()
-ctor (default): 4
-finish
-dtor: 4
+>>> scope { func_out_value() ; }
+func_out_value
+ctor (default): 1
+dtor: 1
+   <<< [ exiting scope ]
 
+>>> scope { const Lifetime<1>& ref = func_out_value() ; }
+func_out_value
+ctor (default): 1
+   <<< [ exiting scope ]
+dtor: 1
+
+>>> scope { Lifetime<1>&& ref = func_out_value() ; }
+func_out_value
+ctor (default): 1
+   <<< [ exiting scope ]
+dtor: 1
+
+
+--- Thru: const T& ---
+
+>>> scope { func_thru_const_lvalue(Lifetime<2>()) ; }
+ctor (default): 2
+ctor (Lifetime<2>&&): 1
+func_thru_const_lvalue
+dtor: 1
+dtor: 2
+   <<< [ exiting scope ]
+
+>>> scope { const auto& ref = func_thru_const_lvalue(Lifetime<2>()) ; }
+ctor (default): 2
+ctor (Lifetime<2>&&): 1
+func_thru_const_lvalue
+dtor: 1
+dtor: 2
+   <<< [ exiting scope ]
+
+
+--- Thru: T&& ---
+
+>>> scope { func_thru_rvalue(Lifetime<2>()) ; }
+ctor (default): 2
+ctor (Lifetime<2>&&): 1
+func_thru_rvalue
+dtor: 1
+dtor: 2
+   <<< [ exiting scope ]
+
+>>> scope { const auto& ref = func_thru_rvalue(Lifetime<2>()) ; }
+ctor (default): 2
+ctor (Lifetime<2>&&): 1
+func_thru_rvalue
+dtor: 1
+dtor: 2
+   <<< [ exiting scope ]
+
+dtor: 2
 dtor: 1

@@ -127,5 +127,5 @@ cc_binary(
 
 cc_binary(
     name = "lifetime",
-    srcs = ["lifetime.cc", "name_trait.h"],
+    srcs = ["lifetime.cc"],
 )
