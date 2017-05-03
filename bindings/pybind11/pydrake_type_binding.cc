@@ -22,6 +22,9 @@ class SimpleType {
   int value_ {};
 };
 
+
+
+
 // Flexible integer with safety checking
 template <typename T = int>
 class PyIntegral {
@@ -60,12 +63,24 @@ using pyint = PyIntegral<int>;
 namespace pybind11 {
 namespace detail {
 
+// Helper conversion methods
+template<typename T>
+struct py_conversion { };
+
+#define PYBIND11_PY_CONVERSION(T, PyAsT, PyFromT) \
+  template<> struct py_conversion<T> { \
+    static T from_py(handle src) { return PyAsT(src.ptr()); } \
+    static handle to_py(T src) { return PyFromT(src); } \
+  }
+
+PYBIND11_PY_CONVERSION(int, PyLong_AsLong, PyLong_FromLong);
+
 // Look at;
 // pybind11 ... cast.h
 // struct type_caster<T, enable_if_t<std::is_arithmetic<T>::value &&  //...
 
-template <>
-struct type_caster<pyint> {
+template <typename T>
+struct type_caster<PyIntegral<T>> {
   PYBIND11_TYPE_CASTER(pyint, _("pyint"));
 
   bool load(handle src, bool convert) {
@@ -76,8 +91,9 @@ struct type_caster<pyint> {
       }
       value = tmp;
     } else {
-      int tmp = PyLong_AsLong(src.ptr());
-      if (tmp == -1 && PyErr_Occurred()) {
+      T tmp = py_conversion<T>::from_py(src);
+      // assuming unsigned logic is correct
+      if (tmp == (T)-1 && PyErr_Occurred()) {
         return false;
       }
       value = tmp;
@@ -87,7 +103,7 @@ struct type_caster<pyint> {
 
   static handle cast(pyint src, return_value_policy /* policy */,
                      handle /* parent */) {
-    return PyLong_FromLong(src);
+    return py_conversion<T>::to_py(src);
   }
 };
 
