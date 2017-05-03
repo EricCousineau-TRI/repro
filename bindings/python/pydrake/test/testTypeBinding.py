@@ -13,10 +13,14 @@ class TestTypeBinding(unittest.TestCase):
     def test_basic(self):
         obj = tb.SimpleType(1)
         self.assertEqual(obj.value(), 1)
+        obj.set_value(2)
+        self.assertEqual(obj.value(), 2)
 
     def test_flexible(self):
         obj = tb.SimpleType(1.)
         self.assertEqual(obj.value(), 1)
+        obj.set_value(2.)
+        self.assertEqual(obj.value(), 2)
 
 if __name__ == '__main__':
     unittest.main()

@@ -29,17 +29,18 @@ PYBIND11_PLUGIN(_pydrake_typebinding) {
 
   // TODO: (Learning) Look at py::overload_cast
 
-  auto init_double = [](SimpleType& self, double value) {
-    new (&self) SimpleType(value);
-  };
-
   py::class_<SimpleType> pySimpleType(m, "SimpleType");
   pySimpleType
     .def(py::init<>())
     .def(py::init<int>())
-    .def("__init__", init_double)
+    .def(py::init<double>()) // Implicit conversion via overload
     .def("value", &SimpleType::value)
-    .def("set_value", &SimpleType::set_value);
+    .def("set_value", &SimpleType::set_value)
+    .def("set_value", [](SimpleType& self, double value) {
+      self.set_value(value);
+    });
+    // // Does not work.
+    // .def("value", py::overload_cast<double>(&SimpleType::set_value));
 
   return m.ptr();
 }
