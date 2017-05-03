@@ -67,25 +67,13 @@ struct py_relax_type { using type = T; };
 template <>
 struct py_relax_type<int> { using type = pyint; };
 
-// Follow pybind11::detail::init
-template <typename Method, typename ... Args>
-struct py_relax_overload_impl {
-  string name;
-  Method method;
-
-  template <typename Class, typename ... Extra>
-  static void execute(Class &cl, const Extra&... extra) {
-    using Base = typename Class::type;
-    auto relaxed = [](Base* self, const py_relax_type<Args>&... args) {
-      return self->*method(args...);
-    };
-    cl.def(name, relaxed, extra...);
-  }
-};
-
-template <typename Method, typename ... Args>
-auto py_relax_overload(handle m, const std::string& name, const Method& method) {
-  return py_relax_overload_impl<Method, Args...> {name, method};
+template <typename Base, typename ... Args, typename Method>
+auto py_relax_overload(const Method& method) {
+  auto relaxed = [=](
+      Base* self, const typename py_relax_type<Args>::type&... args) {
+    return (self->*method)(args...);
+  };
+  return relaxed;
 }
 
 namespace pybind11 {
@@ -152,7 +140,7 @@ PYBIND11_PLUGIN(_pydrake_typebinding) {
 
   // @ref http://pybind11.readthedocs.io/en/master/advanced/functions.html#non-converting-arguments
 
-
+  auto relaxed = py_relax_overload<SimpleType, int>(&SimpleType::set_value);
 
   py::class_<SimpleType> pySimpleType(m, "SimpleType");
   pySimpleType
