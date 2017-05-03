@@ -14,10 +14,10 @@ using std::ostringstream;
 class SimpleType {
  public:
   SimpleType() = default;
-  SimpleType(int value)
+  SimpleType(const int& value)
     : value_(value) {}
   int value() const { return value_; }
-  void set_value(int value) { value_ = value; }
+  void set_value(const int& value) { value_ = value; }
  private:
   int value_ {};
 };
