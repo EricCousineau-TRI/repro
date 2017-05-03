@@ -29,11 +29,15 @@ PYBIND11_PLUGIN(_pydrake_typebinding) {
 
   // TODO: (Learning) Look at py::overload_cast
 
+  // @ref http://pybind11.readthedocs.io/en/master/advanced/functions.html#non-converting-arguments
+
+  py::implicitly_convertible<double, int>();
+
   py::class_<SimpleType> pySimpleType(m, "SimpleType");
   pySimpleType
     .def(py::init<>())
-    .def(py::init<int>())
-    .def(py::init<double>()) // Implicit conversion via overload
+    .def(py::init<int>(), py::arg("value"))
+    // .def(py::init<double>()) // Implicit conversion via overload
     .def("value", &SimpleType::value)
     .def("set_value", &SimpleType::set_value)
     .def("set_value", [](SimpleType& self, double value) {
