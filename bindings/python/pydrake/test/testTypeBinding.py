@@ -21,6 +21,10 @@ class TestTypeBinding(unittest.TestCase):
         self.assertEqual(obj.value(), 1)
         obj.set_value(2.)
         self.assertEqual(obj.value(), 2)
+        # Expect non-integral floating point values to throw error
+        err_expected = RuntimeError
+        bad_ctor = lambda: tb.SimpleType(1.5)
+        self.assertRaises(err_expected, bad_ctor)
 
 if __name__ == '__main__':
     unittest.main()
