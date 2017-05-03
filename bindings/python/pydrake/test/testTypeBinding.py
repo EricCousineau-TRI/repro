@@ -25,6 +25,8 @@ class TestTypeBinding(unittest.TestCase):
         err_expected = RuntimeError
         bad_ctor = lambda: tb.SimpleType(1.5)
         self.assertRaises(err_expected, bad_ctor)
+        bad_set = lambda: obj.set_value(1.5)
+        self.assertRaises(err_expected, bad_set)
 
 if __name__ == '__main__':
     unittest.main()

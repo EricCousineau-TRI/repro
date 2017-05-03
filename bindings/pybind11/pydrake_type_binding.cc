@@ -67,8 +67,20 @@ struct py_relax_type { using type = T; };
 template <>
 struct py_relax_type<int> { using type = pyint; };
 
-template <typename Base, typename ... Args, typename Method>
+// Does std:: have this?
+  // Can't find it here
+  // http://en.cppreference.com/w/cpp/header/functional
+template <class R, class T, class... Args>
+T mem_fn_class_impl(R (T::* pm)(Args...));
+
+template <typename Method>
+struct mem_fn_class {
+  using type = decltype(mem_fn_class_impl(std::declval<Method>()));
+};
+
+template <typename ... Args, typename Method>
 auto py_relax_overload(const Method& method) {
+  using Base = typename mem_fn_class<Method>::type;
   auto relaxed = [=](
       Base* self, const typename py_relax_type<Args>::type&... args) {
     return (self->*method)(args...);
@@ -140,15 +152,13 @@ PYBIND11_PLUGIN(_pydrake_typebinding) {
 
   // @ref http://pybind11.readthedocs.io/en/master/advanced/functions.html#non-converting-arguments
 
-  auto relaxed = py_relax_overload<SimpleType, int>(&SimpleType::set_value);
-
   py::class_<SimpleType> pySimpleType(m, "SimpleType");
   pySimpleType
     .def(py::init<>())
     .def(py::init<pyint>(), py::arg("value"))
     // .def(py::init<double>()) // Implicit conversion via overload
     .def("value", &SimpleType::value)
-    .def("set_value", relaxed);
+    .def("set_value", py_relax_overload<int>(&SimpleType::set_value));
     // .def("set_value", &SimpleType::set_value)
     // // TODO: Make a lambda generator that can emulate pybind11's detail::init<>, or just generate the appropriate thing
     // .def("set_value", [](SimpleType& self, const pyint& value) {
