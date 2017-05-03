@@ -148,11 +148,12 @@ PYBIND11_PLUGIN(_pydrake_typebinding) {
     .def(py::init<pyint>(), py::arg("value"))
     // .def(py::init<double>()) // Implicit conversion via overload
     .def("value", &SimpleType::value)
-    .def("set_value", &SimpleType::set_value)
-    // TODO: Make a lambda generator that can emulate pybind11's detail::init<>, or just generate the appropriate thing
-    .def("set_value", [](SimpleType& self, const pyint& value) {
-      return self.set_value(value);
-    });
+    .def("set_value", relaxed);
+    // .def("set_value", &SimpleType::set_value)
+    // // TODO: Make a lambda generator that can emulate pybind11's detail::init<>, or just generate the appropriate thing
+    // .def("set_value", [](SimpleType& self, const pyint& value) {
+    //   return self.set_value(value);
+    // });
     // // Does not work.
     // .def("value", py::overload_cast<double>(&SimpleType::set_value));
 
