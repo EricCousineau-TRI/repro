@@ -1,7 +1,7 @@
 #!/bin/bash
 
 {
-    bazel run ../pydrake_type_binding_test \
+    bazel run //bindings:pydrake_type_binding_test \
         | sed \
             -e "s#$PATH#\${PATH}#g" -e "s#$LD_LIBRARY_PATH#\${LD_LIBRARY_PATH}#g" \
             -e "s#$PYTHONPATH#\${PYTHONPATH}#g" \
