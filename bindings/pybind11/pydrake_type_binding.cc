@@ -60,6 +60,34 @@ private:
 
 using pyint = PyIntegral<int>;
 
+// How to swap out types? Meh. Only accept const-value types???
+template <typename T>
+struct py_relax_type { using type = T; };
+
+template <>
+struct py_relax_type<int> { using type = pyint; };
+
+// Follow pybind11::detail::init
+template <typename Method, typename ... Args>
+struct py_relax_overload_impl {
+  string name;
+  Method method;
+
+  template <typename Class, typename ... Extra>
+  static void execute(Class &cl, const Extra&... extra) {
+    using Base = typename Class::type;
+    auto relaxed = [](Base* self, const py_relax_type<Args>&... args) {
+      return self->*method(args...);
+    };
+    cl.def(name, relaxed, extra...);
+  }
+};
+
+template <typename Method, typename ... Args>
+auto py_relax_overload(handle m, const std::string& name, const Method& method) {
+  return py_relax_overload_impl<Method, Args...> {name, method};
+}
+
 namespace pybind11 {
 namespace detail {
 
@@ -75,9 +103,9 @@ struct py_conversion { };
 
 PYBIND11_PY_CONVERSION(int, PyLong_AsLong, PyLong_FromLong);
 
-// Look at;
-// pybind11 ... cast.h
-// struct type_caster<T, enable_if_t<std::is_arithmetic<T>::value &&  //...
+// Following:
+// pybind11/include/pybind11/cast.h
+//   struct type_caster<T, enable_if_t<std::is_arithmetic<T>::value &&  //...
 
 template <typename T>
 struct type_caster<PyIntegral<T>> {
@@ -124,6 +152,8 @@ PYBIND11_PLUGIN(_pydrake_typebinding) {
 
   // @ref http://pybind11.readthedocs.io/en/master/advanced/functions.html#non-converting-arguments
 
+
+
   py::class_<SimpleType> pySimpleType(m, "SimpleType");
   pySimpleType
     .def(py::init<>())
@@ -131,8 +161,9 @@ PYBIND11_PLUGIN(_pydrake_typebinding) {
     // .def(py::init<double>()) // Implicit conversion via overload
     .def("value", &SimpleType::value)
     .def("set_value", &SimpleType::set_value)
-    .def("set_value", [](SimpleType& self, double value) {
-      self.set_value(value);
+    // TODO: Make a lambda generator that can emulate pybind11's detail::init<>, or just generate the appropriate thing
+    .def("set_value", [](SimpleType& self, const pyint& value) {
+      return self.set_value(value);
     });
     // // Does not work.
     // .def("value", py::overload_cast<double>(&SimpleType::set_value));
