@@ -29,6 +29,8 @@ PYBIND11_PLUGIN(_pydrake_typebinding) {
 
   py::class_<SimpleType> pySimpleType(m, "SimpleType");
   pySimpleType
+    .def(py::init<>())
+    .def(py::init<int>())
     .def("value", &SimpleType::value)
     .def("set_value", &SimpleType::set_value);
 

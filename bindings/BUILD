@@ -1,14 +1,12 @@
 # -*- python -*-
 # This file contains rules for Bazel; see drake/doc/bazel.rst.
 
-load("//tools:cpplint.bzl", "cpplint")
-load("//tools:python_lint.bzl", "python_lint")
-load("//tools:drake.bzl", "drake_cc_binary")
+load("//tools:python.bzl", "python_repository")
 
 package(default_visibility = ["//visibility:private"])
 
-drake_cc_binary(
-    name = "python/pydrake/solvers/_pydrake_typebinding.so",
+cc_binary(
+    name = "python/pydrake/_pydrake_typebinding.so",
     srcs = [
         "pybind11/pydrake_type_binding.cc",
     ],

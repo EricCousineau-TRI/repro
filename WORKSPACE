@@ -11,6 +11,18 @@ github_archive(
     sha256 = "db797e2857d3d6def92ec2c46aa04577d3e1bb371d6fe14e6bdfc088dcaf2e9e",
 )
 
+load("//tools:python.bzl", "python_repository")
+python_repository(
+    name = "python",
+    version = "2.7",
+)
+
+load("//tools:numpy.bzl", "numpy_repository")
+numpy_repository(
+    name = "numpy",
+    python_version = "2.7",
+)
+
 github_archive(
     name = "pybind11",
     repository = "RobotLocomotion/pybind11",
