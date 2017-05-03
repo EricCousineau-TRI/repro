@@ -15,13 +15,6 @@ class TestTypeBinding(unittest.TestCase):
         self.assertEqual(obj.value(), 1)
 
     def test_flexible(self):
-        """
-        Presently fails:
-        
-            TypeError: __init__(): incompatible constructor arguments. The following argument types are supported:
-                1. pydrake._pydrake_typebinding.SimpleType()
-                2. pydrake._pydrake_typebinding.SimpleType(arg0: int)
-        """
         obj = tb.SimpleType(1.)
         self.assertEqual(obj.value(), 1)
 

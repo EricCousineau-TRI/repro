@@ -27,10 +27,17 @@ PYBIND11_PLUGIN(_pydrake_typebinding) {
   // py::object variable = (py::object)
   //   py::module::import("pydrake.symbolic").attr("Variable");
 
+  // TODO: (Learning) Look at py::overload_cast
+
+  auto init_double = [](SimpleType& self, double value) {
+    new (&self) SimpleType(value);
+  };
+
   py::class_<SimpleType> pySimpleType(m, "SimpleType");
   pySimpleType
     .def(py::init<>())
     .def(py::init<int>())
+    .def("__init__", init_double)
     .def("value", &SimpleType::value)
     .def("set_value", &SimpleType::set_value);
 
