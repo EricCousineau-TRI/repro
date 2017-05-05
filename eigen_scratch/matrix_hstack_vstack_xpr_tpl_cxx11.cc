@@ -238,6 +238,20 @@ struct hstack_tuple : public stack_tuple<Args...> {
     using Base::m_cols;
     using Base::m_rows;
 
+    template<typename Derived>
+    void init_if_needed() {
+        if (m_cols != -1) {
+            eigen_assert(m_rows != -1);
+            return;
+        }
+        // Need Derived type before use. Will defer until we 
+        m_cols = 0;
+        m_rows = -1;
+        
+        InitFunctor<Derived> f {m_rows, m_cols};
+        Base::visit(f);
+    }
+
     template <typename Derived>
     struct InitFunctor {
         // Context
@@ -255,17 +269,16 @@ struct hstack_tuple : public stack_tuple<Args...> {
         }
     };
 
-    template<typename Derived>
-    void init_if_needed() {
-        if (m_cols != -1) {
-            eigen_assert(m_rows != -1);
-            return;
-        }
-        // Need Derived type before use. Will defer until we 
-        m_cols = 0;
-        m_rows = -1;
-        
-        InitFunctor<Derived> f {m_rows, m_cols};
+    template<
+        typename XprType,
+        typename Derived = mutable_matrix_derived_type<XprType>
+        >
+    void assign(XprType&& xpr, bool allow_resize = false) {
+        init_if_needed<Derived>();
+        Base::check_size(xpr, allow_resize);
+
+        int col = 0;
+        AssignFunctor<XprType, Derived> f {std::forward<XprType>(xpr), col};
         Base::visit(f);
     }
 
@@ -282,19 +295,6 @@ struct hstack_tuple : public stack_tuple<Args...> {
             col += subxpr.cols();
         }
     };
-
-    template<
-        typename XprType,
-        typename Derived = mutable_matrix_derived_type<XprType>
-        >
-    void assign(XprType&& xpr, bool allow_resize = false) {
-        init_if_needed<Derived>();
-        Base::check_size(xpr, allow_resize);
-
-        int col = 0;
-        AssignFunctor<XprType, Derived> f {std::forward<XprType>(xpr), col};
-        Base::visit(f);
-    }
 };
 
 template<typename... Args>
@@ -303,6 +303,20 @@ struct vstack_tuple : public stack_tuple<Args...> {
     using Base::Base;
     using Base::m_cols;
     using Base::m_rows;
+
+    template<typename Derived>
+    void init_if_needed() {
+        if (m_cols != -1) {
+            eigen_assert(m_rows != -1);
+            return;
+        }
+        // Need Derived type before use. Will defer until we 
+        m_cols = -1;
+        m_rows = 0;
+
+        InitFunctor<Derived> f {m_rows, m_cols};
+        Base::visit(f);
+    }
 
     template <typename Derived>
     struct InitFunctor {
@@ -321,17 +335,16 @@ struct vstack_tuple : public stack_tuple<Args...> {
         }
     };
 
-    template<typename Derived>
-    void init_if_needed() {
-        if (m_cols != -1) {
-            eigen_assert(m_rows != -1);
-            return;
-        }
-        // Need Derived type before use. Will defer until we 
-        m_cols = -1;
-        m_rows = 0;
+    template<
+        typename XprType,
+        typename Derived = mutable_matrix_derived_type<XprType>
+        >
+    void assign(XprType&& xpr, bool allow_resize = false) {
+        init_if_needed<Derived>();
+        Base::check_size(xpr, allow_resize);
 
-        InitFunctor<Derived> f {m_rows, m_cols};
+        int row = 0;
+        AssignFunctor<XprType, Derived> f {std::forward<XprType>(xpr), row};
         Base::visit(f);
     }
 
@@ -348,19 +361,6 @@ struct vstack_tuple : public stack_tuple<Args...> {
             row += subxpr.rows();
         }
     };
-
-    template<
-        typename XprType,
-        typename Derived = mutable_matrix_derived_type<XprType>
-        >
-    void assign(XprType&& xpr, bool allow_resize = false) {
-        init_if_needed<Derived>();
-        Base::check_size(xpr, allow_resize);
-
-        int row = 0;
-        AssignFunctor<XprType, Derived> f {std::forward<XprType>(xpr), row};
-        Base::visit(f);
-    }
 };
 
 // Actually leveraging std::forward_as_tuple
