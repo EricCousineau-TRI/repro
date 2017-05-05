@@ -192,7 +192,7 @@ struct stack_detail {
     using SubXprAlias = SubXpr<bare<T>, type_index<bare<T>>::value>;
 
     template<typename T>
-    static auto get_subxpr_helper(T&& x) {
+    static SubXprAlias<T> get_subxpr_helper(T&& x) {
         return SubXprAlias<T>(std::forward<T>(x));
     }
 };
@@ -323,11 +323,11 @@ struct vstack_tuple : public stack_tuple<Args...> {
 
 // Actually leveraging std::forward_as_tuple
 template<typename... Args>
-auto hstack(Args&&... args) {
+hstack_tuple<Args&&...> hstack(Args&&... args) {
     return hstack_tuple<Args&&...>(std::forward<Args>(args)...);
 }
 template<typename... Args>
-auto vstack(Args&&... args) {
+vstack_tuple<Args&&...> vstack(Args&&... args) {
     return vstack_tuple<Args&&...>(std::forward<Args>(args)...);
 }
 
