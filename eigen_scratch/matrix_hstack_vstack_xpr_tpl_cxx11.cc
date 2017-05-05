@@ -8,13 +8,13 @@ hstack() and vstack() for concatenation.
 
 namespace std {
 
-template <int... Is>
+template <size_t... Is>
 struct index_sequence{ };
 
-template <int I, int... Is>
+template <size_t I, size_t... Is>
 struct make_index_sequence : public make_index_sequence<I-1, I-1, Is...> { };
 
-template<int... Is>
+template<size_t... Is>
 struct make_index_sequence<0, Is...> : public index_sequence<Is...> { };
 
 template<typename T>
@@ -238,6 +238,23 @@ struct hstack_tuple : public stack_tuple<Args...> {
     using Base::m_cols;
     using Base::m_rows;
 
+    template <typename Derived>
+    struct InitFunctor {
+        // Context
+        int& m_rows;
+        int& m_cols;
+        // Method
+        template <typename T>
+        void operator()(T&& cur) {
+            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
+            if (m_rows == -1)
+                m_rows = subxpr.rows();
+            else
+                eigen_assert(subxpr.rows() == m_rows);
+            m_cols += subxpr.cols();
+        }
+    };
+
     template<typename Derived>
     void init_if_needed() {
         if (m_cols != -1) {
@@ -247,16 +264,24 @@ struct hstack_tuple : public stack_tuple<Args...> {
         // Need Derived type before use. Will defer until we 
         m_cols = 0;
         m_rows = -1;
-        auto f = [&](auto&& cur) {
-            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
-            if (m_rows == -1)
-                m_rows = subxpr.rows();
-            else
-                eigen_assert(subxpr.rows() == m_rows);
-            m_cols += subxpr.cols();
-        };
+        
+        InitFunctor<Derived> f {m_rows, m_cols};
         Base::visit(f);
     }
+
+    template <typename XprType, typename Derived>
+    struct AssignFunctor {
+        // Context
+        XprType&& xpr;
+        int& col;
+        // Method
+        template <typename T>
+        void operator()(T&& cur) {
+            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
+            subxpr.assign(xpr.middleCols(col, subxpr.cols()));
+            col += subxpr.cols();
+        }
+    };
 
     template<
         typename XprType,
@@ -267,11 +292,7 @@ struct hstack_tuple : public stack_tuple<Args...> {
         Base::check_size(xpr, allow_resize);
 
         int col = 0;
-        auto f = [&](auto&& cur) {
-            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
-            subxpr.assign(xpr.middleCols(col, subxpr.cols()));
-            col += subxpr.cols();
-        };
+        AssignFunctor<XprType, Derived> f {std::forward<XprType>(xpr), col};
         Base::visit(f);
     }
 };
@@ -283,6 +304,23 @@ struct vstack_tuple : public stack_tuple<Args...> {
     using Base::m_cols;
     using Base::m_rows;
 
+    template <typename Derived>
+    struct InitFunctor {
+        // Context
+        int& m_rows;
+        int& m_cols;
+        // Method
+        template <typename T>
+        void operator()(T&& cur) {
+            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
+            if (m_cols == -1)
+                m_cols = subxpr.cols();
+            else
+                eigen_assert(subxpr.cols() == m_cols);
+            m_rows += subxpr.rows();
+        }
+    };
+
     template<typename Derived>
     void init_if_needed() {
         if (m_cols != -1) {
@@ -292,16 +330,24 @@ struct vstack_tuple : public stack_tuple<Args...> {
         // Need Derived type before use. Will defer until we 
         m_cols = -1;
         m_rows = 0;
-        auto f = [&](auto&& cur) {
-            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
-            if (m_cols == -1)
-                m_cols = subxpr.cols();
-            else
-                eigen_assert(subxpr.cols() == m_cols);
-            m_rows += subxpr.rows();
-        };
+
+        InitFunctor<Derived> f {m_rows, m_cols};
         Base::visit(f);
     }
+
+    template <typename XprType, typename Derived>
+    struct AssignFunctor {
+        // Context
+        XprType&& xpr;
+        int& row;
+        // Method
+        template <typename T>
+        void operator()(T&& cur) {
+            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
+            subxpr.assign(xpr.middleRows(row, subxpr.rows()));
+            row += subxpr.rows();
+        }
+    };
 
     template<
         typename XprType,
@@ -312,11 +358,7 @@ struct vstack_tuple : public stack_tuple<Args...> {
         Base::check_size(xpr, allow_resize);
 
         int row = 0;
-        auto f = [&](auto&& cur) {
-            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
-            subxpr.assign(xpr.middleRows(row, subxpr.rows()));
-            row += subxpr.rows();
-        };
+        AssignFunctor<XprType, Derived> f {std::forward<XprType>(xpr), row};
         Base::visit(f);
     }
 };
