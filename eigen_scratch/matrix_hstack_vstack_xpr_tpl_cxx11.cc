@@ -1,9 +1,33 @@
 /*
-Purpose: sAme as the other matrix_stack* attempts, but this time, use tuples and explicit calling out of
+Purpose: Same as the other matrix_stack* attempts, but this time, use tuples and explicit calling out of
 hstack() and vstack() for concatenation.
 
 */
-#include "cpp_quick/name_trait.h"
+
+#include <utility>
+
+namespace std {
+
+template <int... Is>
+struct index_sequence{ };
+
+template <int I, int... Is>
+struct make_index_sequence : public make_index_sequence<I-1, I-1, Is...> { };
+
+template<int... Is>
+struct make_index_sequence<0, Is...> : public index_sequence<Is...> { };
+
+template<typename T>
+using decay_t = typename decay<T>::type;
+
+template<typename T>
+using remove_cv_t = typename remove_cv<T>::type;
+
+}  // namespace std
+
+
+
+
 #include "cpp_quick/tuple_iter.h"
 
 #include <string>

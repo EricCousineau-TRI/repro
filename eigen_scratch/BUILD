@@ -65,6 +65,12 @@ cc_binary(
 )
 
 cc_binary(
+    name = "matrix_hstack_vstack_xpr_tpl_cxx11",
+    srcs = ["matrix_hstack_vstack_xpr_tpl_cxx11.cc", "//cpp_quick:tuple_iter.h"],
+    deps = ["@eigen//:eigen"],
+)
+
+cc_binary(
     name = "matrix_array_affinity",
     srcs = ["matrix_array_affinity.cc"],
     deps = ["@eigen//:eigen"],
