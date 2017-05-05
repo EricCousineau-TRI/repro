@@ -61,12 +61,25 @@ using Eigen::MatrixBase;
 
 
 /* <snippet from="./matrix_block.cc"> */
-template<typename Derived>
-Derived extract_mutable_derived_type(MatrixBase<Derived>&& value);
-template<typename Derived>
-Derived extract_mutable_derived_type(MatrixBase<Derived>& value);
-template<typename T>
-using mutable_matrix_derived_type = decltype(extract_mutable_derived_type(std::declval<T>()));
+// template<typename Derived>
+// Derived extract_mutable_derived_type(MatrixBase<Derived>&& value);
+// template<typename Derived>
+// Derived extract_mutable_derived_type(MatrixBase<Derived>& value);
+// template<typename T>
+// using mutable_matrix_derived_type = decltype(extract_mutable_derived_type(std::declval<T>()));
+template <typename T>
+using simple_t = std::decay_t<std::remove_cv<T>>;
+
+template <typename T, typename Derived,
+    typename = std::enable_if<
+        std::is_base_of<MatrixBase<Derived>, simple_t<T>>::value>::type
+struct matrix_derived {
+    using type = Derived;
+};
+
+template <typename T>
+using mutable_matrix_derived_type = typename matrix_derived<T>::type;
+
 /* </snippet> */
 
 
