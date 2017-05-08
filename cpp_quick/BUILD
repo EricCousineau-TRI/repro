@@ -129,3 +129,9 @@ cc_binary(
     name = "lifetime",
     srcs = ["lifetime.cc"],
 )
+
+cc_binary(
+    name = "benchmark_map_test",
+    srcs = ["benchmark_map_test.cc"],
+    deps = ["//externals/benchmark"],
+)

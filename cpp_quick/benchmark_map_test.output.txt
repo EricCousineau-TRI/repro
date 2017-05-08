@@ -1,0 +1,12 @@
+--------------------------------------------------------------
+Benchmark                       Time           CPU Iterations
+--------------------------------------------------------------
+[0;32mBM_MapLookup/8         [m[0;33m       456 ns        459 ns [m[0;36m   1549272[m   16.6216M items/s[m
+[m[0;32mBM_MapLookup/64        [m[0;33m      3363 ns       3364 ns [m[0;36m    207542[m   18.1456M items/s[m
+[m[0;32mBM_MapLookup/512       [m[0;33m     33941 ns      33936 ns [m[0;36m     19869[m   14.3883M items/s[m
+[m[0;32mBM_MapLookup/4096      [m[0;33m    370865 ns     370864 ns [m[0;36m      1887[m   10.5328M items/s[m
+[m[0;32mMapFixture/Lookup/8    [m[0;33m       175 ns        175 ns [m[0;36m   3754288[m   43.5312M items/s[m
+[m[0;32mMapFixture/Lookup/64   [m[0;33m      2234 ns       2234 ns [m[0;36m    316083[m   27.3225M items/s[m
+[m[0;32mMapFixture/Lookup/512  [m[0;33m     25531 ns      25531 ns [m[0;36m     27343[m    19.125M items/s[m
+[m[0;32mMapFixture/Lookup/4096 [m[0;33m    325202 ns     325201 ns [m[0;36m      2172[m   12.0118M items/s[m
+[m
