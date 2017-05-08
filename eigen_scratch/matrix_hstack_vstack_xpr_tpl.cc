@@ -58,7 +58,6 @@ template<typename T>
 using mutable_matrix_derived_type = decltype(extract_mutable_derived_type(std::declval<T>()));
 /* </snippet> */
 
-
 // Quick binary operator reduction
 // @note This permits a single argument, assuming idempotent stuff is OK
 
@@ -268,6 +267,23 @@ struct stack_tuple {
     }
 };
 
+
+// Quick attempt to infer types
+template <typename Derived>
+typename Derived::Scalar infer_scalar_type_impl(const MatrixBase<Derived>&);
+
+template <typename Stack,
+    typename Cond = typename std::enable_if<is_stack<Stack>::value>::type>
+typename Stack::ScalarInferred infer_scalar_type_impl(const Stack&);
+
+template <typename Scalar,
+    typename Cond = typename std::enable_if<!is_stack<Scalar>::value>::type>
+Scalar infer_scalar_type_impl(const Scalar&);
+
+template <typename T>
+using infer_scalar_type = decltype(infer_scalar_type_impl(std::declval<T>()));
+
+
 // Define distinct types for identification
 template<typename... Args>
 struct hstack_tuple : public stack_tuple<Args...> {
@@ -328,7 +344,11 @@ struct hstack_tuple : public stack_tuple<Args...> {
         using FinishedType = typename Eigen::Matrix<Scalar, RowsAtCompileTime, ColsAtCompileTime>;
     };
 
-    template <typename Scalar = double>
+    // TODO: Is there a better way to implement this?
+    using first_type = decltype(std::get<0>(std::declval<typename Base::TupleType>()));
+    using ScalarInferred = infer_scalar_type<first_type>;
+
+    template <typename Scalar = ScalarInferred>
     auto finished() {
         using FinishedType = typename dim_traits<Scalar>::FinishedType;
         init_if_needed<Scalar>();
@@ -396,7 +416,11 @@ struct vstack_tuple : public stack_tuple<Args...> {
         using FinishedType = typename Eigen::Matrix<Scalar, RowsAtCompileTime, ColsAtCompileTime>;
     };
 
-    template <typename Scalar = double>
+    // TODO: Is there a better way to implement this?
+    using first_type = decltype(std::get<0>(std::declval<typename Base::TupleType>()));
+    using ScalarInferred = infer_scalar_type<first_type>;
+
+    template <typename Scalar = ScalarInferred>
     auto finished() {
         using FinishedType = typename dim_traits<Scalar>::FinishedType;
         init_if_needed<Scalar>();
