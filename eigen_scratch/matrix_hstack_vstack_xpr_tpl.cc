@@ -53,20 +53,35 @@ using mutable_matrix_derived_type = decltype(extract_mutable_derived_type(std::d
 /* </snippet> */
 
 
-template <int... Cs>
-struct eigen_dim_sum;
-template <int A>
-struct eigen_dim_sum<A> {
+template <template <int,int> class Op, int... Cs>
+struct binary_reduction;
+template <template <int,int> class Op, int A>
+struct binary_reduction<Op, A> {
     static constexpr int value = A;
 };
+template <template <int,int> class Op, int A, int B, int... Cs>
+struct binary_reduction<Op, A, B, Cs...> {
+    static constexpr int value = binary_reduction<Op, Op<A, B>::value, Cs...>::value;
+};
+
 template <int A, int B>
-struct eigen_dim_sum<A, B> {
+struct eigen_dim_op_sum {
     static constexpr int value = (A == Eigen::Dynamic || B == Eigen::Dynamic) ? Eigen::Dynamic : A + B;
 };
-template <int A, int B, int... Cs>
-struct eigen_dim_sum<A, B, Cs...> {
-    static constexpr int value = eigen_dim_sum<eigen_dim_sum<A, B>::value, Cs...>::value;
+
+template <int A, int B>
+struct eigen_dim_op_eq {
+    static_assert((A == Eigen::Dynamic || B == Eigen::Dynamic) || A == B,
+        "To use compile-time concatenation, dimensions must match or be dynamic.");
+    static constexpr int value = (A == Eigen::Dynamic || B == Eigen::Dynamic) ? Eigen::Dynamic : A;
 };
+
+
+template <int... Cs>
+using eigen_dim_sum = binary_reduction<eigen_dim_op_sum, Cs...>;
+template <int... Cs>
+using eigen_dim_eq = binary_reduction<eigen_dim_op_eq, Cs...>;
+
 
 
 // // Extend to compatible matrix types
@@ -266,7 +281,7 @@ struct hstack_tuple : public stack_tuple<Args...> {
 
         static constexpr int ColsAtCompileTime = eigen_dim_sum<SubDimTraits<Args>::ColsAtCompileTime...>::value;
         // TODO: Check all rows to see if any are dynamically sized
-        static constexpr int RowsAtCompileTime = eigen_dim_sum<SubDimTraits<first_type>::RowsAtCompileTime>::value;
+        static constexpr int RowsAtCompileTime = eigen_dim_eq<SubDimTraits<Args>::RowsAtCompileTime...>::value;
 
         using FinishedType = typename Eigen::Matrix<typename Derived::Scalar, RowsAtCompileTime, ColsAtCompileTime>;
     };
