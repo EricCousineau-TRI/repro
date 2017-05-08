@@ -137,10 +137,10 @@ struct is_stack {
     static constexpr bool value = is_hstack<T>::value || is_vstack<T>::value;
 };
 
-template<typename Derived>
+template<typename Scalar>
 struct stack_detail {
     template<typename T>
-    using is_scalar = std::is_convertible<T, typename Derived::Scalar>;
+    using is_scalar = std::is_convertible<T, Scalar>;
 
     static constexpr int
         TMatrix = 0,
@@ -160,7 +160,6 @@ struct stack_detail {
     struct SubXpr {
         const XprType& value;
 
-        template <typename SubDerived>
         struct dim_traits {
             static constexpr int ColsAtCompileTime = XprType::ColsAtCompileTime;
             static constexpr int RowsAtCompileTime = XprType::RowsAtCompileTime;
@@ -180,17 +179,16 @@ struct stack_detail {
         }
     };
 
-    template<typename Scalar>
-    struct SubXpr<Scalar, TScalar> {
-        const Scalar& value;
+    template<typename SubScalar>
+    struct SubXpr<SubScalar, TScalar> {
+        const SubScalar& value;
 
-        template <typename SubDerived>
         struct dim_traits {
             static constexpr int ColsAtCompileTime = 1;
             static constexpr int RowsAtCompileTime = 1;
         };
 
-        SubXpr(const Scalar& value)
+        SubXpr(const SubScalar& value)
             : value(value) { }
         int rows() {
             return 1;
@@ -208,12 +206,11 @@ struct stack_detail {
     struct SubXpr<Stack, TStack> {
         Stack& value; // Mutable for now, for simplicity.
 
-        template <typename SubDerived>
-        using dim_traits = typename Stack::template dim_traits<SubDerived>;
+        using dim_traits = typename Stack::template dim_traits<Scalar>;
 
         SubXpr(Stack& value)
             : value(value) {
-            value.template init_if_needed<Derived>();
+            value.template init_if_needed<Scalar>();
         }
         int rows() {
             return value.m_rows;
@@ -279,7 +276,7 @@ struct hstack_tuple : public stack_tuple<Args...> {
     using Base::m_cols;
     using Base::m_rows;
 
-    template<typename Derived>
+    template<typename Scalar>
     void init_if_needed() {
         if (m_cols != -1) {
             eigen_assert(m_rows != -1);
@@ -289,7 +286,7 @@ struct hstack_tuple : public stack_tuple<Args...> {
         m_cols = 0;
         m_rows = -1;
         auto f = [&](auto&& cur) {
-            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
+            auto subxpr = stack_detail<Scalar>::get_subxpr_helper(cur);
             if (m_rows == -1)
                 m_rows = subxpr.rows();
             else
@@ -304,12 +301,13 @@ struct hstack_tuple : public stack_tuple<Args...> {
         typename Derived = mutable_matrix_derived_type<XprType>
         >
     void assign(XprType&& xpr, bool allow_resize = false) {
-        init_if_needed<Derived>();
+        using Scalar = typename Derived::Scalar;
+        init_if_needed<Scalar>();
         Base::check_size(xpr, allow_resize);
 
         int col = 0;
         auto f = [&](auto&& cur) {
-            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
+            auto subxpr = stack_detail<Scalar>::get_subxpr_helper(cur);
             subxpr.assign(xpr.middleCols(col, subxpr.cols()));
             col += subxpr.cols();
         };
@@ -317,28 +315,23 @@ struct hstack_tuple : public stack_tuple<Args...> {
     }
 
 
-    template <typename Derived>
+    template <typename Scalar>
     struct dim_traits {
         template <typename T>
-        using SubXprAlias = typename stack_detail<Derived>::template SubXprAlias<T>;
+        using SubXprAlias = typename stack_detail<Scalar>::template SubXprAlias<T>;
         template <typename T>
-        using SubDimTraits = typename SubXprAlias<T>::template dim_traits<Derived>;
+        using SubDimTraits = typename SubXprAlias<T>::dim_traits;
 
         static constexpr int ColsAtCompileTime = eigen_dim_sum<SubDimTraits<Args>::ColsAtCompileTime...>::value;
-        // TODO: Check all rows to see if any are dynamically sized
         static constexpr int RowsAtCompileTime = eigen_dim_eq<SubDimTraits<Args>::RowsAtCompileTime...>::value;
 
-        using FinishedType = typename Eigen::Matrix<typename Derived::Scalar, RowsAtCompileTime, ColsAtCompileTime>;
+        using FinishedType = typename Eigen::Matrix<Scalar, RowsAtCompileTime, ColsAtCompileTime>;
     };
 
     template <typename Scalar = double>
     auto finished() {
-        // Use temporary matrix type get an idea of sizing
-        // TODO: Check if this should be based on Scalar types instead of Derived types
-        // (would make most sense)
-        using DerivedTmp = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
-        using FinishedType = typename dim_traits<DerivedTmp>::FinishedType;
-        init_if_needed<FinishedType>();
+        using FinishedType = typename dim_traits<Scalar>::FinishedType;
+        init_if_needed<Scalar>();
         FinishedType value(m_rows, m_cols);
         assign(value, true);
         return value;
@@ -352,7 +345,7 @@ struct vstack_tuple : public stack_tuple<Args...> {
     using Base::m_cols;
     using Base::m_rows;
 
-    template<typename Derived>
+    template<typename Scalar>
     void init_if_needed() {
         if (m_cols != -1) {
             eigen_assert(m_rows != -1);
@@ -362,7 +355,7 @@ struct vstack_tuple : public stack_tuple<Args...> {
         m_cols = -1;
         m_rows = 0;
         auto f = [&](auto&& cur) {
-            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
+            auto subxpr = stack_detail<Scalar>::get_subxpr_helper(cur);
             if (m_cols == -1)
                 m_cols = subxpr.cols();
             else
@@ -377,40 +370,36 @@ struct vstack_tuple : public stack_tuple<Args...> {
         typename Derived = mutable_matrix_derived_type<XprType>
         >
     void assign(XprType&& xpr, bool allow_resize = false) {
-        init_if_needed<Derived>();
+        using Scalar = typename Derived::Scalar;
+        init_if_needed<Scalar>();
         Base::check_size(xpr, allow_resize);
 
         int row = 0;
         auto f = [&](auto&& cur) {
-            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
+            auto subxpr = stack_detail<Scalar>::get_subxpr_helper(cur);
             subxpr.assign(xpr.middleRows(row, subxpr.rows()));
             row += subxpr.rows();
         };
         Base::visit(f);
     }
 
-    template <typename Derived>
+    template <typename Scalar>
     struct dim_traits {
         template <typename T>
-        using SubXprAlias = typename stack_detail<Derived>::template SubXprAlias<T>;
+        using SubXprAlias = typename stack_detail<Scalar>::template SubXprAlias<T>;
         template <typename T>
-        using SubDimTraits = typename SubXprAlias<T>::template dim_traits<Derived>;
+        using SubDimTraits = typename SubXprAlias<T>::dim_traits;
 
         static constexpr int ColsAtCompileTime = eigen_dim_eq<SubDimTraits<Args>::ColsAtCompileTime...>::value;
-        // TODO: Check all rows to see if any are dynamically sized
         static constexpr int RowsAtCompileTime = eigen_dim_sum<SubDimTraits<Args>::RowsAtCompileTime...>::value;
 
-        using FinishedType = typename Eigen::Matrix<typename Derived::Scalar, RowsAtCompileTime, ColsAtCompileTime>;
+        using FinishedType = typename Eigen::Matrix<Scalar, RowsAtCompileTime, ColsAtCompileTime>;
     };
-    
+
     template <typename Scalar = double>
     auto finished() {
-        // Use temporary matrix type get an idea of sizing
-        // TODO: Check if this should be based on Scalar types instead of Derived types
-        // (would make most sense)
-        using DerivedTmp = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
-        using FinishedType = typename dim_traits<DerivedTmp>::FinishedType;
-        init_if_needed<FinishedType>();
+        using FinishedType = typename dim_traits<Scalar>::FinishedType;
+        init_if_needed<Scalar>();
         FinishedType value(m_rows, m_cols);
         assign(value, true);
         return value;
