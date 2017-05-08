@@ -23,8 +23,14 @@ using Eigen::MatrixBase;
 
 template <typename Scalar, int Rows, int Cols>
 struct name_trait<Eigen::Matrix<Scalar, Rows, Cols>> {
+    static std::string dim_name(int dim) {
+        if (dim == Eigen::Dynamic)
+            return "X";
+        else
+            return std::to_string(dim);
+    }
     static std::string name() {
-        return "Matrix<" + name_trait<Scalar>::name() + ", " + std::to_string(Rows) + ", " + std::to_string(Cols) + ">";
+        return "Matrix<" + name_trait<Scalar>::name() + ", " + dim_name(Rows) + ", " + dim_name(Cols) + ">";
     }
 };
 
@@ -52,6 +58,9 @@ template<typename T>
 using mutable_matrix_derived_type = decltype(extract_mutable_derived_type(std::declval<T>()));
 /* </snippet> */
 
+
+// Quick binary operator reduction
+// @note This permits a single argument, assuming idempotent stuff is OK
 
 template <template <int,int> class Op, int... Cs>
 struct binary_reduction;
@@ -411,21 +420,26 @@ void fill(MatrixXs& X, string prefix) {
         X(i) = prefix + "[" + hex[i] + "]";
 }
 
+template <typename T>
+std::string type_name_of(const T&) {
+    return name_trait<T>::name();
+}
+
 int main() {
     Eigen::Matrix<double, 1, 3> a;
     Eigen::Vector2d a1(1, 2);
     // Existing - better for non-ragged case.
     a << 10, a1.transpose();
-    cout << "a: " << endl << a << endl << endl;
+    cout << "a: " << type_name_of(a) << endl << a << endl << endl;
     hstack(10., a1.transpose()).assign(a);
     cout << "a: " << endl << a << endl << endl;
 
     auto a_tmp = hstack(10., a1.transpose()).finished();
-    cout << "tmp: " << endl
-         << a_tmp << endl;
+    cout << "a_tmp: " << type_name_of(a_tmp) << endl << a_tmp << endl;
 
-    cout << name_trait<decltype(a)>::name() << endl;
-    cout << name_trait<decltype(a_tmp)>::name() << endl;
+    // Check dynamic sizing
+    auto ax_tmp = hstack(10., Eigen::VectorXd(a1).transpose()).finished();
+    cout << "ax_tmp: " << type_name_of(ax_tmp) << endl << ax_tmp << endl;
 
     // Eigen::Matrix3d b;
     // Eigen::Vector3d b1;
