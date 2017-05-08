@@ -279,22 +279,6 @@ struct hstack_tuple : public stack_tuple<Args...> {
     using Base::m_cols;
     using Base::m_rows;
 
-    using first_type = decltype(std::get<0>(std::declval<typename Base::TupleType>()));
-
-    template <typename Derived>
-    struct dim_traits {
-        template <typename T>
-        using SubXprAlias = typename stack_detail<Derived>::template SubXprAlias<T>;
-        template <typename T>
-        using SubDimTraits = typename SubXprAlias<T>::template dim_traits<Derived>;
-
-        static constexpr int ColsAtCompileTime = eigen_dim_sum<SubDimTraits<Args>::ColsAtCompileTime...>::value;
-        // TODO: Check all rows to see if any are dynamically sized
-        static constexpr int RowsAtCompileTime = eigen_dim_eq<SubDimTraits<Args>::RowsAtCompileTime...>::value;
-
-        using FinishedType = typename Eigen::Matrix<typename Derived::Scalar, RowsAtCompileTime, ColsAtCompileTime>;
-    };
-
     template<typename Derived>
     void init_if_needed() {
         if (m_cols != -1) {
@@ -332,9 +316,26 @@ struct hstack_tuple : public stack_tuple<Args...> {
         Base::visit(f);
     }
 
+
+    template <typename Derived>
+    struct dim_traits {
+        template <typename T>
+        using SubXprAlias = typename stack_detail<Derived>::template SubXprAlias<T>;
+        template <typename T>
+        using SubDimTraits = typename SubXprAlias<T>::template dim_traits<Derived>;
+
+        static constexpr int ColsAtCompileTime = eigen_dim_sum<SubDimTraits<Args>::ColsAtCompileTime...>::value;
+        // TODO: Check all rows to see if any are dynamically sized
+        static constexpr int RowsAtCompileTime = eigen_dim_eq<SubDimTraits<Args>::RowsAtCompileTime...>::value;
+
+        using FinishedType = typename Eigen::Matrix<typename Derived::Scalar, RowsAtCompileTime, ColsAtCompileTime>;
+    };
+
     template <typename Scalar = double>
     auto finished() {
         // Use temporary matrix type get an idea of sizing
+        // TODO: Check if this should be based on Scalar types instead of Derived types
+        // (would make most sense)
         using DerivedTmp = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
         using FinishedType = typename dim_traits<DerivedTmp>::FinishedType;
         init_if_needed<FinishedType>();
@@ -344,60 +345,87 @@ struct hstack_tuple : public stack_tuple<Args...> {
     }
 };
 
-// template<typename... Args>
-// struct vstack_tuple : public stack_tuple<Args...> {
-//     using Base = stack_tuple<Args...>;
-//     using Base::Base;
-//     using Base::m_cols;
-//     using Base::m_rows;
+template<typename... Args>
+struct vstack_tuple : public stack_tuple<Args...> {
+    using Base = stack_tuple<Args...>;
+    using Base::Base;
+    using Base::m_cols;
+    using Base::m_rows;
 
-//     template<typename Derived>
-//     void init_if_needed() {
-//         if (m_cols != -1) {
-//             eigen_assert(m_rows != -1);
-//             return;
-//         }
-//         // Need Derived type before use. Will defer until we 
-//         m_cols = -1;
-//         m_rows = 0;
-//         auto f = [&](auto&& cur) {
-//             auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
-//             if (m_cols == -1)
-//                 m_cols = subxpr.cols();
-//             else
-//                 eigen_assert(subxpr.cols() == m_cols);
-//             m_rows += subxpr.rows();
-//         };
-//         Base::visit(f);
-//     }
+    template<typename Derived>
+    void init_if_needed() {
+        if (m_cols != -1) {
+            eigen_assert(m_rows != -1);
+            return;
+        }
+        // Need Derived type before use. Will defer until we 
+        m_cols = -1;
+        m_rows = 0;
+        auto f = [&](auto&& cur) {
+            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
+            if (m_cols == -1)
+                m_cols = subxpr.cols();
+            else
+                eigen_assert(subxpr.cols() == m_cols);
+            m_rows += subxpr.rows();
+        };
+        Base::visit(f);
+    }
 
-//     template<
-//         typename XprType,
-//         typename Derived = mutable_matrix_derived_type<XprType>
-//         >
-//     void assign(XprType&& xpr, bool allow_resize = false) {
-//         init_if_needed<Derived>();
-//         Base::check_size(xpr, allow_resize);
+    template<
+        typename XprType,
+        typename Derived = mutable_matrix_derived_type<XprType>
+        >
+    void assign(XprType&& xpr, bool allow_resize = false) {
+        init_if_needed<Derived>();
+        Base::check_size(xpr, allow_resize);
 
-//         int row = 0;
-//         auto f = [&](auto&& cur) {
-//             auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
-//             subxpr.assign(xpr.middleRows(row, subxpr.rows()));
-//             row += subxpr.rows();
-//         };
-//         Base::visit(f);
-//     }
-// };
+        int row = 0;
+        auto f = [&](auto&& cur) {
+            auto subxpr = stack_detail<Derived>::get_subxpr_helper(cur);
+            subxpr.assign(xpr.middleRows(row, subxpr.rows()));
+            row += subxpr.rows();
+        };
+        Base::visit(f);
+    }
+
+    template <typename Derived>
+    struct dim_traits {
+        template <typename T>
+        using SubXprAlias = typename stack_detail<Derived>::template SubXprAlias<T>;
+        template <typename T>
+        using SubDimTraits = typename SubXprAlias<T>::template dim_traits<Derived>;
+
+        static constexpr int ColsAtCompileTime = eigen_dim_eq<SubDimTraits<Args>::ColsAtCompileTime...>::value;
+        // TODO: Check all rows to see if any are dynamically sized
+        static constexpr int RowsAtCompileTime = eigen_dim_sum<SubDimTraits<Args>::RowsAtCompileTime...>::value;
+
+        using FinishedType = typename Eigen::Matrix<typename Derived::Scalar, RowsAtCompileTime, ColsAtCompileTime>;
+    };
+    
+    template <typename Scalar = double>
+    auto finished() {
+        // Use temporary matrix type get an idea of sizing
+        // TODO: Check if this should be based on Scalar types instead of Derived types
+        // (would make most sense)
+        using DerivedTmp = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
+        using FinishedType = typename dim_traits<DerivedTmp>::FinishedType;
+        init_if_needed<FinishedType>();
+        FinishedType value(m_rows, m_cols);
+        assign(value, true);
+        return value;
+    }
+};
 
 // Actually leveraging std::forward_as_tuple
 template<typename... Args>
 auto hstack(Args&&... args) {
     return hstack_tuple<Args&&...>(std::forward<Args>(args)...);
 }
-// template<typename... Args>
-// auto vstack(Args&&... args) {
-//     return vstack_tuple<Args&&...>(std::forward<Args>(args)...);
-// }
+template<typename... Args>
+auto vstack(Args&&... args) {
+    return vstack_tuple<Args&&...>(std::forward<Args>(args)...);
+}
 
 // Syntactic sugar
 template<
@@ -435,78 +463,78 @@ int main() {
     cout << "a: " << endl << a << endl << endl;
 
     auto a_tmp = hstack(10., a1.transpose()).finished();
-    cout << "a_tmp: " << type_name_of(a_tmp) << endl << a_tmp << endl;
+    cout << "a_tmp: " << type_name_of(a_tmp) << endl << a_tmp << endl << endl;
 
     // Check dynamic sizing
     auto ax_tmp = hstack(10., Eigen::VectorXd(a1).transpose()).finished();
-    cout << "ax_tmp: " << type_name_of(ax_tmp) << endl << ax_tmp << endl;
+    cout << "ax_tmp: " << type_name_of(ax_tmp) << endl << ax_tmp << endl << endl;
 
-    // Eigen::Matrix3d b;
-    // Eigen::Vector3d b1;
-    // b1.setConstant(1);
-    // Eigen::Matrix<double, 2, 3> b2;
-    // b2.setConstant(2);
+    Eigen::Matrix3d b;
+    Eigen::Vector3d b1;
+    b1.setConstant(1);
+    Eigen::Matrix<double, 2, 3> b2;
+    b2.setConstant(2);
 
-    // b << vstack(b1.transpose(), b2);
-    // cout << "b: " << endl << b << endl << endl;
+    b << vstack(b1.transpose(), b2);
+    cout << "b: " << endl << b << endl << endl;
 
-    // // Test for resize needed
-    // Eigen::VectorXd c;
-    // c << vstack(3, 2, 1);
-    // cout << "c: " << endl << c << endl << endl;
+    // Test for resize needed
+    Eigen::VectorXd c;
+    c << vstack(3, 2, 1);
+    cout << "c: " << endl << c << endl << endl;
 
-    // // Test for resize for matrix
-    // Eigen::MatrixXd d;
-    // // hstack(a.transpose(), b, b1, c).assign(d); // Will assert at check_size
-    // d << hstack(a.transpose(), b, b1, c);
-    // cout << "d: " << endl << d << endl << endl;
+    // Test for resize for matrix
+    Eigen::MatrixXd d;
+    // hstack(a.transpose(), b, b1, c).assign(d); // Will assert at check_size
+    d << hstack(a.transpose(), b, b1, c);
+    cout << "d: " << endl << d << endl << endl;
 
-    // // Test nesting
-    // Eigen::Matrix2d e;
-    // e << hstack(vstack(1, 2), vstack(3, 4));
-    // cout << "e: " << endl << e << endl << endl;
+    // Test nesting
+    Eigen::Matrix2d e;
+    e << hstack(vstack(1, 2), vstack(3, 4));
+    cout << "e: " << endl << e << endl << endl;
 
-    // cout << endl << endl;
+    cout << endl << endl;
 
-    // // Use the test from `matrix_stack`, NumPy style
-    // MatrixXs
-    //     A(1, 2), B(1, 2),
-    //     C(2, 1),
-    //     D(1, 3), E(1, 3),
-    //     F(2, 4);
-    // fill(A, "A");
-    // fill(B, "B");
-    // fill(C, "C");
-    // fill(D, "D");
-    // fill(E, "E");
-    // fill(F, "F");
+    // Use the test from `matrix_stack`, NumPy style
+    MatrixXs
+        A(1, 2), B(1, 2),
+        C(2, 1),
+        D(1, 3), E(1, 3),
+        F(2, 4);
+    fill(A, "A");
+    fill(B, "B");
+    fill(C, "C");
+    fill(D, "D");
+    fill(E, "E");
+    fill(F, "F");
 
-    // string s1 = "s1";
-    // string s2 = "s2";
-    // string s3 = "s3";
-    // string s4 = "s4";
+    string s1 = "s1";
+    string s2 = "s2";
+    string s3 = "s3";
+    string s4 = "s4";
 
-    // cout
-    //     << "A: " << endl << A << endl << endl
-    //     << "B: " << endl << B << endl << endl
-    //     << "C: " << endl << C << endl << endl
-    //     << "D: " << endl << D << endl << endl
-    //     << "E: " << endl << E << endl << endl
-    //     << "F: " << endl << F << endl << endl;
+    cout
+        << "A: " << endl << A << endl << endl
+        << "B: " << endl << B << endl << endl
+        << "C: " << endl << C << endl << endl
+        << "D: " << endl << D << endl << endl
+        << "E: " << endl << E << endl << endl
+        << "F: " << endl << F << endl << endl;
 
-    // cout
-    //     << "Scalars: "
-    //     << s1 << ", " << s2 << ", " << s3 << ", " << s4
-    //     << endl << endl;
+    cout
+        << "Scalars: "
+        << s1 << ", " << s2 << ", " << s3 << ", " << s4
+        << endl << endl;
 
-    // MatrixXs X;
-    // X << vstack(
-    //     hstack( vstack(A, B), C, vstack(D, E) ),
-    //     hstack( F, vstack(hstack(s1, s2), hstack(s3, s4)) )
-    // );
+    MatrixXs X;
+    X << vstack(
+        hstack( vstack(A, B), C, vstack(D, E) ),
+        hstack( F, vstack(hstack(s1, s2), hstack(s3, s4)) )
+    );
 
-    // cout
-    //     << "X: " << endl << X << endl << endl;
+    cout
+        << "X: " << endl << X << endl << endl;
 
     return 0;
 }
