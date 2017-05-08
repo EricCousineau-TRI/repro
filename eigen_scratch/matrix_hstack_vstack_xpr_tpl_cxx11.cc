@@ -6,6 +6,7 @@ hstack() and vstack() for concatenation.
 
 #include <utility>
 
+#if __cplusplus <= 201103L
 namespace std {
 
 template <size_t... Is>
@@ -24,8 +25,7 @@ template<typename T>
 using remove_cv_t = typename remove_cv<T>::type;
 
 }  // namespace std
-
-
+#endif
 
 
 #include "cpp_quick/tuple_iter.h"
