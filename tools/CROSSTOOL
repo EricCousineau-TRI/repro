@@ -51,7 +51,7 @@ toolchain {
   cxx_builtin_include_directory: "/usr/lib/gcc/x86_64-linux-gnu/6/include-fixed"
   cxx_builtin_include_directory: "/usr/include/x86_64-linux-gnu"
   cxx_builtin_include_directory: "/usr/include"
-  cxx_flag: "-std=c++1y" # Modified for Drake.
+  cxx_flag: "-std=c++11" # Modified again for local stuff
   host_system_name: "local"
   linker_flag: "-lstdc++"
   linker_flag: "-lm"
@@ -211,7 +211,7 @@ toolchain {
   cxx_builtin_include_directory: "/usr/lib/gcc/x86_64-linux-gnu/4.9/include-fixed"
   cxx_builtin_include_directory: "/usr/include/x86_64-linux-gnu"
   cxx_builtin_include_directory: "/usr/include"
-  cxx_flag: "-std=c++1y" # Modified for Drake.
+  cxx_flag: "-std=c++11" # Modified for Drake.
   host_system_name: "local"
   linker_flag: "-lstdc++"
   linker_flag: "-lm"
@@ -287,7 +287,7 @@ toolchain {
   cxx_builtin_include_directory: "/usr/lib/llvm-3.9/lib/clang/3.9.1/include"
   cxx_builtin_include_directory: "/usr/include/x86_64-linux-gnu"
   cxx_builtin_include_directory: "/usr/include"
-  cxx_flag: "-std=c++1y"
+  cxx_flag: "-std=c++11"
   host_system_name: "local"
   linker_flag: "-lstdc++"
   linker_flag: "-lm"
