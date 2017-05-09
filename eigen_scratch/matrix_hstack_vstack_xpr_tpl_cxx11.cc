@@ -94,14 +94,12 @@ template <typename T>
 struct is_eigen_matrix {
 private:
     // See libstdc++, <type_traits>, __sfinae_types 
-    typedef char good; // sizeof == 1
-    struct bad { char value[2]; }; // sizeof == 2
-
+    // Modified to use true_type, false_type
     template <typename Derived>
-    static good test(const MatrixBase<Derived>&);
-    static bad test(...);
+    static std::true_type test(const MatrixBase<Derived>&);
+    static std::false_type test(...);
 public:
-    static constexpr bool value = sizeof(test(std::declval<T>())) == 1;
+    static constexpr bool value = decltype(test(std::declval<T>()))::value;
 };
 
 // Quick binary operator reduction
