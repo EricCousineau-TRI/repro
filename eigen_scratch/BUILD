@@ -75,3 +75,9 @@ cc_binary(
     srcs = ["matrix_array_affinity.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "matrix_tpl_determine",
+    srcs = ["matrix_tpl_determine.cc"],
+    deps = ["@eigen//:eigen"],
+)
