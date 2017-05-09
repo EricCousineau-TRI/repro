@@ -141,7 +141,7 @@ struct is_specialization_of<Template<Args...>, Template> : std::true_type {};
 
 
 template<typename T>
-using bare = std::remove_cv_t<std::decay_t<T>>;
+using bare_t = std::remove_cv_t<std::decay_t<T>>;
 
 template<typename... Args>
 struct hstack_tuple;
@@ -247,7 +247,7 @@ struct stack_detail {
 
     // More elegance???
     template<typename T>
-    using SubXprAlias = SubXpr<bare<T>, type_index<bare<T>>::value>;
+    using SubXprAlias = SubXpr<bare_t<T>, type_index<bare_t<T>>::value>;
 
     template<typename T>
     static auto get_subxpr_helper(T&& x) {
@@ -310,7 +310,7 @@ public:
 };
 
 template <typename T>
-using infer_scalar_type = typename infer_scalar<bare<T>>::type;
+using infer_scalar_bare_t = typename infer_scalar<bare_t<T>>::type;
 
 
 // Define distinct types for identification
@@ -375,7 +375,7 @@ struct hstack_tuple : public stack_tuple<Args...> {
 
     // TODO: Is there a better way to implement this?
     using first_type = decltype(std::get<0>(std::declval<typename Base::TupleType>()));
-    using ScalarInferred = infer_scalar_type<first_type>;
+    using ScalarInferred = infer_scalar_bare_t<first_type>;
 
     template <typename Scalar = ScalarInferred,
         typename FinishedType = typename dim_traits<Scalar>::FinishedType>
@@ -447,7 +447,7 @@ struct vstack_tuple : public stack_tuple<Args...> {
 
     // TODO: Is there a better way to implement this?
     using first_type = decltype(std::get<0>(std::declval<typename Base::TupleType>()));
-    using ScalarInferred = infer_scalar_type<first_type>;
+    using ScalarInferred = infer_scalar_bare_t<first_type>;
 
     template <typename Scalar = ScalarInferred,
         typename FinishedType = typename dim_traits<Scalar>::FinishedType>
@@ -474,7 +474,7 @@ template<
     typename XprType,
     typename Stack,
     typename Derived = mutable_matrix_derived_type<XprType>,
-    typename Cond = typename std::enable_if<is_stack<bare<Stack>>::value>::type
+    typename Cond = typename std::enable_if<is_stack<bare_t<Stack>>::value>::type
     >
 void operator<<(XprType&& xpr, Stack&& stack) {
     // Permit resizing by default
