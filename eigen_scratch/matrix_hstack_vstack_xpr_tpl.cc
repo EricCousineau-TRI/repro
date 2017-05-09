@@ -58,6 +58,27 @@ template<typename T>
 using mutable_matrix_derived_type = decltype(extract_mutable_derived_type(std::declval<T>()));
 /* </snippet> */
 
+
+template<typename Derived>
+Derived extract_derived_type(const MatrixBase<Derived>& value);
+template<typename T>
+using matrix_derived_type = decltype(extract_derived_type(std::declval<T>()));
+
+
+template <typename T>
+struct is_eigen_matrix {
+private:
+    // See libstdc++, <type_traits>, __sfinae_types 
+    typedef char good; // sizeof == 1
+    struct bad { char value[2]; }; // sizeof == 2
+
+    template <typename Derived>
+    static good test(const MatrixBase<Derived>&);
+    static bad test(...);
+public:
+    static constexpr bool value = sizeof(test(std::declval<T>())) == 1;
+};
+
 // Quick binary operator reduction
 // @note This permits a single argument, assuming idempotent stuff is OK
 
@@ -146,6 +167,7 @@ struct stack_detail {
         TScalar = 1,
         TStack = 2;
 
+    // Specialize this to the context of a stack, where scalars may be other matrices
     template<typename T>
     struct type_index {
         static constexpr int value =
@@ -267,21 +289,28 @@ struct stack_tuple {
     }
 };
 
-
 // Quick attempt to infer types
-template <typename Derived>
-typename Derived::Scalar infer_scalar_type_impl(const MatrixBase<Derived>&);
-
-template <typename Stack,
-    typename Cond = typename std::enable_if<is_stack<Stack>::value>::type>
-typename Stack::ScalarInferred infer_scalar_type_impl(const Stack&);
-
-template <typename Scalar,
-    typename Cond = typename std::enable_if<!is_stack<Scalar>::value>::type>
-Scalar infer_scalar_type_impl(const Scalar&);
+template <typename T>
+struct infer_scalar {
+private:
+    static constexpr int TOther = 0, TMatrix = 1, TStack = 2;
+    static constexpr int type_index =
+        is_eigen_matrix<T>::value ? TMatrix : (
+            is_stack<T>::value ? TStack : TOther
+        );
+    // Need to introduce type to permit defining specialization w/in struct
+    template <typename Scalar, int TIndex = TOther>
+    struct get { using type = Scalar; };
+    template <typename XprType>
+    struct get<XprType, TMatrix> { using type = typename matrix_derived_type<XprType>::Scalar; };
+    template <typename Stack>
+    struct get<Stack, TStack> { using type = typename Stack::ScalarInferred; };
+public:
+    using type = typename get<bare<T>, type_index>::type;
+};
 
 template <typename T>
-using infer_scalar_type = decltype(infer_scalar_type_impl(std::declval<T>()));
+using infer_scalar_type = typename infer_scalar<T>::type;
 
 
 // Define distinct types for identification
@@ -555,9 +584,26 @@ int main() {
             C(2, 1);
 
         double s1 = 1, s2 = 2, s3 = 3, s4 = 4;
-        // auto X_tmp = hstack( vstack(A, B), C ).finished<double>();
-        auto X_tmp = hstack( vstack(A, B), C ).finished(); // Need to infer type
+        auto X_tmp = hstack( vstack(A, B), C ).finished<double>();
+        // auto X_tmp = hstack( vstack(A, B), C ).finished(); // Need to infer type
         cout << "X_tmp: " << type_name_of(X_tmp) << endl << X_tmp << endl << endl;
+        {
+            using infer_scalar = infer_scalar_type<decltype(vstack( C ) )>;
+            cout << "  scalar: " << name_trait<infer_scalar>::name() << endl;
+        }
+        {
+            // Does not work...
+            using infer_scalar = infer_scalar_type<decltype(hstack( vstack( C )) )>;
+            cout << "  scalar: " << name_trait<infer_scalar>::name() << endl;
+        }
+        {
+            using infer_scalar = infer_scalar_type<decltype(A)>;
+            cout << "  scalar: " << name_trait<infer_scalar>::name() << endl;
+        }
+        {
+            using infer_scalar = infer_scalar_type<double>;
+            cout << "  scalar: " << name_trait<infer_scalar>::name() << endl;
+        }
     }
 
     return 0;
