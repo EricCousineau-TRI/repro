@@ -424,7 +424,7 @@ struct vstack_tuple : public stack_tuple<Args...> {
     auto finished() {
         using FinishedType = typename dim_traits<Scalar>::FinishedType;
         init_if_needed<Scalar>();
-        FinishedType value(m_rows, m_cols);
+        FinishedType value;
         assign(value, true);
         return value;
     }
@@ -548,6 +548,17 @@ int main() {
 
     cout
         << "X: " << endl << X << endl << endl;
+
+    {
+        Eigen::MatrixXd
+            A(1, 2), B(1, 2),
+            C(2, 1);
+
+        double s1 = 1, s2 = 2, s3 = 3, s4 = 4;
+        // auto X_tmp = hstack( vstack(A, B), C ).finished<double>();
+        auto X_tmp = hstack( vstack(A, B), C ).finished(); // Need to infer type
+        cout << "X_tmp: " << type_name_of(X_tmp) << endl << X_tmp << endl << endl;
+    }
 
     return 0;
 }
