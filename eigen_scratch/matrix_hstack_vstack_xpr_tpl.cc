@@ -306,11 +306,11 @@ private:
     template <typename Stack>
     struct get<Stack, TStack> { using type = typename Stack::ScalarInferred; };
 public:
-    using type = typename get<bare<T>, type_index>::type;
+    using type = typename get<T, type_index>::type;
 };
 
 template <typename T>
-using infer_scalar_type = typename infer_scalar<T>::type;
+using infer_scalar_type = typename infer_scalar<bare<T>>::type;
 
 
 // Define distinct types for identification
@@ -594,6 +594,11 @@ int main() {
         {
             // Does not work...
             using infer_scalar = infer_scalar_type<decltype(hstack( vstack( C )) )>;
+            cout << "  scalar: " << name_trait<infer_scalar>::name() << endl;
+        }
+        {
+            // Does not work...
+            using infer_scalar = infer_scalar_type<hstack_tuple<const vstack_tuple<Eigen::MatrixXd>&>>;
             cout << "  scalar: " << name_trait<infer_scalar>::name() << endl;
         }
         {
