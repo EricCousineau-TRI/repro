@@ -535,6 +535,9 @@ int main() {
     Eigen::Matrix2d e;
     e << hstack(vstack(1, 2), vstack(3, 4));
     cout << "e: " << endl << e << endl << endl;
+    // Need to explicitly specify types here, or use .finished<double>()
+    auto e_tmp = hstack(vstack(1., 2.), vstack(3., 4.)).finished();
+    cout << "e_tmp: " << type_name_of(e_tmp) << endl << e_tmp << endl << endl;
 
     cout << endl << endl;
 
