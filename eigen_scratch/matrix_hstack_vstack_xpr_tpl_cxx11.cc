@@ -105,12 +105,15 @@ public:
 // Quick binary operator reduction
 // @note This permits a single argument, assuming idempotent stuff is OK
 
+// Base case for specialization
 template <template <int,int> class Op, int... Cs>
 struct binary_reduction;
+// Single-argument (unary) case
 template <template <int,int> class Op, int A>
 struct binary_reduction<Op, A> {
     static constexpr int value = A;
 };
+// 2+ argument case
 template <template <int,int> class Op, int A, int B, int... Cs>
 struct binary_reduction<Op, A, B, Cs...> {
     static constexpr int value = binary_reduction<Op, Op<A, B>::value, Cs...>::value;
@@ -203,6 +206,7 @@ struct stack_detail {
     template<typename XprType, int type = TMatrix>
     struct SubXpr {
         const XprType& value;
+        static_assert(is_eigen_matrix<XprType>::value, "This type is not a Eigen Matrix, compatible scalar, nor a stack type.");
 
         struct dim_traits {
             static constexpr int ColsAtCompileTime = XprType::ColsAtCompileTime;
