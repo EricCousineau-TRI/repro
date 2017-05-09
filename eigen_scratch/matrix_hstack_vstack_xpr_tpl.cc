@@ -377,11 +377,11 @@ struct hstack_tuple : public stack_tuple<Args...> {
     using first_type = decltype(std::get<0>(std::declval<typename Base::TupleType>()));
     using ScalarInferred = infer_scalar_type<first_type>;
 
-    template <typename Scalar = ScalarInferred>
-    auto finished() {
-        using FinishedType = typename dim_traits<Scalar>::FinishedType;
+    template <typename Scalar = ScalarInferred,
+        typename FinishedType = typename dim_traits<Scalar>::FinishedType>
+    FinishedType finished() {
         init_if_needed<Scalar>();
-        FinishedType value(m_rows, m_cols);
+        FinishedType value;
         assign(value, true);
         return value;
     }
@@ -449,9 +449,9 @@ struct vstack_tuple : public stack_tuple<Args...> {
     using first_type = decltype(std::get<0>(std::declval<typename Base::TupleType>()));
     using ScalarInferred = infer_scalar_type<first_type>;
 
-    template <typename Scalar = ScalarInferred>
-    auto finished() {
-        using FinishedType = typename dim_traits<Scalar>::FinishedType;
+    template <typename Scalar = ScalarInferred,
+        typename FinishedType = typename dim_traits<Scalar>::FinishedType>
+    FinishedType finished() {
         init_if_needed<Scalar>();
         FinishedType value;
         assign(value, true);
@@ -571,45 +571,18 @@ int main() {
 
     MatrixXs X;
     X << vstack(
-        hstack( vstack(A, B), C, vstack(D, E) ),
-        hstack( F, vstack(hstack(s1, s2), hstack(s3, s4)) )
-    );
+            hstack( vstack(A, B), C, vstack(D, E) ),
+            hstack( F, vstack(hstack(s1, s2), hstack(s3, s4)) )
+        );
 
     cout
         << "X: " << endl << X << endl << endl;
 
-    {
-        Eigen::MatrixXd
-            A(1, 2), B(1, 2),
-            C(2, 1);
-
-        double s1 = 1, s2 = 2, s3 = 3, s4 = 4;
-        auto X_tmp = hstack( vstack(A, B), C ).finished<double>();
-        // auto X_tmp = hstack( vstack(A, B), C ).finished(); // Need to infer type
-        cout << "X_tmp: " << type_name_of(X_tmp) << endl << X_tmp << endl << endl;
-        {
-            using infer_scalar = infer_scalar_type<decltype(vstack( C ) )>;
-            cout << "  scalar: " << name_trait<infer_scalar>::name() << endl;
-        }
-        {
-            // Does not work...
-            using infer_scalar = infer_scalar_type<decltype(hstack( vstack( C )) )>;
-            cout << "  scalar: " << name_trait<infer_scalar>::name() << endl;
-        }
-        {
-            // Does not work...
-            using infer_scalar = infer_scalar_type<hstack_tuple<const vstack_tuple<Eigen::MatrixXd>&>>;
-            cout << "  scalar: " << name_trait<infer_scalar>::name() << endl;
-        }
-        {
-            using infer_scalar = infer_scalar_type<decltype(A)>;
-            cout << "  scalar: " << name_trait<infer_scalar>::name() << endl;
-        }
-        {
-            using infer_scalar = infer_scalar_type<double>;
-            cout << "  scalar: " << name_trait<infer_scalar>::name() << endl;
-        }
-    }
+    auto X_tmp = vstack(
+            hstack( vstack(A, B), C, vstack(D, E) ),
+            hstack( F, vstack(hstack(s1, s2), hstack(s3, s4)) )
+        ).finished();
+    cout << "X_tmp: " << type_name_of(X_tmp) << endl << X_tmp << endl << endl;
 
     return 0;
 }
