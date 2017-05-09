@@ -380,7 +380,7 @@ struct hstack_tuple : public stack_tuple<Args...> {
         typename XprType,
         typename Derived = mutable_matrix_derived_type<XprType>
         >
-    void assign(XprType&& xpr, bool allow_resize = false) {
+    XprType&& assign(XprType&& xpr, bool allow_resize = false) {
         using Scalar = typename Derived::Scalar;
         init_if_needed<Scalar>();
         Base::check_size(xpr, allow_resize);
@@ -388,6 +388,7 @@ struct hstack_tuple : public stack_tuple<Args...> {
         int col = 0;
         AssignFunctor<XprType, Scalar> f {std::forward<XprType>(xpr), col};
         Base::visit(f);
+        return std::forward<XprType>(xpr);
     }
 
     template <typename XprType, typename Scalar>
@@ -424,10 +425,7 @@ struct hstack_tuple : public stack_tuple<Args...> {
     template <typename Scalar = ScalarInferred,
         typename FinishedType = typename dim_traits<Scalar>::FinishedType>
     FinishedType finished() {
-        init_if_needed<Scalar>();
-        FinishedType value;
-        assign(value, true);
-        return value;
+        return assign(FinishedType(), true);
     }
 };
 
@@ -472,7 +470,7 @@ struct vstack_tuple : public stack_tuple<Args...> {
         typename XprType,
         typename Derived = mutable_matrix_derived_type<XprType>
         >
-    void assign(XprType&& xpr, bool allow_resize = false) {
+    XprType&& assign(XprType&& xpr, bool allow_resize = false) {
         using Scalar = typename Derived::Scalar;
         init_if_needed<Scalar>();
         Base::check_size(xpr, allow_resize);
@@ -480,6 +478,7 @@ struct vstack_tuple : public stack_tuple<Args...> {
         int row = 0;
         AssignFunctor<XprType, Scalar> f {std::forward<XprType>(xpr), row};
         Base::visit(f);
+        return std::forward<XprType>(xpr);
     }
 
     template <typename XprType, typename Scalar>
@@ -516,10 +515,7 @@ struct vstack_tuple : public stack_tuple<Args...> {
     template <typename Scalar = ScalarInferred,
         typename FinishedType = typename dim_traits<Scalar>::FinishedType>
     FinishedType finished() {
-        init_if_needed<Scalar>();
-        FinishedType value;
-        assign(value, true);
-        return value;
+        return assign(FinishedType(), true);
     }
 };
 
