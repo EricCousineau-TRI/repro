@@ -280,10 +280,30 @@ struct stack_detail {
     }
 };
 
-// First: Assume fixed-size, do assignment explicitly
-// Next step: Collect into tuple, possibly accumulate size
-// Then dispatch based on assignment
-// operator<<
+
+// Quick attempt to infer types
+template <typename T>
+struct infer_scalar {
+private:
+    static constexpr int TOther = 0, TMatrix = 1, TStack = 2;
+    static constexpr int type_index =
+        is_eigen_matrix<T>::value ? TMatrix : (
+            is_stack<T>::value ? TStack : TOther
+        );
+    // Need to introduce type to permit defining specialization w/in struct
+    template <typename Scalar, int TIndex = TOther>
+    struct get { using type = Scalar; };
+    template <typename XprType>
+    struct get<XprType, TMatrix> { using type = typename matrix_derived_type<XprType>::Scalar; };
+    template <typename Stack>
+    struct get<Stack, TStack> { using type = typename Stack::ScalarInferred; };
+public:
+    using type = typename get<T, type_index>::type;
+};
+
+template <typename T>
+using infer_scalar_bare_t = typename infer_scalar<bare_t<T>>::type;
+
 
 template<typename... Args>
 struct stack_tuple {
@@ -312,30 +332,28 @@ struct stack_tuple {
                 eigen_assert(xpr.rows() == m_rows && xpr.cols() == m_cols);
         }
     }
-};
 
-// Quick attempt to infer types
-template <typename T>
-struct infer_scalar {
-private:
-    static constexpr int TOther = 0, TMatrix = 1, TStack = 2;
-    static constexpr int type_index =
-        is_eigen_matrix<T>::value ? TMatrix : (
-            is_stack<T>::value ? TStack : TOther
-        );
-    // Need to introduce type to permit defining specialization w/in struct
-    template <typename Scalar, int TIndex = TOther>
-    struct get { using type = Scalar; };
-    template <typename XprType>
-    struct get<XprType, TMatrix> { using type = typename matrix_derived_type<XprType>::Scalar; };
-    template <typename Stack>
-    struct get<Stack, TStack> { using type = typename Stack::ScalarInferred; };
-public:
-    using type = typename get<T, type_index>::type;
-};
+    // For deducing final type
+    template <typename Scalar,
+        template <int...> class RowDimOp,
+        template <int...> class ColDimOp>
+    struct dim_traits {
+        template <typename T>
+        using SubXprAlias = typename stack_detail<Scalar>::template SubXprAlias<T>;
+        template <typename T>
+        using SubDimTraits = typename SubXprAlias<T>::dim_traits;
 
-template <typename T>
-using infer_scalar_bare_t = typename infer_scalar<bare_t<T>>::type;
+        static constexpr int ColsAtCompileTime = ColDimOp<SubDimTraits<Args>::ColsAtCompileTime...>::value;
+        static constexpr int RowsAtCompileTime = RowDimOp<SubDimTraits<Args>::RowsAtCompileTime...>::value;
+
+        using FinishedType = typename Eigen::Matrix<Scalar, RowsAtCompileTime, ColsAtCompileTime>;
+    };
+
+    // TODO: Is there a better way to implement this?
+    using first_type = decltype(std::get<0>(std::declval<TupleType>()));
+
+    using ScalarInferred = infer_scalar_bare_t<first_type>;
+};
 
 
 // Define distinct types for identification
@@ -406,23 +424,9 @@ struct hstack_tuple : public stack_tuple<Args...> {
     };
 
     template <typename Scalar>
-    struct dim_traits {
-        template <typename T>
-        using SubXprAlias = typename stack_detail<Scalar>::template SubXprAlias<T>;
-        template <typename T>
-        using SubDimTraits = typename SubXprAlias<T>::dim_traits;
+    using dim_traits = typename Base::template dim_traits<Scalar, eigen_dim_eq, eigen_dim_sum>;
 
-        static constexpr int ColsAtCompileTime = eigen_dim_sum<SubDimTraits<Args>::ColsAtCompileTime...>::value;
-        static constexpr int RowsAtCompileTime = eigen_dim_eq<SubDimTraits<Args>::RowsAtCompileTime...>::value;
-
-        using FinishedType = typename Eigen::Matrix<Scalar, RowsAtCompileTime, ColsAtCompileTime>;
-    };
-
-    // TODO: Is there a better way to implement this?
-    using first_type = decltype(std::get<0>(std::declval<typename Base::TupleType>()));
-    using ScalarInferred = infer_scalar_bare_t<first_type>;
-
-    template <typename Scalar = ScalarInferred,
+    template <typename Scalar = typename Base::ScalarInferred,
         typename FinishedType = typename dim_traits<Scalar>::FinishedType>
     FinishedType finished() {
         return assign(FinishedType(), true);
@@ -495,24 +499,11 @@ struct vstack_tuple : public stack_tuple<Args...> {
         }
     };
 
+
     template <typename Scalar>
-    struct dim_traits {
-        template <typename T>
-        using SubXprAlias = typename stack_detail<Scalar>::template SubXprAlias<T>;
-        template <typename T>
-        using SubDimTraits = typename SubXprAlias<T>::dim_traits;
+    using dim_traits = typename Base::template dim_traits<Scalar, eigen_dim_sum, eigen_dim_eq>;
 
-        static constexpr int ColsAtCompileTime = eigen_dim_eq<SubDimTraits<Args>::ColsAtCompileTime...>::value;
-        static constexpr int RowsAtCompileTime = eigen_dim_sum<SubDimTraits<Args>::RowsAtCompileTime...>::value;
-
-        using FinishedType = typename Eigen::Matrix<Scalar, RowsAtCompileTime, ColsAtCompileTime>;
-    };
-
-    // TODO: Is there a better way to implement this?
-    using first_type = decltype(std::get<0>(std::declval<typename Base::TupleType>()));
-    using ScalarInferred = infer_scalar_bare_t<first_type>;
-
-    template <typename Scalar = ScalarInferred,
+    template <typename Scalar = typename Base::ScalarInferred,
         typename FinishedType = typename dim_traits<Scalar>::FinishedType>
     FinishedType finished() {
         return assign(FinishedType(), true);
