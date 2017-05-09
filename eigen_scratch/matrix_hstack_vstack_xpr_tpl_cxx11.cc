@@ -183,6 +183,33 @@ struct is_stack {
     static constexpr bool value = is_hstack<T>::value || is_vstack<T>::value;
 };
 
+
+
+// Quick attempt to infer types
+template <typename T>
+struct infer_scalar {
+private:
+    static constexpr int TOther = 0, TMatrix = 1, TStack = 2;
+    static constexpr int type_index =
+        is_eigen_matrix<T>::value ? TMatrix : (
+            is_stack<T>::value ? TStack : TOther
+        );
+    // Need to introduce type to permit defining specialization w/in struct
+    template <typename Scalar, int TIndex = TOther>
+    struct get { using type = Scalar; };
+    template <typename XprType>
+    struct get<XprType, TMatrix> { using type = typename matrix_derived_type<XprType>::Scalar; };
+    template <typename Stack>
+    struct get<Stack, TStack> { using type = typename Stack::ScalarInferred; };
+public:
+    using type = typename get<T, type_index>::type;
+};
+
+template <typename T>
+using infer_scalar_bare_t = typename infer_scalar<bare_t<T>>::type;
+
+
+
 template<typename Scalar>
 struct stack_detail {
     template<typename T>
@@ -196,6 +223,7 @@ struct stack_detail {
     // Specialize this to the context of a stack, where scalars may be other matrices
     template<typename T>
     struct type_index {
+        // Check for scalars first, to avoid prematurely assuming MatrixXd, in the context of MatrixX<MatriXd>, is a scalar.
         static constexpr int value =
             is_scalar<T>::value ? TScalar : (
                 is_stack<T>::value ? TStack :
@@ -206,6 +234,7 @@ struct stack_detail {
     template<typename XprType, int type = TMatrix>
     struct SubXpr {
         const XprType& value;
+        // This is used in tye default case. We should throw an error if this is not an actual matrix.
         static_assert(is_eigen_matrix<XprType>::value, "This type is not a Eigen Matrix, compatible scalar, nor a stack type.");
 
         struct dim_traits {
@@ -281,30 +310,6 @@ struct stack_detail {
         return SubXprAlias<T>(std::forward<T>(x));
     }
 };
-
-
-// Quick attempt to infer types
-template <typename T>
-struct infer_scalar {
-private:
-    static constexpr int TOther = 0, TMatrix = 1, TStack = 2;
-    static constexpr int type_index =
-        is_eigen_matrix<T>::value ? TMatrix : (
-            is_stack<T>::value ? TStack : TOther
-        );
-    // Need to introduce type to permit defining specialization w/in struct
-    template <typename Scalar, int TIndex = TOther>
-    struct get { using type = Scalar; };
-    template <typename XprType>
-    struct get<XprType, TMatrix> { using type = typename matrix_derived_type<XprType>::Scalar; };
-    template <typename Stack>
-    struct get<Stack, TStack> { using type = typename Stack::ScalarInferred; };
-public:
-    using type = typename get<T, type_index>::type;
-};
-
-template <typename T>
-using infer_scalar_bare_t = typename infer_scalar<bare_t<T>>::type;
 
 
 template<typename... Args>
