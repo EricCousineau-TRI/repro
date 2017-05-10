@@ -1,4 +1,4 @@
 [submodule "externals/benchmark"]
 	path = externals/benchmark
-	url = https://github.com/google/benchmark.git
+	url = git@github.com:EricCousineau-TRI/benchmark.git
 	branch = bazel-master
