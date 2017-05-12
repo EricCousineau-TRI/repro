@@ -4,6 +4,11 @@ def stuff_py(is_int=False):
     else:
         return 1.
 
+def stuff_numpy():
+    import numpy as np
+    import numpy.matlib as nm
+    return nm.matrix([1, 2, 3])
+
 def stuff_matlab():
     # Does not work
     import matlab
