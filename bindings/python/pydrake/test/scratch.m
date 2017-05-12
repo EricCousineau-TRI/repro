@@ -1,3 +1,8 @@
+%%
+x = py.numpy.random.random([4, 4]);
+y = py.numpy.matlib.matrix([1, 2, 3]);
+
+%%
 m = pyimport('scratch');
 py.reload(m);
 
