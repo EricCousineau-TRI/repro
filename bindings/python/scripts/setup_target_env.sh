@@ -2,23 +2,20 @@
 
 # Expose Bazel's Python paths, using path info gleaned from `env_info.output.txt`.
 #
-# Example:
+# Usage:
 # 
-#    $ source setpu_target_env.sh pydrake_type_binding_test
+#    $ source setup_target_env.sh [<TARGET>] [<PACKAGE>]
 
-export-append () { 
-    eval "export $1=\"\$$1:$2\""
-}
-
-target=${1-pydrake_type_binding_test}
-package="bindings"
-target_src_dir="bindings/python"
+package_default=bindings
+target_default=pydrake_type_binding_test
 
 workspace=$(bazel info workspace)
-repo=$(basename $workspace)
-bindir=${workspace}/bazel-bin
+workspace_name=$(basename $workspace)
 
-runfiles=${bindir}/${package}/${target}.runfiles
+package=${2-${package_default}}
+import_path=${workspace_name}/${package}/python
+target=${1-${target_default}}
+runfiles=${workspace}/bazel-bin/${package}/${target}.runfiles
 
-export-append PYTHONPATH ${runfiles}:${runfiles}/${repo}/${target_src_dir}:${runfiles}/${repo}
+export PYTHONPATH=${runfiles}:${runfiles}/${import_path}:${runfiles}/${workspace_name}:${PYTHONPATH}
 echo "[ Exposed \${PYTHONPATH} for target: //bindings:${target} ]"

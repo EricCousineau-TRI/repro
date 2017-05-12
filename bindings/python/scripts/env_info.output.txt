@@ -1,5 +1,5 @@
 PATH=${PATH}
 
-PYTHONPATH=${WORKSPACE}/bazel-bin/bindings/pydrake_type_binding_test.runfiles:${WORKSPACE}/bazel-bin/bindings/pydrake_type_binding_test.runfiles/repro/bindings/python:${WORKSPACE}/bazel-bin/bindings/pydrake_type_binding_test.runfiles/repro:${PYTHONPATH}
+PYTHONPATH=${runfiles}:${runfiles}/${import_path}:${runfiles}/${workspace_name}:${PYTHONPATH}
 
 LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
