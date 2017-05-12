@@ -1,8 +1,10 @@
 classdef TypeBindingTest < matlab.unittest.TestCase
+%TypeBindingTest Write a MATLAB analog of testTypeBinding.py, and try to
+%  get this to pass.
 
     methods (Test)
         function testBasic(testCase)
-            tb = getModule();
+            tb = pyimport('pydrake.typebinding');
 
             obj = tb.SimpleType(1);
             testCase.verifyEqual(obj.value(), 1);
@@ -11,7 +13,7 @@ classdef TypeBindingTest < matlab.unittest.TestCase
         end
 
         function testFlexible(testCase)
-            tb = getModule();
+            tb = pyimport('pydrake.typebinding');
 
             obj = tb.SimpleType(1);
             testCase.verifyEqual(obj.value(), 1);
@@ -28,10 +30,4 @@ classdef TypeBindingTest < matlab.unittest.TestCase
             testCase.verifyError(bad_type, identifier);
         end
     end
-end
-
-function [tb] = getModule()
-pyimport = @(m) py.importlib.import_module(m);
-pydrake = pyimport('pydrake');
-tb = pydrake.typebinding;
 end
