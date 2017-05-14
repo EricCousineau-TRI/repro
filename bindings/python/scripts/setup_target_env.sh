@@ -4,18 +4,16 @@
 #
 # Usage:
 # 
-#    $ source setup_target_env.sh <PACKAGE> <TARGET> [<WORKSPACE_NAME>]
+#    $ source setup_target_env.sh <PACKAGE> <TARGET>
 
 set -x
 
+cur=$(cd $(dirname $BASH_SOURCE) && pwd)
+
 workspace=$(bazel info workspace)
+# Use workaround for bazel <= 0.4.5
 # @ref: https://github.com/bazelbuild/bazel/issues/2317#issuecomment-284725684
-# Note: No dice. Still gives the wrong name
-# With "drake", //drake/bindings:pydrake_*_test will place things under
-# ${runfiles}/drake/drake/..., but using `workspace` or `execution_root` yeilds
-# ${runfiles}/drake-distro/drake/....
-workspace_name_default=$(basename $(bazel info execution_root))
-workspace_name=${3-${workspace_name_default}}
+workspace_name=$($cur/../../../shell/bazel_workspace_name.py)
 
 package=${1}
 import_path=${workspace_name}/${package}/python
