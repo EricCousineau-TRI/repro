@@ -135,3 +135,8 @@ cc_binary(
     srcs = ["benchmark_map_test.cc"],
     deps = ["//externals/benchmark"],
 )
+
+cc_binary(
+    name = "tpl_tpl_pod",
+    srcs = ["tpl_tpl_pod.cc"],
+)
