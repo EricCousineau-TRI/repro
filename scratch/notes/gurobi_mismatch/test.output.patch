@@ -1,0 +1,206 @@
+diff --git a/test_local.output.txt b/test_ci.output.txt
+index 9350080..bccc440 100644
+--- a/test_local.output.txt
++++ b/test_ci.output.txt
+@@ -1,6 +1,6 @@
+-# EricCousineau-TRI desktop
++# https://drake-cdash.csail.mit.edu/testDetails.php?test=12917207&build=599407
+ 
+-Running main() from gmock_main.cc
++Running main() from gtest_main.cc
+ [==========] Running 1 test from 1 test case.
+ [----------] Global test environment set-up.
+ [----------] 1 test from KukaTest
+@@ -18,54 +18,61 @@ Coefficient statistics:
+   Bounds range    [5e-01, 1e+00]
+   RHS range       [5e-01, 6e+00]
+ Presolve removed 22987 rows and 570 columns
+-Presolve time: 0.89s
++Presolve time: 1.06s
+ Presolved: 36438 rows, 796 columns, 205173 nonzeros
+ Variable types: 575 continuous, 221 integer (221 binary)
+ Presolve removed 76 rows and 152 columns
+ Presolved: 720 rows, 37082 columns, 205741 nonzeros
+ 
+ 
+-Root relaxation: objective 0.000000e+00, 1972 iterations, 0.15 seconds
++Root relaxation: objective 0.000000e+00, 1972 iterations, 0.17 seconds
++Total elapsed time = 5.39s
+ 
+     Nodes    |    Current Node    |     Objective Bounds      |     Work
+  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+ 
+-     0     0    0.00000    0   74          -    0.00000      -     -    4s
+-     0     0    0.00000    0   78          -    0.00000      -     -    4s
+-     0     0    0.00000    0   41          -    0.00000      -     -    6s
+-     0     0    0.00000    0   49          -    0.00000      -     -    7s
+-     0     0    0.00000    0   31          -    0.00000      -     -    9s
+-     0     0    0.00000    0   20          -    0.00000      -     -   11s
+-     0     0    0.00000    0   20          -    0.00000      -     -   12s
+-     0     0    0.00000    0   31          -    0.00000      -     -   13s
+-     0     0    0.00000    0   26          -    0.00000      -     -   14s
+-     0     0    0.00000    0   19          -    0.00000      -     -   15s
+-     0     0    0.00000    0   26          -    0.00000      -     -   17s
+-     0     0    0.00000    0   26          -    0.00000      -     -   17s
+-     0     2    0.00000    0   22          -    0.00000      -     -   19s
+-     6     9    0.00000    4   23          -    0.00000      -   190   20s
+-   341   250    0.00000   21   68          -    0.00000      -  77.7   27s
+-   698   424    0.00000   38   45          -    0.00000      -  73.0   31s
+-  1302   691 infeasible   13               -    0.00000      -  68.6   35s
+-  2818  1159    0.00000   34   50          -    0.00000      -  52.4   41s
+-  4030  1471 infeasible   51               -    0.00000      -  46.2   46s
+-H 4049    85                       0.0000000    0.00000  0.00%  46.1   46s
++     0     0    0.00000    0   74          -    0.00000      -     -    5s
++     0     0    0.00000    0   78          -    0.00000      -     -    6s
++     0     0    0.00000    0   41          -    0.00000      -     -    9s
++     0     0    0.00000    0   49          -    0.00000      -     -   11s
++     0     0    0.00000    0   31          -    0.00000      -     -   14s
++     0     0    0.00000    0   20          -    0.00000      -     -   17s
++     0     0    0.00000    0   20          -    0.00000      -     -   19s
++     0     0    0.00000    0   31          -    0.00000      -     -   21s
++     0     0    0.00000    0   26          -    0.00000      -     -   23s
++     0     0    0.00000    0   19          -    0.00000      -     -   26s
++     0     0    0.00000    0   26          -    0.00000      -     -   28s
++     0     0    0.00000    0   26          -    0.00000      -     -   29s
++     0     2    0.00000    0   22          -    0.00000      -     -   31s
++     8    10    0.00000    5   33          -    0.00000      -   206   36s
++    21    27    0.00000    8   49          -    0.00000      -   158   40s
++    98   103    0.00000   12   50          -    0.00000      -   103   46s
++   203   173    0.00000   16   63          -    0.00000      -  85.9   50s
++   281   229    0.00000   20   56          -    0.00000      -  78.0   75s
++   332   258    0.00000   23   60          -    0.00000      -  82.2   80s
++   562   386 infeasible   31               -    0.00000      -  72.2   85s
++   941   557    0.00000   18   25          -    0.00000      -  60.2   93s
++  1313   705    0.00000   28   51          -    0.00000      -  58.9  101s
++  1758   867    0.00000   42   28          -    0.00000      -  57.1  109s
++H 1781    86                       0.0000000    0.00000  0.00%  56.6  109s
+ 
+ Cutting planes:
+-  Learned: 30
+-  Cover: 1029
+-  Implied bound: 484
+-  Clique: 8
+-  MIR: 42
+-  GUB cover: 3
+-  Zero half: 6
++  Learned: 26
++  Gomory: 1
++  Cover: 460
++  Implied bound: 278
++  Clique: 6
++  MIR: 28
++  GUB cover: 2
++  Zero half: 4
+ 
+-Explored 5762 nodes (263695 simplex iterations) in 46.78 seconds
+-Thread count was 24 (of 48 available processors)
++Explored 2560 nodes (155276 simplex iterations) in 110.04 seconds
++Thread count was 18 (of 36 available processors)
+ 
+ Optimal solution found (tolerance 1.00e-04)
+-Warning: max constraint violation (3.3380e-06) exceeds tolerance
+ Best objective 0.000000000000e+00, best bound 0.000000000000e+00, gap 0.0%
++/home/ubuntu/workspace/linux-clang-experimental-debug/drake/multibody/dev/test/global_inverse_kinematics_collision_avoidance_test.cc:124: Failure
++Expected: ((ee_pose_ik_without_collision_avoidance.translation() - ee_pos).norm()) <= (0.05), actual: 0.0566899 vs 0.05
+ Warning for adding constraints: zero or small (< 1e-13) coefficients, ignored
+ Optimize a model with 59445 rows, 1474 columns and 341677 nonzeros
+ Model has 169 quadratic constraints
+@@ -75,54 +82,66 @@ Coefficient statistics:
+   Bounds range    [5e-01, 1e+00]
+   RHS range       [5e-01, 6e+00]
+ Presolve removed 22993 rows and 608 columns
+-Presolve time: 0.76s
++Presolve time: 4.95s
+ Presolved: 36452 rows, 866 columns, 205434 nonzeros
+ Variable types: 639 continuous, 227 integer (227 binary)
+ Presolve removed 76 rows and 152 columns
+ Presolved: 790 rows, 37166 columns, 206072 nonzeros
+ 
+ 
+-Root relaxation: objective 0.000000e+00, 1942 iterations, 0.14 seconds
++Root simplex log...
++
++Iteration    Objective       Primal Inf.    Dual Inf.      Time
++       0   -0.0000000e+00   0.000000e+00   1.615228e+03      5s
++    1942   -0.0000000e+00   0.000000e+00   0.000000e+00      5s
++    1942   -0.0000000e+00   0.000000e+00   0.000000e+00      5s
++    1942    0.0000000e+00   0.000000e+00   0.000000e+00      5s
++
++Root relaxation: objective 0.000000e+00, 1942 iterations, 0.23 seconds
+ 
+     Nodes    |    Current Node    |     Objective Bounds      |     Work
+  Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+ 
+-     0     0    0.00000    0   54          -    0.00000      -     -    2s
+-     0     0    0.00000    0   86          -    0.00000      -     -    3s
+-     0     0    0.00000    0   57          -    0.00000      -     -    5s
+-     0     0    0.00000    0   51          -    0.00000      -     -    7s
+-     0     0    0.00000    0   44          -    0.00000      -     -    9s
+-     0     0    0.00000    0   10          -    0.00000      -     -   11s
+-     0     0    0.00000    0    7          -    0.00000      -     -   12s
+-     0     0    0.00000    0    2          -    0.00000      -     -   13s
+-     0     0    0.00000    0    4          -    0.00000      -     -   13s
+-     0     0    0.00000    0   13          -    0.00000      -     -   14s
+-     0     0    0.00000    0   12          -    0.00000      -     -   15s
+-     0     0    0.00000    0    9          -    0.00000      -     -   16s
+-     0     0    0.00000    0    9          -    0.00000      -     -   17s
+-     0     0    0.00000    0    9          -    0.00000      -     -   17s
+-     0     2    0.00000    0    9          -    0.00000      -     -   19s
+-    23    32    0.00000    7   23          -    0.00000      -  84.7   22s
+-   184   164    0.00000   20   13          -    0.00000      -  73.9   25s
+-H  456   110                       0.0000000    0.00000  0.00%  71.0   28s
++     0     0    0.00000    0   54          -    0.00000      -     -    8s
++     0     0    0.00000    0   86          -    0.00000      -     -    8s
++     0     0    0.00000    0   57          -    0.00000      -     -   12s
++     0     0    0.00000    0   51          -    0.00000      -     -   14s
++     0     0    0.00000    0   44          -    0.00000      -     -   17s
++     0     0    0.00000    0   10          -    0.00000      -     -   20s
++     0     0    0.00000    0    7          -    0.00000      -     -   21s
++     0     0    0.00000    0    2          -    0.00000      -     -   23s
++     0     0    0.00000    0    4          -    0.00000      -     -   23s
++     0     0    0.00000    0   13          -    0.00000      -     -   24s
++     0     0    0.00000    0   12          -    0.00000      -     -   26s
++     0     0    0.00000    0    9          -    0.00000      -     -   27s
++     0     0    0.00000    0    9          -    0.00000      -     -   28s
++     0     0    0.00000    0    9          -    0.00000      -     -   29s
++     0     2    0.00000    0    9          -    0.00000      -     -   31s
++    23    32    0.00000    7   23          -    0.00000      -  84.7   37s
++    52    72    0.00000   13   13          -    0.00000      -  62.5   40s
++   145   124 infeasible   18               -    0.00000      -  82.0   45s
++   305   218 infeasible   21               -    0.00000      -  80.9   52s
++H  376    83                       0.0000000    0.00000  0.00%  71.5   52s
+ 
+ Cutting planes:
+-  Learned: 17
+-  Cover: 197
+-  Implied bound: 95
+-  Clique: 5
+-  MIR: 28
+-  Flow cover: 5
++  Learned: 15
++  Cover: 131
++  Implied bound: 52
++  Clique: 4
++  MIR: 15
++  Flow cover: 2
+   GUB cover: 1
+ 
+-Explored 652 nodes (71815 simplex iterations) in 28.82 seconds
+-Thread count was 24 (of 48 available processors)
++Explored 433 nodes (62488 simplex iterations) in 52.48 seconds
++Thread count was 18 (of 36 available processors)
+ 
+ Optimal solution found (tolerance 1.00e-04)
+ Best objective 0.000000000000e+00, best bound 0.000000000000e+00, gap 0.0%
+-[       OK ] KukaTest.CollisionAvoidanceTest (107532 ms)
+-[----------] 1 test from KukaTest (107532 ms total)
++[  FAILED  ] KukaTest.CollisionAvoidanceTest (174710 ms)
++[----------] 1 test from KukaTest (174711 ms total)
+ 
+ [----------] Global test environment tear-down
+-[==========] 1 test from 1 test case ran. (107532 ms total)
+-[  PASSED  ] 1 test.
++[==========] 1 test from 1 test case ran. (174711 ms total)
++[  PASSED  ] 0 tests.
++[  FAILED  ] 1 test, listed below:
++[  FAILED  ] KukaTest.CollisionAvoidanceTest
