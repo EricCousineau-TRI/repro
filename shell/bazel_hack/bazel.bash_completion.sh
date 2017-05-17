@@ -2600,7 +2600,7 @@ BAZEL_COMMAND_QUERY_FLAGS="
 --xml:line_numbers
 --noxml:line_numbers
 "
-BAZEL_COMMAND_RUN_ARGUMENT="label-bin"
+BAZEL_COMMAND_RUN_ARGUMENT="label"
 BAZEL_COMMAND_RUN_FLAGS="
 --action_env=
 --analysis_warnings_as_errors
@@ -2992,7 +2992,7 @@ BAZEL_COMMAND_SHUTDOWN_FLAGS="
 --watchfs
 --nowatchfs
 "
-BAZEL_COMMAND_TEST_ARGUMENT="label-test"
+BAZEL_COMMAND_TEST_ARGUMENT="label"
 BAZEL_COMMAND_TEST_FLAGS="
 --action_env=
 --analysis_warnings_as_errors
