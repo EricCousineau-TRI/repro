@@ -101,31 +101,55 @@ using int_relax = RelaxIntegral<int>;
 template <>
 struct py_relax_type<int> { using type = int_relax; };
 
+
 namespace pybind11 {
 namespace detail {
 
-// Register type_caster for int_relax.
+template <typename Type, typename Option, typename... Others>
+bool duck_type_cast(Type* pvalue, handle src, bool convert) {
+  // Scope this such that it does not accumulate casters for each type
+  // on failure.
+  bool result{};
+  {
+    type_caster<Option> opt_value;
+    result = opt_value.load(src, convert);
+    if (result) {
+      // Store value from caster.
+      *pvalue = opt_value;
+      return true;
+    }
+  }
+  // Delegate to other types
+  return duck_type_cast<Type, Others...>(pvalue, src, convert);
+}
+
+template <typename Type>
+bool duck_type_cast(...) {
+  // No successful casts.
+  return false;
+}
+
+// Duck-type type_caster mixin
+template <typename Type, typename... Options>
+struct duck_type_caster_mixin {
+  bool load_impl(Type* pvalue, handle src, bool convert) {
+    return duck_type_cast<Type, Options...>(pvalue, src, convert);
+  }
+
+  static handle cast(Type src, return_value_policy policy, handle parent) {
+    return type_caster<Type>::cast(src, policy, parent);
+  }
+};
+
+// Register type_caster for RelaxIntegral.
 template <typename T>
-struct type_caster<RelaxIntegral<T>> {
+struct type_caster<RelaxIntegral<T>>
+    : public duck_type_caster_mixin<RelaxIntegral<T>, T, double> {
+
   PYBIND11_TYPE_CASTER(RelaxIntegral<T>, name_trait<RelaxIntegral<T>>::name);
 
   bool load(handle src, bool convert) {
-    // Do effective duck-typing.
-    type_caster<double> dbl_value;
-    type_caster<T> T_value;
-    if (dbl_value.load(src, convert)) {
-      value = dbl_value;
-      return true;
-    } else if (T_value.load(src, convert)) {
-      value = T_value;
-      return true;
-    }
-    return false;
-  }
-
-  static handle cast(int_relax src, return_value_policy policy,
-                     handle parent) {
-    return type_caster<T>::cast(src, policy, parent);
+    return this->load_impl(&value, src, convert);
   }
 };
 
