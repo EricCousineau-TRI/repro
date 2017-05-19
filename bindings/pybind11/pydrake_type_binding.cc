@@ -52,10 +52,10 @@ PYBIND11_PLUGIN(_pydrake_typebinding) {
   py::class_<SimpleType> pySimpleType(m, "SimpleType");
   pySimpleType
     .def(py::init<>())
-    .def(py::init<int_relax>(), py::arg("value"))
+    .def(py_relax_init<int>(), py::arg("value"))
     // .def(py::init<double>()) // Implicit conversion via overload
     .def("value", &SimpleType::value)
-    .def("set_value", py_relax_overload<int>(&SimpleType::set_value));
+    .def("set_value", py_relax_overload_cast<int>(&SimpleType::set_value));
     // .def("set_value", &SimpleType::set_value)
     // // TODO: Make a lambda generator that can emulate pybind11's detail::init<>, or just generate the appropriate thing
     // .def("set_value", [](SimpleType& self, const int_relax& value) {
@@ -67,9 +67,9 @@ PYBIND11_PLUGIN(_pydrake_typebinding) {
   py::class_<EigenType> pyEigenType(m, "EigenType");
   pyEigenType
     .def(py::init<>())
-    .def(py::init<RelaxMatrix<MatrixXd>>(), py::arg("value"))
+    .def(py_relax_init<MatrixXd>(), py::arg("value"))
     .def("value", &EigenType::value)
-    .def("set_value", py_relax_overload<MatrixXd>(&EigenType::set_value));
+    .def("set_value", py_relax_overload_cast<MatrixXd>(&EigenType::set_value));
 
   return m.ptr();
 }

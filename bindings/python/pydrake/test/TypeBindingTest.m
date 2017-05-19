@@ -37,16 +37,18 @@ classdef TypeBindingTest < matlab.unittest.TestCase
         end
         
         function testNumpyBasic(testCase)
-            tb = pyimport('pydrake.typebinding');
+            tb = pyimport_proxy('pydrake.typebinding');
             
             % Without proxy:
             %  'MATLAB:Python:UnsupportedInputArraySizeError'
             %   Error using py.type/subsref
             %   Conversion of MATLAB 'double' to Python is only supported for 1-N vectors.
-%             value = [1; 2; 3];
-%             obj = tb.EigenType(value);
-%             testCase.verifyEqual(obj.value(), value);
+            value = [1; 2; 3];
+            obj = tb.EigenType(value);
+            testCase.verifyEqual(obj.value(), value);
             
+            % Without proxy, need to convert from numpy.ndarray to double
+            % (Trivial)
             value = 1;
             obj = tb.EigenType(value);
             testCase.verifyEqual(obj.value(), value);

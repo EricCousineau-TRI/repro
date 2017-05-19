@@ -32,17 +32,22 @@ struct py_relax_type { using type = T; };
 
 /*
  * Filter types in a parameter pack, and marshal them, to call the actual
- * overload.
+ * overload. Like "py::overload_cast"
  * @note Only works for instance methods. No general functions.
  */
 template <typename ... Args, typename Method>
-auto py_relax_overload(const Method& method) {
+auto py_relax_overload_cast(const Method& method) {
   using Base = typename detail::mem_fn_class<Method>::type;
   auto relaxed = [=](
       Base* self, const typename py_relax_type<Args>::type&... args) {
     return (self->*method)(args...);
   };
   return relaxed;
+}
+
+template <typename ... Args>
+auto py_relax_init() {
+  return py::init<typename py_relax_type<Args>::type...>();
 }
 
 
@@ -203,9 +208,12 @@ private:
 
 template <typename T>
 struct name_trait<RelaxMatrix<T>> {
+  // TODO: Develop better (unique) naming for this.
+  // See //eigen_scratch/matrix_hstack_xpr_tpl stuff.
   static constexpr auto name = name_trait<T>::name + _("_relax_matrix");
 };
 
+// TODO: Use `is_eigen_densebase` from pybind11 to make this more expansive.
 template <>
 struct py_relax_type<Eigen::MatrixXd> {
   using type = RelaxMatrix<Eigen::MatrixXd>;

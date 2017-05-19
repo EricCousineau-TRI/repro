@@ -41,5 +41,15 @@ class TestTypeBinding(unittest.TestCase):
         obj.set_value(value_flat)
         self.assertTrue(np.allclose(obj.value(), value))
 
+    def test_numpy_flexible(self):
+        # Set scalars, and let these be freely interpreted as matrices.
+        obj = tb.EigenType(1.)
+        self.assertTrue(np.allclose(obj.value(), 1.))
+        obj.set_value(2.)
+        self.assertEqual(obj.value(), 2.)
+        # Hmm... Was not expecting this to work... Will need to figure out why this happens.
+        obj.set_value(1)
+        self.assertEqual(obj.value(), 1)
+
 if __name__ == '__main__':
     unittest.main()
