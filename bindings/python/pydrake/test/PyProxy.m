@@ -1,44 +1,61 @@
 classdef PyProxy < dynamicprops
-    properties
-        self
+    % Quick and dirty mechanism to wrap object instance or module to marshal MATLAB data types
+    
+    % TODO(eric.cousineau): Try not to wrap each instance returned, but
+    % rather wrap the class (to minimize on memory overhead).
+    % Presently, each instance is wrapped.
+    
+    properties (Access = protected)
+        pySelf
     end
     
     methods
-        function obj = PyProxy(self)
+        function obj = PyProxy(pySelf)
             % Python form
-            obj.self = self;
+            obj.pySelf = pySelf;
             
-            pyPropNames = py.dir(self);
+            pyPropNames = py.dir(pySelf);
             for i = 1:length(pyPropNames)
                 propName = char(pyPropNames{i});
                 % Skip MATLAB invalid / Python private members
                 if length(propName) >= 1 && strcmp(propName(1), '_')
                     continue;
                 end
-                pyValue = py.getattr(obj.self, propName);
+                pyValue = py.getattr(obj.pySelf, propName);
                 mlProp = addprop(obj, propName);
+                % Add getter (which will work for functions / methods)
+                mlProp.GetMethod = @(obj) ...
+                    PyProxy.fromPyValue(py.getattr(obj.pySelf, propName));
+                % Hide setter if it's a function 
                 if PyProxy.isPyFunc(pyValue)
-                    mlFunc = PyProxy.wrapPyFunc(pyValue);
-                    obj.(propName) = mlFunc;
                 else
-                    % Add property with getter / setter
-                    mlProp.GetMethod = @(self) ...
-                        PyProxy.fromPyValue(py.getattr(self, propName));
-                    mlProp.SetMethod = @(self, value) ...
-                        py.setattr(self, propName, PyProxy.toPyValue(value));
+                    % Permit setting
+                    % TODO(eric.cousineau): See if there is a way to check
+                    % if this is a read-only or write-only setter?
+                    % https://docs.python.org/2/library/functions.html#property
+                    mlProp.SetMethod = @(obj, value) ...
+                        py.setattr(obj.pySelf, propName, PyProxy.toPyValue(value));
                 end
             end
         end
     end
     
     methods (Static)
-        function out = isPyFunc(f)
+        function out = isPyFunc(p)
             % @ref http://stackoverflow.com/questions/624926/how-to-detect-whether-a-python-variable-is-a-function
-            out = py.hasattr(f, '__call__');
+            out = py.hasattr(p, '__call__');
         end
         
-        % If able to wrap classes in general...
-        % @ref http://stackoverflow.com/questions/395735/how-to-check-whether-a-variable-is-a-class-or-not
+        function out = isPyClass(p)
+            % @ref http://stackoverflow.com/questions/395735/how-to-check-whether-a-variable-is-a-class-or-not
+            out = py.inspect.isclass(p);
+        end
+        
+        function out = isPyWrappable(p)
+            % Wrap if function (with __call__) or if class type (to wrap
+            % constructor)
+            out = PyProxy.isPyFunc(p) || PyProxy.isPyClass(p);
+        end
         
         function mfunc = wrapPyFunc(f)
             %wrapPyFunc Wrap Python function as Matlab function, to handle
@@ -58,27 +75,35 @@ classdef PyProxy < dynamicprops
                 case 'double'
                     p = matpy.mat2nparray(m);
                 case 'PyProxy'
-                    p = PyProxy.self;
+                    p = PyProxy.pySelf;
                 otherwise
                     p = m;
             end
         end
         
         function [m] = fromPyValue(p)
-            switch class(p)
-                case 'py.str'
-                    m = char(p);
-                case 'py.long'
-                    m = int64(p);
-                case 'py.list'
-                    m = cell(p);
-                case 'py.numpy.ndarray'
-                    m = matpy.nparray2mat(p);
-                case 'py.NoneType'
-                    m = [];
-                otherwise
-                    % Generate proxy
-                    m = PyProxy(p);
+            if PyProxy.isPyWrappable(p)
+                m = PyProxy.wrapPyFunc(p);
+            else
+                switch class(p)
+                    case 'py.str'
+                        m = char(p);
+                    case 'py.long'
+                        m = int64(p);
+                    case 'py.list'
+                        m = cell(p);
+                    case 'py.numpy.ndarray'
+                        m = matpy.nparray2mat(p);
+                    case 'py.NoneType'
+                        m = [];
+                    case 'py.module'
+                        % This should be proxy-able
+                        % Use this SPARINGLY
+                        m = PyProxy(p);
+                    otherwise
+                        % Generate proxy
+                        m = PyProxy(p);
+                end
             end
         end
     end
