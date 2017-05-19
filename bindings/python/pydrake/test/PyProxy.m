@@ -1,9 +1,17 @@
 classdef PyProxy < dynamicprops
     % Quick and dirty mechanism to wrap object instance or module to marshal MATLAB data types
+    % This might be more easily solved if the MATLAB:Python bindings were
+    % more versatile, e.g., working with matrices.
     
     % TODO(eric.cousineau): Try not to wrap each instance returned, but
     % rather wrap the class (to minimize on memory overhead).
     % Presently, each instance is wrapped.
+    
+    % TODO(eric.cousineau): This won't play nicely with a MATLAB double
+    % matrix that is meant to be a Python double list.
+    % Solution is to use a cell() matrix.
+    
+    % TODO(eric.cousineau): Add operator overloads?
     
     properties (Access = protected)
         pySelf
@@ -73,10 +81,18 @@ classdef PyProxy < dynamicprops
         function [p] = toPyValue(m)
             switch class(m)
                 case 'double'
-                    p = matpy.mat2nparray(m);
+                    % Will need to relax Eigen types to accept scalar
+                    % doubles to initialize as 1x1.
+                    % Use C++ py_relax_overload shindig.
+                    if isscalar(m)
+                        p = m;
+                    else
+                        p = matpy.mat2nparray(m);
+                    end
                 case 'PyProxy'
                     p = PyProxy.pySelf;
                 otherwise
+                    % Defer to MATLAB:Python.
                     p = m;
             end
         end
