@@ -45,27 +45,37 @@ auto py_relax_overload(const Method& method) {
   return relaxed;
 }
 
+// Using pybind's type_descr constexpr magic.
+using py::detail::_;
 
+template <typename T>
+struct name_trait {
+  static constexpr auto name = _("T");
+};
+template <>
+struct name_trait<int> {
+  static constexpr auto name = _("int");
+};
 
 
 // Flexible integer with safety checking
 template <typename T = int>
-class PyIntegral {
+class RelaxIntegral {
 public:
   // Need default ctor to permit type_caster to be constructible per macro
-  PyIntegral() = default; 
-  PyIntegral(T value)
+  RelaxIntegral() = default; 
+  RelaxIntegral(T value)
     : value_(value) {}
-  PyIntegral(double value) {
+  RelaxIntegral(double value) {
     *this = value;
   }
   operator T() const { return value_; }
-  PyIntegral& operator=(T value) {
+  RelaxIntegral& operator=(T value) {
     value_ = value;
     return *this;
   }
-  PyIntegral& operator=(const PyIntegral& other) = default;
-  PyIntegral& operator=(const double& value) {
+  RelaxIntegral& operator=(const RelaxIntegral& other) = default;
+  RelaxIntegral& operator=(const double& value) {
     T tmp = static_cast<T>(value);
     // Ensure they are approximately the same
     double err = value - tmp;
@@ -81,17 +91,19 @@ private:
   T value_ {};
 };
 
-using pyint = PyIntegral<int>;
+using int_relax = RelaxIntegral<int>;
 
 template <>
-struct py_relax_type<int> { using type = pyint; };
+struct py_relax_type<int> { using type = int_relax; };
 
 namespace pybind11 {
 namespace detail {
 
+// Register type_caster for int_relax.
 template <typename T>
-struct type_caster<PyIntegral<T>> {
-  PYBIND11_TYPE_CASTER(pyint, _("pyint"));
+struct type_caster<RelaxIntegral<T>> {
+  // Ehh... Need to figure out better method for concatentating string.
+  PYBIND11_TYPE_CASTER(RelaxIntegral<T>, name_trait<T>::name + _("_relax"));
 
   bool load(handle src, bool convert) {
     // Do effective duck-typing.
@@ -107,7 +119,7 @@ struct type_caster<PyIntegral<T>> {
     return false;
   }
 
-  static handle cast(pyint src, return_value_policy policy,
+  static handle cast(int_relax src, return_value_policy policy,
                      handle parent) {
     return type_caster<T>::cast(src, policy, parent);
   }
