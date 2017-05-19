@@ -45,6 +45,50 @@ auto py_relax_overload(const Method& method) {
   return relaxed;
 }
 
+
+namespace pybind11 {
+namespace detail {
+
+template <typename Type, typename Option, typename... Others>
+bool duck_type_cast(Type* pvalue, handle src, bool convert) {
+  // Scope this such that it does not accumulate casters for each type
+  // on failure.
+  bool result{};
+  {
+    type_caster<Option> opt_value;
+    result = opt_value.load(src, convert);
+    if (result) {
+      // Store value from caster.
+      *pvalue = opt_value;
+      return true;
+    }
+  }
+  // Delegate to other types
+  return duck_type_cast<Type, Others...>(pvalue, src, convert);
+}
+
+template <typename Type>
+bool duck_type_cast(...) {
+  // No successful casts.
+  return false;
+}
+
+// Duck-type type_caster mixin
+template <typename Type, typename... Options>
+struct duck_type_caster_mixin {
+  bool load_impl(Type* pvalue, handle src, bool convert) {
+    return duck_type_cast<Type, Options...>(pvalue, src, convert);
+  }
+
+  static handle cast(Type src, return_value_policy policy, handle parent) {
+    return type_caster<Type>::cast(src, policy, parent);
+  }
+};
+
+}  // namespace detail
+}  // namespace pybind11
+
+
 // Using pybind's type_descr constexpr magic.
 using py::detail::_;
 
@@ -59,6 +103,7 @@ struct name_trait<int> {
 
 
 // Flexible integer with safety checking
+
 template <typename T = int>
 class RelaxIntegral {
 public:
@@ -101,45 +146,8 @@ using int_relax = RelaxIntegral<int>;
 template <>
 struct py_relax_type<int> { using type = int_relax; };
 
-
 namespace pybind11 {
 namespace detail {
-
-template <typename Type, typename Option, typename... Others>
-bool duck_type_cast(Type* pvalue, handle src, bool convert) {
-  // Scope this such that it does not accumulate casters for each type
-  // on failure.
-  bool result{};
-  {
-    type_caster<Option> opt_value;
-    result = opt_value.load(src, convert);
-    if (result) {
-      // Store value from caster.
-      *pvalue = opt_value;
-      return true;
-    }
-  }
-  // Delegate to other types
-  return duck_type_cast<Type, Others...>(pvalue, src, convert);
-}
-
-template <typename Type>
-bool duck_type_cast(...) {
-  // No successful casts.
-  return false;
-}
-
-// Duck-type type_caster mixin
-template <typename Type, typename... Options>
-struct duck_type_caster_mixin {
-  bool load_impl(Type* pvalue, handle src, bool convert) {
-    return duck_type_cast<Type, Options...>(pvalue, src, convert);
-  }
-
-  static handle cast(Type src, return_value_policy policy, handle parent) {
-    return type_caster<Type>::cast(src, policy, parent);
-  }
-};
 
 // Register type_caster for RelaxIntegral.
 template <typename T>
@@ -153,6 +161,69 @@ struct type_caster<RelaxIntegral<T>>
   }
 };
 
+}  // namespace detail
+}  // namespace pybind11
+
+
+// Flexible scalar-matrix registration.
+// TODO: Could generalize if need be.
+
+template <typename T = Eigen::MatrixXd>
+class RelaxMatrix {
+public:
+  // TODO: Generalize dimensions and all that stuff.
+  using Scalar = typename T::Scalar;
+
+  // Need default ctor to permit type_caster to be constructible per macro
+  RelaxMatrix() = default; 
+  RelaxMatrix(const T& value)
+    : value_(value) {}
+  RelaxMatrix(const Scalar& value) {
+    // Delegate to assignment overload.
+    *this = value;
+  }
+
+  operator T&() { return value_; }
+  operator const T&() const { return value_; }
+
+  RelaxMatrix& operator=(const RelaxMatrix& other) = default;
+  RelaxMatrix& operator=(const T& value) {
+    value_ = value;
+    return *this;
+  }
+  RelaxMatrix& operator=(const Scalar& value) {
+    // Accept scalar.
+    value_.resize(1, 1);
+    value_(0) = value;
+    return *this;
+  }
+private:
+  T value_ {};
+};
+
+template <typename T>
+struct name_trait<RelaxMatrix<T>> {
+  static constexpr auto name = name_trait<T>::name + _("_relax_matrix");
+};
+
+template <>
+struct py_relax_type<Eigen::MatrixXd> {
+  using type = RelaxMatrix<Eigen::MatrixXd>;
+};
+
+namespace pybind11 {
+namespace detail {
+
+template <typename T>
+struct type_caster<RelaxMatrix<T>>
+    : public duck_type_caster_mixin<RelaxMatrix<T>, T, double> {
+
+  PYBIND11_TYPE_CASTER(RelaxMatrix<T>, name_trait<RelaxMatrix<T>>::name);
+
+  bool load(handle src, bool convert) {
+    return this->load_impl(&value, src, convert);
+  }
+};
 
 } // namespace pybind11
 } // namespace detail

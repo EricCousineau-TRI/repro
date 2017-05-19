@@ -67,9 +67,9 @@ PYBIND11_PLUGIN(_pydrake_typebinding) {
   py::class_<EigenType> pyEigenType(m, "EigenType");
   pyEigenType
     .def(py::init<>())
-    .def(py::init<MatrixXd>(), py::arg("value"))
+    .def(py::init<RelaxMatrix<MatrixXd>>(), py::arg("value"))
     .def("value", &EigenType::value)
-    .def("set_value", &EigenType::set_value);
+    .def("set_value", py_relax_overload<MatrixXd>(&EigenType::set_value));
 
   return m.ptr();
 }
