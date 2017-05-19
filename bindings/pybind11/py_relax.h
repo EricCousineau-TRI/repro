@@ -91,6 +91,11 @@ private:
   T value_ {};
 };
 
+template <typename T>
+struct name_trait<RelaxIntegral<T>> {
+  static constexpr auto name = name_trait<T>::name + _("_relax");
+};
+
 using int_relax = RelaxIntegral<int>;
 
 template <>
@@ -102,8 +107,7 @@ namespace detail {
 // Register type_caster for int_relax.
 template <typename T>
 struct type_caster<RelaxIntegral<T>> {
-  // Ehh... Need to figure out better method for concatentating string.
-  PYBIND11_TYPE_CASTER(RelaxIntegral<T>, name_trait<T>::name + _("_relax"));
+  PYBIND11_TYPE_CASTER(RelaxIntegral<T>, name_trait<RelaxIntegral<T>>::name);
 
   bool load(handle src, bool convert) {
     // Do effective duck-typing.
