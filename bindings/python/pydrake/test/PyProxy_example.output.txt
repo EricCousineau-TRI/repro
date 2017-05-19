@@ -11,10 +11,10 @@ ans =
     itemsize: 8
     typecode: [1×1 py.str]
 
-    array('d', [1.0, 2.0, 3.0])
+    array('d', [5.0, 10.0, 15.0])
 
 (<type 'str'>, 'test')
-(<type 'array.array'>, array('d', [1.0, 2.0, 3.0]))
+(<type 'array.array'>, array('d', [5.0, 10.0, 15.0]))
 
 
 [ Python via PyProxy ]
@@ -23,7 +23,7 @@ test
 
 ans =
 
-     1     2     3
+     5    10    20
 
 (<type 'str'>, 'test')
-(<type 'numpy.ndarray'>, array([[ 1.,  2.,  3.]]))
+(<type 'numpy.ndarray'>, array([[  5.,  10.,  20.]]))

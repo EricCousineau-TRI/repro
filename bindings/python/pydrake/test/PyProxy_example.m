@@ -8,7 +8,8 @@ fprintf('[ Python Directly ]\n');
 pyo = pyscratch.Test('hello');
 disp(pyo.get_name())
 pyo.set_name('test');
-pyo.nparray = [1, 2, 3];
+pyo.nparray = [5, 10, 15];
+% pyo.nparray(3) = 20; % Invalid - MATLAB does not permit indexing into Python object
 pyo.nparray
 % Note that .nparray is now array.array, not numpy.ndarray
 pyo.do_stuff();
@@ -25,7 +26,8 @@ mlo = mscratch.Test('hello');
 disp(mlo.get_name());
 mlo.set_name('test');
 disp(mlo.get_name());
-mlo.nparray = [1, 2, 3];
+mlo.nparray = [5, 10, 15];
+mlo.nparray(3) = 20; % Permitted - getter/setter combo in MATLAB permits natural indexing (but slow due to copies)
 mlo.nparray
 % Note that it is still numpy.ndarray
 mlo.do_stuff();
