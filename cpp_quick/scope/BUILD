@@ -6,3 +6,10 @@ cc_binary(
         "shared_ptr_pimpl.cc",
     ],
 )
+
+cc_binary(
+    name = "weak_ptr_singleton",
+    srcs = [
+        "weak_ptr_singleton.cc",
+    ],
+)
