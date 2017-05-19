@@ -17,4 +17,13 @@ c = m.stuff_numpy()
 
 %%
 pyo = m.Test('hello');
-mo = PyProxy(pyo);
+pyo.get_name()
+pyo.set_name('test');
+pyo.set_name('hello');
+
+%%
+
+mlo = PyProxy(pyo);
+mlo.get_name()
+mlo.set_name('test')
+mlo.get_name()
