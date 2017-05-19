@@ -10,19 +10,20 @@ using std::shared_ptr;
 using std::make_shared;
 
 // Forward declare, hide implementation
-shared_ptr<void> get_resource();
-
+class Resource;
+shared_ptr<Resource> get_resource();
 
 int main() {
-    shared_ptr<void> ptr = get_resource();
+    shared_ptr<Resource> ptr = get_resource();
     return 0;
 }
 
-shared_ptr<void> get_resource() {
-    class Resource {
-     public:
-        Resource() { cout << "ctor" << endl; }
-        ~Resource() { cout << "dtor" << endl; }
-    };
+class Resource {
+ public:
+    Resource() { cout << "ctor" << endl; }
+    ~Resource() { cout << "dtor" << endl; }
+};
+
+shared_ptr<Resource> get_resource() {
     return make_shared<Resource>();
 }
