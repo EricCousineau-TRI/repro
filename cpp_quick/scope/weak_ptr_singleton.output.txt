@@ -1,0 +1,17 @@
+- default: 0
+- A: 0
+ctor
+- default: 1
+- default: 2
+- default: 3
+ctor
+- A: 1
+dtor
+- default: 2
+- A: 0
+dtor
+- default: 0
+ctor
+- default: 1
+dtor
+- default: 0
