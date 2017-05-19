@@ -9,6 +9,7 @@ cc_binary(
     name = "python/pydrake/_pydrake_typebinding.so",
     srcs = [
         "pybind11/pydrake_type_binding.cc",
+        "pybind11/py_relax.h",
     ],
     copts = [
         "-Wno-#warnings",

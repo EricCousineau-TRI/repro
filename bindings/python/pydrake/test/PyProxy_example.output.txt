@@ -1,0 +1,29 @@
+[ Python Directly ]
+  Python str with no properties.
+
+    hello
+
+
+ans = 
+
+  Python array with properties:
+
+    itemsize: 8
+    typecode: [1×1 py.str]
+
+    array('d', [5.0, 10.0, 15.0])
+
+(<type 'str'>, 'test')
+(<type 'array.array'>, array('d', [5.0, 10.0, 15.0]))
+
+
+[ Python via PyProxy ]
+hello
+test
+
+ans =
+
+     5    10    20
+
+(<type 'str'>, 'test')
+(<type 'numpy.ndarray'>, array([[  5.,  10.,  20.]]))
