@@ -10,6 +10,8 @@ namespace py = pybind11;
 using std::string;
 using std::ostringstream;
 
+using Eigen::MatrixXd;
+
 
 class SimpleType {
  public:
@@ -20,6 +22,18 @@ class SimpleType {
   void set_value(const int& value) { value_ = value; }
  private:
   int value_ {};
+};
+
+
+class EigenType {
+ public:
+  EigenType() = default;
+  EigenType(const MatrixXd& value)
+    : value_(value) {}
+  const MatrixXd& value() const { return value_; }
+  void set_value(const MatrixXd& value) { value_ = value; }
+ private:
+  MatrixXd value_;
 };
 
 
@@ -166,6 +180,13 @@ PYBIND11_PLUGIN(_pydrake_typebinding) {
     // });
     // // Does not work.
     // .def("value", py::overload_cast<double>(&SimpleType::set_value));
+
+  py::class_<EigenType> pyEigenType(m, "EigenType");
+  pyEigenType
+    .def(py::init<>())
+    .def(py::init<MatrixXd>(), py::arg("value"))
+    .def("value", &EigenType::value)
+    .def("set_value", &EigenType::set_value);
 
   return m.ptr();
 }

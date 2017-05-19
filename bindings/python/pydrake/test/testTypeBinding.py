@@ -3,6 +3,7 @@ from __future__ import print_function, absolute_import
 
 import unittest
 import numpy as np
+npa = np.array
 import pydrake
 from pydrake import typebinding as tb
 
@@ -29,6 +30,16 @@ class TestTypeBinding(unittest.TestCase):
         self.assertRaises(RuntimeError, bad_set)
         bad_type = lambda: obj.set_value("bad")
         self.assertRaises(TypeError, bad_type)
+
+    def test_numpy_basic(self):
+        # Will reshape a flat nparray. Need to explicitly shape.
+        value = npa([[1., 2, 3]]).T
+        obj = tb.EigenType(value)
+        self.assertTrue(np.allclose(obj.value(), value))
+
+        value_flat = npa([1, 2, 3])
+        obj.set_value(value_flat)
+        self.assertTrue(np.allclose(obj.value(), value))
 
 if __name__ == '__main__':
     unittest.main()
