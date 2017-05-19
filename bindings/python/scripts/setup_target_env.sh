@@ -18,4 +18,4 @@ target=${1-${target_default}}
 runfiles=${workspace}/bazel-bin/${package}/${target}.runfiles
 
 export PYTHONPATH=${runfiles}:${runfiles}/${import_path}:${runfiles}/${workspace_name}:${PYTHONPATH}
-echo "[ Exposed \${PYTHONPATH} for target: //bindings:${target} ]"
+echo "[ Exposed \${PYTHONPATH} for target: //${package}:${target} ]"
