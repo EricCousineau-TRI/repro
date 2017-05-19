@@ -86,52 +86,30 @@ using pyint = PyIntegral<int>;
 template <>
 struct py_relax_type<int> { using type = pyint; };
 
-
-
 namespace pybind11 {
 namespace detail {
-
-// Helper conversion methods
-template<typename T>
-struct py_conversion { };
-
-#define PYBIND11_PY_CONVERSION(T, PyAsT, PyFromT) \
-  template<> struct py_conversion<T> { \
-    static T from_py(handle src) { return PyAsT(src.ptr()); } \
-    static handle to_py(T src) { return PyFromT(src); } \
-  }
-
-PYBIND11_PY_CONVERSION(int, PyLong_AsLong, PyLong_FromLong);
-
-// Following:
-// pybind11/include/pybind11/cast.h
-//   struct type_caster<T, enable_if_t<std::is_arithmetic<T>::value &&  //...
 
 template <typename T>
 struct type_caster<PyIntegral<T>> {
   PYBIND11_TYPE_CASTER(pyint, _("pyint"));
 
   bool load(handle src, bool convert) {
-    if (PyFloat_Check(src.ptr())) {
-      double tmp = PyFloat_AsDouble(src.ptr());
-      if (tmp == -1. && PyErr_Occurred()) {
-        return false;
-      }
-      value = tmp;
-    } else {
-      T tmp = py_conversion<T>::from_py(src);
-      // assuming unsigned logic is correct
-      if (tmp == (T)-1 && PyErr_Occurred()) {
-        return false;
-      }
-      value = tmp;
+    // Do effective duck-typing.
+    type_caster<double> dbl_value;
+    type_caster<T> T_value;
+    if (dbl_value.load(src, convert)) {
+      value = dbl_value;
+      return true;
+    } else if (T_value.load(src, convert)) {
+      value = T_value;
+      return true;
     }
-    return true;
+    return false;
   }
 
-  static handle cast(pyint src, return_value_policy /* policy */,
-                     handle /* parent */) {
-    return py_conversion<T>::to_py(src);
+  static handle cast(pyint src, return_value_policy policy,
+                     handle parent) {
+    return type_caster<T>::cast(src, policy, parent);
   }
 };
 
