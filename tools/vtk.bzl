@@ -28,6 +28,10 @@ In your ~/.bash_aliases, use VTK_ROOT and VTK_VERSION and export hese:
 
 # TODO(eric.cousineau): Provide more granularity for libraries, such that you are not forced to link to ALL libraries.
 
+def strip_indent(s, indent=4):
+    # Must correct indentation for BUILD file at least.
+    return s.replace("\n" + (" " * indent), "\n")  # Strip leading indent from lines.
+
 def _vtk_impl(repository_ctx):
     vtk_include_path = repository_ctx.os.environ.get("VTK_INCLUDE", "")
     vtk_libdir_path = repository_ctx.os.environ.get("VTK_LIBDIR", "")
@@ -41,27 +45,38 @@ def _vtk_impl(repository_ctx):
         warning_detail = "VTK path is empty or unset"
     else:
         warning_detail = "VTK include (%s) / lib path ('%s') are invalid" % (vtk_include_path, vtk_libdir_path)
-    warning = "\\n\\n{}\\nPlease set VTK_INCLUDE and VTK_LIBDIR correctly\\n".format(warning_detail)
+    warning = """
+
+    WARNING: {detail}
+    Please set VTK_INCLUDE and VTK_LIBDIR correctly
+
+    """.format(detail=warning_detail)
 
     # # Cannot glob easily
     # print("Libs:\n%s" % native.glob(["%s/libvtk*.so" % vtk_libdir_path]))
 
     BUILD = """
-hdrs = glob(["{inc}/*.h"])
-libs = glob(["{libdir}/lib*.so"])
+    hdrs = glob(["{inc}/*.h"])
+    libs = glob(["{libdir}/lib*.so"])
 
-print("{warning}") \
-    if not hdrs or not libs else \
-    cc_library(
-        name = "vtk",
-        srcs = libs,
-        hdrs = hdrs,
-        linkstatic = 0,
-        includes = ["{inc}"],
-        visibility = ["//visibility:public"],
-    )
-""".format(warning=warning, libdir=vtk_libdir_sym, inc=vtk_include_sym)
-    repository_ctx.file("BUILD", content=BUILD, executable=False)
+    print(""\"{warning}""\") \
+        if not hdrs or not libs else \
+        cc_library(
+            name = "vtk",
+            srcs = libs,
+            hdrs = hdrs,
+            linkstatic = 0,
+            includes = ["{inc}"],
+            visibility = ["//visibility:public"],
+        )
+    """.format(
+        warning = strip_indent(warning),
+        libdir=vtk_libdir_sym,
+        inc=vtk_include_sym)
+    repository_ctx.file(
+        "BUILD",
+        content=strip_indent(BUILD),
+        executable=False)
 
 vtk_repository = repository_rule(
     environ = ["VTK_INCLUDE", "VTK_LIBDIR"],
