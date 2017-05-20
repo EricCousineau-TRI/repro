@@ -1,7 +1,32 @@
 # -*- python -*-
 # See https://www.bazel.io/versions/master/docs/skylark/repository_rules.html
 
-# Derived from @drake//tools/gurobi.bzl
+"""
+Derived from @drake//tools/gurobi.bzl
+
+In your shell, define:
+
+    VTK_VERSION=vtk-5.10
+    # Squirrel this away wherever you like.
+    VTK_ROOT=~/.local/vtk/$VTK_VERSION
+
+Build VTK as follows:
+
+    cd drake-distro/externals/vtk
+    mkdir -p build && cd build
+    cmake .. -DCMAKE_CXX_FLAGS="-DGLX_GLXEXT_LEGACY=1" -DCMAKE_INSTALL_PREFIX=$VTK_ROOT -DBUILD_SHARED=ON -DCMAKE_BUILD_TYPE=Release
+    make -j install
+
+In your ~/.bash_aliases, use VTK_ROOT and VTK_VERSION and export hese:
+
+    # Used by vtk_repository
+    export VTK_INCLUDE=$VTK_ROOT/include/$VTK_VERSION
+    export VTK_LIBDIR=$VTK_ROOT/lib/$VTK_VERSION
+    # Necessary for execution
+    export LD_LIBRARY_PATH=$VTK_LIBDIR:$LD_LIBRARY_PATH;
+"""
+
+# TODO(eric.cousineau): Provide more granularity for libraries, such that you are not forced to link to ALL libraries.
 
 def _vtk_impl(repository_ctx):
     vtk_include_path = repository_ctx.os.environ.get("VTK_INCLUDE", "")
