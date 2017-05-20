@@ -4,6 +4,6 @@ cc_binary(
         "ParticleReader.cxx",
     ],
     deps = [
-        "@vtk",
+        "@vtk//:vtk",
     ],
 )

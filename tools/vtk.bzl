@@ -4,8 +4,8 @@
 # Derived from @drake//tools/gurobi.bzl
 
 def _vtk_impl(repository_ctx):
-    vtk_include_path = repository_ctx.os.environ.get("VTK_INCLUDE", "")
-    vtk_libdir_path = repository_ctx.os.environ.get("VTK_LIBDIR", "")
+    vtk_include_path = "/home/eacousineau/proj/tri/proj/dart_impl/install/vtk/include/vtk-5.10" # repository_ctx.os.environ.get("VTK_INCLUDE", "")
+    vtk_libdir_path = "/home/eacousineau/proj/tri/proj/dart_impl/install/vtk/lib/vtk-5.10" # repository_ctx.os.environ.get("VTK_LIBDIR", "")
     vtk_include_sym = "vtk-system-inc"
     vtk_libdir_sym = "vtk-system-lib"
 
@@ -18,22 +18,19 @@ def _vtk_impl(repository_ctx):
         warning_detail = "VTK include / lib path '%s' is invalid" % vtk_include_path
     warning = warning_detail
 
-    libs = native.glob("%s/lib*.so" % vtk_libdir_sym)
-
     BUILD = """
-hdrs = glob([
-    "{inc}/*.h",
-])
-print("{warning}") if not hdrs
+hdrs = glob(["{inc}/*.h"])
+libs = glob(["{libdir}/lib*.so"])
+
 cc_library(
     name = "vtk",
-    srcs = {libs},
+    srcs = libs,
     hdrs = hdrs,
     linkstatic = 0,
     includes = ["{inc}"],
     visibility = ["//visibility:public"],
 )
-""".format(warning=warning, srcs=libs, inc=vtk_include_sym)
+""".format(warning=warning, libdir=vtk_libdir_sym, inc=vtk_include_sym)
     repository_ctx.file("BUILD", content=BUILD, executable=False)
 
 
