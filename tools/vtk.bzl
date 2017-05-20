@@ -37,11 +37,11 @@ def _vtk_impl(repository_ctx):
     repository_ctx.symlink(vtk_include_path or "/MISSING", vtk_include_sym)
     repository_ctx.symlink(vtk_libdir_path or "/MISSING", vtk_libdir_sym)
 
-    if not vtk_include_path:
+    if not vtk_include_path or not vtk_libdir_path:
         warning_detail = "VTK path is empty or unset"
     else:
-        warning_detail = "VTK include / lib path '%s' is invalid" % vtk_include_path
-    warning = warning_detail
+        warning_detail = "VTK include (%s) / lib path ('%s') are invalid" % (vtk_include_path, vtk_libdir_path)
+    warning = "\\n\\n{}\\nPlease set VTK_INCLUDE and VTK_LIBDIR correctly\\n".format(warning_detail)
 
     # # Cannot glob easily
     # print("Libs:\n%s" % native.glob(["%s/libvtk*.so" % vtk_libdir_path]))
@@ -50,7 +50,7 @@ def _vtk_impl(repository_ctx):
 hdrs = glob(["{inc}/*.h"])
 libs = glob(["{libdir}/lib*.so"])
 
-print(warning) \
+print("{warning}") \
     if not hdrs or not libs else \
     cc_library(
         name = "vtk",
