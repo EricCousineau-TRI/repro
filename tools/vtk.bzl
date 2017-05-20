@@ -14,7 +14,7 @@ Build VTK as follows:
 
     cd drake-distro/externals/vtk
     mkdir -p build && cd build
-    cmake .. -DCMAKE_CXX_FLAGS="-DGLX_GLXEXT_LEGACY=1" -DCMAKE_INSTALL_PREFIX=$VTK_ROOT -DBUILD_SHARED=ON -DCMAKE_BUILD_TYPE=Release -DVTK_INSTALL_NO_DEVELOPMENT=0
+    cmake .. -DCMAKE_CXX_FLAGS="-DGLX_GLXEXT_LEGACY=1" -DCMAKE_INSTALL_PREFIX=$VTK_ROOT -DBUILD_SHARED=ON -DCMAKE_BUILD_TYPE=Release
     make -j install
 
 In your ~/.bash_aliases, use VTK_ROOT and VTK_VERSION and export hese:
