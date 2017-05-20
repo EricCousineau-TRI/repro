@@ -30,3 +30,9 @@ github_archive(
     build_file = "tools/pybind11.BUILD",
     sha256 = "08b4813b3b17f607efc4e8ba8b73bf55759ba744cab125e9fc666b5161cb1d0a",
 )
+
+# Jerry-rig VTK
+load("//tools:vtk.bzl", "vtk_repository")
+vtk_repository(
+    name = "vtk",
+)
