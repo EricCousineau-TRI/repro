@@ -14,7 +14,7 @@ Build VTK as follows:
 
     cd drake-distro/externals/vtk
     mkdir -p build && cd build
-    cmake .. -DCMAKE_CXX_FLAGS="-DGLX_GLXEXT_LEGACY=1" -DCMAKE_INSTALL_PREFIX=$VTK_ROOT -DBUILD_SHARED=ON -DCMAKE_BUILD_TYPE=Release
+    cmake .. -DCMAKE_CXX_FLAGS="-DGLX_GLXEXT_LEGACY=1" -DCMAKE_INSTALL_PREFIX=$VTK_ROOT -DBUILD_SHARED=ON -DCMAKE_BUILD_TYPE=Release -DVTK_INSTALL_NO_DEVELOPMENT=0
     make -j install
 
 In your ~/.bash_aliases, use VTK_ROOT and VTK_VERSION and export hese:
@@ -23,7 +23,7 @@ In your ~/.bash_aliases, use VTK_ROOT and VTK_VERSION and export hese:
     export VTK_INCLUDE=$VTK_ROOT/include/$VTK_VERSION
     export VTK_LIBDIR=$VTK_ROOT/lib/$VTK_VERSION
     # Necessary for execution
-    export LD_LIBRARY_PATH=$VTK_LIBDIR:$LD_LIBRARY_PATH;
+    export LD_LIBRARY_PATH=$VTK_LIBDIR:$LD_LIBRARY_PATH
 """
 
 # TODO(eric.cousineau): Provide more granularity for libraries, such that you are not forced to link to ALL libraries.
@@ -68,3 +68,6 @@ vtk_repository = repository_rule(
     local = True,
     implementation = _vtk_impl,
 )
+
+def vtk_test_tags():
+    return ["vtk"]
