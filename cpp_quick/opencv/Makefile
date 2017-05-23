@@ -7,4 +7,4 @@ clean:
 	rm -rf display_image
 
 display_image: display_image.cc
-	$(CXX) $< $(shell pkg-config opencv --cflags --libs) -o $@
+	$(CXX) -o $@ $< $(shell pkg-config opencv --cflags --libs)
