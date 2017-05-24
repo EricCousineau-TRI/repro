@@ -17,6 +17,7 @@ classdef PyProxy < dynamicprops
         pySelf
     end
     
+    %% Construction
     methods
         function obj = PyProxy(pySelf)
             % Python form
@@ -53,6 +54,20 @@ classdef PyProxy < dynamicprops
         end
     end
     
+    %% Operator overloads
+    methods
+        % How to handle concatenation?
+        function r = plus(a, b)
+            % Quick hack for now
+            % Project items into Python domain, then back into MATLAB.
+            r = PyProxy.callPyFunc(@plus, a, b);
+        end
+        function r = minus(a, b)
+            r = PyProxy.callPyFunc(@minus, a, b);
+        end
+    end
+    
+    %% Helper methods
     methods (Static)
         function out = isPyFunc(p)
             % @ref http://stackoverflow.com/questions/624926/how-to-detect-whether-a-python-variable-is-a-function
@@ -95,7 +110,7 @@ classdef PyProxy < dynamicprops
                         p = matpy.mat2nparray(m);
                     end
                 case 'PyProxy'
-                    p = PyProxy.pySelf;
+                    p = m.pySelf;
                 otherwise
                     % Defer to MATLAB:Python.
                     p = m;

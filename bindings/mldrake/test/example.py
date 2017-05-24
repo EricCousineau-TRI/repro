@@ -18,6 +18,10 @@ def stuff_matlab():
     import matlab
     return matlab.double(1.)
 
+def passthrough(x):
+    """ Hack to explicitly get MATLAB's conversion """
+    return x
+
 class Test:
     def __init__(self, name):
         import numpy as np
