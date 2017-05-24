@@ -42,27 +42,13 @@ PYBIND11_PLUGIN(_typebinding) {
   py::module m("_typebinding",
                "Drake Type Binding tests");
 
-  // py::object variable = (py::object)
-  //   py::module::import("pydrake.symbolic").attr("Variable");
-
-  // TODO: (Learning) Look at py::overload_cast
-
-  // @ref http://pybind11.readthedocs.io/en/master/advanced/functions.html#non-converting-arguments
 
   py::class_<SimpleType> pySimpleType(m, "SimpleType");
   pySimpleType
     .def(py::init<>())
     .def(py_relax_init<int>(), py::arg("value"))
-    // .def(py::init<double>()) // Implicit conversion via overload
     .def("value", &SimpleType::value)
     .def("set_value", py_relax_overload_cast<int>(&SimpleType::set_value));
-    // .def("set_value", &SimpleType::set_value)
-    // // TODO: Make a lambda generator that can emulate pybind11's detail::init<>, or just generate the appropriate thing
-    // .def("set_value", [](SimpleType& self, const int_relax& value) {
-    //   return self.set_value(value);
-    // });
-    // // Does not work.
-    // .def("value", py::overload_cast<double>(&SimpleType::set_value));
 
   py::class_<EigenType> pyEigenType(m, "EigenType");
   pyEigenType
