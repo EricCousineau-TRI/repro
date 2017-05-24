@@ -7,9 +7,12 @@ mp = pyimport_proxy('pydrake.solvers.mathematicalprogram');
 
 % QP test
 prog = mp.MathematicalProgram();
+% TODO: Change this to a proper Eigen array.
 x = prog.NewContinuousVariables(int32(2),'x');
 prog.AddLinearConstraint(x.item(0) >= 1);
 prog.AddLinearConstraint(x.item(1) >= 1);
+% TODO: Presently interpreted as dtype=object. See if we can get pybind11
+% to use the actual type.
 prog.AddQuadraticCost(eye(2), zeros(2), x);
 result = prog.Solve()
 

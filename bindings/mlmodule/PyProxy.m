@@ -181,15 +181,14 @@ classdef PyProxy < dynamicprops
             if PyProxy.isPyWrappable(p)
                 m = PyProxy.wrapPyFunc(p);
             else
-                switch class(p)
+                cls = class(p);
+                switch cls
                     case 'py.str'
                         m = char(p);
                     case 'py.long'
                         m = int64(p);
                     case 'py.list'
                         m = cell(p);
-                    case 'py.numpy.ndarray'
-                        m = matpy.nparray2mat(p);
                     case 'py.NoneType'
                         m = [];
                     case 'py.module'
@@ -197,8 +196,19 @@ classdef PyProxy < dynamicprops
                         % Use this SPARINGLY
                         m = PyProxy(p);
                     otherwise
-                        % Generate proxy
-                        m = PyProxy(p);
+                        good = false;
+                        if strcmp(cls, 'py.numpy.ndarray') %#ok<STISA>
+                            helper = pyimport('proxy_helper'); % TODO: Use PYTHONPATH
+                            % Ensure that this is an integral type
+                            if helper.np_is_arithmetic(p)
+                                good = true;
+                                m = matpy.nparray2mat(p);
+                            end
+                        end
+                        if ~good
+                            % Generate proxy
+                            m = PyProxy(p);
+                        end
                 end
             end
         end
