@@ -7,11 +7,13 @@ classdef PyProxy < dynamicprops
     % rather wrap the class (to minimize on memory overhead).
     % Presently, each instance is wrapped.
     
+    % TODO(eric.cousineau): See if there is a better way to control when an
+    % instance is converted (e.g., "expr = ~expr", if "expr" is a numpy
+    % array...).
+    
     % TODO(eric.cousineau): This won't play nicely with a MATLAB double
     % matrix that is meant to be a Python double list.
     % Solution is to use a cell() matrix.
-    
-    % TODO(eric.cousineau): Add operator overloads?
     
     properties (Access = protected)
         pySelf
@@ -118,7 +120,10 @@ classdef PyProxy < dynamicprops
             r = PyProxy.callPyFunc(@or, a, b);
         end
         function r = not(a)
-            r = PyProxy.callPyFunc(@not, a);
+            % This cannot be overridden in Python.
+            % For now, we can delegate to numpy.logical_not and cross our
+            % fingers.
+            r = PyProxy.callPyFunc(@py.numpy.logical_not, a);
         end
     end
     

@@ -3,6 +3,15 @@
 pyexample = pyimport('example');
 
 %%
+% Issue: Logical not is not overrideable in Python.
+b = py.bool(1);
+% ~b
+
+% However, we can use a custom override / hack.
+mlb = PyProxy(b);
+~mlb
+
+%%
 tup = pyexample.passthrough({4});
 tup + {5}
 
@@ -42,4 +51,5 @@ mlca = PyProxy(ca);
 mlca + 5
 mlca * 5
 mlca / 5
-mlca == 1
+logic = mlca == 1
+~logic
