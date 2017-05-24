@@ -1,2 +1,0 @@
-classdef dynprop < dynamicprops
-end
