@@ -6,19 +6,18 @@ Sources adapted from:
 
 # Structure
 
-* `bindings/`
-    * `README.md` - instructions.
-    * `pymodule/`
-        * `_typebinding.cc` - `pybind11` module file.
-        * `_util/py_relax.h` - relaxed casting prototype.
-        * `test/testTypeBinding.py` - unittest showing behavior.
-    * `mlmodule/`
-        * `PyProxy.m` - hacky proxy wrapper
-        * `test/`
-            * `matlab_with_pythonpath.sh` - will build and source environment to use Bazel's Python modules, and start MATLAB with the path setup.
-            * `TypeBindingTest.m` - MATLAB unittest.
-            * `run_all.m` - Run example script and unittest.
-    * `install_prereqs.sh` - minimal install for using Bazel, tested on basic Docker image (see `:/shell/docker/docker-x11.sh`).
+* `README.md` - instructions.
+* `pymodule/`
+    * `_typebinding.cc` - `pybind11` module file.
+    * `_util/py_relax.h` - relaxed casting prototype.
+    * `test/testTypeBinding.py` - unittest showing behavior.
+* `mlmodule/`
+    * `PyProxy.m` - hacky proxy wrapper
+    * `test/`
+        * `matlab_with_pythonpath.sh` - will build and source environment to use Bazel's Python modules, and start MATLAB with the path setup.
+        * `TypeBindingTest.m` - MATLAB unittest.
+        * `run_all.m` - Run example script and unittest.
+* `install_prereqs.sh` - minimal install for using Bazel, tested on basic Docker image (see `:/shell/docker/docker-x11.sh`).
 
 # pybind11 within MATLAB using Bazel
 
