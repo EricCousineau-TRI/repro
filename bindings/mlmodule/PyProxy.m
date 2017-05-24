@@ -54,6 +54,10 @@ classdef PyProxy < dynamicprops
             disp('  [PyProxy]');
             disp(obj.pySelf);
         end
+        
+        function [p] = py(obj)
+            p = obj.pySelf;
+        end
     end
     
     %% Operator overloads
@@ -125,6 +129,36 @@ classdef PyProxy < dynamicprops
             % fingers.
             r = PyProxy.callPyFunc(@py.numpy.logical_not, a);
         end
+        function r = reshape(obj, varargin)
+            % Call Python version, not MATLAB
+            f = @(varargin) obj.pySelf.reshape(varargin{:});
+            r = PyProxy.callPyFunc(f, varargin{:});
+        end
+        % Confusing...
+        %{
+        % Referencing
+        function r = subsref(obj, ss)
+            s = ss(1); % Uhhh...???
+            switch s.type
+                case '.'
+                    % Member access
+                    % Figure out more elegenat solution:
+                    % https://www.mathworks.com/help/matlab/ref/subsref.html
+                    r = obj.(s.subs);
+                case '()'
+                    % Hack. Could figure out slicing / 2D stuff later.
+                    r = obj.item(int64(s.subs{1}) - 1);
+            end
+            if length(ss) == 2
+                % Err...
+                assert(strcmp(ss(2).type, '()'));
+                % Call function
+                assert(isempty(ss(2).subs));
+                r = r();
+            end
+        end
+        % No assignment.
+        %}
     end
     
     %% Helper methods
@@ -177,12 +211,25 @@ classdef PyProxy < dynamicprops
             end
         end
         
+        function [out] = isPy(p)
+            cls = class(p);
+            if length(cls) >= 3 && strcmp(cls(1:3), 'py.')
+                out = true;
+            else
+                out = false;
+            end
+        end
+        
         function [m] = fromPyValue(p)
-            if PyProxy.isPyWrappable(p)
+            if ~PyProxy.isPy(p)
+                m = p;
+            elseif PyProxy.isPyWrappable(p)
                 m = PyProxy.wrapPyFunc(p);
             else
                 cls = class(p);
                 switch cls
+                    case 'py.bool'
+                        m = logical(p);
                     case 'py.str'
                         m = char(p);
                     case 'py.long'
@@ -205,6 +252,8 @@ classdef PyProxy < dynamicprops
                                 m = matpy.nparray2mat(p);
                             end
                         end
+                        % TODO: Wrapping class as function does not permit
+                        % accessing constant values...
                         if ~good
                             % Generate proxy
                             m = PyProxy(p);

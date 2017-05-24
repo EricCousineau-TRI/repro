@@ -7,17 +7,21 @@ mp = pyimport_proxy('pydrake.solvers.mathematicalprogram');
 
 % QP test
 prog = mp.MathematicalProgram();
-% TODO: Change this to a proper Eigen array.
 x = prog.NewContinuousVariables(int32(2),'x');
-prog.AddLinearConstraint(x.item(0) >= 1);
+% TODO: Consider making PyProxy array-able, or a separte item for numpy
+% stuf.
+
+% TODO: Make indexing work, somehow...
+prog.AddLinearConstraint(x.item(0) >= 1); % Hard to implement subsref
 prog.AddLinearConstraint(x.item(1) >= 1);
 % TODO: Presently interpreted as dtype=object. See if we can get pybind11
 % to use the actual type.
-prog.AddQuadraticCost(eye(2), zeros(2), x);
-result = prog.Solve()
+prog.AddQuadraticCost(eye(2), zeros(2, 1), x);
+result = prog.Solve();
 
-% Note: int32(0) is kSolutionFound; can't reference it directly.
-assert(result == mp.SolutionResult(int32(0)));
+% Should extract module from Python to refer to static variables...
+% Not great...
+assert(result == mp.py.SolutionResult.kSolutionFound);
 
 x_sol = prog.GetSolution(x);
 assert(abs(x_sol(1)-1.0)<1e-6);
