@@ -11,7 +11,7 @@ set -x
 
 cur=$(cd $(dirname $BASH_SOURCE) && pwd)
 
-local build=
+build=
 while [[ $# -gt 0 ]]; do
     case $1 in
         --build)
