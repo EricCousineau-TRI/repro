@@ -6,7 +6,7 @@
 #include <pybind11/eigen.h>
 #include <pybind11/stl.h>
 
-#include "py_relax.h"
+#include "_util/py_relax.h"
 
 namespace py = pybind11;
 using std::string;
@@ -38,8 +38,8 @@ class EigenType {
   MatrixXd value_;
 };
 
-PYBIND11_PLUGIN(_pydrake_typebinding) {
-  py::module m("_pydrake_typebinding",
+PYBIND11_PLUGIN(_typebinding) {
+  py::module m("_typebinding",
                "Drake Type Binding tests");
 
   // py::object variable = (py::object)

@@ -1,5 +1,0 @@
-PATH=${PATH}
-
-PYTHONPATH=${runfiles}:${runfiles}/${import_path}:${runfiles}/${workspace_name}:${PYTHONPATH}
-
-LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
