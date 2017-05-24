@@ -28,3 +28,15 @@ To see Python bindings used from within MATLAB, in `bash`:
 and in MATLAB:
     
     >> run_all
+
+## With `drake`
+
+If you have a recent version of `drake`, you can test this out with the current bindings (minus type relaxations, which require C++ modifications).
+
+First, `export DRAKE=...`, then execute:
+
+    $ ./mlmodule/test/matlab_with_pythonpath_drake.sh
+
+and in MATLAB:
+
+    >> example_drake
