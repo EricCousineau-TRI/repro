@@ -11,7 +11,7 @@ pydrake_dir=$source_dir/../../pydrake
 
 # Source Python environment
 source ${pydrake_dir}/_util/setup_target_env.sh \
-    bindings/pydrake bindings typebinding_test
+    --build bindings/pydrake bindings typebinding_test
 
 # Ensure we can run the test script directly. Fail fast if this does not work.
 python ${pydrake_dir}/test/testTypeBinding.py

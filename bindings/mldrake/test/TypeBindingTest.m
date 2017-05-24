@@ -4,7 +4,7 @@ classdef TypeBindingTest < matlab.unittest.TestCase
 
     methods (Test)
         function testBasic(testCase)
-            tb = py_proxy(ppydrake.typebinding);
+            tb = pyimport_proxy('pydrake.typebinding');
 
             % Without proxy:
             % Classes do not match (py.long <-> int64)
@@ -17,7 +17,7 @@ classdef TypeBindingTest < matlab.unittest.TestCase
         end
 
         function testFlexible(testCase)
-            tb = py_proxy(py.pydrake.typebinding);
+            tb = pyimport_proxy('pydrake.typebinding');
             
             % Same case as above, without proxy.
 
