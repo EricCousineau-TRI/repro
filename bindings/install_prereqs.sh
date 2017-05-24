@@ -1,5 +1,5 @@
 #!/bin/bash
-l
+
 # Install minimal prereqs, except for MATLAB
 # Adapted from: drake:51a89a6:setup/ubuntu/16.04/install_prereqs.sh
 
