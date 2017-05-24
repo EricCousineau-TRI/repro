@@ -15,6 +15,9 @@ classdef PyProxy < dynamicprops
     % matrix that is meant to be a Python double list.
     % Solution is to use a cell() matrix.
     
+    % TODO(eric.cousineau): Make a separate PyProxy for subsref-able
+    % classes.... Numpy makes things as confusing as hell.
+    
     properties (Access = protected)
         pySelf
     end
