@@ -1,11 +1,11 @@
 % Call "clear classes" if you change your method, then reload the module.
 % http://www.mathworks.com/help/matlab/matlab_external/call-modified-python-module.html
-pyscratch = pyimport('scratch');
+pyexample = pyimport('example'); % Use this since the package is not explicitly on PYTHONPATH
 % py.reload(pyscratch);
 
 %% Use Python module directly
 fprintf('[ Python Directly ]\n');
-pyo = pyscratch.Test('hello');
+pyo = pyexample.Test('hello');
 disp(pyo.get_name())
 pyo.set_name('test');
 pyo.nparray = [5, 10, 15];
@@ -18,11 +18,11 @@ fprintf('\n\n');
 
 %% Use Python module via PyProxy
 fprintf('[ Python via PyProxy ]\n');
-mscratch = PyProxy(pyscratch);
+mlexample = py_proxy(pyexample);
 % Test = PyProxy.fromPyValue(pyscratch.Test);
 % Wrap type
 
-mlo = mscratch.Test('hello');
+mlo = mlexample.Test('hello');
 disp(mlo.get_name());
 mlo.set_name('test');
 disp(mlo.get_name());
