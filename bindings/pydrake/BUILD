@@ -42,12 +42,12 @@ py_library(
     data = [
         ":_typebinding.so",
     ],
-    imports = ["python"],
+    imports = [".."],
     visibility = ["//visibility:public"],
 )
 
 py_test(
-   name = "pydrake_type_binding_test",
+   name = "typebinding_test",
    size = "small",
    srcs = ["test/testTypeBinding.py"],
    main = "test/testTypeBinding.py",
