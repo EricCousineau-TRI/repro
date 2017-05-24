@@ -46,6 +46,11 @@ classdef PyProxy < dynamicprops
                 end
             end
         end
+        
+        function disp(obj)
+            disp('  [PyProxy]');
+            disp(obj.pySelf);
+        end
     end
     
     methods (Static)
