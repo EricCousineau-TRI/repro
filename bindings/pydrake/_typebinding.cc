@@ -14,7 +14,9 @@ using std::ostringstream;
 
 using Eigen::MatrixXd;
 
-
+/*
+ * Class which requires an integer for construction.
+ */
 class SimpleType {
  public:
   SimpleType() = default;
@@ -26,7 +28,9 @@ class SimpleType {
   int value_ {};
 };
 
-
+/*
+ * Class which requires a Matrix for construction.
+ */
 class EigenType {
  public:
   EigenType() = default;
@@ -39,9 +43,9 @@ class EigenType {
 };
 
 PYBIND11_PLUGIN(_typebinding) {
-  py::module m("_typebinding",
-               "Drake Type Binding tests");
+  py::module m("_typebinding", "Drake Type Binding tests");
 
+  // Use py_relax_* to make Python bindings more permissive with MATLAB types.
 
   py::class_<SimpleType> pySimpleType(m, "SimpleType");
   pySimpleType
