@@ -22,6 +22,12 @@ def passthrough(x):
     """ Hack to explicitly get MATLAB's conversion """
     return x
 
+def get_custom_array():
+    # @ref https://docs.scipy.org/doc/numpy/user/basics.subclassing.html
+    import numpy as np
+    class custom_array(np.ndarray): pass
+    return custom_array
+
 class Test:
     def __init__(self, name):
         import numpy as np

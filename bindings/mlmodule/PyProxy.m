@@ -55,15 +55,70 @@ classdef PyProxy < dynamicprops
     end
     
     %% Operator overloads
+    % @ref https://www.mathworks.com/help/matlab/matlab_oop/implementing-operators-for-your-class.html
     methods
         % How to handle concatenation?
         function r = plus(a, b)
-            % Quick hack for now
-            % Project items into Python domain, then back into MATLAB.
+            % Quick hack for now - delegte overloads to Python.
             r = PyProxy.callPyFunc(@plus, a, b);
         end
         function r = minus(a, b)
             r = PyProxy.callPyFunc(@minus, a, b);
+        end
+        function r = uminus(a)
+            r = PyProxy.callPyFunc(@uminus, a);
+        end
+        function r = uplus(a)
+            r = PyProxy.callPyFunc(@uplus, a);
+        end
+        function r = times(a, b)
+            r = PyProxy.callPyFunc(@times, a, b);
+        end
+        function r = mtimes(a, b)
+            r = PyProxy.callPyFunc(@mtimes, a, b);
+        end
+        function r = rdivide(a, b)
+            r = PyProxy.callPyFunc(@rdivide, a, b);
+        end
+        function r = mrdivide(a, b)
+            % This may be ambiguous. Still gonna leave it up to MATLAB
+            % Python bridge to figure it out.
+            r = PyProxy.callPyFunc(@mrdivide, a, b);
+        end
+        function r = power(a, b)
+            r = PyProxy.callPyFunc(@power, a, b);
+        end
+        function r = mpower(a, b)
+            % Same as mrdivide
+            r = PyProxy.callPyFunc(@mpower, a, b);
+        end
+        % Logical
+        function r = lt(a, b)
+            r = PyProxy.callPyFunc(@lt, a, b);
+        end
+        function r = gt(a, b)
+            r = PyProxy.callPyFunc(@gt, a, b);
+        end
+        function r = le(a, b)
+            r = PyProxy.callPyFunc(@le, a, b);
+        end
+        function r = ge(a, b)
+            r = PyProxy.callPyFunc(@ge, a, b);
+        end
+        function r = ne(a, b)
+            r = PyProxy.callPyFunc(@ne, a, b);
+        end
+        function r = eq(a, b)
+            r = PyProxy.callPyFunc(@eq, a, b);
+        end
+        function r = and(a, b)
+            r = PyProxy.callPyFunc(@and, a, b);
+        end
+        function r = or(a, b)
+            r = PyProxy.callPyFunc(@or, a, b);
+        end
+        function r = not(a)
+            r = PyProxy.callPyFunc(@not, a);
         end
     end
     
@@ -101,9 +156,9 @@ classdef PyProxy < dynamicprops
         function [p] = toPyValue(m)
             switch class(m)
                 case 'double'
-                    % Will need to relax Eigen types to accept scalar
-                    % doubles to initialize as 1x1.
-                    % Use C++ py_relax_overload shindig.
+                    % Use C++ py_relax_overload and RelaxMatrix<> to permit
+                    % Eigen matrices to be initialized by scalars from
+                    % Python.
                     if isscalar(m)
                         p = m;
                     else
