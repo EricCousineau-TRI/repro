@@ -3,7 +3,7 @@
 {
     workspace_name=repro
     
-    package=bindings/pydrake
+    package=bindings/pymodule
     imports=bindings
     target=typebinding_test
     runfiles="\${workspace}/bazel-bin/${package}/${target}.runfiles"

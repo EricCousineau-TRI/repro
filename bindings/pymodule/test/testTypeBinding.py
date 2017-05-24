@@ -4,8 +4,8 @@ from __future__ import print_function, absolute_import
 import unittest
 import numpy as np
 npa = np.array
-import pydrake
-from pydrake import typebinding as tb
+import pymodule
+from pymodule import typebinding as tb
 
 class TestTypeBinding(unittest.TestCase):
     def test_env(self):

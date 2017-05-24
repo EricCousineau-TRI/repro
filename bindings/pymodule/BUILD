@@ -26,7 +26,7 @@ cc_binary(
 )
 
 py_library(
-    name = "pydrake",
+    name = "pymodule",
     srcs = [
         "__init__.py",
         "typebinding.py",
@@ -44,5 +44,5 @@ py_test(
    srcs = ["test/testTypeBinding.py"],
    main = "test/testTypeBinding.py",
    tags = [],
-   deps = [":pydrake"],
+   deps = [":pymodule"],
 )

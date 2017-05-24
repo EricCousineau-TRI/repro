@@ -2,17 +2,17 @@
 
 Sources adapted from:
 
-* https://github.com/RobotLocomotion/drake/tree/e132af9/drake/bindings
+* https://github.com/RobotLocomotion/module/tree/e132af9/module/bindings
 
 # Structure
 
 * `bindings/`
     * `README.md` - instructions.
-    * `pydrake/`
-        * `_pydrake_typebinding.cc` - `pybind11` module file.
+    * `pymodule/`
+        * `_typebinding.cc` - `pybind11` module file.
         * `_util/py_relax.h` - relaxed casting prototype.
         * `test/testTypeBinding.py` - unittest showing behavior.
-    * `mldrake/`
+    * `mlmodule/`
         * `PyProxy.m` - hacky proxy wrapper
         * `test/`
             * `matlab_with_pythonpath.sh` - will build and source environment to use Bazel's Python modules, and start MATLAB with the path setup.
@@ -24,7 +24,7 @@ Sources adapted from:
 
 To see Python bindings used from within MATLAB, in `bash`:
 
-    $ ./mldrake/test/matlab_with_pythonpath.sh
+    $ ./mlmodule/test/matlab_with_pythonpath.sh
 
 and in MATLAB:
     
