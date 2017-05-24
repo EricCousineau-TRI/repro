@@ -1,5 +1,5 @@
 PATH=${PATH}
 
-PYTHONPATH=${runfiles}:${runfiles}/${import_path}:${runfiles}/${workspace_name}:${PYTHONPATH}
+PYTHONPATH=${runfiles}:${runfiles}/${workspace_name}/${imports}:${runfiles}/${workspace_name}:${PYTHONPATH}
 
 LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
