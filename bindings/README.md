@@ -13,10 +13,12 @@ Sources adapted from:
     * `test/testTypeBinding.py` - unittest showing behavior.
 * `mlmodule/`
     * `PyProxy.m` - hacky proxy wrapper
+    * `NumPyProxy.m` - hacky NumPy proxy wrapper (allows MATLAB-syntax slicing, etc.)
     * `test/`
         * `matlab_with_pythonpath.sh` - will build and source environment to use Bazel's Python modules, and start MATLAB with the path setup.
         * `TypeBindingTest.m` - MATLAB unittest.
         * `run_all.m` - Run example script and unittest.
+        * `matlab_with_pythonpath_drake.sh` - see below.
 * `install_prereqs.sh` - minimal install for using Bazel, tested on basic Docker image (see `:/shell/docker/docker-x11.sh`).
 
 # pybind11 within MATLAB using Bazel
@@ -33,7 +35,7 @@ and in MATLAB:
 
 If you have a recent version of `drake`, you can test this out with the current bindings (minus type relaxations, which require C++ modifications).
 
-First, `export DRAKE=...`, then execute:
+First, `export DRAKE=/path/to/drake-distro` in your `bash` session, then execute:
 
     $ ./mlmodule/test/matlab_with_pythonpath_drake.sh
 

@@ -12,6 +12,8 @@ t(5).Hello(20);
 % It will even override the current fields
 t.Value;
 
+-t
+
 %{
 t = 
 

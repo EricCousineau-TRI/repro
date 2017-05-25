@@ -36,10 +36,28 @@ classdef matpy
         function result = nparray2mat( nparray )
             %nparray2mat Convert an nparray from numpy to a Matlab array
             %   Convert an n-dimensional nparray into an equivalent Matlab array
+            
+            % TODO: Generalize to other types.
+            % Also, try to find out how to get numpy.nditer to play nicely
+            % with reverse- or ragged-ordered slices.
+            % Example:
+            %{
+            >> A = reshape(1:9, [3, 3]);
+            >> mlA = NumPyProxy(matpy.mat2nparray(A));
+            >> sub = mlA([2, 1], 3)  % Reverse - numpy shows correct order
+            >> double(sub)  % Conversion returns the wrong order
+            >> sub2 = mlA([1, 2], 3)  % Forward
+            >> double(sub2)  % Returns the correct order
+            %}
+            
             data_size = cellfun(@int64,cell(nparray.shape));
-            if length(data_size)==1
+            if prod(data_size) == 0
+                % Zero-size matrix - still preserve shape
+                result = zeros(data_size);
+            elseif length(data_size)==1
                 % This is a simple operation
-                result=double(py.array.array('d', py.numpy.nditer(nparray)));
+                % Return column vector.
+                result=double(py.array.array('d', py.numpy.nditer(nparray)))';
             elseif length(data_size)==2
                 % order='F' is used to get data in column-major order (as in Fortran
                 % 'F' and Matlab)

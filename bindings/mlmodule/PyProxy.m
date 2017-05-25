@@ -1,4 +1,4 @@
-classdef PyProxy < dynamicprops
+classdef PyProxy % < dynamicprops
     % Quick and dirty mechanism to wrap object instance or module to marshal MATLAB data types
     % This might be more easily solved if the MATLAB:Python bindings were
     % more versatile, e.g., working with matrices.
@@ -27,30 +27,6 @@ classdef PyProxy < dynamicprops
         function obj = PyProxy(pySelf)
             % Python form
             obj.pySelf = pySelf;
-            
-            pyPropNames = py.dir(pySelf);
-            for i = 1:length(pyPropNames)
-                propName = char(pyPropNames{i});
-                % Skip MATLAB invalid / Python private members
-                if length(propName) >= 1 && strcmp(propName(1), '_')
-                    continue;
-                end
-                pyValue = py.getattr(obj.pySelf, propName);
-                mlProp = addprop(obj, propName);
-                % Add getter (which will work for functions / methods)
-                mlProp.GetMethod = @(obj) ...
-                    PyProxy.fromPyValue(py.getattr(obj.pySelf, propName));
-                % Hide setter if it's a function 
-                if PyProxy.isPyFunc(pyValue)
-                else
-                    % Permit setting
-                    % TODO(eric.cousineau): See if there is a way to check
-                    % if this is a read-only or write-only setter?
-                    % https://docs.python.org/2/library/functions.html#property
-                    mlProp.SetMethod = @(obj, value) ...
-                        py.setattr(obj.pySelf, propName, PyProxy.toPyValue(value));
-                end
-            end
         end
         
         function disp(obj)
@@ -60,6 +36,58 @@ classdef PyProxy < dynamicprops
         
         function [p] = py(obj)
             p = obj.pySelf;
+        end
+        
+        function r = subsref(obj, S)
+            p = PyProxy.getPy(obj);
+            s = S(1);
+            switch s.type
+                case '.'
+                    switch s.subs
+                        case 'py'
+                            r = p;
+                        otherwise
+                            % Get the proxied value
+                            pValue = py.getattr(p, s.subs);
+                            r = PyProxy.fromPyValue(pValue);
+                    end
+                otherwise
+                    r = pySubsref(obj, s);
+            end
+            % Accumulate the remainder
+            r = subsref_relaxed(r, S(2:end));
+        end
+        
+        function obj = subsasgn(obj, S, value)
+            % Just take scalars for now
+            % Get everything leading up to final portion
+            penultimate = subsref_relaxed(obj, S(1:end-1));
+            % Assumes everything is some sort of proxied thing
+            pySubsasgn(penultimate, S(end), value);
+        end
+    end
+    
+    methods (Access = protected)
+        function r = pySubsref(obj, s)
+            p = PyProxy.getPy(obj);
+            switch s.type
+                case '()'
+                    % Assume that we are calling this as a function.
+                    r = PyProxy.callPyFunc(p, s.subs{:});
+                otherwise
+                    error('Unsupported subsref type: %s', s.type);
+            end
+        end
+        
+        function pySubsasgn(obj, s, value)
+            p = PyProxy.getPy(obj);
+            switch s.type
+                case '.'
+                    pValue = PyProxy.toPyValue(value);
+                    py.setattr(p, s.subs, pValue);
+                otherwise
+                    error('Indexing unsupported');
+            end
         end
     end
     
@@ -137,31 +165,6 @@ classdef PyProxy < dynamicprops
             f = @(varargin) obj.pySelf.reshape(varargin{:});
             r = PyProxy.callPyFunc(f, varargin{:});
         end
-        % Confusing...
-        %{
-        % Referencing
-        function r = subsref(obj, ss)
-            s = ss(1); % Uhhh...???
-            switch s.type
-                case '.'
-                    % Member access
-                    % Figure out more elegenat solution:
-                    % https://www.mathworks.com/help/matlab/ref/subsref.html
-                    r = obj.(s.subs);
-                case '()'
-                    % Hack. Could figure out slicing / 2D stuff later.
-                    r = obj.item(int64(s.subs{1}) - 1);
-            end
-            if length(ss) == 2
-                % Err...
-                assert(strcmp(ss(2).type, '()'));
-                % Call function
-                assert(isempty(ss(2).subs));
-                r = r();
-            end
-        end
-        % No assignment.
-        %}
     end
     
     %% Helper methods
@@ -206,8 +209,8 @@ classdef PyProxy < dynamicprops
                     else
                         p = matpy.mat2nparray(m);
                     end
-                case 'PyProxy'
-                    p = m.pySelf;
+                case {'PyProxy', 'NumPyProxy'}
+                    p = PyProxy.getPy(m);
                 otherwise
                     % Defer to MATLAB:Python.
                     p = m;
@@ -227,7 +230,7 @@ classdef PyProxy < dynamicprops
             if ~PyProxy.isPy(p)
                 m = p;
             elseif PyProxy.isPyWrappable(p)
-                m = PyProxy.wrapPyFunc(p);
+                m = PyProxy(p);
             else
                 cls = class(p);
                 switch cls
@@ -245,24 +248,25 @@ classdef PyProxy < dynamicprops
                         % This should be proxy-able
                         % Use this SPARINGLY
                         m = PyProxy(p);
+                    case 'py.numpy.ndarray'
+                        % Do not convert, to preserve memory, yada yada.
+                        % TODO: Determin if it is more convenient to return
+                        % a MATLAB array directly for arithemetic types?
+                        % Possibly include as an option in the ctor?
+                        % (This will mess with NumPyProxy)
+                        m = NumPyProxy(p);
                     otherwise
-                        good = false;
-                        if strcmp(cls, 'py.numpy.ndarray') %#ok<STISA>
-                            helper = pyimport('proxy_helper'); % TODO: Use PYTHONPATH
-                            % Ensure that this is an integral type
-                            if helper.np_is_arithmetic(p)
-                                good = true;
-                                m = matpy.nparray2mat(p);
-                            end
-                        end
-                        % TODO: Wrapping class as function does not permit
-                        % accessing constant values...
-                        if ~good
-                            % Generate proxy
-                            m = PyProxy(p);
-                        end
+                        % Generate proxy
+                        m = PyProxy(p);
                 end
             end
+        end
+    end
+    
+    methods (Static, Access = protected)
+        function p = getPy(obj)
+            % Direct access, do not use subsref overload
+            p = builtin('subsref', obj, substruct('.', 'pySelf'));
         end
     end
 end

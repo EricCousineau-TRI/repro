@@ -20,5 +20,12 @@ classdef SubsrefPrinter
             % For uniqueness
             ind = subscriptIndex * 10 + subscriptCount;
         end
+        
+        function c = uminus(b)
+            % Arriving here won't call subsref
+            disp('neg');
+            % However, this call will
+            c = -b.Value;
+        end
     end
 end

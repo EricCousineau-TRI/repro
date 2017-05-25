@@ -24,25 +24,27 @@ classdef SubsrefDispatch
             s = S(1);
             switch s.type
                 case '.'
-                    switch s.subs
-                        case 'Value' % Property
-                            % Dispatch to Value
-                            r = subsref_relax(obj.Value, S(2:end));
-                            return;
-                        case 'doStuff' % Method
-                            % Dispatch to doStuff
-                            % If direct access, call as function
-                            if n == 1
-                                r = obj.doStuff();
-                            else
-                                sn = S(2);
-                                assert(strcmp(sn.type, '()'));
-                                r = obj.doStuff(sn.subs{:});
-                                % Return following items
-                                r = subsref_relax(r, S(3:end));
-                            end
-                            return;
-                    end
+                    r = builtin('subsref', obj, S);
+                    return;
+%                     switch s.subs
+%                         case 'Value' % Property
+%                             % Dispatch to Value
+%                             r = subsref_relax(obj.Value, S(2:end));
+%                             return;
+%                         case 'doStuff' % Method
+%                             % Dispatch to doStuff
+%                             % If direct access, call as function
+%                             if n == 1
+%                                 r = obj.doStuff();
+%                             else
+%                                 sn = S(2);
+%                                 assert(strcmp(sn.type, '()'));
+%                                 r = obj.doStuff(sn.subs{:});
+%                                 % Return following items
+%                                 r = subsref_relax(r, S(3:end));
+%                             end
+%                             return;
+%                     end
             end
             disp('subsref unhandled:')
             disp(indent(yaml_dump(s), '  '));
