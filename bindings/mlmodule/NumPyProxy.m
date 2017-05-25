@@ -60,7 +60,10 @@ classdef NumPyProxy < PyProxy
         
         function pySubsasgn(obj, s, value)
             % Constructor indexing, either a py.slice or an index list
-            error('Not implemented');
+            [pView, pKeys] = obj.pyGetSubViewAndKeys(s);
+            set = py.getattr(pView, '__setitem__');
+            pValue = PyProxy.toPyValue(value);
+            set(pKeys, pValue);
         end
         
         function [pView, pKeys] = pyGetSubViewAndKeys(obj, s)
@@ -76,6 +79,7 @@ classdef NumPyProxy < PyProxy
             else
                 pView = p;
             end
+            % TODO: Preserve 2D shape of slices?
             pKeys = substruct_to_py_slice(s.subs);
         end
     end

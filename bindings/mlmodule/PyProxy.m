@@ -209,8 +209,8 @@ classdef PyProxy % < dynamicprops
                     else
                         p = matpy.mat2nparray(m);
                     end
-                case 'PyProxy'
-                    p = m.pySelf;
+                case {'PyProxy', 'NumPyProxy'}
+                    p = PyProxy.getPy(m);
                 otherwise
                     % Defer to MATLAB:Python.
                     p = m;

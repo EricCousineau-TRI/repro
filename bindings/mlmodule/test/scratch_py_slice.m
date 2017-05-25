@@ -23,14 +23,14 @@ a
 % Can directly access
 get(int32([1, 2]))
 
-%%
+%% MATLAB Base Case
 A = reshape(1:9, 3, 3);
 
 A(:)
 A(3, 2)
 A([2, 1], 3)
 
-%%
+%% "Raw" Python
 pyA = py.numpy.eye(3);
 pyA.T.flat = py.numpy.arange(1, 10);
 
@@ -44,8 +44,21 @@ get({[1, 0], 2})
 mlA = NumPyProxy(pyA);
 
 mlA(:)
-mlA(3, 2)
-sub = mlA([2, 1], 3)
-
 double(mlA(:))
+
+mlA(3, 2)
+
+sub = mlA([2, 1], 3)
+sub2 = mlA([1, 2], 3)
+
+% BUG SOMEWHERE: numpy.nditer does not play well with a sliced view of the
+% Python array.
 double(sub)  % Not working???
+double(sub2) % This works. Issue is due to iterator...
+
+%% Assignment
+A([2, 1], 3) = 100 * [1, 2]
+mlA([2, 1], 3) = 100 * [1, 2]
+
+A(:) = 5
+mlA(:) = 5
