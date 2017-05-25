@@ -37,7 +37,10 @@ classdef matpy
             %nparray2mat Convert an nparray from numpy to a Matlab array
             %   Convert an n-dimensional nparray into an equivalent Matlab array
             data_size = cellfun(@int64,cell(nparray.shape));
-            if length(data_size)==1
+            if prod(data_size) == 0
+                % Zero-size matrix - still preserve shape
+                result = zeros(data_size);
+            elseif length(data_size)==1
                 % This is a simple operation
                 result=double(py.array.array('d', py.numpy.nditer(nparray)));
             elseif length(data_size)==2

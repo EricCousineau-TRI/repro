@@ -5,6 +5,11 @@ classdef NumPyProxy < PyProxy
             obj@PyProxy(p);
         end
         
+        function t = transpose(obj)
+            p = PyProxy.getPy(obj);
+            t = NumPyProxy(p.T);
+        end
+        
         function ind = end(obj, subscriptIndex, subscriptCount)
             p = PyProxy.getPy(obj);
             % Play naive
@@ -27,9 +32,17 @@ classdef NumPyProxy < PyProxy
         function disp(obj)
             disp('  [NumPyProxy]');
             p = PyProxy.getPy(obj);
-            disp(char(py.str(p))); % need indent
+            if p.ndim == 1
+                % Show vectors as a row
+                view = p.view().reshape([-1, 1]); % err... somehow...
+                disp('    1D');
+            else
+                view = p;
+            end
+            disp(char(py.str(view))); % need indent
         end
         
+        % More generalized conversion mechanism???
         function out = double(obj)
             p = PyProxy.getPy(obj);
             out = matpy.nparray2mat(p);
@@ -39,16 +52,9 @@ classdef NumPyProxy < PyProxy
     methods (Access = protected)
         function r = pySubsref(obj, s)
             % https://stackoverflow.com/questions/2936863/python-implementing-slicing-in-getitem
-            p = PyProxy.getPy(obj);
-            if length(s) == 1 && p.ndim > 1
-                % Use flat view for 1D access to 2+D arrays
-                view = p.flat;
-            else
-                view = p;
-            end
-            get = py.getattr(view, '__getitem__');
-            pKey = obj.getPyKey(s);
-            pValue = get(pKey);
+            [pView, pKeys] = obj.pyGetSubViewAndKeys(s);
+            get = py.getattr(pView, '__getitem__');
+            pValue = get(pKeys);
             r = PyProxy.fromPyValue(pValue);
         end
         
@@ -57,7 +63,19 @@ classdef NumPyProxy < PyProxy
             error('Not implemented');
         end
         
-        function pKeys = getPyKey(~, s)
+        function [pView, pKeys] = pyGetSubViewAndKeys(obj, s)
+            p = PyProxy.getPy(obj);
+            if length(s.subs) == 1 && p.ndim > 1
+                % Use flat view for 1D access to 2+D arrays
+                if p.flags.c_contiguous
+                    % Stored in C order (row-major, column-contiguous).
+                    pView = p.T.flat;
+                else
+                    pView = p.flat;
+                end
+            else
+                pView = p;
+            end
             pKeys = substruct_to_py_slice(s.subs);
         end
     end

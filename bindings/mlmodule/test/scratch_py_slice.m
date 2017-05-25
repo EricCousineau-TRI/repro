@@ -24,13 +24,25 @@ a
 get(int32([1, 2]))
 
 %%
-A = py.numpy.eye(3);
-get = py.getattr(A, '__getitem__');
+A = reshape(1:9, 3, 3);
+
+A(:)
+A(3, 2)
+A([2, 1], 3)
+
+%%
+pyA = py.numpy.eye(3);
+pyA.T.flat = py.numpy.arange(1, 10);
+
+% A(1)  % Not permitted
+
+get = py.getattr(pyA, '__getitem__');
 get({2, 1})
 get({[1, 0], 2})
 
-
 %%
-mlA = NumPyProxy(A);
+mlA = NumPyProxy(pyA);
 
-mlA(1)
+mlA(:)
+mlA(3, 2)
+mlA([2, 1], 3)

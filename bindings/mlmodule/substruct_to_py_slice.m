@@ -9,7 +9,6 @@ function pKeys = substruct_to_py_slice(subs)
 %     (inefficient, but meh).
 %   - otherwise, convert to numpy array
 %
-%
 % >> substruct_to_py_slice({1, 1:10, [1, 3, 7], ':'})
 % 0
 % slice(0L, 9L, 1L)
@@ -35,7 +34,15 @@ for i = 1:n
             % Meh.
             dsub = diff(sub);
             if all(dsub == dsub(1))
-                pKey = py.slice(sub(1) - 1, sub(end) - 1, dsub(1));
+                % Apply extra bounds, 'cause Python
+                fin = sub(end) - 1 + dsub(1);
+                if fin < 0
+                    % Need this to capture first element, if that's where a
+                    % reverse sequence ends.
+                    % NOTE: This should ignore ragged stuff.
+                    fin = py.None;
+                end
+                pKey = py.slice(sub(1) - 1, fin, dsub(1));
             else
                 % Meh. Just pass it along.
                 pKey = sub - 1;
