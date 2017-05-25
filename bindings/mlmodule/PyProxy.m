@@ -39,7 +39,7 @@ classdef PyProxy % < dynamicprops
         end
         
         function r = subsref(obj, S)
-            p = get_py_self(obj);
+            p = PyProxy.getPy(obj);
             s = S(1);
             switch s.type
                 case '.'
@@ -69,7 +69,7 @@ classdef PyProxy % < dynamicprops
     
     methods (Access = protected)
         function r = pySubsref(obj, s)
-            p = get_py_self(obj);
+            p = PyProxy.getPy(obj);
             switch s.type
                 case '()'
                     % Assume that we are calling this as a function.
@@ -80,7 +80,7 @@ classdef PyProxy % < dynamicprops
         end
         
         function pySubsasgn(obj, s, value)
-            p = get_py_self(obj);
+            p = PyProxy.getPy(obj);
             switch s.type
                 case '.'
                     pValue = PyProxy.toPyValue(value);
@@ -268,10 +268,11 @@ classdef PyProxy % < dynamicprops
             end
         end
     end
+    
+    methods (Static, Access = protected)
+        function p = getPy(obj)
+            % Direct access, do not use subsref overload
+            p = builtin('subsref', obj, substruct('.', 'pySelf'));
+        end
+    end
 end
-
-function p = get_py_self(pyProxy)
-% Direct access
-p = builtin('subsref', pyProxy, substruct('.', 'pySelf'));
-end
-
