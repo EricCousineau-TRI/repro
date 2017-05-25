@@ -27,7 +27,7 @@ disp(mlo.get_name());
 mlo.set_name('test');
 disp(mlo.get_name());
 mlo.nparray = [5, 10, 15];
-% mlo.nparray(3) = 20; % Permitted - getter/setter combo in MATLAB permits natural indexing (but slow due to copies)
+mlo.nparray(3) = 20; % Permitted - using overload in NumPyProxy
 mlo.nparray
 % Note that it is still numpy.ndarray
 mlo.do_stuff();

@@ -1,13 +1,33 @@
 classdef NumPyProxy < PyProxy
-% Sliceable NumPy proxy
+% Sliceable, castable NumPy proxy.
+% A lot of stuff to do something simple, but it allows a *little* smoother
+% integration with NumPy.
+
     methods
         function obj = NumPyProxy(p)
+            if isnumeric(p)
+                % Convert to nparray
+                p = matpy.mat2nparray(p);
+            end
             obj@PyProxy(p);
         end
         
+        function out = isArithmetic(obj)
+            p = PyProxy.getPy(obj);
+            helper = pyimport('proxy_helper'); % Put on PYTHONPATH
+            out = helper.np_is_arithemtic(p);
+        end
+    end
+    
+    methods
         function t = transpose(obj)
             p = PyProxy.getPy(obj);
             t = NumPyProxy(p.T);
+        end
+        
+        function t = ctranspose(obj)
+            % TODO: Return conjugate if dtype implies complex
+            t = transpose(obj);
         end
         
         function ind = end(obj, subscriptIndex, subscriptCount)
@@ -23,10 +43,17 @@ classdef NumPyProxy < PyProxy
             end
         end
         
-        function out = isArithmetic(obj)
+        function sz = size(obj, dim)
             p = PyProxy.getPy(obj);
-            helper = pyimport('proxy_helper'); % Put on PYTHONPATH
-            out = helper.np_is_arithemtic(p);
+            if nargin < 2
+                sz = cellfun(@int64, cell(p.shape));
+                if isscalar(sz)
+                    % Make it look like a 2D vector... Is this a bad idea?
+                    sz = [sz, int64(1)];
+                end
+            else
+                sz = p.shape{dim};
+            end
         end
         
         function disp(obj)
@@ -51,6 +78,7 @@ classdef NumPyProxy < PyProxy
     
     methods (Access = protected)
         function r = pySubsref(obj, s)
+            % Retrieve something with a final substruct
             % https://stackoverflow.com/questions/2936863/python-implementing-slicing-in-getitem
             [pView, pKeys] = obj.pyGetSubViewAndKeys(s);
             get = py.getattr(pView, '__getitem__');
@@ -59,7 +87,7 @@ classdef NumPyProxy < PyProxy
         end
         
         function pySubsasgn(obj, s, value)
-            % Constructor indexing, either a py.slice or an index list
+            % Assign something with a final substruct
             [pView, pKeys] = obj.pyGetSubViewAndKeys(s);
             set = py.getattr(pView, '__setitem__');
             pValue = PyProxy.toPyValue(value);

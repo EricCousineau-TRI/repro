@@ -45,13 +45,13 @@ classdef TypeBindingTest < matlab.unittest.TestCase
             %   Conversion of MATLAB 'double' to Python is only supported for 1-N vectors.
             value = [1; 2; 3];
             obj = tb.EigenType(value);
-            testCase.verifyEqual(obj.value(), value);
+            testCase.verifyEqual(double(obj.value()), value);
             
             % Without proxy, need to convert from numpy.ndarray to double
             % (Trivial)
             value = 1;
             obj = tb.EigenType(value);
-            testCase.verifyEqual(obj.value(), value);
+            testCase.verifyEqual(double(obj.value()), value);
         end
     end
 end

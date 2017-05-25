@@ -35,21 +35,21 @@ np * 5
 np / 5
 np == 1
 
-% These will all return double matrices (MATLAB), since PyProxy will cast
-% them.
+% These will all return NumPy proxied matrices, since PyProxy will use a
+% specific proxy.
 mlnp + 5
 mlnp * 5
 mlnp / 5
 mlnp == 1
 
-% This will prevent PyProxy from converting back to double after operators.
-custom_array = pyexample.get_custom_array();
-% @ref https://docs.scipy.org/doc/numpy/user/basics.subclassing.html
-ca = np.view(custom_array);
-mlca = PyProxy(ca);
-
-mlca + 5
-mlca * 5
-mlca / 5
-logic = mlca == 1
-~logic
+% % This will prevent PyProxy from converting back to double after operators.
+% custom_array = pyexample.get_custom_array();
+% % @ref https://docs.scipy.org/doc/numpy/user/basics.subclassing.html
+% ca = np.view(custom_array);
+% mlca = PyProxy(ca);
+% 
+% mlca + 5
+% mlca * 5
+% mlca / 5
+% logic = mlca == 1
+% ~logic

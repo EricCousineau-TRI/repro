@@ -34,13 +34,13 @@ A([2, 1], 3)
 pyA = py.numpy.eye(3);
 pyA.T.flat = py.numpy.arange(1, 10);
 
-% A(1)  % Not permitted
+% pyA(1)  % Not permitted
 
 get = py.getattr(pyA, '__getitem__');
 get({2, 1})
 get({[1, 0], 2})
 
-%%
+%% Use NumPyProxy
 mlA = NumPyProxy(pyA);
 
 mlA(:)

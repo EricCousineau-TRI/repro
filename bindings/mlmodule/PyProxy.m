@@ -250,10 +250,13 @@ classdef PyProxy % < dynamicprops
                         m = PyProxy(p);
                     case 'py.numpy.ndarray'
                         % Do not convert, to preserve memory, yada yada.
+                        % TODO: Determin if it is more convenient to return
+                        % a MATLAB array directly for arithemetic types?
+                        % Possibly include as an option in the ctor?
+                        % (This will mess with NumPyProxy)
                         m = NumPyProxy(p);
                     otherwise
-                        % Generate proxy ???
-                        warning('Dunno what this is');
+                        % Generate proxy
                         m = PyProxy(p);
                 end
             end
