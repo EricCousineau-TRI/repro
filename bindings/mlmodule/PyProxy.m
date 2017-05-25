@@ -248,22 +248,13 @@ classdef PyProxy % < dynamicprops
                         % This should be proxy-able
                         % Use this SPARINGLY
                         m = PyProxy(p);
+                    case 'py.numpy.ndarray'
+                        % Do not convert, to preserve memory, yada yada.
+                        m = NumPyProxy(p);
                     otherwise
-                        good = false;
-                        if strcmp(cls, 'py.numpy.ndarray') %#ok<STISA>
-                            helper = pyimport('proxy_helper'); % TODO: Use PYTHONPATH
-                            % Ensure that this is an integral type
-                            if helper.np_is_arithmetic(p)
-                                good = true;
-                                m = matpy.nparray2mat(p);
-                            end
-                        end
-                        % TODO: Wrapping class as function does not permit
-                        % accessing constant values...
-                        if ~good
-                            % Generate proxy
-                            m = PyProxy(p);
-                        end
+                        % Generate proxy ???
+                        warning('Dunno what this is');
+                        m = PyProxy(p);
                 end
             end
         end

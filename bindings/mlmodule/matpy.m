@@ -42,7 +42,8 @@ classdef matpy
                 result = zeros(data_size);
             elseif length(data_size)==1
                 % This is a simple operation
-                result=double(py.array.array('d', py.numpy.nditer(nparray)));
+                % Return column vector.
+                result=double(py.array.array('d', py.numpy.nditer(nparray)))';
             elseif length(data_size)==2
                 % order='F' is used to get data in column-major order (as in Fortran
                 % 'F' and Matlab)

@@ -45,4 +45,7 @@ mlA = NumPyProxy(pyA);
 
 mlA(:)
 mlA(3, 2)
-mlA([2, 1], 3)
+sub = mlA([2, 1], 3)
+
+double(mlA(:))
+double(sub)  % Not working???
