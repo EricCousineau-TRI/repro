@@ -4,6 +4,7 @@ t
 t();
 t(1);
 t(:);
+t(end, end, end)
 t(1:3, :);
 t.Hello;
 t.('World');
