@@ -10,8 +10,9 @@ int main() {
   Timer timer;
   for (int i = 0; i < 5; ++i) {
     ostringstream oss;
-    oss << "iter " << i << ": ";
+    oss << "iter " << i;
     ScopedTimerMessage timer_scope(timer, oss.str());
+    ScopedWithTimer<> timer(oss.str());
     sleep(dt);
   }
   return 0;

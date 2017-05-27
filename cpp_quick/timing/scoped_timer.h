@@ -76,10 +76,24 @@ class ScopedTimer {
 class ScopedTimerMessage : public ScopedTimer {
  public:
   ScopedTimerMessage(Timer& timer,
-                     const std::string& message = "Elapsed time (s): ")
+                     const std::string& message = "Elapsed time (s)")
     : ScopedTimer(timer,
-                  [=](double t) { std::cout << message << t << std::endl; })
-      {}
+                  [=](double t) {
+                    std::cout << message << ": " << t << std::endl;
+                  }) {}
+};
+
+template <typename T = ScopedTimerMessage>
+class ScopedWithTimer {
+ public:
+  template <typename ... Args>
+  ScopedWithTimer(Args&&... args)
+    : scoped_(timer_, std::forward<Args>(args)...) {}
+  Timer& timer() { return timer_; }
+  Timer& timer() const { return timer_; }
+ private:
+  Timer timer_;
+  T scoped_;
 };
 
 }  // namespace timing
