@@ -140,3 +140,8 @@ cc_binary(
     name = "tpl_tpl_pod",
     srcs = ["tpl_tpl_pod.cc"],
 )
+
+cc_binary(
+    name = "tpl_spec_switch_main",
+    srcs = ["tpl_spec_switch_main.cc", "tpl_spec_switch.cc", "tpl_spec_switch.h"],
+)
