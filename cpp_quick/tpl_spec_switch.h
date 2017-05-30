@@ -7,20 +7,22 @@ class A {
 
 class B {};
 
-// Use `Extra` to permit this to be partially specialized, such that
-// we can define it within the class.
-template <typename U, bool kIsA_>
+namespace detail {
+
+template <typename U, bool kIsA>
 struct stuff_helper {
-  static int impl(U* obj) {
+  static int DoStuff(U* obj) {
     return -1;
   }
 };
 template <typename U>
-struct stuff_helper<U, true> {
-  static int impl(U* obj) {
+struct stuff_helper<U, true /* kIsA */> {
+  static int DoStuff(U* obj) {
     return obj->private_value();
   }
 };
+
+}  // namespace detail
 
 template <typename T>
 class Base {
@@ -35,13 +37,13 @@ template <typename T>
 class Example : public Base<T> {
  public:
   int Stuff() {
-    return helper::impl(this);
+    return stuff_helper::DoStuff(this);
   }
  private:
   static constexpr bool kIsA = std::is_base_of<A, T>::value;
-  using helper = stuff_helper<Example, kIsA>;
+  using stuff_helper = detail::stuff_helper<Example, kIsA>;
   // Permit the helper to have access
-  friend helper;
+  friend stuff_helper;
 };
 
 int extra_stuff();
