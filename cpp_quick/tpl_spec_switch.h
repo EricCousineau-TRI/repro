@@ -29,7 +29,10 @@ class DetailedBase : public Base<T> {
   // Place helper specializations inside class to permit friendly
   // access to Base<T>::private_value().
   template <bool kIsA, typename = void>
-  struct helper_impl {
+  struct helper_impl {};
+
+  template <typename Extra>
+  struct helper_impl<false, Extra> {
     // Note that we use DetailBase to access Base<T>::private_value.
     // If we passed Base<T>, we would get scope access errors.
     static int DoStuff(DetailedBase* obj) {
