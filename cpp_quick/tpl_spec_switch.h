@@ -1,5 +1,7 @@
 #include <type_traits>
 
+// @ref https://stackoverflow.com/questions/10178598/specializing-a-templated-member-of-a-template-class
+
 class A {
  public:
   static constexpr int value = 10;
@@ -7,22 +9,6 @@ class A {
 
 class B {};
 
-namespace detail {
-
-template <typename U, bool kIsA>
-struct stuff_helper {
-  static int DoStuff(U* obj) {
-    return -1;
-  }
-};
-template <typename U>
-struct stuff_helper<U, true /* kIsA */> {
-  static int DoStuff(U* obj) {
-    return obj->private_value();
-  }
-};
-
-}  // namespace detail
 
 template <typename T>
 class Base {
@@ -32,18 +18,44 @@ class Base {
   }
 };
 
-// @ref https://stackoverflow.com/questions/10178598/specializing-a-templated-member-of-a-template-class
 template <typename T>
-class Example : public Base<T> {
+class DetailedBase : public Base<T> {
  public:
   int Stuff() {
-    return stuff_helper::DoStuff(this);
+    return helper::DoStuff(this);
   }
- private:
+ protected:
+
+  // Place helper specializations inside class to permit friendly
+  // access to Base<T>::private_value().
+  template <bool kIsA, typename = void>
+  struct helper_impl {
+    // Note that we use DetailBase to access Base<T>::private_value.
+    // If we passed Base<T>, we would get scope access errors.
+    static int DoStuff(DetailedBase* obj) {
+      return -1;
+    }
+  };
+
+  template <typename Extra>
+  struct helper_impl<true, Extra> {
+    static int DoStuff(DetailedBase* obj) {
+      return obj->private_value();
+    }
+  };
+
   static constexpr bool kIsA = std::is_base_of<A, T>::value;
-  using stuff_helper = detail::stuff_helper<Example, kIsA>;
-  // Permit the helper to have access
-  friend stuff_helper;
+  using helper = helper_impl<kIsA>;
+};
+
+template <typename T>
+class Example : public DetailedBase<T> {
+ public:
+  int Stuff() {
+    return 2 * Base::Stuff();
+  }
+ protected:
+  using Base = DetailedBase<T>;
 };
 
 int extra_stuff();
