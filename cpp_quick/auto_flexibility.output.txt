@@ -1,0 +1,16 @@
+>>> { auto x = ret_value(); cout << name_trait<decltype(x)>::name(); };
+int
+>>> { auto&& x = ret_value(); cout << name_trait<decltype(x)>::name(); };
+int&&
+>>> { auto x = ret_ref(); cout << name_trait<decltype(x)>::name(); };
+int
+>>> { auto&& x = ret_ref(); cout << name_trait<decltype(x)>::name(); };
+int&
+>>> { auto x = ret_rref(); cout << name_trait<decltype(x)>::name(); };
+int
+>>> { auto&& x = ret_rref(); cout << name_trait<decltype(x)>::name(); };
+int&&
+>>> { auto x = ret_cref(); cout << name_trait<decltype(x)>::name(); };
+int
+>>> { auto&& x = ret_cref(); cout << name_trait<decltype(x)>::name(); };
+const int&

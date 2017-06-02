@@ -83,6 +83,10 @@ const Lifetime<4>& func_thru_const_lvalue(const Lifetime<4>& in) {
 //     return in;
 // }
 
+auto func_thru_auto(const Lifetime<5>& in) {
+    return in;
+}
+
 void section(const char* name) {
     cout << endl << "--- " << name << " ---" << endl << endl;
 }
@@ -124,6 +128,10 @@ int main() {
     // section("Thru: T&&");
     // EVAL( func_thru_rvalue(Lifetime<4>()) );
     // EVAL_SCOPED( const auto& ref = func_thru_rvalue(Lifetime<4>()) );
+
+    section("Thru: auto");
+    EVAL( func_thru_auto(Lifetime<5>()) );
+    EVAL_SCOPED( const auto& ref = func_thru_auto(Lifetime<5>()) );
 
     return 0;
 }
