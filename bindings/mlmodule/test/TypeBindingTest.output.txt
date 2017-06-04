@@ -1,0 +1,141 @@
+Running TypeBindingTest
+
+================================================================================
+<strong>Verification failed in TypeBindingTest/testBasic.</strong>
+
+    ---------------------
+    Framework Diagnostic:
+    ---------------------
+    <a href="matlab:helpPopup matlab.unittest.TestCase.verifyEqual" style="font-weight:bold">verifyEqual</a> failed.
+    --> Classes do not match.
+        
+        Actual Class:
+            py.long
+        Expected Class:
+            double
+    
+    Actual py.long:
+          Python <a href="matlab:helpPopup py.long" style="font-weight:bold">long</a> with properties:
+        
+            denominator: [1×1 py.long]
+                   imag: [1×1 py.long]
+              numerator: [1×1 py.long]
+                   real: [1×1 py.long]
+        
+            1
+    Expected double:
+             1
+
+    ------------------
+    Stack Information:
+    ------------------
+    In <a href="matlab: opentoline('${PWD}/TypeBindingTest.m',8,1)">${PWD}/TypeBindingTest.m (TypeBindingTest.testBasic) at 8</a>
+================================================================================
+
+================================================================================
+<strong>Verification failed in TypeBindingTest/testBasic.</strong>
+
+    ---------------------
+    Framework Diagnostic:
+    ---------------------
+    <a href="matlab:helpPopup matlab.unittest.TestCase.verifyEqual" style="font-weight:bold">verifyEqual</a> failed.
+    --> Classes do not match.
+        
+        Actual Class:
+            py.long
+        Expected Class:
+            double
+    
+    Actual py.long:
+          Python <a href="matlab:helpPopup py.long" style="font-weight:bold">long</a> with properties:
+        
+            denominator: [1×1 py.long]
+                   imag: [1×1 py.long]
+              numerator: [1×1 py.long]
+                   real: [1×1 py.long]
+        
+            2
+    Expected double:
+             2
+
+    ------------------
+    Stack Information:
+    ------------------
+    In <a href="matlab: opentoline('${PWD}/TypeBindingTest.m',10,1)">${PWD}/TypeBindingTest.m (TypeBindingTest.testBasic) at 10</a>
+================================================================================
+.
+================================================================================
+<strong>Verification failed in TypeBindingTest/testFlexible.</strong>
+
+    ---------------------
+    Framework Diagnostic:
+    ---------------------
+    <a href="matlab:helpPopup matlab.unittest.TestCase.verifyEqual" style="font-weight:bold">verifyEqual</a> failed.
+    --> Classes do not match.
+        
+        Actual Class:
+            py.long
+        Expected Class:
+            double
+    
+    Actual py.long:
+          Python <a href="matlab:helpPopup py.long" style="font-weight:bold">long</a> with properties:
+        
+            denominator: [1×1 py.long]
+                   imag: [1×1 py.long]
+              numerator: [1×1 py.long]
+                   real: [1×1 py.long]
+        
+            1
+    Expected double:
+             1
+
+    ------------------
+    Stack Information:
+    ------------------
+    In <a href="matlab: opentoline('${PWD}/TypeBindingTest.m',17,1)">${PWD}/TypeBindingTest.m (TypeBindingTest.testFlexible) at 17</a>
+================================================================================
+
+================================================================================
+<strong>Verification failed in TypeBindingTest/testFlexible.</strong>
+
+    ---------------------
+    Framework Diagnostic:
+    ---------------------
+    <a href="matlab:helpPopup matlab.unittest.TestCase.verifyEqual" style="font-weight:bold">verifyEqual</a> failed.
+    --> Classes do not match.
+        
+        Actual Class:
+            py.long
+        Expected Class:
+            double
+    
+    Actual py.long:
+          Python <a href="matlab:helpPopup py.long" style="font-weight:bold">long</a> with properties:
+        
+            denominator: [1×1 py.long]
+                   imag: [1×1 py.long]
+              numerator: [1×1 py.long]
+                   real: [1×1 py.long]
+        
+            2
+    Expected double:
+             2
+
+    ------------------
+    Stack Information:
+    ------------------
+    In <a href="matlab: opentoline('${PWD}/TypeBindingTest.m',19,1)">${PWD}/TypeBindingTest.m (TypeBindingTest.testFlexible) at 19</a>
+================================================================================
+.
+Done TypeBindingTest
+__________
+
+Failure Summary:
+
+     Name                          Failed  Incomplete  Reason(s)
+    ===========================================================================
+     TypeBindingTest/testBasic       X                 Failed by verification.
+    ---------------------------------------------------------------------------
+     TypeBindingTest/testFlexible    X                 Failed by verification.
+    

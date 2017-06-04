@@ -1,0 +1,12 @@
+>>> ex_a.Stuff()
+10
+
+>>> ex_b.Stuff()
+-1
+
+>>> ex_c.Stuff()
+100
+
+>>> extra_stuff()
+9
+

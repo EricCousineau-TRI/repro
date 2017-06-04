@@ -140,3 +140,18 @@ cc_binary(
     name = "check_for_type",
     srcs = ["check_for_type.cc", "name_trait.h"],
 )
+
+cc_binary(
+    name = "tpl_tpl_pod",
+    srcs = ["tpl_tpl_pod.cc"],
+)
+
+cc_binary(
+    name = "tpl_spec_switch_main",
+    srcs = ["tpl_spec_switch_main.cc", "tpl_spec_switch.cc", "tpl_spec_switch.h"],
+)
+
+cc_binary(
+    name = "auto_flexibility",
+    srcs = ["auto_flexibility.cc", "name_trait.h"],
+)
