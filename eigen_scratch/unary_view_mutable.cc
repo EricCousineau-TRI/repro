@@ -107,6 +107,11 @@ int main() {
   // Xc_am.setConstant(20);  // Fails as desired.
   cout << Xc_am << endl;
 
+  auto X_bm = unaryExprFlex(X, [](Value& v) -> auto& { return v.b; });
+  cout << X_bm << endl;
+  X_bm.setConstant(10);
+  cout << X_bm << endl;
+
   // // Refs don't work :(
   // Eigen::Ref<Eigen::MatrixXd> Xref = X_am;
 
