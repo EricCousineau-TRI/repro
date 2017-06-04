@@ -45,18 +45,27 @@ struct get_mutable_a_direct {
 template <typename Derived>
 Derived derived_of(const Eigen::MatrixBase<Derived>&);
 
+template <typename Op, typename XprType>
+struct unary_mutable_helper {
+  typedef decltype(derived_of(std::declval<XprType>())) Derived;
+  typedef typename Derived::Scalar Scalar;
+  // typedef decltype(op(std::declval<const Scalar&>())) const_return_type;
+  // typedef decltype(op(std::declval<Scalar&&>())) rvalue_return_type;
+  static auto run(XprType& xpr, const Op& op) {
+    // lvalue
+    typedef decltype(op(std::declval<Scalar&>())) lvalue_return_type;
+    auto wrap_const_cast = [&op](const Scalar& scalar) -> lvalue_return_type {
+      return op(const_cast<Scalar&>(scalar));
+    };
+    typedef Eigen::CwiseUnaryView<decltype(wrap_const_cast), Derived> NonConstView;
+    return NonConstView(xpr, wrap_const_cast);
+  }
+};
+
 // Keep savage nature contained.
 template <typename Op, typename XprType>
-auto unaryMutableExpr(XprType&& xpr, Op op = Op()) {
-  typedef decltype(derived_of(xpr)) Derived;
-  typedef typename Derived::Scalar Scalar;
-  typedef decltype(op(std::declval<Scalar&>())) return_type;
-  // Wrap the const_cast away.
-  auto wrap_const_cast = [&op](const Scalar& scalar) -> return_type {
-    return op(const_cast<Scalar&>(scalar));
-  };
-  typedef Eigen::CwiseUnaryView<decltype(wrap_const_cast), Derived> NonConstView;
-  return NonConstView(xpr, wrap_const_cast);
+auto unaryMutableExpr(XprType&& xpr, const Op& op = Op()) {
+  return unary_mutable_helper<Op, XprType>::run(xpr, op);
 }
 
 // Follow drake/common/eigen_types.h
@@ -65,6 +74,9 @@ using MatrixX = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
 
 struct get_mutable_a {
   double& operator()(Value& v) const {
+    return v.a;
+  }
+  const double& operator()(const Value& v) const {
     return v.a;
   }
 };
@@ -82,5 +94,10 @@ int main() {
   auto X_am = unaryMutableExpr(X, get_mutable_a());
   X_am *= 10;
   cout << X_ac << endl;
+
+  // // Fails as desired.
+  // const auto& Xc = X;
+  // auto Xc_am = unaryMutableExpr(Xc, get_mutable_a());
+
   return 0;
 }
