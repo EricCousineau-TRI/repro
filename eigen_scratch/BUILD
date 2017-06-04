@@ -81,3 +81,9 @@ cc_binary(
     srcs = ["matrix_tpl_determine.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "unary_view_mutable",
+    srcs = ["unary_view_mutable.cc"],
+    deps = ["@eigen//:eigen"],
+)
