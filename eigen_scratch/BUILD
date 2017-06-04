@@ -81,3 +81,9 @@ cc_binary(
     srcs = ["matrix_tpl_determine.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "unary_example",
+    srcs = ["unary_example.cc"],
+    deps = ["@eigen//:eigen"],
+)
