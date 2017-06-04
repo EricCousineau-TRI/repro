@@ -36,7 +36,6 @@ struct get_a {
 // Savage. Use aforemention hack from scalar_real_ref_op.
 struct get_mutable_a_direct {
   double& operator()(const Value& v) const {
-    // 
     return const_cast<Value&>(v).a;
   }
 };
@@ -47,10 +46,9 @@ Derived derived_of(const Eigen::MatrixBase<Derived>&);
 
 template <typename Op, typename XprType>
 struct unary_mutable_helper {
-  typedef decltype(derived_of(std::declval<XprType>())) Derived;
+  typedef decltype(derived_of(std::declval<XprType>())) Derived; // Is this needed???
   typedef typename Derived::Scalar Scalar;
-  // typedef decltype(op(std::declval<const Scalar&>())) const_return_type;
-  // typedef decltype(op(std::declval<Scalar&&>())) rvalue_return_type;
+
   static auto run(XprType& xpr, const Op& op) {
     // lvalue
     typedef decltype(op(std::declval<Scalar&>())) lvalue_return_type;
@@ -60,19 +58,25 @@ struct unary_mutable_helper {
     typedef Eigen::CwiseUnaryView<decltype(wrap_const_cast), Derived> NonConstView;
     return NonConstView(xpr, wrap_const_cast);
   }
+  // Don't worry about move semantics until properly supported?
+  
+  static auto run(const XprType& xpr, const Op& op) {
+    // Use the good stuff.
+    return xpr.unaryViewExpr(op);
+  }
 };
 
 // Keep savage nature contained.
 template <typename Op, typename XprType>
-auto unaryMutableExpr(XprType&& xpr, const Op& op = Op()) {
-  return unary_mutable_helper<Op, XprType>::run(xpr, op);
+auto unaryExprFlex(XprType&& xpr, const Op& op = Op()) {
+  return unary_mutable_helper<Op, std::decay_t<XprType>>::run(xpr, op);
 }
 
 // Follow drake/common/eigen_types.h
 template <typename Scalar>
 using MatrixX = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
 
-struct get_mutable_a {
+struct get_a_flex {
   double& operator()(Value& v) const {
     return v.a;
   }
@@ -85,19 +89,26 @@ int main() {
   MatrixX<Value> X(2, 2);
   auto X_ac = X.unaryViewExpr(get_a());
   cout << X_ac << endl;
-  // Savage.
+  
+  // Savage. But direct.
   auto X_am_direct = Eigen::CwiseUnaryView<get_mutable_a_direct, MatrixX<Value>>(
       X, get_mutable_a_direct());
   X_am_direct.setConstant(20);
   cout << X_ac << endl;
+
   // Less? savage.
-  auto X_am = unaryMutableExpr(X, get_mutable_a());
+  auto X_am = unaryExprFlex(X, get_a_flex());
   X_am *= 10;
   cout << X_ac << endl;
 
-  // // Fails as desired.
-  // const auto& Xc = X;
-  // auto Xc_am = unaryMutableExpr(Xc, get_mutable_a());
+  // Works.
+  const auto& Xc = X;
+  auto Xc_am = unaryExprFlex(Xc, get_a_flex());
+  // Xc_am.setConstant(20);  // Fails as desired.
+  cout << Xc_am << endl;
+
+  // // Refs don't work :(
+  // Eigen::Ref<Eigen::MatrixXd> Xref = X_am;
 
   return 0;
 }
