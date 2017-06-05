@@ -68,8 +68,10 @@ struct unary_mutable_helper {
 
 // Keep savage nature contained.
 template <typename Op, typename XprType>
-auto unaryExprFlex(XprType&& xpr, const Op& op = Op()) {
-  return unary_mutable_helper<Op, std::decay_t<XprType>>::run(xpr, op);
+auto unaryExprFlex(XprType&& xpr, const Op& op) {
+  typedef std::decay_t<XprType> XprTypeBare;
+  return unary_mutable_helper<Op, XprTypeBare>::run(
+      std::forward<XprType>(xpr), op);
 }
 
 // Follow drake/common/eigen_types.h
@@ -84,6 +86,26 @@ struct get_a_flex {
     return v.a;
   }
 };
+
+// Simple helper to extract a given field.
+template <typename Scalar, typename FieldType>
+class extract_field {
+ public:
+  typedef FieldType Scalar::* FieldPtr;
+  extract_field() = delete;
+  extract_field(FieldPtr member)
+      : member_(member) {}
+  FieldType& operator() (Scalar& x) const { return x.*member_; }
+  const FieldType& operator() (const Scalar& x) const { return x.*member_; }
+ private:
+  FieldPtr member_{};
+};
+
+template <typename XprType, typename Scalar, typename FieldType>
+auto unaryFieldExpr(XprType&& xpr, FieldType Scalar::* member) {
+  extract_field<Scalar, FieldType> op(member);
+  return unaryExprFlex(std::forward<XprType>(xpr), op);
+}
 
 int main() {
   MatrixX<Value> X(2, 2);
@@ -114,6 +136,9 @@ int main() {
 
   // // Refs don't work :(
   // Eigen::Ref<Eigen::MatrixXd> Xref = X_am;
+
+  auto X_bmf = unaryFieldExpr(X, &Value::b);
+  cout << X_bmf << endl;
 
   return 0;
 }
