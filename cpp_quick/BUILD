@@ -160,3 +160,13 @@ cc_binary(
     name = "tpl_rref_only",
     srcs = ["tpl_rref_only.cc"],
 )
+
+cc_binary(
+    name = "optional",
+    srcs = ["optional.cc"],
+)
+
+cc_binary(
+    name = "tpl_pack_visitor",
+    srcs = ["tpl_pack_visitor.cc"],
+)
