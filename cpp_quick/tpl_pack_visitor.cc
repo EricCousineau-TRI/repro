@@ -1,6 +1,34 @@
 #include <string>
 #include <iostream>
 
+using namespace std;
+
+// https://stackoverflow.com/a/38617219/7829525
+#define TYPE_SUPPORTS(ClassName, Expr)                         \
+  template<typename U>                                         \
+  struct ClassName                                             \
+  {                                                            \
+   private:                                                    \
+    template<typename>                                         \
+    static constexpr std::false_type test(...);                \
+                                                               \
+    template<typename T = U>                                   \
+    static decltype((Expr), std::true_type{}) test(int) ;      \
+                                                               \
+   public:                                                     \
+    static constexpr bool value = decltype(test<U>(0))::value; \
+  };
+
+void g() {}
+
+void f() {
+  // Can use this for SFINAE
+  decltype((g(), 2)) x{};
+  cout << x << endl;
+}
+
+TYPE_SUPPORTS(has_run, std::declval<T>().template run<int>());
+
 template <typename Visitor>
 void pack_visit(Visitor&& visitor) {}
 
@@ -18,6 +46,7 @@ struct visitor {
 };
 
 int main() {
+  f();
   visitor visit;
   pack_visit<visitor&, int, std::string>(visit);
 }
