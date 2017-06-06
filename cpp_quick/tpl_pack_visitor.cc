@@ -38,6 +38,15 @@ void pack_visit(Visitor&& visitor) {
   pack_visit<Visitor, Ts...>(std::forward<Visitor>(visitor));
 };
 
+// To infer caller type
+template <typename... Ts>
+struct pack_visitor {
+  template <typename Visitor>
+  static void run(Visitor&& visitor) {
+    pack_visit<Visitor, Ts...>(std::forward<Visitor>(visitor));
+  }
+};
+
 struct visitor {
   template <typename T>
   void run() {
@@ -49,4 +58,5 @@ int main() {
   f();
   visitor visit;
   pack_visit<visitor&, int, std::string>(visit);
+  pack_visitor<int, std::string>::run(visit);
 }
