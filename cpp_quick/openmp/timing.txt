@@ -1,41 +1,39 @@
 CXX: g++
-mkdir build/g++
 g++ -fopenmp -std=c++1y -I/home/eacousineau/proj/tri/repo/drake-distro/build/install/include/eigen3 simple.cc -o build/g++/with_openmp
 g++ -std=c++1y -I/home/eacousineau/proj/tri/repo/drake-distro/build/install/include/eigen3 simple.cc -o build/g++/without_openmp
 Prefix: 
   Args: 
 [ With OpenMP ]
 + ./build/g++/with_openmp
-Elapsed time: 0.0661999
+Elapsed time: 0.0282484
+Elapsed time: 0.0507591
 [ Without OpenMP ]
 + ./build/g++/without_openmp
-Elapsed time: 0.500924
+Elapsed time: 6.98e-07
+Elapsed time: 0.501032
 Prefix: 
   Args: --no-sleep
 [ With OpenMP ]
 + ./build/g++/with_openmp --no-sleep
-Elapsed time: 0.0236569
+Elapsed time: 0.0203139
+Elapsed time: 0.00874023
 [ Without OpenMP ]
 + ./build/g++/without_openmp --no-sleep
-Elapsed time: 3.98e-07
+Elapsed time: 9.04e-07
+Elapsed time: 5.06e-07
 Prefix: 
   Args: --no-pragma
 [ With OpenMP ]
 + ./build/g++/with_openmp --no-pragma
-Elapsed time: 0.501073
+Elapsed time: 0.500978
 [ Without OpenMP ]
 + ./build/g++/without_openmp --no-pragma
-Elapsed time: 0.501032
+Elapsed time: 0.500954
 Prefix: 
   Args: --no-pragma --no-sleep
 [ With OpenMP ]
 + ./build/g++/with_openmp --no-pragma --no-sleep
-Elapsed time: 4.78e-07
+Elapsed time: 9.25e-07
 [ Without OpenMP ]
 + ./build/g++/without_openmp --no-pragma --no-sleep
-Elapsed time: 5.27e-07
-CXX: clang++
-mkdir build/clang++
-clang++ -fopenmp -std=c++1y -I/home/eacousineau/proj/tri/repo/drake-distro/build/install/include/eigen3 simple.cc -o build/clang++/with_openmp
-clang++ -std=c++1y -I/home/eacousineau/proj/tri/repo/drake-distro/build/install/include/eigen3 simple.cc -o build/clang++/without_openmp
-Makefile:22: recipe for target 'build/clang++/with_openmp' failed
+Elapsed time: 1.042e-06

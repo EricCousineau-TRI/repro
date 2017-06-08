@@ -22,6 +22,18 @@ double expensive(int i, bool no_sleep) {
   return i * i;
 }
 
+class ScopedTimer {
+ public:
+  ScopedTimer()
+      : start_(Clock::now()) {}
+  ~ScopedTimer() {
+    cout << "Elapsed time: " << Duration(Clock::now() - start_).count() << endl;
+  }
+ private:
+  TimePoint start_;
+};
+auto start = Clock::now();
+
 int main(int argc, char** argv) {
   bool no_sleep = false;
   bool no_pragma = false;
@@ -42,17 +54,29 @@ int main(int argc, char** argv) {
   }
   const int count = 10;
   double value[count];
-  auto start = Clock::now();
+  
   if (!no_pragma) {
-    #pragma omp parallel for
-    for (int i = 0; i < count; ++i) {
-      value[i] = expensive(i, no_sleep);
+    // Do a warm-up to see if we can get the threads started
+    {
+      ScopedTimer timer;
+      #pragma omp parallel for
+      for (int i = 0; i < count; ++i) {
+        value[i] = 0.;
+      }
+    }
+    {
+      ScopedTimer timer;
+      #pragma omp parallel for
+      for (int i = 0; i < count; ++i) {
+        value[i] = expensive(i, no_sleep);
+      }
     }
   } else {
+    ScopedTimer timer;
     for (int i = 0; i < count; ++i) {
       value[i] = expensive(i, no_sleep);
     }
   }
-  cout << "Elapsed time: " << Duration(Clock::now() - start).count() << endl;
+  
   return 0;
 }
