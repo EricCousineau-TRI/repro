@@ -1,8 +1,8 @@
 Prefix: 
-  Args: --no-sleep
+  Args: --no-pragma
 [ With OpenMP ]
-+ ./build/with_openmp --no-sleep
-Elapsed time: 0.0307024
++ ./build/with_openmp --no-pragma
+Elapsed time: 0.500876
 [ Without OpenMP ]
-+ ./build/without_openmp --no-sleep
-Elapsed time: 1.48e-06
++ ./build/without_openmp --no-pragma
+Elapsed time: 0.50099

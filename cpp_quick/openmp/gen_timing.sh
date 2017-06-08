@@ -17,3 +17,4 @@ show-timing() {
 make -j
 show-timing ''
 show-timing '' --no-sleep
+show-timing '' --no-pragma

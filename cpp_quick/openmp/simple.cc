@@ -24,25 +24,34 @@ double expensive(int i, bool no_sleep) {
 
 int main(int argc, char** argv) {
   bool no_sleep = false;
+  bool no_pragma = false;
   {
     int i = 1;
     while (i < argc) {
       string arg = argv[i];
       if (arg == "--no-sleep") {
         no_sleep = true;
+      } else if (arg == "--no-pragma") {
+        no_pragma = true;
       } else {
-        cerr << "usage:  " << argv[0] << " [--no-sleep]" << endl;
+        cerr << "usage:  " << argv[0] << " [--no-sleep] [--no-pragma]" << endl;
         return 1;
       }
       i++;
     }
   }
-  const int count = 100;
+  const int count = 10;
   double value[count];
   auto start = Clock::now();
-  #pragma omp parallel for
-  for (int i = 0; i < count; ++i) {
-    value[i] = expensive(i, no_sleep);
+  if (!no_pragma) {
+    #pragma omp parallel for
+    for (int i = 0; i < count; ++i) {
+      value[i] = expensive(i, no_sleep);
+    }
+  } else {
+    for (int i = 0; i < count; ++i) {
+      value[i] = expensive(i, no_sleep);
+    }
   }
   cout << "Elapsed time: " << Duration(Clock::now() - start).count() << endl;
   return 0;
