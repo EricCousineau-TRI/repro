@@ -2,7 +2,13 @@
 #include <cmath>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <thread>
+
+// @ref https://stackoverflow.com/questions/1300180/ignore-openmp-on-machine-that-doesnt-have-it
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 using namespace std;
 
@@ -68,6 +74,11 @@ int main(int argc, char** argv) {
       ScopedTimer timer;
       #pragma omp parallel for
       for (int i = 0; i < count; ++i) {
+        #ifdef _OPENMP
+        std::ostringstream os;
+        os << "thread: " << omp_get_thread_num() << endl;
+        cout << os.str();
+        #endif
         value[i] = expensive(i, no_sleep);
       }
     }
