@@ -1,7 +1,5 @@
-OUTPUT_DIR := build
-
-CXX = g++
 CXX_ALL_FLAGS = -std=c++1y $(shell pkg-config --cflags --libs eigen3)
+OUTPUT_DIR := build/$(CXX)
 
 .PHONY = all dir clean bin
 
