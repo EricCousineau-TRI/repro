@@ -20,8 +20,8 @@ inline void sleep(double seconds) {
 
 int main() {
   string window_name = "KinectFrameCostDebug";
-  // cv::namedWindow(window_name, cv::WINDOW_AUTOSIZE );
-  // cv::startWindowThread();
+  cv::namedWindow(window_name, cv::WINDOW_AUTOSIZE );
+  cv::startWindowThread();
 
   cv::Mat image;
   image = cv::imread("../test.png", 1);
@@ -29,7 +29,7 @@ int main() {
   cv::cvtColor(image, gray_image, CV_BGR2GRAY);
   cv::Mat gray_image_color;
   cv::cvtColor(gray_image, gray_image_color, CV_GRAY2BGR);
-  // gray_image.convertTo(gray_image_color, image.type());
+  // gray_image.convertTo(gray_image_color, image.type()); // Doesn't work??
 
   cout
     << "image: " << image.rows << " x " << image.cols << " - " << image.type() << endl
@@ -39,21 +39,14 @@ int main() {
   auto start = Clock::now();
   bool show = true;
   double t = 0;
-  cv::Mat out;
+  
   while (t < duration_sec) {
-    double factor = (cos(t) + 1) / 2;
-    // cout << t << endl;
-    // show = !show;
-    // if (show) {
-    //   cv::imshow(window_name, image);
-    // } else {
-      cout << factor << endl;
-      cv::addWeighted(image, factor, gray_image_color, 1 - factor, 0., out);
-      cv::imshow(window_name, out);
-    // }
-    // sleep(0.1);
-    cv::waitKey(2);
-    // cv::waitKey(33);
+    cv::Mat out;
+    double factor = (cos(t * (2 * M_PI)) + 1) / 2;
+    cv::addWeighted(image, factor, gray_image_color, 1 - factor, 0., out);
+    cv::imshow(window_name, out);
+    // cv::waitKey(2);
+    sleep(0.002);
     t = Duration(Clock::now() - start).count();
   }
 
