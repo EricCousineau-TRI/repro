@@ -41,7 +41,7 @@ int main() {
   double t = 0;
   
   while (t < duration_sec) {
-    cv::Mat out;
+    cv::Mat out; // do NOT copy construct this - will not animate if that is done
     double factor = (cos(t * (2 * M_PI)) + 1) / 2;
     cv::addWeighted(image, factor, gray_image_color, 1 - factor, 0., out);
     cv::imshow(window_name, out);
