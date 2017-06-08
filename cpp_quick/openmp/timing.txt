@@ -1,0 +1,7 @@
+Prefix: 
+[ With OpenMP ]
++ ./build/with_openmp
+Elapsed time: 0.165287
+[ Without OpenMP ]
++ ./build/without_openmp
+Elapsed time: 5.01011
