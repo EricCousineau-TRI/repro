@@ -93,3 +93,9 @@ cc_binary(
     srcs = ["unary_view_mutable.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "colwise_check",
+    srcs = ["colwise_check.cc"],
+    deps = ["@eigen//:eigen"],
+)
