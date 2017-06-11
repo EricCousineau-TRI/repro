@@ -20,7 +20,7 @@ int main() {
   A a {.value = 22};
   A b;
   A c {25, "Hola"};
-  A d {.name = "You"};
+  auto d = A {.name = "You"};
 
   cout << a << b << c << d << endl;
 }
