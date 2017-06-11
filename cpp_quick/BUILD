@@ -170,3 +170,8 @@ cc_binary(
     name = "tpl_pack_visitor",
     srcs = ["tpl_pack_visitor.cc"],
 )
+
+cc_binary(
+    name = "c_style_init",
+    srcs = ["c_style_init.cc"],
+)

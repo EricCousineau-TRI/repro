@@ -16,22 +16,19 @@ class RowView {
   RowView(XprType xpr)
       : xpr_(xpr) {}
 
-  int size() {
+  int size() const {
     return xpr_.rows();
   }
 
   void resize(int row_count) {
-    cout << "resize: " << row_count << endl;
     xpr_.resize(row_count, xpr_.cols());
   }
 
   template <typename Other>
-  void resizeOtherEigen(Other&& other, int row_count) const {
-    other.resize(row_count, xpr_.cols());
-  }
-  template <typename Other>
-  void resizeOther(Other&& other, int row_count) const {
-    other.resize(row_count);
+  void resizeLike(const RowView<Other>& other, int row_count = -1) const {
+    int cols = other.xpr().cols();
+    int rows = row_count == -1 ? other.xpr().rows() : row_count;
+    xpr_.resize(cols, rows);
   }
 
   auto xpr() { return xpr_; }
@@ -64,7 +61,6 @@ auto MakeRowView(XprType&& xpr) {
 template <typename Src, typename Dest>
 void select_indices(const vector<int> indices, Src&& src, Dest&& dest) {
   for (int i = 0; i < indices.size(); ++i) {
-    cout << "select " << i << ": " << src[indices[i]] << endl;
     dest[i] = src[indices[i]];
   }
 }
@@ -92,7 +88,7 @@ int main() {
 
   MatrixXd X_sub(0, 3);
   auto X_sub_rows = MakeRowView(X_sub);
-  X_rows.resizeOther(X_sub_rows, 2);
+  X_sub_rows.resizeLike(X_rows, 2);
   select_indices({2, 0}, X_rows, X_sub_rows);
   cout << endl;
   cout << X_sub << endl;
