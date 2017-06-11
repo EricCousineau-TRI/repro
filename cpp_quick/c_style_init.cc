@@ -33,7 +33,7 @@ ostream& operator<<(ostream& os, const B& b) {
 int main() {
   A a {.value = 22};
   A b;
-  A c {25, "Hola"};
+  A c {25, .name = "Hola"};
   auto d = A {.name = "You",};
 
   cout << a << b << c << d << endl;
