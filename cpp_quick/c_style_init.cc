@@ -33,8 +33,9 @@ ostream& operator<<(ostream& os, const B& b) {
 int main() {
   A a {.value = 22};
   A b;
-  A c {25, .name = "Hola"};
-  auto d = A {.name = "You",};
+  A c {25, .name = "Hola", };
+  // A c {25, .name = "Hola", .value = 200};  // Will generate warning.
+  auto d = A {.name = "You", .value = 15,};
 
   cout << a << b << c << d << endl;
 
