@@ -10,6 +10,8 @@ using namespace Eigen;
 
 // NOTE: XprType should be `const T&` or `T&` if not using a view.
 // Use perfect forwarding when able.
+// This will ONLY work if .row(int) returns a reference object that does
+// not need to be forwarded.
 template <typename XprType>
 class RowView {
  public:
@@ -28,11 +30,15 @@ class RowView {
   void resizeLike(const RowView<Other>& other, int row_count = -1) const {
     int cols = other.xpr().cols();
     int rows = row_count == -1 ? other.xpr().rows() : row_count;
-    xpr_.resize(cols, rows);
+    xpr_.resize(rows, cols);
   }
 
   auto xpr() { return xpr_; }
   auto xpr() const { return xpr_; }
+
+  auto segment(int index, int row_count) {
+    return xpr_.middleRows(index, row_count);
+  }
 
   auto operator[](int index) {
     return xpr_.row(index);
@@ -73,8 +79,7 @@ int main() {
     7, 8, 9;
 
 
-  RowVector3d X1; // = X.rowwise()[0];  // No dice.
-  cout << X1 << endl;
+  // RowVector3d X1 = X.rowwise()[0];  // No dice.
 
   auto X_rows = MakeRowView(X);
   cout << X_rows[0] << endl;
