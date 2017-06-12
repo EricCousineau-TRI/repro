@@ -99,3 +99,9 @@ cc_binary(
     srcs = ["colwise_check.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "iterator",
+    srcs = ["iterator.cc"],
+    deps = ["@eigen//:eigen"],
+)
