@@ -105,3 +105,9 @@ cc_binary(
     srcs = ["iterator.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "ref_check",
+    srcs = ["ref_check.cc"],
+    deps = ["@eigen//:eigen"],
+)
