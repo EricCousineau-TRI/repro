@@ -5,6 +5,8 @@
 using namespace std;
 using namespace Eigen;
 
+// TODO(eric.cousineau): Consider overloading std::begin() and std::end()
+
 // TODO(eric.cousineau): Do full implementation for more robust access
 // (especially for views!!!). Make static_assert for invalid types.
 template <typename XprType>
@@ -33,6 +35,9 @@ auto MakeIterableMatrix(XprType&& xpr) {
   return IterableMatrix<XprType>(std::forward<XprType>(xpr));
 }
 
+namespace std {
+}
+
 int main() {
   VectorXd x(5);
   x << 1, 2, 3, 4, 5;
@@ -57,10 +62,11 @@ int main() {
   }
   cout << endl;
 
-  for (auto&& xi : MakeIterableMatrix(X.row(1))) {
-    cout << xi << " ";
-  }
-  cout << endl;
+  // // Will throw an error.
+  // for (auto&& xi : MakeIterableMatrix(X.row(1))) {
+  //   cout << xi << " ";
+  // }
+  // cout << endl;
 
   return 0;
 }
