@@ -3,6 +3,8 @@
 
 using namespace std;
 
+// Only supported on clang.
+
 struct A {
   int value{10};
   string name{"Howdy"};
@@ -30,18 +32,18 @@ ostream& operator<<(ostream& os, const B& b) {
   return os;
 }
 
-struct C {
-  int independent {10};
-  int dependent {independent + 1};
-};
+// struct C {
+//   int independent {10};
+//   int dependent {independent + 1};
+// };
 
-ostream& operator<<(ostream& os, const C& c) {
-  os
-    << "independent: " << c.independent << endl
-    << "dependent: " << c.dependent << endl
-    << "---" << endl;
-  return os;
-}
+// ostream& operator<<(ostream& os, const C& c) {
+//   os
+//     << "independent: " << c.independent << endl
+//     << "dependent: " << c.dependent << endl
+//     << "---" << endl;
+//   return os;
+// }
 
 int main() {
   A a {.value = 22};
@@ -55,9 +57,9 @@ int main() {
   B e { .a = {.name = "Whadup"}, .extra = -100};
   cout << e << endl;
 
-  C f {};
-  C g {.independent = 20};
-  cout << f << g << endl;
+  // C f {};
+  // C g {.independent = 20};
+  // cout << f << g << endl;
 
   return 0;
 }
