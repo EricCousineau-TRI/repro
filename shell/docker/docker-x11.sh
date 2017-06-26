@@ -61,11 +61,12 @@ docker-x11-run() { (
   image=${1}  # ubuntu_x11
   container=${2}
   cmd=${3-bash}
+  shift; shift; shift;
   docker-x11-env
   ${DOCKER} run -ti $flags --name ${container} -h ${container} \
       -v $XSOCK:$XSOCK:rw -v $XAUTH:$XAUTH:rw -v /dev/video0:/dev/video0 \
       -v $DOCKER_SHARE_HOST:$DOCKER_SHARE_IMAGE:shared \
-      ${DOCKER_ENV_ARGS} \
+      ${DOCKER_ENV_ARGS} "$@" \
       ${image}
 ) }
 
