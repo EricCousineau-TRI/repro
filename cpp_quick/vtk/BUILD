@@ -7,3 +7,10 @@ cc_binary(
         "@vtk//:vtk",
     ],
 )
+
+sh_test(
+    name = "vtk_test",
+    srcs = [
+        "vtk_test.sh",
+    ],
+)
