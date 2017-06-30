@@ -180,3 +180,8 @@ cc_binary(
     name = "tpl_pack_sizing",
     srcs = ["tpl_pack_sizing.cc"],
 )
+
+cc_binary(
+    name = "friend_tpl",
+    srcs = ["friend_tpl.cc"],
+)
