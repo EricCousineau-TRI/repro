@@ -7,6 +7,7 @@ cc_binary(
     ],
     deps = [
         "@eigen",
-        "@pcl//:lib",
+        "@pcl_filters//:lib",
+        "@pcl_io//:lib",
     ],
 )
