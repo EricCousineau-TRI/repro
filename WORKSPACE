@@ -1,7 +1,7 @@
 workspace(name = "repro")
 
 load("//tools:github.bzl", "github_archive")
-load('@bazel_tools//tools/build_defs/repo:git.bzl', 'git_repository')
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 github_archive(
     name = "eigen",
@@ -35,4 +35,20 @@ github_archive(
 load("//tools:vtk.bzl", "vtk_repository")
 vtk_repository(
     name = "vtk",
+)
+
+# Jerry-rig PCL via pkg_config
+local_repository(
+    name = "io_kythe",
+    path = "externals/kythe",
+)
+load("@io_kythe//tools/build_rules/config:pkg_config.bzl", "pkg_config_package")
+
+pkg_config_package(
+    name = "pcl_io",
+    modname = "pcl_io-1.8",
+)
+pkg_config_package(
+    name = "pcl_filters",
+    modname = "pcl_filters-1.8",
 )
