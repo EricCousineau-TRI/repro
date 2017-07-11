@@ -1,6 +1,10 @@
 [submodule "externals/benchmark"]
 	path = externals/benchmark
 	url = git@github.com:EricCousineau-TRI/benchmark.git
+[submodule "externals/flann"]
+	path = externals/flann
+	url = git://github.com/mariusmuja/flann.git
+	branch = master
 [submodule "externals/pcl"]
 	path = externals/pcl
 	url = http://github.com/pointcloudlibrary/pcl.git
