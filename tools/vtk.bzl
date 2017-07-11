@@ -63,7 +63,7 @@ def _vtk_impl(repository_ctx):
         if not hdrs or not libs else \
         cc_library(
             name = "vtk",
-            srcs = libs,
+            srcs = [lib for lib in libs if "Java" not in lib and "Python" not in lib],
             hdrs = hdrs,
             linkstatic = 0,
             includes = ["{inc}"],
