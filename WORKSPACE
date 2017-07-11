@@ -44,11 +44,16 @@ local_repository(
 )
 load("@io_kythe//tools/build_rules/config:pkg_config.bzl", "pkg_config_package")
 
+# # Cannot have two pkg_config packages with overlapping paths
+# pkg_config_package(
+#     name = "pcl_io",
+#     modname = "pcl_io-1.8",
+# )
+# pkg_config_package(
+#     name = "pcl_filters",
+#     modname = "pcl_filters-1.8",
+# )
 pkg_config_package(
-    name = "pcl_io",
-    modname = "pcl_io-1.8",
-)
-pkg_config_package(
-    name = "pcl_filters",
-    modname = "pcl_filters-1.8",
+    name = "pcl",
+    modname = "pcl_custom-1.8",
 )

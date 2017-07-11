@@ -1,0 +1,13 @@
+# Handcrafted for everything.
+# Place this somewhere on ${PKG_CONFIG_PATH}, and update `prefix`.
+prefix=/home/eacousineau/.local/pcl
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+#includedir=${prefix}/include/pcl-1.8/pcl
+includedir=${prefix}/include/pcl-1.8
+Name: pcl
+Description: Point cloud library
+Version: 1.8.0
+Requires:  pcl_common-1.8 pcl_sample_consensus-1.8 pcl_search-1.8 pcl_kdtree-1.8 pcl_octree-1.8 pcl_io-1.8 pcl_filters-1.8
+Libs: -L${libdir}
+Cflags: -I${includedir} 
