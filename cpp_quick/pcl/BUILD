@@ -8,5 +8,6 @@ cc_binary(
     deps = [
         "@eigen",
         "@pcl//:lib",
+        "@vtk",
     ],
 )
