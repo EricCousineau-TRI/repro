@@ -185,3 +185,8 @@ cc_binary(
     name = "friend_tpl",
     srcs = ["friend_tpl.cc"],
 )
+
+cc_binary(
+    name = "stl_ref",
+    srcs = ["stl_ref.cc"],
+)
