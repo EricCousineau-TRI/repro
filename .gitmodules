@@ -3,7 +3,7 @@
 	url = git@github.com:EricCousineau-TRI/benchmark.git
 [submodule "externals/flann"]
 	path = externals/flann
-	url = git://github.com/mariusmuja/flann.git
+	url = https://github.com/mariusmuja/flann.git
 	branch = master
 [submodule "externals/kythe"]
 	path = externals/kythe
