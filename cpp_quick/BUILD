@@ -190,3 +190,10 @@ cc_binary(
     name = "stl_ref",
     srcs = ["stl_ref.cc"],
 )
+
+cc_binary(
+    name = "stl_container",
+    srcs = [
+        "stl_container.cc",
+    ],
+)
