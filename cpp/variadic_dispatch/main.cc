@@ -3,8 +3,8 @@
 #include <iostream>
 #include <memory>
 
-#include "cpp_quick/drake_copy.h"
-#include "cpp_quick/name_trait.h"
+#include "cpp/drake_copy.h"
+#include "cpp/name_trait.h"
 
 using std::cout;
 using std::endl;

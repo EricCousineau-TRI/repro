@@ -8,7 +8,7 @@
 // Would need additional decay_t, and ensure that it is non-const
 // See: http://en.cppreference.com/w/cpp/types/is_reference
 
-#include "cpp_quick/name_trait.h"
+#include "cpp/name_trait.h"
 
 #include <string>
 #include <iostream>

@@ -1,6 +1,6 @@
 // @ref https://github.com/hauptmech/eigen-initializer_list
 
-// @ref ../cpp_quick/composition_ctor.cc
+// @ref ../cpp/composition_ctor.cc
 // @ref ./matrix_inheritance.cc
 
 // Purpose: For fun
@@ -46,7 +46,7 @@ Achievable via:
 
 */
 
-#include "cpp_quick/name_trait.h"
+#include "cpp/name_trait.h"
 
 #include <string>
 #include <iostream>

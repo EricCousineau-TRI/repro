@@ -3,8 +3,8 @@ Purpose: sAme as the other matrix_stack* attempts, but this time, use tuples and
 hstack() and vstack() for concatenation.
 
 */
-#include "cpp_quick/name_trait.h"
-#include "cpp_quick/tuple_iter.h"
+#include "cpp/name_trait.h"
+#include "cpp/tuple_iter.h"
 
 #include <string>
 #include <iostream>
