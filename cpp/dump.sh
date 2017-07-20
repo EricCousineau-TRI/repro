@@ -1,5 +1,5 @@
 #!/bin/bash
-toplevel=cpp_quick
+toplevel=cpp
 target=tpl_inst
 
 (

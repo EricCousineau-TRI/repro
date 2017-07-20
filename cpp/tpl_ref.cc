@@ -1,5 +1,5 @@
 // Goal: Check that a reference can be stored via a template parameter
-// Purpose: Dunno yet. Maybe for ../eigen_scratch/matrix_stack.cc?
+// Purpose: Dunno yet. Maybe for ../cpp/eigen/matrix_stack.cc?
 
 #include <iostream>
 #include <string>

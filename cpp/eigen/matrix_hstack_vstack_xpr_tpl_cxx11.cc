@@ -28,8 +28,8 @@ using remove_cv_t = typename remove_cv<T>::type;
 #endif
 
 
-#include "cpp_quick/name_trait.h"
-#include "cpp_quick/tuple_iter.h"
+#include "cpp/name_trait.h"
+#include "cpp/tuple_iter.h"
 
 #include <string>
 #include <iostream>

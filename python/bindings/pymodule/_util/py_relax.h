@@ -209,7 +209,7 @@ private:
 template <typename T>
 struct name_trait<RelaxMatrix<T>> {
   // TODO: Develop better (unique) naming for this.
-  // See //eigen_scratch/matrix_hstack_xpr_tpl stuff.
+  // See //cpp/eigen/matrix_hstack_xpr_tpl stuff.
   static constexpr auto name = name_trait<T>::name + _("_relax_matrix");
 };
 

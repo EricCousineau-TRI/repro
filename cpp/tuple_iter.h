@@ -10,7 +10,7 @@ void visit_args(F&& f, T1&& t1, Args&&... args) {
     visit_args(std::forward<F>(f), std::forward<Args>(args)...);
 }
 
-// Modelling after: ../cpp_quick/tuple_future.h
+// Modelling after: ../cpp/tuple_future.h
 template<typename F, typename Tuple, std::size_t... I>
 void visit_tuple_impl(F&& f, Tuple&& t, std::index_sequence<I...>) {
     visit_args(std::forward<F>(f), std::get<I>(std::forward<Tuple>(t))...);

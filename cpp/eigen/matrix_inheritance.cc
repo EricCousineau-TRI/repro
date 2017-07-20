@@ -1,6 +1,6 @@
 // Goal: See how easy it is to extend a Matrix's constructor
-// Purpose: See if we can permit the semantics in `cpp_quick/composition_ctor.cc`
-#include "cpp_quick/name_trait.h"
+// Purpose: See if we can permit the semantics in `cpp/composition_ctor.cc`
+#include "cpp/name_trait.h"
 
 #include <string>
 #include <iostream>

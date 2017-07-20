@@ -2,7 +2,7 @@
 // Figure out how T&& works in forwarding. See if this can be generalized to a greedy is_convertible match
 // 
 // Purpose:
-// In eigen_scratch/matrix_inheritance.cc, Eigen::Matrix's ctor has a the form
+// In cpp/eigen/matrix_inheritance.cc, Eigen::Matrix's ctor has a the form
 //   template<typename T> Matrix(const T& x)
 // When there is an attempt to override this, via
 //    template<typename T> MyMat(T&& x) { ... }
