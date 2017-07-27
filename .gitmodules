@@ -1,9 +1,13 @@
+[submodule "externals/Super4PCS"]
+	path = externals/Super4PCS
+	url = https://github.com/nmellado/Super4PCS.git
+	branch = master
 [submodule "externals/benchmark"]
 	path = externals/benchmark
 	url = git@github.com:EricCousineau-TRI/benchmark.git
 [submodule "externals/flann"]
 	path = externals/flann
-	url = https://github.com/mariusmuja/flann.git
+	url = git://github.com/mariusmuja/flann.git
 	branch = master
 [submodule "externals/kythe"]
 	path = externals/kythe
@@ -12,3 +16,7 @@
 [submodule "externals/pcl"]
 	path = externals/pcl
 	url = http://github.com/pointcloudlibrary/pcl.git
+[submodule "externals/vtk"]
+	path = externals/vtk
+	url = git://vtk.org/VTK.git
+	branch = master
