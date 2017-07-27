@@ -1,0 +1,9 @@
+# Copied from drake-distro
+directories:
+  .
+  -externals
+  -build
+
+targets:
+  //...:all
+

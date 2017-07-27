@@ -197,3 +197,10 @@ cc_binary(
         "stl_container.cc",
     ],
 )
+
+cc_binary(
+    name = "stl_pod",
+    srcs = [
+        "stl_pod.cc",
+    ],
+)
