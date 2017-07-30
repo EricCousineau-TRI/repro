@@ -111,3 +111,9 @@ cc_binary(
     srcs = ["ref_check.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "map_ref",
+    srcs = ["map_ref.cc"],
+    deps = ["@eigen//:eigen"],
+)
