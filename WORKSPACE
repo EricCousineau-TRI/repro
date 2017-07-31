@@ -37,12 +37,12 @@ vtk_repository(
     name = "vtk",
 )
 
-# Jerry-rig PCL via pkg_config
-local_repository(
-    name = "io_kythe",
-    path = "externals/kythe",
-)
-load("@io_kythe//tools/build_rules/config:pkg_config.bzl", "pkg_config_package")
+# # Jerry-rig PCL via pkg_config
+# local_repository(
+#     name = "io_kythe",
+#     path = "externals/kythe",
+# )
+# load("@io_kythe//tools/build_rules/config:pkg_config.bzl", "pkg_config_package")
 
 # # Cannot have two pkg_config packages with overlapping paths
 # pkg_config_package(
@@ -53,7 +53,8 @@ load("@io_kythe//tools/build_rules/config:pkg_config.bzl", "pkg_config_package")
 #     name = "pcl_filters",
 #     modname = "pcl_filters-1.8",
 # )
-pkg_config_package(
-    name = "pcl",
-    modname = "pcl_custom-1.8",
-)
+
+# pkg_config_package(
+#     name = "pcl",
+#     modname = "pcl_custom-1.8",
+# )
