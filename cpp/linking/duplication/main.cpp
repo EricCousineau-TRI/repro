@@ -1,39 +1,36 @@
 #include <iostream>
 #include <dlfcn.h>
-#include "singleton.h"
 
-int main() {
-    using std::cout;
-    using std::cerr;
-    using std::endl;
+typedef void (*hello_t)();
+using std::cout;
+using std::cerr;
+using std::endl;
 
-    singleton::instance().num = 100; // call singleton
-    cout << "singleton.num in main : " << singleton::instance().num << endl;// call singleton
+void call_hello(const char* lib, const char* name) {
 
     // open the library
-    void* handle = dlopen("./hello.so", RTLD_LAZY);
-
+    void* handle = dlopen(lib, RTLD_LAZY);
     if (!handle) {
         cerr << "Cannot open library: " << dlerror() << '\n';
-        return 1;
+        return;
     }
-
     // load the symbol
-    typedef void (*hello_t)();
-
+    
     // reset errors
     dlerror();
-    hello_t hello = (hello_t) dlsym(handle, "hello");
+    hello_t hello = (hello_t) dlsym(handle, name);
     const char *dlsym_error = dlerror();
     if (dlsym_error) {
         cerr << "Cannot load symbol 'hello': " << dlerror() << '\n';
         dlclose(handle);
-        return 1;
+        return;
     }
-
     hello(); // call plugin function hello
-
-    cout << "singleton.num in main : " << singleton::instance().num << endl;// call singleton
-    cout << singleton::pInstance << endl;
     dlclose(handle);
+}
+
+int main() {
+    call_hello("./hello.so", "hello");
+    call_hello("./hello2.so", "hello2");
+    return 0;
 }
