@@ -7,8 +7,8 @@
 	url = git@github.com:EricCousineau-TRI/benchmark.git
 [submodule "externals/eigen"]
 	path = externals/eigen
-	url = hg::https://bitbucket.org/eigen/eigen
-	branch = master
+	url = git@github.com:EricCousineau-TRI/eigen.git
+	branch = feature/possible_tri_fix
 [submodule "externals/flann"]
 	path = externals/flann
 	url = git://github.com/mariusmuja/flann.git

@@ -8,8 +8,8 @@ Execute in Bash:
   set -e -u
   mkdir -p build/
   name=ubsan_zero_size_mult
-  eigen_INCLUDE_DIR=/usr/include/eigen3
-  # eigen_INCLUDE_DIR=../../externals/eigen
+  # eigen_INCLUDE_DIR=/usr/include/eigen3
+  eigen_INCLUDE_DIR=../../externals/eigen
   clang++-3.9 -g -std=c++11 \
     -I ${eigen_INCLUDE_DIR} \
     -fsanitize=undefined -fno-sanitize-recover=undefined \
