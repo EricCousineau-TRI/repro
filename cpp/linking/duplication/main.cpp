@@ -1,5 +1,6 @@
 #include <iostream>
 #include <dlfcn.h>
+// #include "singleton.h"
 
 typedef void (*hello_t)();
 using std::cout;
@@ -7,7 +8,7 @@ using std::cerr;
 using std::endl;
 
 void call_hello(const char* lib, const char* name) {
-
+    // std::cout << singleton::pInstance << std::endl;
     // open the library
     void* handle = dlopen(lib, RTLD_LAZY);
     if (!handle) {
