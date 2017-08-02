@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdexcept>
 #include <dlfcn.h>
 #include "singleton.h"
 
@@ -9,10 +10,13 @@ using std::endl;
 
 void call_hello(const char* lib, const char* name) {
     std::cout << singleton::pInstance << std::endl;
+    // Without this first call, each library will have its own `count`.
+    // With it, the count continues on.
+    std::cout << &singleton::instance() << std::endl;
     // open the library
     void* handle = dlopen(lib, RTLD_LAZY);
     if (!handle) {
-        cerr << "Cannot open library: " << dlerror() << '\n';
+        throw std::runtime_error("Cannot open lib");
         return;
     }
     // load the symbol
@@ -22,9 +26,8 @@ void call_hello(const char* lib, const char* name) {
     hello_t hello = (hello_t) dlsym(handle, name);
     const char *dlsym_error = dlerror();
     if (dlsym_error) {
-        cerr << "Cannot load symbol 'hello': " << dlerror() << '\n';
         dlclose(handle);
-        return;
+        throw std::runtime_error("Cannot load symbol 'hello'");
     }
     hello(); // call plugin function hello
     dlclose(handle);

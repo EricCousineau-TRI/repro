@@ -8,6 +8,8 @@
 #ifndef SINGLETON_H_
 #define SINGLETON_H_
 
+#include <iostream>
+
 class singleton
 {
 public:
@@ -20,6 +22,9 @@ public:
         {
             pInstance = new singleton();
         }
+        static int count = 0;
+        ++count;
+        std::cout << "(count: " << count << ") ";
         return *pInstance;
     }
 public:
