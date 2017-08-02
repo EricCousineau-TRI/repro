@@ -24,7 +24,7 @@ pybind11_module(
 )
 
 py_library(
-    name = "pymodule",
+    name = "pymodule",  # This is the package's name.
     deps = [
         ":type_binding",
         ":inherit_check",
@@ -42,4 +42,10 @@ py_test_simple(
    name = "inherit_check_test",
    size = "small",
    deps = [":inherit_check"],
+)
+
+py_test_simple(
+    name = "pymodule_test",
+    size = "small",
+    deps = [":pymodule"],
 )
