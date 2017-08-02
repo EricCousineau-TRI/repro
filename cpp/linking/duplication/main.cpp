@@ -34,5 +34,6 @@ int main() {
     hello(); // call plugin function hello
 
     cout << "singleton.num in main : " << singleton::instance().num << endl;// call singleton
+    cout << singleton::pInstance << endl;
     dlclose(handle);
 }

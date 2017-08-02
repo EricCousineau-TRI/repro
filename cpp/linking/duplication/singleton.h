@@ -10,7 +10,7 @@
 
 class singleton
 {
-private:
+public:
     singleton() {num = -1;}
     static singleton* pInstance;
 public:
