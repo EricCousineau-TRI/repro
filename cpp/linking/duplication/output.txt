@@ -1,0 +1,16 @@
+$ ./example1
+singleton.num in hello.so : 100
+singleton.num in hello.so after ++ : 101
+0x16902a0
+singleton.num in hello2.so : -1
+singleton.num in hello2.so after ++ : 0
+0x16906d0
+$ ./example2
+0
+singleton.num in hello.so : 100
+singleton.num in hello.so after ++ : 101
+0x21c46b0
+0x21c46b0
+singleton.num in hello2.so : 101
+singleton.num in hello2.so after ++ : 102
+0x21c46b0
