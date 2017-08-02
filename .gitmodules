@@ -5,6 +5,10 @@
 [submodule "externals/benchmark"]
 	path = externals/benchmark
 	url = git@github.com:EricCousineau-TRI/benchmark.git
+[submodule "externals/eigen"]
+	path = externals/eigen
+	url = hg::https://bitbucket.org/eigen/eigen
+	branch = master
 [submodule "externals/flann"]
 	path = externals/flann
 	url = git://github.com/mariusmuja/flann.git
