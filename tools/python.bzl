@@ -86,3 +86,15 @@ python_repository = repository_rule(
     attrs = {"version": attr.string(default = "2.7")},
     local = True,
 )
+
+def py_test_simple(name, srcs = [], **kwargs):
+    py_main = "test/{}.py".format(name)
+    native.py_test(
+        name = name,
+        srcs = [
+            py_main,
+            ] + srcs,
+        main = py_main,
+        **kwargs
+    )
+
