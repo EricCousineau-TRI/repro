@@ -34,3 +34,15 @@ def pybind11_module(name, srcs = [], deps = [], **kwargs):
         visibility = ["//visibility:public"],
         **kwargs
     )
+
+def drake_py_test(name, srcs = [], **kwargs):
+    py_main = "test/{}.py".format(name)
+    native.py_test(
+        name = name,
+        srcs = [
+            py_main,
+            ] + srcs,
+        main = py_main,
+        **kwargs
+    )
+

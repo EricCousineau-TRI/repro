@@ -1,7 +1,7 @@
 # -*- python -*-
 # This file contains rules for Bazel; see drake/doc/bazel.rst.
 
-load(":pybind11_module.bzl", "pybind11_module")
+load(":pybind11_module.bzl", "pybind11_module", "drake_py_test")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -31,20 +31,14 @@ py_library(
     visibility = ["//visibility:public"],
 )
 
-py_test(
-   name = "typebinding_test",
+drake_py_test(
+   name = "type_binding_test",
    size = "small",
-   srcs = ["test/testTypeBinding.py"],
-   main = "test/testTypeBinding.py",
-   tags = [],
-   deps = [":pymodule"],
+   deps = [":typebinding"],
 )
 
-py_test(
+drake_py_test(
    name = "inherit_check_test",
    size = "small",
-   srcs = ["test/testInheritCheck.py"],
-   main = "test/testInheritCheck.py",
-   tags = [],
-   deps = [":pymodule"],
+   deps = [":inherit_check"],
 )
