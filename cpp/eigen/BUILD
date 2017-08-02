@@ -117,3 +117,9 @@ cc_binary(
     srcs = ["map_ref.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "eigenvalue_ordering",
+    srcs = ["eigenvalue_ordering.cc"],
+    deps = ["@eigen//:eigen"],
+)
