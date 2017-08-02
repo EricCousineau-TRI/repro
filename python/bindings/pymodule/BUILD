@@ -6,7 +6,7 @@ load(":pybind11_module.bzl", "pybind11_module", "drake_py_test")
 package(default_visibility = ["//visibility:private"])
 
 pybind11_module(
-    name = "typebinding",
+    name = "type_binding",
     srcs = [
         "_util/py_relax.h",
     ],
@@ -25,7 +25,7 @@ pybind11_module(
 py_library(
     name = "pymodule",
     deps = [
-        ":typebinding",
+        ":type_binding",
         ":inherit_check",
     ],
     visibility = ["//visibility:public"],
@@ -34,7 +34,7 @@ py_library(
 drake_py_test(
    name = "type_binding_test",
    size = "small",
-   deps = [":typebinding"],
+   deps = [":type_binding"],
 )
 
 drake_py_test(

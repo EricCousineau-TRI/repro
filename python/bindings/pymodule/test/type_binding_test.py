@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 npa = np.array
 import pymodule
-from pymodule import typebinding as tb
+from pymodule import type_binding as tb
 
 class TestTypeBinding(unittest.TestCase):
     def test_env(self):

@@ -42,8 +42,8 @@ class EigenType {
   MatrixXd value_;
 };
 
-PYBIND11_PLUGIN(_typebinding) {
-  py::module m("_typebinding", "Drake Type Binding tests");
+PYBIND11_PLUGIN(_type_binding) {
+  py::module m("_type_binding", "Drake Type Binding tests");
 
   // Use py_relax_* to make Python bindings more permissive with MATLAB types.
 
