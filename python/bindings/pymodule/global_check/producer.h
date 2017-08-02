@@ -8,9 +8,14 @@ namespace global_check {
 // Goal: Try to recreate issue of duplicate objects when linking with Python
 // code.
 
+struct Impl {
+  static double global;
+};
+double Impl::global{};
+
 template <typename T>
 std::string Producer(const T& value) {
-  static T global{};
+  T& global = Impl::global;
   global += value;
   std::ostringstream os;
   os << "Ptr: " << &global << "\nValue: " << global << std::endl;
