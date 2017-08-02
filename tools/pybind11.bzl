@@ -6,19 +6,19 @@ copts = [
     "-Wno-unknown-warning-option",
     ]
 
-def pybind11_module(name, srcs = [], deps = [], **kwargs):
+def pybind11_module(name, srcs = [], deps = [], package_dir = "..", imports = [], **kwargs):
     cc_lib = "_{}".format(name)
     cc_lib_so = "_{}.so".format(name)
     native.cc_binary(
         name = cc_lib_so,
-        srcs = [
+        srcs = srcs + [
             "{}.cc".format(cc_lib),
-            ] + srcs,
+            ],
         copts = copts,
         linkshared = 1,
-        deps = [
+        deps = deps + [
             "@pybind11//:pybind11",
-        ] + deps,
+        ],
     )
 
     native.py_library(
@@ -30,7 +30,7 @@ def pybind11_module(name, srcs = [], deps = [], **kwargs):
         data = [
             ":{}".format(cc_lib_so),
         ],
-        imports = [".."],
+        imports = imports + [package_dir],
         visibility = ["//visibility:public"],
         **kwargs
     )
@@ -45,4 +45,3 @@ def drake_py_test(name, srcs = [], **kwargs):
         main = py_main,
         **kwargs
     )
-

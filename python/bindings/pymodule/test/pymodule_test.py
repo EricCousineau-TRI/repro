@@ -5,8 +5,8 @@ from __future__ import print_function, absolute_import
 
 import unittest
 import pymodule
-from pymodule import inherit_check as ic
 from pymodule import type_binding as tb
+from pymodule.sub import inherit_check as ic
 
 class TestTypeBinding(unittest.TestCase):
     def test_type_binding(self):

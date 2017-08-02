@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 npa = np.array
 import pymodule
-from pymodule import inherit_check as ic
+from pymodule.sub import inherit_check as ic
 
 class PyExtend(ic.Base):
     def pure(self, value):
