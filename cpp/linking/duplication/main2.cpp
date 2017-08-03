@@ -13,6 +13,10 @@ void call_hello(const char* lib, const char* name) {
     // Without this first call, each library will have its own `count`.
     // With it, the count continues on.
     std::cout << &singleton::instance() << std::endl;
+    Produce<double>();
+    // The fact that this works means that these linkages are being stored,
+    // somehwere, somehow... But how???
+
     // open the library
     void* handle = dlopen(lib, RTLD_LAZY);
     if (!handle) {

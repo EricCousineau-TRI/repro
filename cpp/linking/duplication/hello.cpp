@@ -7,4 +7,5 @@ extern "C" void hello() {
     ++singleton::instance().num;
     std::cout << "singleton.num in hello.so after ++ : " << singleton::instance().num << std::endl;
     std::cout << singleton::pInstance << std::endl;
+    Produce<double>();
 }

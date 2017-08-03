@@ -33,4 +33,11 @@ public:
 
 singleton* singleton::pInstance = NULL;
 
+template <typename T>
+void Produce() {
+    static T value = 0;
+    ++value;
+    std::cout << "produce: " << value << std::endl;
+}
+
 #endif /* SINGLETON_H_ */
