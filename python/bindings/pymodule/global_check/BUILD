@@ -2,29 +2,22 @@
 # This file contains rules for Bazel; see drake/doc/bazel.rst.
 
 load("//tools:python.bzl", "py_test_simple")
-load("//tools:pybind11.bzl", "pybind11_module")
+load("//tools:pybind11.bzl", "pybind11_module_share")
 
 package(default_visibility = ["//visibility:private"])
 
-
-pybind11_module(
+pybind11_module_share(
     name = "consumer_1",
     srcs = [
         "producer.h",
     ],
     package_dir = "../..",
-    py_deps = [
-        "//python/bindings/pymodule/util:share_symbols",
-    ],
 )
 
-pybind11_module(
+pybind11_module_share(
     name = "consumer_2",
     srcs = ["producer.h"],
     package_dir = "../..",
-    py_deps = [
-        "//python/bindings/pymodule/util:share_symbols",
-    ],
 )
 
 py_library(

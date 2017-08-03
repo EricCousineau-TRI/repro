@@ -4,7 +4,7 @@
 load("//tools:python.bzl", "py_test_simple")
 load("//tools:pybind11.bzl", "pybind11_module")
 
-package(default_visibility = ["//visibility:private"])
+package(default_visibility = ["//python/bindings/pymodule:__subpackages__"])
 
 cc_library(
     name = "py_relax",
@@ -21,5 +21,4 @@ py_library(
     srcs = [
         "share_symbols.py",
     ],
-    visibility = ["//visibility:public"],
 )
