@@ -8,16 +8,16 @@ void modes() {
       msg = "Nominal lazy loading (won't work)";
       break;
     case 1:
-      msg = "Include file to add to static symbol table.\n(Needs -rdynamic)";
+      msg = "Include file to add to static symbol table.";
       break;
     case 2:
-      msg = "Load initially using RTLD_GLOBAL\n(Does not need -rdynamic)";
+      msg = "Load initially using RTLD_GLOBAL";
       break;
     case 3:
-      msg = "Reload using RTLD_NOLOAD | RTLD_GLOBAL\n(Does not need -rdynamic)";
+      msg = "Reload using RTLD_NOLOAD | RTLD_GLOBAL";
       break;
     case 4:
-      msg = "Reload (after calling first) using RTLD_NOLOAD | RTLD_GLOBAL\n(Does not need -rdynamic)";
+      msg = "Reload (after calling first) using RTLD_NOLOAD | RTLD_GLOBAL";
       break;
   }
   printf("Mode %d: %s\n", MODE, msg);
