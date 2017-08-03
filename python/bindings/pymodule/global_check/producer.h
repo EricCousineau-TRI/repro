@@ -14,12 +14,12 @@ struct Impl {
 double Impl::global{};
 
 template <typename T>
-std::string Producer(const T& value) {
+std::pair<std::string, T> Producer(const T& value) {
   T& global = Impl::global;
   global += value;
   std::ostringstream os;
-  os << "Ptr: " << &global << "\nValue: " << global << std::endl;
-  return os.str();
+  os << "Ptr: " << &global;
+  return std::make_pair(os.str(), global);
 }
 
 }  // namespace global_check

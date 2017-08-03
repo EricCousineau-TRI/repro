@@ -34,3 +34,9 @@ py_test_simple(
    size = "small",
    deps = [":global_check"],
 )
+
+py_test_simple(
+   name = "global_check_fail_test",
+   size = "small",
+   deps = [":global_check"],
+)

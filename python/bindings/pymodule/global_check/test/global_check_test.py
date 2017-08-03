@@ -11,8 +11,13 @@ with ShareSymbols():
 class TestInheritance(unittest.TestCase):
     def test_basic(self):
         value = 2
-        print(c1.do_stuff_1(value))
-        print(c2.do_stuff_2(value))
+        # Will have the same singletons.
+        for i in xrange(3):
+            (ptr1, value1) = c1.consume(value)
+            (ptr2, value2) = c2.consume(value)
+            self.assertEqual(ptr1, ptr2)
+            self.assertEqual(value1 + value, value2)
+        print(ptr1, value1, value2)
 
 if __name__ == '__main__':
     unittest.main()

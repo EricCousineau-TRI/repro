@@ -8,13 +8,13 @@ using std::string;
 
 namespace global_check {
 
-string Consumer2(double value) {
+std::pair<string, double> Consumer2(double value) {
   return Producer(value);
 }
 
 PYBIND11_PLUGIN(_consumer_2) {
-  py::module m("_consumer_2", "");
-  m.def("do_stuff_2", &Consumer2);
+  py::module m("_consumer_2", "Simple check on inheritance");
+  m.def("consume", &Consumer2);
   return m.ptr();
 }
 
