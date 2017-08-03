@@ -9,12 +9,15 @@ main_2: main.cpp
 	$(CXX) $(FLAGS) -DMODE=2 -o $@ $< -ldl
 main_3: main.cpp
 	$(CXX) $(FLAGS) -DMODE=3 -o $@ $< -ldl
+main_4: main.cpp
+	$(CXX) $(FLAGS) -DMODE=4 -o $@ $< -ldl
 consumer_1.so: consumer.cpp
 	$(CXX) $(FLAGS) -DCONSUMER='"$@"' -shared -o $@ $<
 consumer_2.so: consumer.cpp
 	$(CXX) $(FLAGS) -DCONSUMER='"$@"' -shared -o $@ $<
-run: main_0 main_1 main_2 main_3 consumer_1.so consumer_2.so
+run: main_0 main_1 main_2 main_3 main_4 consumer_1.so consumer_2.so
 	./main_0
 	./main_1
 	./main_2
 	./main_3
+	./main_4
