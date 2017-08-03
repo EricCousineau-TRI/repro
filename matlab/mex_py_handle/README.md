@@ -57,77 +57,66 @@ Example:
             from ctypes import *
             mx_array_t = c_void_p  # mxArray*
             mx_array_t_p = c_void_p  # mxArray**
-            # int call_matlab_c(mxArray* func_handle, int nlhs, mxArray* plhs[], int nrhs, mxArray* prhs[])
-            call_matlab_c_t = CFUNCTYPE(c_int, mx_array_t, c_int, mx_array_t_p, c_int, mx_array_t_p)
-            # int mx_to_py_t(int n, mxArray* mx_in[], void* py_out[])
-            mx_to_py_t = ctypes.CFUNCTYPE(c_int, c_int, mx_array_t_p, POINTER(py_object))
-            # int 
+
+            # int (mxArray* func_handle, void_p) # int nlhs, mxArray* plhs[], int nrhs, mxArray* prhs[])
+            c_call_matlab_t = CFUNCTYPE(py_object, mx_array_t, c_int, mx_array_t_p, c_int, mx_array_t_p)
+
+            # void* (void*) - but use ctypes to extract void* from py_object
+            c_raw_to_py_t = ctypes.CFUNCTYPE(py_object, c_void_p)  # Use py_object so ctypes can cast to void*
+            c_py_to_raw_t = ctypes.CFUNCTYPE(c_void_p, py_object)
 
             # py - Python
             # py_raw - Raw Python points (py_object, c_void_p)
             # ml, mx - MATLAB
-            # mx_raw - void* representing mxArray*
+            # mx_raw - void* representing mxArray* (mx_array_t, c_void_p)
             # mex - MEX function
 
-
             funcs = {}
-            funcs_raw = {}
-            handles = {}
 
-            def declare_mex_funcs(funcs_in):
-                global funcs funcs_raw
-                funcs_raw = funcs_in
-                funcs['call_matlab_c'] = \
-                    call_matlab_c_t(funcs_in['call_matlab_c'])
-                funcs['mx_to_py'] = \
-                    mx_to_py_t(funcs_in['mx_to_py'])
-                funcs['py_to_mx'] = \
-                    py_to_mx_t(funcs_in['py_to_mx'])
+            def declare_c_func_ptrs(funcs_in):
+                global funcs
+                # Effectively re-interperet casts.
+                funcs['c_raw_to_py'] = \
+                    c_raw_to_py_t(funcs_in['c_raw_to_py'])
+                funcs['c_py_to_raw'] = \
+                    c_py_to_raw_t(funcs_in['c_py_to_raw'])
+                        # Marshaling between MATLAB <-> Python
+                        funcs['c_mx_raw_to_py_raw'] = \
+                            c_raw_to_py_t(funcs_in['c_mx_raw_to_py_raw'])
+                        funcs['c_py_raw_to_mx_raw'] = \
+                            c_py_to_raw_t(funcs_in['c_py_raw_to_mx_raw'])
+                # Calling MEX through type erasure.
+                funcs['c_call_matlab'] = \
+                    c_call_matlab_t(funcs_in['c_call_matlab'])
 
-            def declare_mx_func_handles(handles_in):
-                global handles
-                handles = handles_in
+            def py_raw_to_py(py_raw):
+                return funcs['c_raw_to_py'](py_raw)
 
-            def raw_to_py(n, raw):
-                raw_a = cast(raw, c_void_p)
-                py = [None] * n
-                for i in xrange(n):
-                    py[i] = deref_py(raw[i])
-                return py
+            def py_to_py_raw(obj):
+                return funcs['c_py_to_raw'](obj)
 
-            def deref_py(raw):
-                # This should be of type c_void_p
-                # Recover original Python object reference.
-                obj = cast(raw, py_object).value
-                return obj
-
-            def mx_raw_to_py(mx_in):
-                
-
-            def py_to_mx(py_in):
-
-            def call_matlab(mx_func_handle, nargout, *py_in):
+            def call_matlab(mx_raw_func_handle, nargout, *py_in):
                 nargin = len(py_in)
-                mx_in = py_to_mx(py_in)
-                mx_out = mx_array_t * nargout
-                call_matlab_c(mx_func_handle, len(in), in, nargout, mx_out)  # Args will be cast to 
-                py_out = mx_to_py(nargout, mx_out)
+                # Just do a py.list, for MATLAB to convert to a cell arrays.
+                py_raw_in = c_py_to_raw(py_in)
+                mx_raw_out = mx_array_t * nargout
+                py_raw_out = call_matlab_c(mx_raw_func_handle, nargout, py_raw_in)  # Args will be cast to 
+                py_out = c_raw_to_py(nargout, mx_out)
+                return py_out
 
                 # Is there a way to use mexCallMATLAB to be invoked on Python args?
                 # Increase reference counting???
         MATLAB
-            py.declare_mex_func_ptrs(mex_get_func_ptrs())
-            s = struct();
-            s.mx_raw_to_ml = @mex_mx_raw_to_ml  % f(n, mx)
-            s.ml_to_mx_raw = @mex_ml_to_mx_raw
-            py.declare_func_handles(structfun(@mex_get_mx_array, s))
+            py.declare_c_func_ptrs(mex_get_c_func_ptrs())
 
             py.call_matlab(mex_ml_to_mx_raw(@sin), 1, 0.)
 
-            function py_mx = py_raw_to_py_mx(n, py_raw)
-                % Get MATLAB object representing Python stuff.
-                py_mx = py.raw_to_py(n, py_raw)
+            function py_out = feval_py(f, nout, py_in)
+                argin = cell(py_in);
+                argout = cell(1, nout);
+                [argout{:}] = feval(f, argin{:});
+                py_out = py.pass_thru(argout);
             end
 
-
 TODO: Test passing opaque function pointers from `pybind11`.
+    Done.
