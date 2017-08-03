@@ -1,17 +1,39 @@
+g++  -fPIC -DMODE=0 -o main_0 main.cpp -ldl
+g++  -fPIC -rdynamic -DMODE=1 -o main_1 main.cpp -ldl
+g++  -fPIC -DMODE=1 -o main_1_no_rdynamic main.cpp -ldl
+g++  -fPIC -DMODE=2 -o main_2 main.cpp -ldl
+g++  -fPIC -DMODE=3 -o main_3 main.cpp -ldl
+g++  -fPIC -DMODE=4 -o main_4 main.cpp -ldl
+g++  -fPIC -DCONSUMER='"consumer_1.so"' -shared -o consumer_1.so consumer.cpp
+g++  -fPIC -DCONSUMER='"consumer_2.so"' -shared -o consumer_2.so consumer.cpp
 ./main_0
 Mode 0: Nominal lazy loading (won't work)
 dlopen: ./consumer_1.so
 dlopen: ./consumer_2.so
 consumer_1.so
-  produce: 1 (0x7f4b291d803c)
+  produce: 1 (0x7f4f4233003c)
 consumer_2.so
-  produce: 1 (0x7f4b28fd603c)
+  produce: 1 (0x7f4f4212e03c)
+dlclose: ./consumer_2.so
+dlclose: ./consumer_1.so
+
+
+./main_1_no_rdynamic
+Mode 1: Include file to add to static symbol table.
+(Needs -rdynamic)
+dlopen: ./consumer_1.so
+dlopen: ./consumer_2.so
+consumer_1.so
+  produce: 1 (0x7f6c27d3803c)
+consumer_2.so
+  produce: 1 (0x7f6c27b3603c)
 dlclose: ./consumer_2.so
 dlclose: ./consumer_1.so
 
 
 ./main_1
 Mode 1: Include file to add to static symbol table.
+(Needs -rdynamic)
 dlopen: ./consumer_1.so
 dlopen: ./consumer_2.so
 consumer_1.so
@@ -24,24 +46,51 @@ dlclose: ./consumer_1.so
 
 ./main_2
 Mode 2: Load initially using RTLD_GLOBAL
+(Does not need -rdynamic)
 dlopen: ./consumer_1.so
 dlopen: ./consumer_2.so
 consumer_1.so
-  produce: 1 (0x7f49ecbcf03c)
+  produce: 1 (0x7fa9d8cad03c)
 consumer_2.so
-  produce: 2 (0x7f49ecbcf03c)
+  produce: 2 (0x7fa9d8cad03c)
 dlclose: ./consumer_2.so
 dlclose: ./consumer_1.so
 
 
 ./main_3
 Mode 3: Reload using RTLD_NOLOAD | RTLD_GLOBAL
+(Does not need -rdynamic)
+dlopen: ./consumer_1.so
+consumer_1.so
+  produce: 1 (0x7f3b1c6c103c)
+dlopen: ./consumer_2.so
+consumer_2.so
+  produce: 2 (0x7f3b1c6c103c)
+consumer_1.so
+  produce: 3 (0x7f3b1c6c103c)
+consumer_2.so
+  produce: 4 (0x7f3b1c6c103c)
+dlclose: ./consumer_2.so
+dlclose: ./consumer_1.so
+
+
+./main_4
+Mode 4: Reload (after calling first) using RTLD_NOLOAD | RTLD_GLOBAL
+(Does not need -rdynamic)
 dlopen: ./consumer_1.so
 dlopen: ./consumer_2.so
 consumer_1.so
-  produce: 1 (0x7f82e9d2c03c)
+  produce: 1 (0x7f2cda4a503c)
+consumer_1.so
+  produce: 2 (0x7f2cda4a503c)
+consumer_1.so
+  produce: 3 (0x7f2cda4a503c)
 consumer_2.so
-  produce: 2 (0x7f82e9d2c03c)
+  produce: 4 (0x7f2cda4a503c)
+consumer_2.so
+  produce: 5 (0x7f2cda4a503c)
+consumer_2.so
+  produce: 6 (0x7f2cda4a503c)
 dlclose: ./consumer_2.so
 dlclose: ./consumer_1.so
 
