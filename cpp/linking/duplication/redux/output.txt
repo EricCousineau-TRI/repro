@@ -1,0 +1,48 @@
+./main_0
+Mode 0: Nominal lazy loading (won't work)
+dlopen: ./consumer_1.so
+dlopen: ./consumer_2.so
+consumer_1.so
+  produce: 1 (0x7f4b291d803c)
+consumer_2.so
+  produce: 1 (0x7f4b28fd603c)
+dlclose: ./consumer_2.so
+dlclose: ./consumer_1.so
+
+
+./main_1
+Mode 1: Include file to add to static symbol table.
+dlopen: ./consumer_1.so
+dlopen: ./consumer_2.so
+consumer_1.so
+  produce: 1 (0x60207c)
+consumer_2.so
+  produce: 2 (0x60207c)
+dlclose: ./consumer_2.so
+dlclose: ./consumer_1.so
+
+
+./main_2
+Mode 2: Load initially using RTLD_GLOBAL
+dlopen: ./consumer_1.so
+dlopen: ./consumer_2.so
+consumer_1.so
+  produce: 1 (0x7f49ecbcf03c)
+consumer_2.so
+  produce: 2 (0x7f49ecbcf03c)
+dlclose: ./consumer_2.so
+dlclose: ./consumer_1.so
+
+
+./main_3
+Mode 3: Reload using RTLD_NOLOAD | RTLD_GLOBAL
+dlopen: ./consumer_1.so
+dlopen: ./consumer_2.so
+consumer_1.so
+  produce: 1 (0x7f82e9d2c03c)
+consumer_2.so
+  produce: 2 (0x7f82e9d2c03c)
+dlclose: ./consumer_2.so
+dlclose: ./consumer_1.so
+
+
