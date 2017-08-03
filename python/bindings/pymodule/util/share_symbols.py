@@ -1,7 +1,10 @@
+#!/usr/bin/env python
 import sys
 import ctypes
 
 # Will this work on Mac?
+
+# @ref https://stackoverflow.com/a/19664308
 
 class ShareSymbols(object):
     def __init__(self):

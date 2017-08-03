@@ -9,11 +9,12 @@ package(default_visibility = ["//visibility:private"])
 pybind11_module(
     name = "type_binding",
     package_dir = "..",
-    srcs = [
-        "_util/py_relax.h",
-    ],
     deps = [
+        "//python/bindings/pymodule/util:py_relax",
         "@eigen//:eigen",
+    ],
+    py_deps = [
+        "//python/bindings/pymodule/util:share_symbols",
     ],
 )
 

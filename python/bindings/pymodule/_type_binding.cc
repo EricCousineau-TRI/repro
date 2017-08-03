@@ -6,7 +6,7 @@
 #include <pybind11/eigen.h>
 #include <pybind11/stl.h>
 
-#include "_util/py_relax.h"
+#include "util/py_relax.h"
 
 namespace py = pybind11;
 using std::string;

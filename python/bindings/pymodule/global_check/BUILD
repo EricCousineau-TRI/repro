@@ -6,10 +6,6 @@ load("//tools:pybind11.bzl", "pybind11_module")
 
 package(default_visibility = ["//visibility:private"])
 
-py_library(
-    name = "dl_share",
-    srcs = ["dl_share.py"],
-)
 
 pybind11_module(
     name = "consumer_1",
@@ -17,13 +13,18 @@ pybind11_module(
         "producer.h",
     ],
     package_dir = "../..",
-    py_deps = [":dl_share"],
+    py_deps = [
+        "//python/bindings/pymodule/util:share_symbols",
+    ],
 )
 
 pybind11_module(
     name = "consumer_2",
     srcs = ["producer.h"],
     package_dir = "../..",
+    py_deps = [
+        "//python/bindings/pymodule/util:share_symbols",
+    ],
 )
 
 py_library(
