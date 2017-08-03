@@ -3,10 +3,9 @@ from __future__ import print_function, absolute_import
 
 import unittest
 
-from pymodule.util.share_symbols import ShareSymbols
-with ShareSymbols():
-    import pymodule.global_check.consumer_1 as c1
-    import pymodule.global_check.consumer_2 as c2
+# This not enable symbol sharing, and will fail.
+import pymodule.global_check.consumer_1 as c1
+import pymodule.global_check.consumer_2 as c2
 
 class TestInheritance(unittest.TestCase):
     def test_basic(self):
