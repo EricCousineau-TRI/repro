@@ -6,7 +6,7 @@ copts = [
     "-Wno-unknown-warning-option",
     ]
 
-def pybind11_module(name, srcs = [], deps = [], package_dir = "..", imports = [], **kwargs):
+def pybind11_module(name, srcs = [], deps = [], py_deps = [], package_dir = "..", imports = [], **kwargs):
     cc_lib = "_{}".format(name)
     cc_lib_so = "_{}.so".format(name)
     native.cc_binary(
@@ -31,18 +31,20 @@ def pybind11_module(name, srcs = [], deps = [], package_dir = "..", imports = []
         data = [
             ":{}".format(cc_lib_so),
         ],
+        deps = py_deps,
         imports = imports + [package_dir],
         visibility = ["//visibility:public"],
         **kwargs
     )
 
-def drake_py_test(name, srcs = [], **kwargs):
-    py_main = "test/{}.py".format(name)
-    native.py_test(
+"""
+Add ...share_symbols to enable RTLD_GLOBAL when importing SO files.
+"""
+def pybind11_module_share(name, py_deps = [], **kwargs):
+    pybind11_module(
         name = name,
-        srcs = [
-            py_main,
-            ] + srcs,
-        main = py_main,
+        py_deps = py_deps + [
+            "//python/bindings/pymodule/util:share_symbols",
+        ],
         **kwargs
     )
