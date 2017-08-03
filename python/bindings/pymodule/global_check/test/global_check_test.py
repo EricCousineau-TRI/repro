@@ -17,7 +17,7 @@ class TestInheritance(unittest.TestCase):
             (ptr2, value2) = c2.consume(value)
             self.assertEqual(ptr1, ptr2)
             self.assertEqual(value1 + value, value2)
-        print(ptr1, value1, value2)
+        print("{}\n{} {}".format(ptr1, value1, value2))
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,0 +1,8 @@
+$ global_check_test
+Ptr: 0x7f8a4dddb3f0
+10.0 12.0
+
+$ global_check_fail_test
+Ptr: 0x7fe4d73743f0
+Ptr: 0x7fe4d663b3f0
+2.0
