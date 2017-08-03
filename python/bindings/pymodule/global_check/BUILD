@@ -6,10 +6,18 @@ load("//tools:pybind11.bzl", "pybind11_module")
 
 package(default_visibility = ["//visibility:private"])
 
+py_library(
+    name = "dl_share",
+    srcs = ["dl_share.py"],
+)
+
 pybind11_module(
     name = "consumer_1",
-    srcs = ["producer.h"],
+    srcs = [
+        "producer.h",
+    ],
     package_dir = "../..",
+    py_deps = [":dl_share"],
 )
 
 pybind11_module(

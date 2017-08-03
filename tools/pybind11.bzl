@@ -6,7 +6,7 @@ copts = [
     "-Wno-unknown-warning-option",
     ]
 
-def pybind11_module(name, srcs = [], deps = [], package_dir = "..", imports = [], **kwargs):
+def pybind11_module(name, srcs = [], cc_deps = [], py_deps = [], package_dir = "..", imports = [], **kwargs):
     cc_lib = "_{}".format(name)
     cc_lib_so = "_{}.so".format(name)
     native.cc_binary(
@@ -17,7 +17,7 @@ def pybind11_module(name, srcs = [], deps = [], package_dir = "..", imports = []
         copts = copts,
         linkshared = 1,
         linkstatic = 0,
-        deps = deps + [
+        deps = cc_deps + [
             "@pybind11//:pybind11",
         ],
     )
@@ -31,6 +31,7 @@ def pybind11_module(name, srcs = [], deps = [], package_dir = "..", imports = []
         data = [
             ":{}".format(cc_lib_so),
         ],
+        deps = py_deps,
         imports = imports + [package_dir],
         visibility = ["//visibility:public"],
         **kwargs
