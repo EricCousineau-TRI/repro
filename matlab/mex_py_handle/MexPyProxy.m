@@ -32,8 +32,12 @@ classdef MexPyProxy
             mx_handle = MexPyProxy.mx_raw_to_mx(mx_raw_handle);
             disp(mx_handle);
             
+            disp('Convert py');
             py_in = mex_py.py_raw_to_py(py_raw_in);
+            disp('Have py');
+            disp(py_in);
             mx_in = PyProxy.fromPyValue(py_in);  % Add depth option?
+            disp(mx_in);
             mx_out = cell(1, nout);
             
             disp('feval');
@@ -52,7 +56,7 @@ classdef MexPyProxy
         end
     end
 
-    methods (Static, Access = protected)
+    methods (Static) %, Access = protected)
         function [out] = erasure()
             persistent e
             if isempty(e)

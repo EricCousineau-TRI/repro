@@ -97,6 +97,7 @@ def mx_raw_feval_py(mx_raw_handle, nout, *py_in):
         traceback.print_exc(file=sys.stdout)
         py_out = None
     # py_out = py_raw_to_py(nout, py_raw_out)
+    print "Done"
     return py_out
 
 if __name__ == "__main__":
