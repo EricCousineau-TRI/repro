@@ -82,6 +82,11 @@ void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
   return py_raw_out;
 }
 
+int c_simple() {
+  mexCallMATLAB(0, nullptr, 0, nullptr, "simple");
+  return 0;
+}
+
 }  // namespace
 
 string mxToStdString(mxArray* mx_in) {
@@ -111,22 +116,26 @@ const string usage =
     "        [mx] = mex_py_proxy('mx_raw_to_mx', mx_raw)\n" \
     "    'get_c_func_ptrs' Get C pointers, using opaque types, to pass to Python.\n" \
     "        [c_func_ptrs_struct] = mex_py_proxy('get_c_func_ptrs')\n" \
+    "    'simple' Call Python from MATLAB from C\n" \
+    "        [] = mex_py_proxy('simple')\n" \
     "    'help' Show usage.";
 
 // Create MATLAB struct containing raw values pointing to functions.
 mxArray* get_c_func_ptrs() {
   // Reference example: mxcreatestructarray.c
-  const int n = 3;
+  const int n = 4;
   const char* names[n] = {
     "c_py_to_py_raw",
     "c_py_raw_to_py",
     "c_mx_feval_py_raw",
+    "c_simple",
   };
   // TODO: Will this work???
   void* ptrs[n] = {
     &c_void_p_pass_thru,
     &c_void_p_pass_thru,
-    &c_mx_feval_py_raw
+    &c_mx_feval_py_raw,
+    &c_simple,
   };
   mwSize dims[2] = {1, 1};
   mxArray* s = mxCreateStructArray(2, dims, n, names);
@@ -169,6 +178,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
       plhs[0] = get_c_func_ptrs();
     } else if (op == "help") {
       mexPrintf("%s\n", usage.c_str());
+    } else if (op == "simple") {
+      ex_assert(nrhs == 1, "");
+      ex_assert(nlhs == 0, "");
+      c_simple();
     }
   }
   catch (const std::exception& e) {

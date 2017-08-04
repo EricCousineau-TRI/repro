@@ -3,6 +3,8 @@ from ctypes import *
 # py_raw_t (mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in)
 c_mx_feval_py_raw_t = CFUNCTYPE(c_uint64, c_uint64, c_int, c_uint64)
 
+c_simple_t = CFUNCTYPE(c_int)
+
 # void* (void*) - but use ctypes to extract void* from py_object
 c_py_raw_to_py_t = CFUNCTYPE(py_object, c_void_p)  # Use py_object so ctypes can cast to void*
 c_py_to_py_raw_t = CFUNCTYPE(c_void_p, py_object)
@@ -60,7 +62,12 @@ def init_c_func_ptrs(funcs_in):
     # Calling MEX through type erasure.
     funcs['c_mx_feval_py_raw'] = \
         c_mx_feval_py_raw_t(funcs_in['c_mx_feval_py_raw'])
+    funcs['c_simple'] = \
+        c_simple_t(funcs_in['c_simple'])
     print "Stored pointers"
+
+def simple():
+    funcs['c_simple']()
 
 # Used by MATLAB
 # TODO: Consider having similar Erasure mechanism, since MATLAB is not pointer-friendly.
