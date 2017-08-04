@@ -80,11 +80,6 @@ Example:
                     c_raw_to_py_t(funcs_in['c_raw_to_py'])
                 funcs['c_py_to_raw'] = \
                     c_py_to_raw_t(funcs_in['c_py_to_raw'])
-                        # Marshaling between MATLAB <-> Python
-                        funcs['c_mx_raw_to_py_raw'] = \
-                            c_raw_to_py_t(funcs_in['c_mx_raw_to_py_raw'])
-                        funcs['c_py_raw_to_mx_raw'] = \
-                            c_py_to_raw_t(funcs_in['c_py_raw_to_mx_raw'])
                 # Calling MEX through type erasure.
                 funcs['c_call_matlab'] = \
                     c_call_matlab_t(funcs_in['c_call_matlab'])
@@ -99,9 +94,8 @@ Example:
                 nargin = len(py_in)
                 # Just do a py.list, for MATLAB to convert to a cell arrays.
                 py_raw_in = c_py_to_raw(py_in)
-                mx_raw_out = mx_array_t * nargout
-                py_raw_out = call_matlab_c(mx_raw_func_handle, nargout, py_raw_in)  # Args will be cast to 
-                py_out = c_raw_to_py(nargout, mx_out)
+                py_raw_out = funcs['c_call_matlab'](mx_raw_func_handle, nargout, py_raw_in)
+                py_out = c_raw_to_py(nargout, py_raw_out)
                 return py_out
 
                 # Is there a way to use mexCallMATLAB to be invoked on Python args?
@@ -117,6 +111,16 @@ Example:
                 [argout{:}] = feval(f, argin{:});
                 py_out = py.pass_thru(argout);
             end
+        C
+            void* call_matlab_c(void* mx_raw_handle, int nout, void* py_raw_in) {
+                mxArray* varargin[] = {py_raw_in};
+                mxArray* varargout[] = {NULL};
+                mxArray* varargin = mexCallMATLAB("py.py_raw_to_py", py_raw_in);
+                mxArray* mx_handle = static_cast<mxArray*>(mx_raw_handle);
+                mexCallMATLAB(mx_handle, ...)
+                void* py_raw_out = *static_cast<void**>(mxGetData(varargout[0]));
+                return py_raw_out;
+            }
 
 TODO: Test passing opaque function pointers from `pybind11`.
     Done.
