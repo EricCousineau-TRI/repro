@@ -105,20 +105,33 @@ Example:
 
             py.call_matlab(mex_ml_to_mx_raw(@sin), 1, 0.)
 
-            function py_out = feval_py(f, nout, py_in)
-                argin = cell(py_in);
-                argout = cell(1, nout);
-                [argout{:}] = feval(f, argin{:});
-                py_out = py.pass_thru(argout);
+            function py_raw_out = feval_py_raw(f, nout, py_raw_in)
+                % feval_py 
+                % Input: void* representing a Python list containing all input
+                % arguments to be converted to MATLAB.
+                % Output: void* representing a Python list containing all output.
+                py_in = py.py_raw_to_py(py_raw_in)
+                mx_in = PyProxy.fromPy(py_in);  % Add depth option?
+                mx_out = cell(1, nout);
+                [mx_out{:}] = feval(f, mx_in{:});
+                py_out = PyProxy.toPy(mx_out);
+                py_raw_out = uint64(py.py_to_py_raw(py_out));
             end
         C
-            void* call_matlab_c(void* mx_raw_handle, int nout, void* py_raw_in) {
-                mxArray* varargin[] = {py_raw_in};
-                mxArray* varargout[] = {NULL};
-                mxArray* varargin = mexCallMATLAB("py.py_raw_to_py", py_raw_in);
+            void* c_call_matlab(void* mx_raw_handle, int nout, void* py_raw_in) {
+                mxArray* mx_handle = mx_raw_handle;
+                mxArray* mx_nout = mxCreateNumericMatrix(1, 1, nout);
+                mxArray* mx_py_raw_in = mxCreateNumericMatrix(1, 1, py_raw_in);
+
+                mxArray* mx_in[] = {mx_raw_handle, mx_nout, mx_py_raw_in};
+                mxArray* mx_out[] = {NULL};
                 mxArray* mx_handle = static_cast<mxArray*>(mx_raw_handle);
                 mexCallMATLAB(mx_handle, ...)
-                void* py_raw_out = *static_cast<void**>(mxGetData(varargout[0]));
+                void* py_raw_out = *static_cast<void**>(mxGetData(mx_out[0]));
+
+                mxFree(mx_nout);
+                mxFree(mx_out);
+
                 return py_raw_out;
             }
 
