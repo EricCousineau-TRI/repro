@@ -35,7 +35,7 @@ def py_raw_to_py(py_raw):
     return py
 
 def py_to_py_raw(py):
-    py_raw = funcs['c_py_to_py_raw'](py)
+    py_raw = funcs['c_py_to_py_raw'](py_object(py))
     return py_raw
 
 # Used by Python
@@ -46,7 +46,14 @@ def mx_raw_feval_py(mx_raw_handle, nout, *py_in):
     mx_feval_py_raw = funcs['c_mx_feval_py_raw']
     try:
         print (mx_raw_handle, int(nout), py_in)
-        py_out = mx_feval_py_raw(c_uint64(mx_raw_handle), c_int(int(nout)), py_object(py_in))
+        print "stuff:"
+        py_raw_in = py_to_py_raw(py_in)
+        print "{} -> {}".format(py_in, py_raw_in)
+        py_anew = py_raw_to_py(py_raw_in)
+        print "{} -> {}".format(py_raw_in, py_anew)
+        py_out = None
+        # py_out = 
+        mx_feval_py_raw(c_uint64(mx_raw_handle), c_int(int(nout)), py_object(py_in))
     except:
         import sys, traceback
         print "Error"

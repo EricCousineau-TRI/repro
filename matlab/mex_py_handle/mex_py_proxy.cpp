@@ -52,28 +52,34 @@ mxArray* mx_raw_to_mx(mx_raw_t mx_raw) {
 namespace {
 
 void* c_void_p_pass_thru(void* in) {
-    // Leverage Python's ctypes marhsalling of py_object is a (hopefully)
-    // robust mechanism to pass stuff around.
-    return in;
+  // Leverage Python's ctypes marhsalling of py_object is a (hopefully)
+  // robust mechanism to pass stuff around.
+  return in;
 }
 
 void* c_mx_feval_py_raw(uint64_t mx_raw_handle, int nout, void* py_raw_in) {
-    mxArray* mx_handle = mx_raw_to_mx(mx_raw_handle);
-    mxArray* mx_nout = mxCreateUint64Value(nout);
-    mxArray* mx_py_raw_in = mxCreateUint64Value(reinterpret_cast<py_raw_t>(py_raw_in));
+  cout << "C: c_mx_feval_py_raw" << endl;
 
-    const int nrhs = 3;
-    mxArray* mx_in[nrhs] = {mx_raw_handle, mx_nout, mx_py_raw_in};
-    const int nlhs = 1;
-    mxArray* mx_out[nlhs] = {NULL};
-    mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "MexPyProxy.mx_feval_py_raw");
-    void* py_raw_out = reinterpret_cast<void*>(mxGetUint64(mx_out[0]));
+  mxArray* mx_mx_raw_handle = mxCreateUint64Value(mx_raw_handle);
+  mxArray* mx_nout = mxCreateUint64Value(nout);
+  mxArray* mx_py_raw_in = mxCreateUint64Value(reinterpret_cast<py_raw_t>(py_raw_in));
 
-    mxFree(mx_nout);
-    mxFree(mx_py_raw_in);
-    mxFree(mx_out);
+  cout << "Prep to call" << endl;
 
-    return py_raw_out;
+  const int nrhs = 3;
+  mxArray* mx_in[nrhs] = {mx_mx_raw_handle, mx_nout, mx_py_raw_in};
+  const int nlhs = 1;
+  mxArray* mx_out[nlhs] = {NULL};
+  mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "MexPyProxy.mx_feval_py_raw");
+  void* py_raw_out = reinterpret_cast<void*>(mxGetUint64(mx_out[0]));
+
+  cout << "Finish call" << endl;
+
+  mxFree(mx_nout);
+  mxFree(mx_py_raw_in);
+  mxFree(mx_out);
+
+  return py_raw_out;
 }
 
 }  // namespace

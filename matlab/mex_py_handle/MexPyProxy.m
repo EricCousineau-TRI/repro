@@ -24,14 +24,21 @@ classdef MexPyProxy
             % Input: py_raw_t representing a Python list containing all input
             % arguments to be converted to MATLAB.
             % Output: py_raw_t representing a Python list containing all output.
+            disp('MATLAB');
+            disp({mx_raw_handle, nout, py_raw_in});
             mex_py = MexPyProxy.py_module();
-            
+            disp('Got module');
+            disp('Get from raw');
             mx_handle = MexPyProxy.mx_raw_to_mx(mx_raw_handle);
+            disp(mx_handle);
+            
             py_in = mex_py.py_raw_to_py(py_raw_in);
             mx_in = PyProxy.fromPyValue(py_in);  % Add depth option?
             mx_out = cell(1, nout);
             
+            disp('feval');
             [mx_out{:}] = feval(mx_handle, mx_in{:});
+            disp(mx_out);
             
             py_out = PyProxy.toPyValue(mx_out);
             py_raw_out = uint64(py.py_to_py_raw(py_out));
