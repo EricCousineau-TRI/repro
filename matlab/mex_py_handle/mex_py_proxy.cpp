@@ -8,22 +8,44 @@ using std::endl;
 using std::string;
 
 // https://stackoverflow.com/questions/15011674/is-it-possible-to-dereference-variable-ids
-// Can wrap any pythonic types...
+// Can wrap around pythonic types?
 
 #include <mex.h>
 #include <matrix.h>
 
 typedef uint64_T mx_raw_t;
+typedef uint64_T py_raw_t;
 
-mxArray* mxCreateRawPtrValue(mx_raw_t value) {
+mxArray* mxCreateUint64Value(mx_raw_t value) {
   mxArray* mx_out = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
   mx_raw_t* pvalue = static_cast<mx_raw_t*>(mxGetData(mx_out));
   *pvalue = value;
   return mx_out;
 }
 
-mx_raw_t mxGetRawPtr(const mxArray* in) {
-  return *static_cast<mx_raw_t*>(mxGetData(in));
+mx_raw_t mxGetUint64(const mxArray* in) {
+  return *static_cast<uint64_T*>(mxGetData(in));
+}
+
+// static_cast will not work, as MATLAB shifts memory around between calls.
+mx_raw_t mx_to_mx_raw(mxArray* mx) {
+  cout << "keep going" << endl;
+  mxArray* argin[1] = {mx};
+  mxArray* argout[1] = {nullptr};
+  mexCallMATLAB(1, argout, 1, argin, "MexPyProxy.mx_to_mx_raw");
+  mx_raw_t mx_raw = mxGetUint64(argout[0]);
+  cout << "mer: " << mx_raw << endl;
+  // mxFree(argout[0]);
+  return mx_raw;
+}
+
+mxArray* mx_raw_to_mx(mx_raw_t mx_raw) {
+  mxArray* argin[1] = {mxCreateUint64Value(mx_raw)};
+  mxArray* argout[1] = {nullptr};
+  mexCallMATLAB(1, argout, 1, argin, "MexPyProxy.mx_raw_to_mx");
+  mxArray* mx = argout[0];
+  // mxFree(argin[0]);
+  return mx;
 }
 
 // Use internal linkage to prevent collision when dynamically linking.
@@ -35,17 +57,17 @@ void* c_void_p_pass_thru(void* in) {
     return in;
 }
 
-void* c_mx_feval_py_raw(void* mx_raw_handle, int nout, void* py_raw_in) {
-    mxArray* mx_handle = static_cast<mxArray*>(mx_raw_handle);
-    mxArray* mx_nout = mxCreateRawPtrValue(nout);
-    mxArray* mx_py_raw_in = mxCreateRawPtrValue(reinterpret_cast<mx_raw_t>(py_raw_in));
+void* c_mx_feval_py_raw(uint64_t mx_raw_handle, int nout, void* py_raw_in) {
+    mxArray* mx_handle = mx_raw_to_mx(mx_raw_handle);
+    mxArray* mx_nout = mxCreateUint64Value(nout);
+    mxArray* mx_py_raw_in = mxCreateUint64Value(reinterpret_cast<py_raw_t>(py_raw_in));
 
     const int nrhs = 3;
     mxArray* mx_in[nrhs] = {mx_raw_handle, mx_nout, mx_py_raw_in};
     const int nlhs = 1;
     mxArray* mx_out[nlhs] = {NULL};
-    mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "mx_feval_py_raw");
-    void* py_raw_out = reinterpret_cast<void*>(mxGetRawPtr(mx_out[0]));
+    mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "MexPyProxy.mx_feval_py_raw");
+    void* py_raw_out = reinterpret_cast<void*>(mxGetUint64(mx_out[0]));
 
     mxFree(mx_nout);
     mxFree(mx_py_raw_in);
@@ -107,7 +129,7 @@ mxArray* get_c_func_ptrs() {
     void* ptr = ptrs[i];
     int field_index = mxGetFieldNumber(s, name);
     mx_raw_t ptr_raw = reinterpret_cast<mx_raw_t>(ptr);
-    mxArray* value = mxCreateRawPtrValue(ptr_raw);
+    mxArray* value = mxCreateUint64Value(ptr_raw);
     mxSetFieldByNumber(s, 0, field_index, value);
   }
   return s;
@@ -120,21 +142,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
     string op = mxToStdString(prhs[0]);
     if (op == "mx_to_mx_raw") {
+      cout << "start" << endl;
       // Return a uint64 representing point to mxArray* item.
       ex_assert(nrhs == 2, usage);
       ex_assert(nlhs == 1, usage);
       mxArray* mx = prhs[1];
-      mx_raw_t mx_raw = reinterpret_cast<mx_raw_t>(mx);
-      cout << mx << endl;
-      plhs[0] = mxCreateRawPtrValue(mx_raw);
+      mx_raw_t mx_raw = mx_to_mx_raw(mx);
+      plhs[0] = mxCreateUint64Value(mx_raw);
     } else if (op == "mx_raw_to_mx") {
       // Opposite direction.
       ex_assert(nrhs == 3, usage);
       ex_assert(nlhs == 1, usage);
-      mxArray* mx_mx_raw = prhs[1];
-      mx_raw_t mx_raw = *static_cast<mx_raw_t*>(mxGetData(mx_mx_raw));
-      mxArray* mx = reinterpret_cast<mxArray*>(mx_raw);
-      cout << mx << " - " << prhs[2] << endl;
+      mx_raw_t mx_raw = mxGetUint64(prhs[1]);
+      mxArray* mx = mx_raw_to_mx(mx_raw);
       plhs[0] = mx;
     } else if (op == "get_c_func_ptrs") {
       ex_assert(nrhs == 1, usage);
