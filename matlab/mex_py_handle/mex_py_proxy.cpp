@@ -13,19 +13,17 @@ using std::string;
 #include <mex.h>
 #include <matrix.h>
 
-typedef int64_T mx_raw_t;
+typedef uint64_T mx_raw_t;
 
-mxArray* mxCreateUint64(mx_raw_t** ppvalue) {
-  mxArray* mx_out = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
-  *ppvalue = static_cast<mx_raw_t*>(mxGetData(mx_out));
-  return mx_out;
-}
-
-mxArray* mxCreateUint64Value(mx_raw_t value) {
+mxArray* mxCreateRawPtrValue(mx_raw_t value) {
   mxArray* mx_out = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
   mx_raw_t* pvalue = static_cast<mx_raw_t*>(mxGetData(mx_out));
   *pvalue = value;
   return mx_out;
+}
+
+mx_raw_t mxGetRawPtr(const mxArray* in) {
+  return *static_cast<mx_raw_t*>(mxGetData(in));
 }
 
 // Use internal linkage to prevent collision when dynamically linking.
@@ -39,17 +37,18 @@ void* c_void_p_pass_thru(void* in) {
 
 void* c_mx_feval_py_raw(void* mx_raw_handle, int nout, void* py_raw_in) {
     mxArray* mx_handle = static_cast<mxArray*>(mx_raw_handle);
-    mxArray* mx_nout = mxCreateUint64Value(nout);
-    mxArray* mx_py_raw_in = mxCreateUint64Value(reinterpret_cast<mx_raw_t>(py_raw_in));
+    mxArray* mx_nout = mxCreateRawPtrValue(nout);
+    mxArray* mx_py_raw_in = mxCreateRawPtrValue(reinterpret_cast<mx_raw_t>(py_raw_in));
 
     const int nrhs = 3;
     mxArray* mx_in[nrhs] = {mx_raw_handle, mx_nout, mx_py_raw_in};
     const int nlhs = 1;
     mxArray* mx_out[nlhs] = {NULL};
     mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "mx_feval_py_raw");
-    void* py_raw_out = reinterpret_cast<void*>(*static_cast<mx_raw_t*>(mxGetData(mx_out[0])));
+    void* py_raw_out = reinterpret_cast<void*>(mxGetRawPtr(mx_out[0]));
 
     mxFree(mx_nout);
+    mxFree(mx_py_raw_in);
     mxFree(mx_out);
 
     return py_raw_out;
@@ -107,9 +106,8 @@ mxArray* get_c_func_ptrs() {
     const char* name = names[i];
     void* ptr = ptrs[i];
     int field_index = mxGetFieldNumber(s, name);
-    mx_raw_t* pvalue;
-    mxArray* value = mxCreateUint64(&pvalue);
-    *pvalue = ptr;
+    mx_raw_t ptr_raw = reinterpret_cast<mx_raw_t>(ptr);
+    mxArray* value = mxCreateRawPtrValue(ptr_raw);
     mxSetFieldByNumber(s, 0, field_index, value);
   }
   return s;
@@ -127,18 +125,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
       ex_assert(nlhs == 1, usage);
       mxArray* mx = prhs[1];
       mx_raw_t mx_raw = reinterpret_cast<mx_raw_t>(mx);
-      mxArray* mx_raw_test = reinterpret_cast<mxArray*>(mx_raw);
-      cout << sizeof(mx_raw_t) << " " << sizeof(mxArray*) << endl;
-      plhs[0] = mxCreateUint64Value(mx_raw);
-      cout << "mx_to_mx_raw: " << mx << " = " << mx_raw << " = " << mx_raw_test << "\n";
+      cout << mx << endl;
+      plhs[0] = mxCreateRawPtrValue(mx_raw);
     } else if (op == "mx_raw_to_mx") {
       // Opposite direction.
-      ex_assert(nrhs == 2, usage);
-      ex_assert(nlhs == /*1*/0, usage);
+      ex_assert(nrhs == 3, usage);
+      ex_assert(nlhs == 1, usage);
       mxArray* mx_mx_raw = prhs[1];
       mx_raw_t mx_raw = *static_cast<mx_raw_t*>(mxGetData(mx_mx_raw));
       mxArray* mx = reinterpret_cast<mxArray*>(mx_raw);
-      cout << "mx_raw_to_mx: " << mx << " = " << mx_raw << "\n";
+      cout << mx << " - " << prhs[2] << endl;
       plhs[0] = mx;
     } else if (op == "get_c_func_ptrs") {
       ex_assert(nrhs == 1, usage);

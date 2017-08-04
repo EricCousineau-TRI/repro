@@ -14,11 +14,19 @@ mex_py_proxy('help')
 make;
 
 %%
-value = 1;  % Must avoid passing temporaries!
-% value = struct('hello', 1);
-mx_raw = mex_py_proxy('mx_to_mx_raw', value);
-mex_py_proxy('mx_raw_to_mx', mx_raw)
-% mx = mex_py_proxy('mx_raw_to_mx', mx_raw);
-% 
-% mx_raw = mex_py_proxy('mx_to_mx_raw', 1);
-% mex_py_proxy('mx_raw_to_mx', mx_raw)
+% values = {1, eye(20, 20)};  % Fails
+values = {Ref(1)};
+% Be wary of passing temporaries! May be subject to ML gargabe collection.
+for i = 1:length(values)
+    value = values{i};
+    mx_raw = mex_py_proxy('mx_to_mx_raw', value);
+    mx_raw
+    mx_value = mex_py_proxy('mx_raw_to_mx', mx_raw, value);
+    if ~isequal(value, mx_value)
+        value
+        mx_value
+        warning('Not equal');
+    end
+end
+
+%%
