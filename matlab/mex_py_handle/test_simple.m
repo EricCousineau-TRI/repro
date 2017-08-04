@@ -11,11 +11,14 @@ mex_py_proxy('help')
     'help' Show usage.
 %}
 
-value = 1;
+make;
+
+%%
+value = 1;  % Must avoid passing temporaries!
 % value = struct('hello', 1);
 mx_raw = mex_py_proxy('mx_to_mx_raw', value);
 mex_py_proxy('mx_raw_to_mx', mx_raw)
 % mx = mex_py_proxy('mx_raw_to_mx', mx_raw);
-
-mx_raw = mex_py_proxy('mx_to_mx_raw', 1);
-mex_py_proxy('mx_raw_to_mx', mx_raw)
+% 
+% mx_raw = mex_py_proxy('mx_to_mx_raw', 1);
+% mex_py_proxy('mx_raw_to_mx', mx_raw)
