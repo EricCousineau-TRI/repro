@@ -18,12 +18,14 @@ typedef mwSize mx_uint64;
 mxArray* mxCreateUint64(mx_uint64** ppvalue) {
   mxArray* mx_out = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
   *ppvalue = static_cast<mx_uint64*>(mxGetData(mx_out));
+  return mx_out;
 }
 
 mxArray* mxCreateUint64Value(mx_uint64 value) {
   mxArray* mx_out = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
   mx_uint64* pvalue = static_cast<mx_uint64*>(mxGetData(mx_out));
   *pvalue = value;
+  return mx_out;
 }
 
 // Use internal linkage to prevent collision when dynamically linking.
@@ -124,9 +126,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
       ex_assert(nrhs == 2, usage);
       ex_assert(nlhs == 1, usage);
       mxArray* mx = prhs[1];
-      mx_uint64* pmx_raw;
-      plhs[0] = mxCreateUint64(&pmx_raw);
-      *pmx_raw = reinterpret_cast<mx_uint64>(mx);
+      mx_uint64 mx_raw = reinterpret_cast<mx_uint64>(mx);
+      plhs[0] = mxCreateUint64Value(mx_raw);
+      cout << "Assigned.\n";
     } else if (op == "mx_raw_to_mx") {
       // Opposite direction.
       ex_assert(nrhs == 2, usage);
