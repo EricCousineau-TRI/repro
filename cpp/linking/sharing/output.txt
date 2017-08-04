@@ -1,0 +1,19 @@
+g++  -o main_0 main.cpp -ldl
+g++  -DCONSUMER='"consumer_1.so"' -fPIC -shared -o consumer_1.so consumer.cpp
+g++  -DCONSUMER='"consumer_2.so"' -fPIC -shared -o consumer_2.so consumer.cpp
+./main_0
+dlopen: ./consumer_1.so
+dlopen: ./consumer_2.so
+[ consumer_1.so ]
+tmp: main
+tmp_static: main
+[ consumer_2.so ]
+tmp: consumer_1.so
+tmp_static: consumer_1.so
+[ main ]
+tmp: consumer_2.so
+tmp_static: consumer_2.so
+dlclose: ./consumer_2.so
+dlclose: ./consumer_1.so
+
+
