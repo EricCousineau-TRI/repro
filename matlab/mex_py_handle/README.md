@@ -59,7 +59,7 @@ Example:
             mx_array_t_p = c_void_p  # mxArray**
 
             # int (mxArray* func_handle, void_p) # int nlhs, mxArray* plhs[], int nrhs, mxArray* prhs[])
-            c_call_matlab_t = CFUNCTYPE(py_object, mx_array_t, c_int, mx_array_t_p, c_int, mx_array_t_p)
+            c_mx_feval_py_raw_t = CFUNCTYPE(py_object, mx_array_t, c_int, mx_array_t_p, c_int, mx_array_t_p)
 
             # void* (void*) - but use ctypes to extract void* from py_object
             c_raw_to_py_t = ctypes.CFUNCTYPE(py_object, c_void_p)  # Use py_object so ctypes can cast to void*
@@ -81,8 +81,8 @@ Example:
                 funcs['c_py_to_raw'] = \
                     c_py_to_raw_t(funcs_in['c_py_to_raw'])
                 # Calling MEX through type erasure.
-                funcs['c_call_matlab'] = \
-                    c_call_matlab_t(funcs_in['c_call_matlab'])
+                funcs['c_mx_feval_py_raw'] = \
+                    c_mx_feval_py_raw_t(funcs_in['c_mx_feval_py_raw'])
 
             def py_raw_to_py(py_raw):
                 return funcs['c_raw_to_py'](py_raw)
@@ -94,7 +94,7 @@ Example:
                 nargin = len(py_in)
                 # Just do a py.list, for MATLAB to convert to a cell arrays.
                 py_raw_in = c_py_to_raw(py_in)
-                py_raw_out = funcs['c_call_matlab'](mx_raw_func_handle, nargout, py_raw_in)
+                py_raw_out = funcs['c_mx_feval_py_raw'](mx_raw_func_handle, nargout, py_raw_in)
                 py_out = c_raw_to_py(nargout, py_raw_out)
                 return py_out
 
@@ -106,7 +106,7 @@ Example:
                 py.mx_py.call_matlab(mex_py_proxy('mx_to_mx_raw', @sin), 1, 0.)
             end
 
-            function py_raw_out = mx_py_raw_feval(f, nout, py_raw_in)
+            function py_raw_out = mx_feval_py_raw(f, nout, py_raw_in)
                 % feval_py 
                 % Input: void* representing a Python list containing all input
                 % arguments to be converted to MATLAB.
@@ -124,7 +124,7 @@ Example:
                 // robust mechanism to pass stuff around.
                 return out;
             }
-            void* c_call_matlab(void* mx_raw_handle, int nout, void* py_raw_in) {
+            void* c_mx_feval_py_raw(void* mx_raw_handle, int nout, void* py_raw_in) {
                 mxArray* mx_handle = mx_raw_handle;
                 mxArray* mx_nout = mxCreateNumericMatrix(1, 1, nout);
                 mxArray* mx_py_raw_in = mxCreateNumericMatrix(1, 1, py_raw_in);
@@ -132,7 +132,7 @@ Example:
                 mxArray* mx_in[] = {mx_raw_handle, mx_nout, mx_py_raw_in};
                 mxArray* mx_out[] = {NULL};
                 mxArray* mx_handle = static_cast<mxArray*>(mx_raw_handle);
-                mexCallMATLAB("mx_py_raw_feval", ...)
+                mexCallMATLAB("mx_feval_py_raw", ...)
                 void* py_raw_out = *static_cast<void**>(mxGetData(mx_out[0]));
 
                 mxFree(mx_nout);
