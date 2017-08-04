@@ -50,7 +50,7 @@ Example:
         # https://stackoverflow.com/questions/3245859/back-casting-a-ctypes-py-object-in-a-callback
         # Concerns: https://stackoverflow.com/questions/18660433/matlab-mex-file-with-mexcallmatlab-is-almost-300-times-slower-than-the-correspon
 
-        Python
+        Python - mx_py.py
             def call_func(f, x, str):
                 call_matlab(f, 1, 2 * x, str + " world")
 
@@ -100,12 +100,13 @@ Example:
 
                 # Is there a way to use mexCallMATLAB to be invoked on Python args?
                 # Increase reference counting???
-        MATLAB
-            py.declare_c_func_ptrs(mex_get_c_func_ptrs())
+        MATLAB - PyProxyMex
+            function init()
+                py.mx_py.declare_c_func_ptrs(mex_py_proxy('get_c_func_ptrs'));
+                py.mx_py.call_matlab(mex_py_proxy('mx_to_mx_raw', @sin), 1, 0.)
+            end
 
-            py.call_matlab(mex_ml_to_mx_raw(@sin), 1, 0.)
-
-            function py_raw_out = feval_py_raw(f, nout, py_raw_in)
+            function py_raw_out = mx_py_raw_feval(f, nout, py_raw_in)
                 % feval_py 
                 % Input: void* representing a Python list containing all input
                 % arguments to be converted to MATLAB.
@@ -117,7 +118,12 @@ Example:
                 py_out = PyProxy.toPy(mx_out);
                 py_raw_out = uint64(py.py_to_py_raw(py_out));
             end
-        C
+        C - mex_py_proxy.cpp
+            void* void_p_pass_thru(void* in) {
+                // Leverage Python's ctypes marhsalling of py_object is a (hopefully)
+                // robust mechanism to pass stuff around.
+                return out;
+            }
             void* c_call_matlab(void* mx_raw_handle, int nout, void* py_raw_in) {
                 mxArray* mx_handle = mx_raw_handle;
                 mxArray* mx_nout = mxCreateNumericMatrix(1, 1, nout);
@@ -126,7 +132,7 @@ Example:
                 mxArray* mx_in[] = {mx_raw_handle, mx_nout, mx_py_raw_in};
                 mxArray* mx_out[] = {NULL};
                 mxArray* mx_handle = static_cast<mxArray*>(mx_raw_handle);
-                mexCallMATLAB(mx_handle, ...)
+                mexCallMATLAB("mx_py_raw_feval", ...)
                 void* py_raw_out = *static_cast<void**>(mxGetData(mx_out[0]));
 
                 mxFree(mx_nout);
@@ -134,6 +140,7 @@ Example:
 
                 return py_raw_out;
             }
+
 
 TODO: Test passing opaque function pointers from `pybind11`.
     Done.
