@@ -26,7 +26,8 @@ mxArray* mxCreateUint64Value(mx_uint64 value) {
   *pvalue = value;
 }
 
-extern "C" {
+// Use internal linkage to prevent collision when dynamically linking.
+namespace {
 
 void* c_void_p_pass_thru(void* in) {
     // Leverage Python's ctypes marhsalling of py_object is a (hopefully)
@@ -52,7 +53,7 @@ void* c_mx_feval_py_raw(void* mx_raw_handle, int nout, void* py_raw_in) {
     return py_raw_out;
 }
 
-}  // extern "C"
+}  // namespace
 
 string mxToStdString(mxArray* mx_in) {
   // From: mxmalloc.c
@@ -104,7 +105,7 @@ mxArray* get_c_func_ptrs() {
     const char* name = names[i];
     void* ptr = ptrs[i];
     int field_index = mxGetFieldNumber(s, name);
-    mx_int64* pvalue;
+    mx_uint64* pvalue;
     mxArray* value = mxCreateUint64(&pvalue);
     *pvalue = ptr;
     mxSetFieldByNumber(s, 0, field_index, value);
@@ -113,7 +114,7 @@ mxArray* get_c_func_ptrs() {
 }
 
 // Wrap MEX function call.
-void mexFunction(int nlhs, mxArray *plhs[], int nrhs, mxArray *prhs[]) {
+void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   try {
     ex_assert(nrhs >= 1, usage);
 
@@ -125,14 +126,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, mxArray *prhs[]) {
       mxArray* mx = prhs[1];
       mx_uint64* pmx_raw;
       plhs[0] = mxCreateUint64(&pmx_raw);
-      *pmx_raw = static_cast<mx_uint64>(mx);
+      *pmx_raw = reinterpret_cast<mx_uint64>(mx);
     } else if (op == "mx_raw_to_mx") {
       // Opposite direction.
       ex_assert(nrhs == 2, usage);
       ex_assert(nlhs == 1, usage);
       mxArray* mx_mx_raw = prhs[1];
       mx_uint64 mx_raw = *static_cast<mx_uint64*>(mxGetData(mx_mx_raw));
-      plhs[0] = static_cast<mxArray*>(mx_raw);
+      plhs[0] = reinterpret_cast<mxArray*>(mx_raw);
     } else if (op == "get_c_func_ptrs") {
       ex_assert(nrhs == 1, usage);
       ex_assert(nlhs == 1, usage);
