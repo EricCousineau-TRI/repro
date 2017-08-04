@@ -1,6 +1,7 @@
 #include <iostream>
-#include <string>
+#include <sstream>
 #include <stdexcept>
+#include <string>
 
 using std::cout;
 using std::endl;
@@ -12,7 +13,18 @@ using std::string;
 #include <mex.h>
 #include <matrix.h>
 
-#include "func.h"
+typedef mwSize mx_uint64;
+
+mxArray* mxCreateUint64(mx_uint64** ppvalue) {
+  mxArray* mx_out = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
+  *ppvalue = static_cast<mx_uint64*>(mxGetData(mx_out));
+}
+
+mxArray* mxCreateUint64Value(mx_uint64 value) {
+  mxArray* mx_out = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
+  mx_uint64* pvalue = static_cast<mx_uint64*>(mxGetData(mx_out));
+  *pvalue = value;
+}
 
 extern "C" {
 
@@ -24,15 +36,15 @@ void* c_void_p_pass_thru(void* in) {
 
 void* c_mx_feval_py_raw(void* mx_raw_handle, int nout, void* py_raw_in) {
     mxArray* mx_handle = static_cast<mxArray*>(mx_raw_handle);
-    mxArray* mx_nout = mxCreateNumericMatrix(1, 1, nout);
-    mxArray* mx_py_raw_in = mxCreateNumericMatrix(1, 1, py_raw_in);
+    mxArray* mx_nout = mxCreateUint64Value(nout);
+    mxArray* mx_py_raw_in = mxCreateUint64Value(reinterpret_cast<mx_uint64>(py_raw_in));
 
     const int nrhs = 3;
     mxArray* mx_in[nrhs] = {mx_raw_handle, mx_nout, mx_py_raw_in};
     const int nlhs = 1;
     mxArray* mx_out[nlhs] = {NULL};
-    mexCallMATLAB("mx_feval_py_raw", ...)
-    void* py_raw_out = *static_cast<void**>(mxGetData(mx_out[0]));
+    mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "mx_feval_py_raw");
+    void* py_raw_out = reinterpret_cast<void*>(*static_cast<mx_uint64*>(mxGetData(mx_out[0])));
 
     mxFree(mx_nout);
     mxFree(mx_out);
@@ -41,13 +53,6 @@ void* c_mx_feval_py_raw(void* mx_raw_handle, int nout, void* py_raw_in) {
 }
 
 }  // extern "C"
-
-typedef mwSize mx_uint64;
-
-mxArray* mxCreateUint64(mx_uint64** ppvalue) {
-  mxArray* mx_out = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
-  *ppvalue = static_cast<mx_uint64*>(mxGetData(mx_out));
-}
 
 string mxToStdString(mxArray* mx_in) {
   // From: mxmalloc.c
@@ -61,7 +66,7 @@ string mxToStdString(mxArray* mx_in) {
 
 #define ex_assert(cond, msg_expr) \
   if (!(cond)) { \
-    ostringstream os; \
+    std::ostringstream os; \
     os << #cond << endl; \
     os << msg_expr; \
     throw std::runtime_error(os.str()); \
@@ -138,6 +143,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, mxArray *prhs[]) {
     }
   }
   catch (const std::exception& e) {
-    mexErrMsgTxt(e.what().c_str());
+    mexErrMsgIdAndTxt("mex_py_proxy:exception", e.what());
   }
 }
