@@ -28,6 +28,7 @@ def init_c_func_ptrs(funcs_in):
     print "Stored pointers"
 
 # Used by MATLAB
+# TODO: Consider having similar Erasure mechanism, since MATLAB is not pointer-friendly.
 def py_raw_to_py(py_raw):
     # py_raw - will be uint64
     py = funcs['c_py_raw_to_py'](py_raw)
@@ -39,10 +40,17 @@ def py_to_py_raw(py):
 
 # Used by Python
 def mx_raw_feval_py(mx_raw_handle, nout, *py_in):
-    nargin = len(py_in)
+    print "Calling from Python"
     # Just do a py.list, for MATLAB to convert to a cell arrays.
     # py_raw_in = py_to_py_raw(py_in)
     mx_feval_py_raw = funcs['c_mx_feval_py_raw']
-    py_out = mx_feval_py_raw(mx_raw_handle, nout, py_in)
+    try:
+        print (mx_raw_handle, int(nout), py_in)
+        py_out = mx_feval_py_raw(c_uint64(mx_raw_handle), c_int(int(nout)), py_object(py_in))
+    except:
+        import sys, traceback
+        print "Error"
+        traceback.print_exc(file=sys.stdout)
+        py_out = None
     # py_out = py_raw_to_py(nout, py_raw_out)
     return py_out

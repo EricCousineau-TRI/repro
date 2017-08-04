@@ -14,6 +14,7 @@ mex_py_proxy('help')
 make;
 
 %%
+clear classes;
 MexPyProxy.init();
 
 %%
@@ -32,3 +33,6 @@ for i = 1:length(values)
 end
 
 %%
+f = @sin;
+
+MexPyProxy.test_call(f, 1, 0)
