@@ -36,3 +36,9 @@ py_test_simple(
     size = "small",
     deps = [":pymodule"],
 )
+
+py_binary(
+    name = "shell",
+    srcs = ["shell.py"],
+    deps = [":pymodule"],
+)
