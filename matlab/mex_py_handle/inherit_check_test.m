@@ -25,6 +25,7 @@ py.dispatch(value)
 %%
 mx = InheritCheckMx();
 
+%%
 mx.pure(value)
 mx.optional(value)
 

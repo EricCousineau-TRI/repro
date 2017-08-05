@@ -107,3 +107,6 @@ class MxFunc(MxRaw):
         return out
     def __call__(self, *args, **kwargs):
         return self.call(args, **kwargs)
+
+def is_trampoline(obj):
+    return hasattr(obj, 'mx_obj')
