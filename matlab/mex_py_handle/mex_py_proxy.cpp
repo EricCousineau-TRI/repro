@@ -9,44 +9,44 @@ using std::cout;
 using std::endl;
 using std::string;
 
-// For GIL
-#define WITH_THREAD 1
-// <pybind11>
-#include <Python.h>
+// // For GIL
+// #define WITH_THREAD 1
+// // <pybind11>
+// #include <Python.h>
 
-namespace pybind11 {
+// namespace pybind11 {
 
-class gil_scoped_acquire {
-    PyGILState_STATE state;
-public:
-    gil_scoped_acquire() {
-      cout << "c: gil_acquire start" << endl;
-      state = PyGILState_Ensure();
-    }
-    ~gil_scoped_acquire() {
-      PyGILState_Release(state);
-      cout << "c: gil_acquire end" << endl;
-    }
-};
+// class gil_scoped_acquire {
+//     PyGILState_STATE state;
+// public:
+//     gil_scoped_acquire() {
+//       cout << "c: gil_acquire start" << endl;
+//       state = PyGILState_Ensure();
+//     }
+//     ~gil_scoped_acquire() {
+//       PyGILState_Release(state);
+//       cout << "c: gil_acquire end" << endl;
+//     }
+// };
 
-class gil_scoped_release {
-    PyThreadState *state;
-public:
-    gil_scoped_release() {
-      cout << "c: gil_release start" << endl;
-      state = PyEval_SaveThread();
-    }
-    ~gil_scoped_release() {
-      PyEval_RestoreThread(state);
-      cout << "c: gil_release end" << endl;
-    }
-};
+// class gil_scoped_release {
+//     PyThreadState *state;
+// public:
+//     gil_scoped_release() {
+//       cout << "c: gil_release start" << endl;
+//       state = PyEval_SaveThread();
+//     }
+//     ~gil_scoped_release() {
+//       PyEval_RestoreThread(state);
+//       cout << "c: gil_release end" << endl;
+//     }
+// };
 
-}  // namespace pybind11
+// }  // namespace pybind11
 
-namespace py = pybind11;
+// namespace py = pybind11;
 
-// </pybind11>
+// // </pybind11>
 
 // https://stackoverflow.com/questions/15011674/is-it-possible-to-dereference-variable-ids
 // Can wrap around pythonic types?
@@ -76,7 +76,7 @@ mx_raw_t mx_to_mx_raw(mxArray* mx) {
   mexCallMATLAB(1, argout, 1, argin, "MexPyProxy.mx_to_mx_raw");
   mx_raw_t mx_raw = mxGetUint64(argout[0]);
   cout << "mer: " << mx_raw << endl;
-  // mxFree(argout[0]);
+  // mxDestroyArray(argout[0]);
   return mx_raw;
 }
 
@@ -85,7 +85,7 @@ mxArray* mx_raw_to_mx(mx_raw_t mx_raw) {
   mxArray* argout[1] = {nullptr};
   mexCallMATLAB(1, argout, 1, argin, "MexPyProxy.mx_raw_to_mx");
   mxArray* mx = argout[0];
-  // mxFree(argin[0]);
+  // mxDestroyArray(argin[0]);
   return mx;
 }
 
@@ -101,7 +101,7 @@ void* c_void_p_pass_thru(void* in) {
 void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
   cout << "c: c_mx_feval_py_raw" << endl;
 
-  py::gil_scoped_acquire py_gil;
+  // py::gil_scoped_acquire py_gil;
   // py::gil_scoped_release py_gil;
 
   mxArray* mx_mx_raw_handle = mxCreateUint64Value(mx_raw_handle);
@@ -120,32 +120,31 @@ void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
 
   cout << "c: call matlab - finish" << endl;
 
-  mxFree(mx_mx_raw_handle);
-
-  // mxFree(mx_nout);
-  // mxFree(mx_py_raw_in);
-  // mxFree(mx_out);
+  mxDestroyArray(mx_mx_raw_handle);
+  mxDestroyArray(mx_nout);
+  mxDestroyArray(mx_py_raw_in);
+  // mxDestroyArray(mx_out[0]);
 
   return 0;
   // return py_raw_out;
 }
 
 int c_simple() {
-  py::gil_scoped_acquire py_gil;
-  {
-    py::gil_scoped_acquire py_gil;
-    {
-      py::gil_scoped_release py_gil;
-    }
-  }
+  // py::gil_scoped_acquire py_gil;
+  // {
+  //   py::gil_scoped_acquire py_gil;
+  //   {
+  //     py::gil_scoped_release py_gil;
+  //   }
+  // }
   cout << "c: call matlab - start" << endl;
   mxArray* mx_in[] = {mxCreateUint64Value(1), mxCreateUint64Value(2)};
   mxArray* mx_out[] = {nullptr};
   mexCallMATLAB(1, mx_out, 2, mx_in, "simple");
   cout << "  y = " << mxGetUint64(mx_out[0]) << endl;
   cout << "c: call matlab - finish" << endl;
-  mxFree(mx_in[0]);
-  mxFree(mx_in[1]);
+  mxDestroyArray(mx_in[0]);
+  mxDestroyArray(mx_in[1]);
   return 0;
 }
 
@@ -244,9 +243,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
       ex_assert(nrhs == 1, "");
       ex_assert(nlhs == 0, "");
       c_simple();
+    } else if (op == "mx_feval_py_raw") {
+      ex_assert(nrhs == 1, "");
+      ex_assert(nlhs == 0, "");
+      cout << "c_mx_feval_py_raw" << c_mx_feval_py_raw(0, 0, 0) << endl;
     } else if (op == "py_so_reload") {
       dlopen("/usr/lib/x86_64-linux-gnu/libpython2.7.so.1", RTLD_NOLOAD | RTLD_GLOBAL);
       cout << "Reload python.so with global symbol table" << endl;
+    } else {
+      throw std::runtime_error("Invalid op: " + op);
     }
   }
   catch (const std::exception& e) {
