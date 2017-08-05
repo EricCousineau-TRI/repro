@@ -90,8 +90,8 @@ class MxFunc(MxRaw):
         return "<MxFunc: {}>".format(self.disp)
     def call(self, args, nargout=1, unpack_scalar=True):
         # mx_raw_ref_incr(self.mx_raw)
-        # # Incremented reference count, because this call will
-        # # directly decrement it.
+        # Incremented reference count, because this call will
+        # directly decrement it.
         out = mx_raw_feval_py(self.mx_raw, nargout, *args)
         if len(out) == 1 and unpack_scalar:
             out = out[0]

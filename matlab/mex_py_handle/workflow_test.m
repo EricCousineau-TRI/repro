@@ -16,9 +16,13 @@ fs = @(s) [s, ' world'];
 c = py_simple.call_check(fs, 'Hello')
 d = py_simple.call_check(fs, 'What a')
 
+fprintf('Ref count: %d\n', MexPyProxy.mx_raw_count());
+
 %%
 % finv = @(A, b) A \ b;
 e = py_simple.call_check(@mldivide, 2 * eye(2), [2, 4]')
+
+fprintf('Ref count: %d\n', MexPyProxy.mx_raw_count());
 
 %%
 % NOTE: This won't work, since `struct` will turn into a `dict` in Python,
@@ -26,13 +30,16 @@ e = py_simple.call_check(@mldivide, 2 * eye(2), [2, 4]')
 % fields).
 py_simple.call_check(@fieldnames, struct('test', 1))
 
-objs = cell(1, 3);
+%%
+clear objs
+objs = cell(1, 2);
 for i = 1:2
     objs{i} = py_simple.Obj(@sin);
     for j = 1:2
         objs{i}.call(pi / 4)
     end
 end
+fprintf('Ref count: %d\n', MexPyProxy.mx_raw_count());
 
 %% Show number of live references
 fprintf('Ref count: %d\n', MexPyProxy.mx_raw_count());

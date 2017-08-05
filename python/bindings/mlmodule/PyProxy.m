@@ -282,6 +282,10 @@ classdef PyProxy % < dynamicprops
                         m = NumPyProxy(p);
                     case {'py.py_mex_proxy.MxRaw', 'py.py_mex_proxy.MxFunc'}
                         mx_raw = int64(p.mx_raw);
+                        % Prevent reference counter from decrementing on
+                        % access to a persistent object.
+                        % TODO: Figure out more elegant mechanism for this.
+                        MexPyProxy.mx_raw_ref_incr(mx_raw);
                         m = MexPyProxy.mx_raw_to_mx(mx_raw);
                     otherwise
                         % Generate proxy
