@@ -6,6 +6,7 @@ PyProxy.reloadPy(ice);
 
 %%
 cpp = ic.CppExtend()
+%%
 py = ice.PyExtend() % ice.pass_thru)
 value = int64(3);
 
