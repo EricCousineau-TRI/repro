@@ -4,7 +4,7 @@
 load("//tools:python.bzl", "py_test_simple")
 load("//tools:pybind11.bzl", "pybind11_module")
 
-package(default_visibility = ["//visibility:private"])
+package(default_visibility = ["//visibility:public"])
 
 pybind11_module(
     name = "inherit_check",
