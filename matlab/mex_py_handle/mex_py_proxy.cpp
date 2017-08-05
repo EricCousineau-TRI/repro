@@ -17,6 +17,12 @@ Can tinker with `format debug` to see addresses.
 
 (Hopefully this is not a deep copy.)
 
+Concerns: https://stackoverflow.com/questions/18660433/matlab-mex-file-with-mexcallmatlab-is-almost-300-times-slower-than-the-correspon
+If MATLAB gets too slow due mexCallMATLAB, see if this can be bypassed by
+somehow storing a persistent function handle.
+(See comments above for persistent mxArray* objects - hopefully
+they apply to function handles?)
+
 For Python objects in MATLAB, since MATLAB treats Python objects well, we
 not actually need reference counting.
 If we do, __del__ should be sufficient.
