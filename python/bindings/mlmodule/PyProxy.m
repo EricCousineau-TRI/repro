@@ -216,9 +216,13 @@ classdef PyProxy % < dynamicprops
                 case {'PyProxy', 'NumPyProxy'}
                     p = PyProxy.getPy(m);
                 case {'function_handle'}
+                    mx_raw = MexPyProxy.mx_to_mx_raw(m);
                     p = py.py_mex_proxy.MxFunc(...
-                        MexPyProxy.mx_to_mx_raw(m), ...
+                        mx_raw, ...
                         func2str(m));
+                    % The above object will effecitvely enforce `move` semantics.
+                    % Thus, we will let our instance `go out of scope`.
+                    MexPyProxy.mx_raw_ref_decr(mx_raw);
                 case 'cell'
                     if isempty(m)
                         % Handle empty-case. Otherwise, MATLAB reports an error
@@ -282,10 +286,10 @@ classdef PyProxy % < dynamicprops
                         m = NumPyProxy(p);
                     case {'py.py_mex_proxy.MxRaw', 'py.py_mex_proxy.MxFunc'}
                         mx_raw = int64(p.mx_raw);
-                        % Prevent reference counter from decrementing on
-                        % access to a persistent object.
-                        % TODO: Figure out more elegant mechanism for this.
-                        MexPyProxy.mx_raw_ref_incr(mx_raw);
+                        % % Prevent reference counter from decrementing on
+                        % % access to a persistent object.
+                        % % TODO: Figure out more elegant mechanism for this.
+                        % MexPyProxy.mx_raw_ref_incr(mx_raw);
                         m = MexPyProxy.mx_raw_to_mx(mx_raw);
                     otherwise
                         % Generate proxy

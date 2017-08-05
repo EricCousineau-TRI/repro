@@ -48,6 +48,32 @@ mx_raw_t mxGetUint64(const mxArray* in) {
   return *static_cast<uint64_T*>(mxGetData(in));
 }
 
+// From drakeMexUtil.cpp
+int mexCallMATLABSafe(int nlhs, mxArray* plhs[], int nrhs, mxArray* prhs[],
+                       const char* filename) {
+  mxArray* ex = mexCallMATLABWithTrap(nlhs, plhs, nrhs, prhs, filename);
+  if (ex) {
+    mxArray* report = nullptr;
+    mexCallMATLAB(1, &report, 1, &ex, "getReport");
+    mxArray* mxFilename = mxCreateString(filename);
+    mxArray* mxStderr = mxCreateDoubleScalar(2);
+    mxArray* mxFormat = 
+        mxCreateString("mexCallMATLABSafe:\nError calling '%s':\n%s\n");
+    mxArray* mxIn[] = {mxStderr, mxFormat, mxFilename, report};
+    mexCallMATLAB(0, nullptr, 4, mxIn, "fprintf");
+    mxDestroyArray(report);
+    mxDestroyArray(ex);
+    mxDestroyArray(mxFilename);
+    mxDestroyArray(mxStderr);
+    mxDestroyArray(mxFormat);
+    // Failure
+    return -1;
+  } else {
+    // Success
+    return 0;
+  }
+}
+
 string mxToStdString(const mxArray* mx_in) {
   // From: mxmalloc.c
   const int len = mxGetN(mx_in) + 1;
@@ -86,26 +112,30 @@ int c_simple() {
   cout << "c: call matlab - start" << endl;
   mxArray* mx_in[] = {mxCreateUint64Value(1), mxCreateUint64Value(2)};
   mxArray* mx_out[] = {nullptr};
-  mexCallMATLAB(1, mx_out, 2, mx_in, "simple");
-  cout << "  y = " << mxGetUint64(mx_out[0]) << endl;
-  cout << "c: call matlab - finish" << endl;
+  int out = mexCallMATLABSafe(1, mx_out, 2, mx_in, "simple");
+  if (out == 0) {
+    cout << "  y = " << mxGetUint64(mx_out[0]) << endl;
+    cout << "c: call matlab - finish" << endl;
+  }
   mxDestroyArray(mx_in[0]);
   mxDestroyArray(mx_in[1]);
-  return 0;
+  return out;
 }
 
 int c_mx_raw_ref_incr(mx_raw_t mx_raw) {
   mxArray* mx_mx_raw = mxCreateUint64Value(mx_raw);
   mxArray* mx_in[] = {mx_mx_raw};
-  mexCallMATLAB(0, nullptr, 1, mx_in, "MexPyProxy.mx_raw_ref_incr");
+  int out = mexCallMATLABSafe(0, nullptr, 1, mx_in, "MexPyProxy.mx_raw_ref_incr");
   mxDestroyArray(mx_mx_raw);
+  return out;
 }
 
 int c_mx_raw_ref_decr(mx_raw_t mx_raw) {
   mxArray* mx_mx_raw = mxCreateUint64Value(mx_raw);
   mxArray* mx_in[] = {mx_mx_raw};
-  mexCallMATLAB(0, nullptr, 1, mx_in, "MexPyProxy.mx_raw_ref_decr");
+  int out = mexCallMATLABSafe(0, nullptr, 1, mx_in, "MexPyProxy.mx_raw_ref_decr");
   mxDestroyArray(mx_mx_raw);
+  return out;
 }
 
 py_raw_t c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nargout, py_raw_t py_raw_in) {
@@ -118,8 +148,11 @@ py_raw_t c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nargout, py_raw_t py_raw_
   const int nlhs = 1;
   mxArray* mx_out[nlhs] = {NULL};
   // TODO(eric.cousineau): Handle MATLAB exceptions.
-  mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "MexPyProxy.mx_feval_py_raw");
-  py_raw_t py_raw_out = reinterpret_cast<py_raw_t>(mxGetUint64(mx_out[0]));
+  int out = mexCallMATLABSafe(nlhs, mx_out, nrhs, mx_in, "MexPyProxy.mx_feval_py_raw");
+  py_raw_t py_raw_out = 0xBADF00D;
+  if (out == 0) {
+    py_raw_out = reinterpret_cast<py_raw_t>(mxGetUint64(mx_out[0]));
+  }
 
   mxDestroyArray(mx_mx_raw_handle);
   mxDestroyArray(mx_nargout);

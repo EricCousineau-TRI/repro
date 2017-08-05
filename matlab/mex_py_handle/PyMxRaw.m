@@ -1,9 +1,11 @@
 classdef PyMxRaw < handle
 % Class representing a MATLAB extension of a Python object.
+% TODO: Rename this to PyMxClass. Make PyMxRaw handle reference counting.
 
     properties (Access = protected)
         PyBaseCls
         PyBaseObj
+        mx_raw_obj
     end
     
     methods
@@ -15,16 +17,20 @@ classdef PyMxRaw < handle
             pyCls = PyProxy.toPyValue(obj.PyBaseCls);
             
             function [varargout] = obj_feval_mx_raw(mx_raw_obj, method, varargin)
-                MexPyProxy.mx_raw_ref_incr(mx_raw_obj);
+                % MexPyProxy.mx_raw_ref_incr(mx_raw_obj);
                 mx_obj = MexPyProxy.mx_raw_to_mx(mx_raw_obj);
                 varargout = cell(1, nargout);
                 [varargout{:}] = feval(method, mx_obj, varargin{:});
             end
             
             pyFeval = PyProxy.toPyValue(@obj_feval_mx_raw);
-            mx_raw_obj = MexPyProxy.mx_to_mx_raw(obj);
+            obj.mx_raw_obj = MexPyProxy.mx_to_mx_raw(obj);
             % Don't wrap this in a proxy just yet.
-            obj.PyBaseObj = pyCls(mx_raw_obj, pyFeval);
+            obj.PyBaseObj = pyCls(obj.mx_raw_obj, pyFeval);
+        end
+
+        function delete(obj)
+            MexPyProxy.mx_raw_ref_decr(obj.mx_raw_obj);
         end
 
         function [varargout] = pyInvokeVirtual(obj, method, varargin)
