@@ -20,40 +20,30 @@ classdef MexPyProxy
         end
 
         function py_raw_out = mx_feval_py_raw(mx_raw_handle, nout, py_raw_in)
-            % feval_py
-            % Input: py_raw_t representing a Python list containing all input
-            % arguments to be converted to MATLAB.
-            % Output: py_raw_t representing a Python list containing all output.
-            disp('ml: mx_feval_py_raw');
-            disp({mx_raw_handle, nout, py_raw_in});
+            % This will be called by Python, which will have been called by
+            % MATLAB.
             py_mex = MexPyProxy.py_module();
-            disp('ml: mx_raw_to_mx');
+            % Marshal MATLAB function handle from C.
             mx_handle = MexPyProxy.mx_raw_to_mx(mx_raw_handle);
-            disp('ml:');
-            disp(mx_handle);
-            disp('ml: py_in conversion');
-            py.simple.simple();
-            py_in = cell(py_mex.py_raw_to_py(py_raw_in));
+            py_in = py_mex.py_raw_to_py(py_raw_in);
             % Convert each argument.
-            mx_in = cellfun(@PyProxy.fromPyValue, py_in, 'UniformOutput', false);
-            disp(mx_in);
+            mx_in = cellfun(@PyProxy.fromPyValue, cell(py_in), ...
+                'UniformOutput', false);
+            % Call the MATLAB method.
             mx_out = cell(1, nout);
-
-            disp('ml: feval');
             [mx_out{:}] = feval(mx_handle, mx_in{:});
-            disp(mx_out);
-            
-            py_out = PyProxy.toPyValue(mx_out);
+            % Marshal back to C-friendly Python types.
+            py_out = cellfun(@PyProxy.toPyValue, mx_out, ...
+                'UniformOutput', false);
             py_raw_out = uint64(py_mex.py_to_py_raw(py_out));
-            disp('ml: done');
         end
 
-        function [varargout] = test_call(mx_handle, nout, varargin)
+        function [varargout] = test_call(mx_handle, varargin)
             py_mex = MexPyProxy.py_module();
-            
             mx_raw_handle = MexPyProxy.mx_to_mx_raw(mx_handle);
-            py_out = py_mex.mx_raw_feval_py(mx_raw_handle, nout, varargin{:});
-            varargout = cell(py_out);
+            py_out = py_mex.mx_raw_feval_py(mx_raw_handle, nargout, varargin{:});
+            varargout = cellfun(@PyProxy.fromPyValue, cell(py_out), ...
+                'UniformOutput', false);
         end
     end
 

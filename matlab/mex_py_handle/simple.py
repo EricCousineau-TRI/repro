@@ -5,3 +5,7 @@ def simple():
     value += 1
     # Called by MATLAB, which is called by C
     print "py: Simple {}".format(value)
+
+def call_check(f, *args):
+    print f
+    return f(*args)

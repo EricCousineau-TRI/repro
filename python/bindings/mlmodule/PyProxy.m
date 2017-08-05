@@ -211,12 +211,16 @@ classdef PyProxy % < dynamicprops
                     end
                 case {'PyProxy', 'NumPyProxy'}
                     p = PyProxy.getPy(m);
+                case {'function_handle'}
+                    p = py.py_mex_proxy.MxFunc(...
+                        MexPyProxy.mx_to_mx_raw(m), ...
+                        func2str(m));
                 otherwise
                     % Defer to MATLAB:Python.
                     p = m;
             end
         end
-        
+
         function [out] = isPy(p)
             cls = class(p);
             if length(cls) >= 3 && strcmp(cls(1:3), 'py.')
@@ -240,7 +244,7 @@ classdef PyProxy % < dynamicprops
                         m = char(p);
                     case 'py.long'
                         m = int64(p);
-                    case 'py.list'
+                    case {'py.list', 'py.tuple'}
                         m = cell(p);
                     case 'py.NoneType'
                         m = [];
@@ -255,6 +259,8 @@ classdef PyProxy % < dynamicprops
                         % Possibly include as an option in the ctor?
                         % (This will mess with NumPyProxy)
                         m = NumPyProxy(p);
+                    case 'py.py_mex_proxy.MxRaw'
+                        m = MexPyProxy.mx_raw_to_mx(p.value);
                     otherwise
                         % Generate proxy
                         m = PyProxy(p);

@@ -1,8 +1,15 @@
-make;
-
 %%
+make;
 clear classes; %#ok<CLCLS>
 MexPyProxy.init();
+
+%%
+% mex_py_proxy('py_so_reload');
+x = MexPyProxy.test_call(@sin, pi / 4)
+
+% mex_py_proxy('mx_feval_py_raw');
+
+%%
 
 % %%
 % values = {1, eye(20, 20)};  % Fails
@@ -18,9 +25,3 @@ MexPyProxy.init();
 %         warning('Not equal');
 %     end
 % end
-
-%%
-% mex_py_proxy('py_so_reload');
-MexPyProxy.test_call(@sin, 1, pi / 4)
-
-% mex_py_proxy('mx_feval_py_raw');
