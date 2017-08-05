@@ -52,8 +52,6 @@ classdef MexPyProxy
             py_out = cellfun(@PyProxy.toPyValue, mx_out, ...
                 'UniformOutput', false);
             py_raw_out = uint64(py_mex.py_to_py_raw(py_out));
-            % Let the mx_raw_handle 'go out of scope'
-            MexPyProxy.mx_raw_ref_decr(mx_raw_handle);
         end
 
         function [varargout] = test_call(mx_handle, varargin)
@@ -62,6 +60,8 @@ classdef MexPyProxy
             py_out = py_mex.mx_raw_feval_py(mx_raw_handle, nargout, varargin{:});
             varargout = cellfun(@PyProxy.fromPyValue, cell(py_out), ...
                 'UniformOutput', false);
+            % Let the mx_raw_handle 'go out of scope'
+            MexPyProxy.mx_raw_ref_decr(mx_raw_handle);
         end
 
         function [out] = py_module()

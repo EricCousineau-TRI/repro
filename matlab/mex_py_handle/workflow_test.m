@@ -14,6 +14,8 @@ a = py_simple.call_check(f, pi / 4)
 
 %%
 b = py_simple.call_check(f, [pi / 4, 10 * pi])
+
+%%
 fs = @(s) [s, ' world'];
 c = py_simple.call_check(fs, 'Hello')
 d = py_simple.call_check(fs, 'What a')

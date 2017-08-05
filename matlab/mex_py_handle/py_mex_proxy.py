@@ -70,7 +70,7 @@ def mx_raw_ref_incr(mx_raw):
         raise Exception("Error")
 
 def mx_raw_ref_decr(mx_raw):
-    funcs['c_mx_raw_ref_decr'](mx_raw)
+    out = funcs['c_mx_raw_ref_decr'](mx_raw)
     if out != 0:
         raise Exception("Error")
 
@@ -92,14 +92,15 @@ class MxRaw(object):
 class MxFunc(MxRaw):
     def __init__(self, mx_raw, disp):
         super(MxFunc, self).__init__(mx_raw, disp)
-        # How to fix this?
-        mx_raw_ref_decr(self.mx_raw)
+        # # How to fix this?
+        # mx_raw_ref_decr(self.mx_raw)
     def __str__(self):
         return "<MxFunc: {}>".format(self.disp)
     def call(self, args, nargout=1, unpack_scalar=True):
-        # mx_raw_ref_incr(self.mx_raw)
-        # # Incremented reference count, because this call will
-        # # directly decrement it.
+        mx_raw_ref_incr(self.mx_raw)
+        # Incremented reference count, because
+        # `MexPyProxy.mx_raw_feval_py` will  directly decrement it at the end
+        # of the scope.
         out = mx_raw_feval_py(self.mx_raw, nargout, *args)
         if len(out) == 1 and unpack_scalar:
             out = out[0]
