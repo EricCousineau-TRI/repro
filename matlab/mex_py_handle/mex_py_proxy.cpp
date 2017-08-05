@@ -13,19 +13,25 @@ using std::string;
 // <pybind11>
 #include <Python.h>
 
+namespace pybind11 {
+
 class gil_scoped_acquire {
     PyGILState_STATE state;
 public:
-    gil_scoped_acquire() { state = PyGILState_Ensure(); }
-    ~gil_scoped_acquire() { PyGILState_Release(state); }
+    gil_scoped_acquire() {
+      cout << "C: gil_acquire start" << endl;
+      state = PyGILState_Ensure();
+    }
+    ~gil_scoped_acquire() {
+      PyGILState_Release(state);
+      cout << "C: gil_acquire end" << endl;
+    }
 };
 
-class gil_scoped_release {
-    PyThreadState *state;
-public:
-    gil_scoped_release() { cout << "C: gil_release start" << endl; state = PyEval_SaveThread(); }
-    ~gil_scoped_release() { PyEval_RestoreThread(state); cout << "C: gil_release finish" << endl; }
-};
+}  // namespace pybind11
+
+namespace py = pybind11;
+
 // </pybind11>
 
 // https://stackoverflow.com/questions/15011674/is-it-possible-to-dereference-variable-ids
@@ -50,7 +56,6 @@ mx_raw_t mxGetUint64(const mxArray* in) {
 
 // static_cast will not work, as MATLAB shifts memory around between calls.
 mx_raw_t mx_to_mx_raw(mxArray* mx) {
-  gil_scoped_release gil_release;
   cout << "keep going" << endl;
   mxArray* argin[1] = {mx};
   mxArray* argout[1] = {nullptr};
@@ -62,7 +67,6 @@ mx_raw_t mx_to_mx_raw(mxArray* mx) {
 }
 
 mxArray* mx_raw_to_mx(mx_raw_t mx_raw) {
-  gil_scoped_release gil_release;
   mxArray* argin[1] = {mxCreateUint64Value(mx_raw)};
   mxArray* argout[1] = {nullptr};
   mexCallMATLAB(1, argout, 1, argin, "MexPyProxy.mx_raw_to_mx");
@@ -81,8 +85,6 @@ void* c_void_p_pass_thru(void* in) {
 }
 
 void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
-  cout << "C: release scope" << endl;
-  gil_scoped_release gil_release;
   cout << "C: c_mx_feval_py_raw" << endl;
 
   mxArray* mx_mx_raw_handle = mxCreateUint64Value(mx_raw_handle);
@@ -95,7 +97,10 @@ void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
   mxArray* mx_in[nrhs] = {mx_mx_raw_handle, mx_nout, mx_py_raw_in};
   const int nlhs = 1;
   mxArray* mx_out[nlhs] = {NULL};
-  mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "MexPyProxy.mx_feval_py_raw");
+  {
+    py::gil_scoped_acquire py_gil;
+    mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "MexPyProxy.mx_feval_py_raw");
+  }
   py_raw_t py_raw_out = reinterpret_cast<py_raw_t>(mxGetUint64(mx_out[0]));
 
   cout << "Finish call" << endl;
@@ -108,8 +113,7 @@ void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
 }
 
 int c_simple() {
-  // gil_scoped_release gil_release;
-  gil_scoped_acquire gil_acquire;
+  py::gil_scoped_acquire py_gil;
   mexCallMATLAB(0, nullptr, 0, nullptr, "simple");
   return 0;
 }
