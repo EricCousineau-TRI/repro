@@ -81,10 +81,10 @@ class MxRaw(object):
         self.mx_raw = mx_raw
         self.disp = disp
         mx_raw_ref_incr(self.mx_raw)
-        print "py: Store {}".format(self)
+        # print "py: Store {}".format(self)
     def __del__(self):
         mx_raw_ref_decr(self.mx_raw)
-        print "py: Destroy {}".format(self)
+        # print "py: Destroy {}".format(self)
     def __str__(self):
         return "<MxRaw: {}>".format(self.disp)
 
