@@ -8,6 +8,20 @@
 #include <mex.h>
 #include <matrix.h>
 
+/*
+Reference counting:
+For MEX, consider `mexMakeArrayPersistent`, or undocumented
+https://stackoverflow.com/questions/19813718/mex-files-how-to-return-an-already-allocated-matlab-array
+Cannot return directly from this to `plhs`, though...
+Can tinker with `format debug` to see addresses.
+
+(Hopefully this is not a deep copy.)
+
+For Python objects in MATLAB, since MATLAB treats Python objects well, we
+not actually need reference counting.
+If we do, __del__ should be sufficient.
+*/
+
 using std::cout;
 using std::endl;
 using std::string;
@@ -74,6 +88,20 @@ int c_simple() {
   return 0;
 }
 
+int c_mx_ref_incr(mx_raw_t mx_raw) {
+  mxArray* mx_mx_raw = mxCreateUint64Value(mx_raw);
+  mxArray* mx_in[] = {mx_mx_raw};
+  mexCallMATLAB(0, nullptr, 1, mx_in, "MexPyProxy.mx_ref_incr");
+  mxDestroyArray(mx_mx_raw);
+}
+
+int c_mx_ref_decr(mx_raw_t mx_raw) {
+  mxArray* mx_mx_raw = mxCreateUint64Value(mx_raw);
+  mxArray* mx_in[] = {mx_mx_raw};
+  mexCallMATLAB(0, nullptr, 1, mx_in, "MexPyProxy.mx_ref_decr");
+  mxDestroyArray(mx_mx_raw);
+}
+
 py_raw_t c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nargout, py_raw_t py_raw_in) {
   mxArray* mx_mx_raw_handle = mxCreateUint64Value(mx_raw_handle);
   mxArray* mx_nargout = mxCreateUint64Value(nargout);
@@ -99,15 +127,22 @@ py_raw_t c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nargout, py_raw_t py_raw_
 // Create MATLAB struct containing raw values pointing to functions.
 mxArray* get_c_func_ptrs() {
   // Reference example: mxcreatestructarray.c
-  const int n = 2;
+  const int n = 4;
   const char* names[n] = {
     "c_mx_feval_py_raw",
     "c_simple",
+    "c_mx_ref_incr",
+    "c_mx_ref_decr",
   };
   // Store easily-accessible pointers.
+  auto raw_cast = [](auto x) {
+    return reinterpret_cast<mx_raw_t>(x);
+  };
   mx_raw_t ptrs_raw[n] = {
-    reinterpret_cast<mx_raw_t>(&c_mx_feval_py_raw),
-    reinterpret_cast<mx_raw_t>(&c_simple),
+    raw_cast(&c_mx_feval_py_raw),
+    raw_cast(&c_simple),
+    raw_cast(&c_mx_ref_incr),
+    raw_cast(&c_mx_ref_decr)
   };
   mwSize dims[2] = {1, 1};
   mxArray* s = mxCreateStructArray(2, dims, n, names);

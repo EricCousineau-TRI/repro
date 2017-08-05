@@ -16,6 +16,7 @@ from util import Erasure
 mx_raw_t = c_uint64
 py_raw_t = c_uint64
 c_mx_feval_py_raw_t = PYFUNCTYPE(py_raw_t, mx_raw_t, c_int, py_raw_t)
+c_mx_ref_t = PYFUNCTYPE(c_int, mx_raw_t)
 
 # Simple example.
 c_simple_t = PYFUNCTYPE(c_int)
@@ -29,6 +30,10 @@ def init_c_func_ptrs(funcs_in):
         c_mx_feval_py_raw_t(funcs_in['c_mx_feval_py_raw'])
     funcs['c_simple'] = \
         c_simple_t(funcs_in['c_simple'])
+    funcs['c_mx_ref_incr'] = \
+        c_mx_ref_t(funcs_in['c_mx_ref_incr'])
+    funcs['c_mx_ref_decr'] = \
+        c_mx_ref_t(funcs_in['c_mx_ref_decr'])
 
 # Test function
 def simple():
@@ -57,20 +62,29 @@ def mx_raw_feval_py(mx_raw_handle, nargout, *py_in):
     py_out = py_raw_to_py(py_raw_out)
     return py_out
 
-# Wrap a raw MATLAB type.
-class MxRaw:
+def mx_ref_incr(mx_raw):
+    funcs['c_mx_ref_incr'](mx_raw)
+
+def mx_ref_decr(mx_raw):
+    funcs['c_mx_ref_decr'](mx_raw)
+
+# Wrap a raw MATLAB type, and increase its reference count.
+class MxRaw(object):
     def __init__(self, value, name):
         self.value = value
         self.name = name
+        mx_ref_incr(self.value)
+        print "py: Store {}".format(self)
+    def __del__(self):
+        mx_ref_decr(self.value)
+        print "py: Destroy {}".format(self)
     def __str__(self):
         return "<MxRaw: {}>".format(self.name)
 
 # MATLAB Function handle
-class MxFunc:
+class MxFunc(MxRaw):
     def __init__(self, value, name):
-        # MxRaw.__init__(self, value, name)
-        self.name = name
-        self.value = value
+        super(MxFunc, self).__init__(value, name)
     def __str__(self):
         return "<MxFunc: {}>".format(self.name)
     def call(self, args, nargout=1, unpack_scalar=True):

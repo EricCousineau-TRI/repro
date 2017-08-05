@@ -3,41 +3,48 @@ classdef Erasure < handle
         % Stored values.
         Values
         % Permit storing [] values, so use an external sentinel.
-        Occupied
+        References
     end
     
     methods
         function obj = Erasure()
             obj.Values = cell(1, 0);
-            obj.Occupied = false(1, 0);
+            obj.References = zeros(1, 0);
             obj.resize(2);
         end
         
         function [i] = store(obj, value)
-            i = find(~obj.Occupied, 1, 'first');
+            i = find(obj.References == 0, 1, 'first');
             if isempty(i)
                 i = obj.size() + 1;
                 obj.resize(obj.size() + 4);
             end
             assert(isscalar(i));
             assert(isempty(obj.Values{i}));
-            assert(~obj.Occupied(i));
+            assert(obj.References(i) == 0);
             obj.Values{i} = value;
-            obj.Occupied(i) = true;
+            obj.References(i) = 1;
+            fprintf('ml: Store %d -> %d\n', i, obj.References(i));
             i = uint64(i);
         end
         
-        function [value] = dereference(obj, i, keep)
-            if nargin < 3
-                keep = false;
-            end
+        function [value] = reference(obj, i)
+            % Can only reference an existing object.
+            assert(obj.References(i) > 0);
+            obj.References(i) = obj.References(i) + 1;
+            fprintf('ml: Ref %d -> %d\n', i, obj.References(i));
+        end
+        
+        function [value] = dereference(obj, i)
             assert(i >= 1 && i <= obj.size());
-            assert(obj.Occupied(i));
+            assert(obj.References(i) > 0);
             value = obj.Values{i};
-            if ~keep
-                % Clear cell
+            obj.References(i) = obj.References(i) - 1;
+            fprintf('ml: Deref %d -> %d\n', i, obj.References(i));
+            if obj.References(i) == 0
+                % Clear cell, release reference.
                 obj.Values{i} = [];
-                obj.Occupied(i) = false;
+                fprintf('ml: Delete %d\n', i);
             end
         end
     end
@@ -53,7 +60,7 @@ classdef Erasure < handle
             dsz = new_sz - sz;
             new_indices = sz + 1:new_sz;
             obj.Values(new_indices) = cell(1, dsz);
-            obj.Occupied(new_indices) = false;
+            obj.References(new_indices) = false;
         end
     end
 end

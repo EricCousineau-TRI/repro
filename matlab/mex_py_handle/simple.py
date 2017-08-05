@@ -12,3 +12,11 @@ def call_check(f, *args):
 
 def pass_thru(value):
     return value
+
+class Obj(object):
+    def __init__(self, func):
+        self.func = func
+        print "py: Store {}".format(self.func)
+    def call(self, *args):
+        print "py: Call {}".format(self.func)
+        return self.func(*args)

@@ -1,4 +1,4 @@
-%%
+h%%
 make;
 clear classes; %#ok<CLCLS>
 MexPyProxy.init();

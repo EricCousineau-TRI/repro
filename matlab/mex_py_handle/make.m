@@ -4,4 +4,4 @@
 pyversion
 
 %%
-mex mex_py_proxy.cpp
+mex CXXFLAGS='$CXXFLAGS -std=c++14' mex_py_proxy.cpp
