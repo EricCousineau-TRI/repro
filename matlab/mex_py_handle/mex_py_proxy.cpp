@@ -112,7 +112,7 @@ void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
 
   cout << "c: call matlab - finish" << endl;
 
-  mxFree(mx_mx_raw_handle);
+  // mxFree(mx_mx_raw_handle);
 
   // mxFree(mx_nout);
   // mxFree(mx_py_raw_in);
@@ -125,9 +125,12 @@ void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
 int c_simple() {
   py::gil_scoped_acquire py_gil;
   cout << "c: call matlab - start" << endl;
-  mxArray* mx_in[] = {mxCreateUint64Value(1)};
-  mexCallMATLAB(0, nullptr, 1, mx_in, "simple");
+  mxArray* mx_in[] = {mxCreateUint64Value(1), mxCreateUint64Value(2)};
+  mxArray* mx_out[] = {nullptr};
+  mexCallMATLAB(1, mx_out, 2, mx_in, "simple");
+  cout << "  y = " << mxGetUint64(mx_out[0]) << endl;
   cout << "c: call matlab - finish" << endl;
+  // mxFree(mx_in[0]);
   return 0;
 }
 
