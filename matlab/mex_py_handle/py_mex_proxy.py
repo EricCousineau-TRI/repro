@@ -7,8 +7,8 @@ c_mx_feval_py_raw_t = PYFUNCTYPE(c_uint64, c_uint64, c_int, c_uint64)
 c_simple_t = PYFUNCTYPE(c_int)
 
 # void* (void*) - but use ctypes to extract void* from py_object
-c_py_raw_to_py_t = CFUNCTYPE(py_object, c_void_p)  # Use py_object so ctypes can cast to void*
-c_py_to_py_raw_t = CFUNCTYPE(c_void_p, py_object)
+c_py_raw_to_py_t = PYFUNCTYPE(py_object, c_void_p)  # Use py_object so ctypes can cast to void*
+c_py_to_py_raw_t = PYFUNCTYPE(c_void_p, py_object)
 
 # py - Python
 # py_raw - Raw Python points (py_object, c_void_p)
@@ -93,15 +93,15 @@ def mx_raw_feval_py(mx_raw_handle, nout, *py_in):
     print "py: mx_raw_feval_py - start"
     mx_feval_py_raw = funcs['c_mx_feval_py_raw']
     py_out = None
-    # try:
-    py_raw_in = py_to_py_raw(py_in)
-    # py_raw_out = 
-    mx_feval_py_raw(c_uint64(mx_raw_handle), c_int(int(nout)), c_uint64(py_raw_in))
-    # py_out = py_raw_to_py(nout, py_raw_out)
-    # except:
-    #     import sys, traceback
-    #     print "py: error"
-    #     traceback.print_exc(file=sys.stdout)
+    try:
+        py_raw_in = py_to_py_raw(py_in)
+        py_raw_out = (mx_feval_py_raw(
+                c_uint64(mx_raw_handle), c_int(int(nout)), c_uint64(py_raw_in)))
+        py_out = py_raw_to_py(py_raw_out)
+    except:
+        import sys, traceback
+        print "py: error"
+        traceback.print_exc(file=sys.stdout)
     print "py: mx_raw_feval_py - finish"
     return py_out
 

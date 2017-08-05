@@ -108,25 +108,24 @@ void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
   mxArray* mx_nout = mxCreateUint64Value(nout);
   mxArray* mx_py_raw_in = mxCreateUint64Value(py_raw_in);
 
-  // const int nrhs = 3;
-  // mxArray* mx_in[nrhs] = {mx_mx_raw_handle, mx_nout, mx_py_raw_in};
-  // const int nlhs = 1;
-  // mxArray* mx_out[nlhs] = {NULL};
-  // cout << "c: call matlab - start" << endl;
-  // mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "MexPyProxy.mx_feval_py_raw");
-  mxArray* mx_in[] = {mx_mx_raw_handle};
-  mexCallMATLAB(0, nullptr, 1, mx_in, "simple");
-  // // py_raw_t py_raw_out = reinterpret_cast<py_raw_t>(mxGetUint64(mx_out[0]));
+  const int nrhs = 3;
+  mxArray* mx_in[nrhs] = {mx_mx_raw_handle, mx_nout, mx_py_raw_in};
+  const int nlhs = 1;
+  mxArray* mx_out[nlhs] = {NULL};
+  cout << "c: call matlab - start" << endl;
+  mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "MexPyProxy.mx_feval_py_raw");
+  // mxArray* mx_in[] = {mx_mx_raw_handle};
+  // mexCallMATLAB(0, nullptr, 1, mx_in, "simple");
+  py_raw_t py_raw_out = reinterpret_cast<py_raw_t>(mxGetUint64(mx_out[0]));
 
   cout << "c: call matlab - finish" << endl;
 
   mxDestroyArray(mx_mx_raw_handle);
   mxDestroyArray(mx_nout);
   mxDestroyArray(mx_py_raw_in);
-  // mxDestroyArray(mx_out[0]);
 
-  return 0;
-  // return py_raw_out;
+  // return 0;
+  return py_raw_out;
 }
 
 int c_simple() {
