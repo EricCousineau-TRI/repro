@@ -21,4 +21,3 @@ MexPyProxy.init();
 
 %%
 MexPyProxy.test_call(@sin, 1, 0)
-
