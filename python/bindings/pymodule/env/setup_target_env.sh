@@ -30,7 +30,7 @@ EOF
 
     # Generate environment and export it to a temporary file.
      # > /dev/null 2>&1 
-    bazel run --spawn_strategy=standalone //python/bindings/pymodule/env/tmp:py_shell -- \
+    bazel run --spawn_strategy=standalone -c dbg //python/bindings/pymodule/env/tmp:py_shell -- \
         bash -c "export -p > $script" \
             || { echo "Error for target: ${target}"; return 1;  }
     # Override PWD
