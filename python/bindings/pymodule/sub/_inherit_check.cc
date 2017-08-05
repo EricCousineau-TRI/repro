@@ -10,6 +10,37 @@ using namespace std;
 
 namespace inherit_check {
 
+/* Custom pybind11 overload stuff */
+
+#define EX_PYBIND11_OVERLOAD_INT(ret_type, cname, name, ...) { \
+        pybind11::gil_scoped_acquire gil; \
+        pybind11::function overload = pybind11::get_overload(static_cast<const cname *>(this), name); \
+        if (overload) { \
+            auto o = overload(__VA_ARGS__); \
+            if (pybind11::detail::cast_is_temporary_value_reference<ret_type>::value) { \
+                static pybind11::detail::overload_caster_t<ret_type> caster; \
+                return pybind11::detail::cast_ref<ret_type>(std::move(o), caster); \
+            } \
+            else return pybind11::detail::cast_safe<ret_type>(std::move(o)); \
+        } \
+    }
+
+#define EX_PYBIND11_OVERLOAD_NAME(ret_type, cname, name, fn, ...) \
+    EX_PYBIND11_OVERLOAD_INT(ret_type, cname, name, __VA_ARGS__) \
+    return cname::fn(__VA_ARGS__)
+
+#define EX_PYBIND11_OVERLOAD_PURE_NAME(ret_type, cname, name, fn, ...) \
+    EX_PYBIND11_OVERLOAD_INT(ret_type, cname, name, __VA_ARGS__) \
+    pybind11::pybind11_fail("Tried to call pure virtual function \"" #cname "::" name "\"");
+
+#define EX_PYBIND11_OVERLOAD(ret_type, cname, fn, ...) \
+    EX_PYBIND11_OVERLOAD_NAME(ret_type, cname, #fn, fn, __VA_ARGS__)
+
+#define EX_PYBIND11_OVERLOAD_PURE(ret_type, cname, fn, ...) \
+    EX_PYBIND11_OVERLOAD_PURE_NAME(ret_type, cname, #fn, fn, __VA_ARGS__)
+
+/* */
+
 // Simple base class.
 class Base {
  public:
@@ -26,10 +57,10 @@ class Base {
 class PyBase : public Base {
  public:
   int pure(int value) override {
-    PYBIND11_OVERLOAD(int, Base, pure, value);
+    EX_PYBIND11_OVERLOAD(int, Base, pure, value);
   }
   int optional(int value) override {
-    PYBIND11_OVERLOAD(int, Base, optional, value);
+    EX_PYBIND11_OVERLOAD(int, Base, optional, value);
   }
 };
 

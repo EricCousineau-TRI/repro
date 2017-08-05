@@ -11,7 +11,7 @@ pymodule_dir=$source_dir/../../python/bindings/pymodule
 
 # Source Bazel python environment
 source ${pymodule_dir}/env/setup_target_env.sh \
-    //python/bindings/pymodule/sub:func_ptr
+    //python/bindings/pymodule/sub:sub
 
 # Ensure we can run the test script directly. Fail fast if this does not work.
 python ${pymodule_dir}/sub/test/func_ptr_test.py || :  # Ignore error for now.
