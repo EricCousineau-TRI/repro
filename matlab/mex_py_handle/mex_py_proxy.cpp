@@ -10,6 +10,7 @@ using std::endl;
 using std::string;
 
 // For GIL
+#define WITH_THREAD 1
 // <pybind11>
 #include <Python.h>
 
@@ -31,8 +32,14 @@ public:
 class gil_scoped_release {
     PyThreadState *state;
 public:
-    gil_scoped_release() { state = PyEval_SaveThread(); }
-    ~gil_scoped_release() { PyEval_RestoreThread(state); }
+    gil_scoped_release() {
+      cout << "c: gil_release start" << endl;
+      state = PyEval_SaveThread();
+    }
+    ~gil_scoped_release() {
+      PyEval_RestoreThread(state);
+      cout << "c: gil_release end" << endl;
+    }
 };
 
 }  // namespace pybind11
@@ -94,29 +101,26 @@ void* c_void_p_pass_thru(void* in) {
 void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
   cout << "c: c_mx_feval_py_raw" << endl;
 
-  // py::gil_scoped_acquire py_gil;
-  {
-    py::gil_scoped_release py_gil;
-  }
-  py::gil_scoped_release py_gil;
+  py::gil_scoped_acquire py_gil;
+  // py::gil_scoped_release py_gil;
 
   mxArray* mx_mx_raw_handle = mxCreateUint64Value(mx_raw_handle);
   mxArray* mx_nout = mxCreateUint64Value(nout);
   mxArray* mx_py_raw_in = mxCreateUint64Value(py_raw_in);
 
-  const int nrhs = 3;
-  mxArray* mx_in[nrhs] = {mx_mx_raw_handle, mx_nout, mx_py_raw_in};
-  const int nlhs = 1;
-  mxArray* mx_out[nlhs] = {NULL};
-  cout << "c: call matlab - start" << endl;
-  mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "MexPyProxy.mx_feval_py_raw");
-  // mxArray* mx_in[] = {mx_mx_raw_handle};
-  // mexCallMATLAB(0, nullptr, 1, mx_in, "simple");
-  // py_raw_t py_raw_out = reinterpret_cast<py_raw_t>(mxGetUint64(mx_out[0]));
+  // const int nrhs = 3;
+  // mxArray* mx_in[nrhs] = {mx_mx_raw_handle, mx_nout, mx_py_raw_in};
+  // const int nlhs = 1;
+  // mxArray* mx_out[nlhs] = {NULL};
+  // cout << "c: call matlab - start" << endl;
+  // mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "MexPyProxy.mx_feval_py_raw");
+  // // mxArray* mx_in[] = {mx_mx_raw_handle};
+  // // mexCallMATLAB(0, nullptr, 1, mx_in, "simple");
+  // // py_raw_t py_raw_out = reinterpret_cast<py_raw_t>(mxGetUint64(mx_out[0]));
 
   cout << "c: call matlab - finish" << endl;
 
-  // mxFree(mx_mx_raw_handle);
+  mxFree(mx_mx_raw_handle);
 
   // mxFree(mx_nout);
   // mxFree(mx_py_raw_in);
@@ -128,13 +132,20 @@ void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
 
 int c_simple() {
   py::gil_scoped_acquire py_gil;
+  {
+    py::gil_scoped_acquire py_gil;
+    {
+      py::gil_scoped_release py_gil;
+    }
+  }
   cout << "c: call matlab - start" << endl;
   mxArray* mx_in[] = {mxCreateUint64Value(1), mxCreateUint64Value(2)};
   mxArray* mx_out[] = {nullptr};
   mexCallMATLAB(1, mx_out, 2, mx_in, "simple");
   cout << "  y = " << mxGetUint64(mx_out[0]) << endl;
   cout << "c: call matlab - finish" << endl;
-  // mxFree(mx_in[0]);
+  mxFree(mx_in[0]);
+  mxFree(mx_in[1]);
   return 0;
 }
 

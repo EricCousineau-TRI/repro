@@ -20,4 +20,5 @@ MexPyProxy.init();
 % end
 
 %%
+mex_py_proxy('py_so_reload');
 MexPyProxy.test_call(@sin, 1, 0)
