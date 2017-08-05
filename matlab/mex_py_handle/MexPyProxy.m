@@ -26,7 +26,7 @@ classdef MexPyProxy
             % Output: py_raw_t representing a Python list containing all output.
             disp('ml: mx_feval_py_raw');
             disp({mx_raw_handle, nout, py_raw_in});
-            py_mex = MexPyProxy.py_module();
+%             py_mex = MexPyProxy.py_module();
             disp('ml: mx_raw_to_mx');
             mx_handle = MexPyProxy.mx_raw_to_mx(mx_raw_handle);
             disp('ml:');

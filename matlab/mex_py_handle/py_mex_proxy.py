@@ -64,10 +64,12 @@ def init_c_func_ptrs(funcs_in):
         c_mx_feval_py_raw_t(funcs_in['c_mx_feval_py_raw'])
     funcs['c_simple'] = \
         c_simple_t(funcs_in['c_simple'])
-    print "Stored pointers"
+    print "py: stored pointers"
 
 def simple():
+    print "py: c_simple - start"
     funcs['c_simple']()
+    print "py: c_simple - finish"
 
 # Used by MATLAB
 # TODO: Consider having similar Erasure mechanism, since MATLAB is not pointer-friendly.
@@ -84,22 +86,22 @@ def py_to_py_raw(py):
 
 # Used by Python
 def mx_raw_feval_py(mx_raw_handle, nout, *py_in):
+    simple()
     # Just do a py.list, for MATLAB to convert to a cell arrays.
     # py_raw_in = py_to_py_raw(py_in)
-    print "py: Start"
+    print "py: mx_raw_feval_py - start"
     mx_feval_py_raw = funcs['c_mx_feval_py_raw']
+    py_out = None
     try:
         py_raw_in = py_to_py_raw(py_in)
-        py_out = None
-        # py_out = 
+        # py_raw_out = 
         mx_feval_py_raw(c_uint64(mx_raw_handle), c_int(int(nout)), c_uint64(py_raw_in))
+        # py_out = py_raw_to_py(nout, py_raw_out)
     except:
         import sys, traceback
-        print "py: Error"
+        print "py: error"
         traceback.print_exc(file=sys.stdout)
-        py_out = None
-    # py_out = py_raw_to_py(nout, py_raw_out)
-    print "py: Done"
+    print "py: mx_raw_feval_py - finish"
     return py_out
 
 if __name__ == "__main__":
