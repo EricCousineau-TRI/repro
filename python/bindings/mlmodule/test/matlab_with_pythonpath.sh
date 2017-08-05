@@ -9,9 +9,9 @@ cd $source_dir
 
 pymodule_dir=$source_dir/../../pymodule
 
-# Source Python environment
-source ${pymodule_dir}/util/setup_target_env.sh \
-    --build python/bindings/pymodule python/bindings type_binding_test
+# Source Bazel python environment
+source ${pymodule_dir}/env/setup_target_env.sh \
+    //python/bindings/pymodule:type_binding_test
 
 # Ensure we can run the test script directly. Fail fast if this does not work.
 python ${pymodule_dir}/test/type_binding_test.py
