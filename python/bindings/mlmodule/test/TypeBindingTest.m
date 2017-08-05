@@ -4,7 +4,7 @@ classdef TypeBindingTest < matlab.unittest.TestCase
 
     methods (Test)
         function testBasic(testCase)
-            tb = pyimport_proxy('pymodule.typebinding');
+            tb = pyimport_proxy('pymodule.type_binding');
 
             % Without proxy:
             % Classes do not match (py.long <-> int64)
@@ -17,7 +17,7 @@ classdef TypeBindingTest < matlab.unittest.TestCase
         end
 
         function testFlexible(testCase)
-            tb = pyimport_proxy('pymodule.typebinding');
+            tb = pyimport_proxy('pymodule.type_binding');
             
             % Same case as above, without proxy.
 
@@ -37,7 +37,7 @@ classdef TypeBindingTest < matlab.unittest.TestCase
         end
         
         function testNumpyBasic(testCase)
-            tb = pyimport_proxy('pymodule.typebinding');
+            tb = pyimport_proxy('pymodule.type_binding');
             
             % Without proxy:
             %  'MATLAB:Python:UnsupportedInputArraySizeError'
