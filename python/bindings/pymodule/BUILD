@@ -4,7 +4,7 @@
 load("//tools:python.bzl", "py_test_simple")
 load("//tools:pybind11.bzl", "pybind11_module_share")
 
-package(default_visibility = ["//visibility:private"])
+package(default_visibility = ["//visibility:__subpackages__"])
 
 pybind11_module_share(
     name = "type_binding",
@@ -34,11 +34,5 @@ py_test_simple(
 py_test_simple(
     name = "pymodule_test",
     size = "small",
-    deps = [":pymodule"],
-)
-
-py_binary(
-    name = "shell",
-    srcs = ["shell.py"],
     deps = [":pymodule"],
 )

@@ -6,7 +6,9 @@ setup_target_env-main() {
 
     # Use //tools:py_shell as the source file, and add the target such that
     # any necessary dependencies are pulled in.
-    cat > BUILD <<EOF
+    mkdir -p tmp
+    cat > tmp/BUILD <<EOF
+# NOTE: This is a temporary file. Do not version control!
 py_binary(
     name = "py_shell",
     srcs = ["//tools:py_shell"],
@@ -16,19 +18,19 @@ py_binary(
 )
 EOF
 
-    local prefix=/tmp/bazel_env
-    mkdir -p $prefix
-    local env_dir=$(mktemp -d -p ${prefix})
-    local script=${env_dir}/bazel_env.sh
+    echo $PWD
+    local script=$PWD/tmp/bazel_env.sh
 
     # Generate environment and export it to a temporary file.
-    bazel run --spawn_strategy=standalone :py_shell -- \
+    bazel run --spawn_strategy=standalone tmp:py_shell -- \
         bash -c "export -p > $script"
     echo $script
 
     # Source environment.
     echo "[ Environment sourced for: $target ]"
-    . $script
+    set -x
+    source $script
+    set +x
     cd .
 }
 
