@@ -84,27 +84,22 @@ def py_to_py_raw(py):
 
 # Used by Python
 def mx_raw_feval_py(mx_raw_handle, nout, *py_in):
-    print "Calling from Python"
     # Just do a py.list, for MATLAB to convert to a cell arrays.
     # py_raw_in = py_to_py_raw(py_in)
+    print "py: Start"
     mx_feval_py_raw = funcs['c_mx_feval_py_raw']
     try:
-        print (mx_raw_handle, int(nout), py_in)
-        print "stuff:"
         py_raw_in = py_to_py_raw(py_in)
-        print "{} -> {}".format(py_in, py_raw_in)
-        py_anew = py_raw_to_py(py_raw_in)
-        print "{} -> {}".format(py_raw_in, py_anew)
         py_out = None
         # py_out = 
         mx_feval_py_raw(c_uint64(mx_raw_handle), c_int(int(nout)), c_uint64(py_raw_in))
     except:
         import sys, traceback
-        print "Error"
+        print "py: Error"
         traceback.print_exc(file=sys.stdout)
         py_out = None
     # py_out = py_raw_to_py(nout, py_raw_out)
-    print "Done"
+    print "py: Done"
     return py_out
 
 if __name__ == "__main__":

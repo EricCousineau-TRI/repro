@@ -1,4 +1,4 @@
 function simple()
-fprintf('MATLAB: Simple\n');
+fprintf('ml: Simple\n');
 py.simple.simple();
 end

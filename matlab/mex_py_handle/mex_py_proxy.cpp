@@ -19,13 +19,20 @@ class gil_scoped_acquire {
     PyGILState_STATE state;
 public:
     gil_scoped_acquire() {
-      cout << "C: gil_acquire start" << endl;
+      cout << "c: gil_acquire start" << endl;
       state = PyGILState_Ensure();
     }
     ~gil_scoped_acquire() {
       PyGILState_Release(state);
-      cout << "C: gil_acquire end" << endl;
+      cout << "c: gil_acquire end" << endl;
     }
+};
+
+class gil_scoped_release {
+    PyThreadState *state;
+public:
+    gil_scoped_release() { state = PyEval_SaveThread(); }
+    ~gil_scoped_release() { PyEval_RestoreThread(state); }
 };
 
 }  // namespace pybind11
@@ -85,25 +92,23 @@ void* c_void_p_pass_thru(void* in) {
 }
 
 void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
-  cout << "C: c_mx_feval_py_raw" << endl;
+  cout << "c: c_mx_feval_py_raw" << endl;
+
+  py::gil_scoped_acquire py_gil;
 
   mxArray* mx_mx_raw_handle = mxCreateUint64Value(mx_raw_handle);
   mxArray* mx_nout = mxCreateUint64Value(nout);
   mxArray* mx_py_raw_in = mxCreateUint64Value(py_raw_in);
 
-  cout << "Prep to call" << endl;
-
   const int nrhs = 3;
   mxArray* mx_in[nrhs] = {mx_mx_raw_handle, mx_nout, mx_py_raw_in};
   const int nlhs = 1;
   mxArray* mx_out[nlhs] = {NULL};
-  {
-    py::gil_scoped_acquire py_gil;
-    mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "MexPyProxy.mx_feval_py_raw");
-  }
+  cout << "c: call matlab - start" << endl;
+  mexCallMATLAB(nlhs, mx_out, nrhs, mx_in, "MexPyProxy.mx_feval_py_raw");
   py_raw_t py_raw_out = reinterpret_cast<py_raw_t>(mxGetUint64(mx_out[0]));
 
-  cout << "Finish call" << endl;
+  cout << "c: call matlab - finish" << endl;
 
   // mxFree(mx_nout);
   // mxFree(mx_py_raw_in);
@@ -114,7 +119,9 @@ void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
 
 int c_simple() {
   py::gil_scoped_acquire py_gil;
+  cout << "c: call matlab - start" << endl;
   mexCallMATLAB(0, nullptr, 0, nullptr, "simple");
+  cout << "c: call matlab - finish" << endl;
   return 0;
 }
 
