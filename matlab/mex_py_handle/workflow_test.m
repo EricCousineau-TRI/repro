@@ -26,12 +26,17 @@ e = py_simple.call_check(@mldivide, 2 * eye(2), [2, 4]')
 % fields).
 py_simple.call_check(@fieldnames, struct('test', 1))
 
-obj = py_simple.Obj(@sin);
-obj.call(pi / 4)
+objs = cell(1, 3);
+for i = 1:2
+    objs{i} = py_simple.Obj(@sin);
+    for j = 1:2
+        objs{i}.call(pi / 4)
+    end
+end
 
-% Show number of live references
+%% Show number of live references
 fprintf('Ref count: %d\n', MexPyProxy.mx_raw_count());
-clear obj
+clear objs
 fprintf('Ref count: %d\n', MexPyProxy.mx_raw_count());
 
 %%

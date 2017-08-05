@@ -20,6 +20,7 @@ classdef MexPyProxy
         function [value] = mx_raw_to_mx(i)
             e = MexPyProxy.erasure();
             value = e.retrieve(i);
+            % Think of better mechanism than this hack.
             e.decrementReference(i);
         end
         
@@ -71,7 +72,7 @@ classdef MexPyProxy
         end
     end
 
-    methods (Static, Access = protected)
+    methods (Static) % , Access = protected)
         function [out] = erasure()
             persistent e
             if isempty(e)
