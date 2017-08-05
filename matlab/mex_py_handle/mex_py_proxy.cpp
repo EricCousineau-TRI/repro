@@ -108,7 +108,8 @@ void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
 }
 
 int c_simple() {
-  gil_scoped_release gil_release;
+  // gil_scoped_release gil_release;
+  gil_scoped_acquire gil_acquire;
   mexCallMATLAB(0, nullptr, 0, nullptr, "simple");
   return 0;
 }
@@ -178,7 +179,6 @@ mxArray* get_c_func_ptrs() {
 
 // Wrap MEX function call.
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
-  dlopen(nullptr, RTLD_LAZY | RTLD_GLOBAL);
   try {
     ex_assert(nrhs >= 1, usage);
 
@@ -209,6 +209,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
       ex_assert(nrhs == 1, "");
       ex_assert(nlhs == 0, "");
       c_simple();
+    } else if (op == "py_so_reload") {
+      dlopen("/usr/lib/x86_64-linux-gnu/libpython2.7.so.1", RTLD_NOLOAD | RTLD_GLOBAL);
+      cout << "Reload python.so with global symbol table" << endl;
     }
   }
   catch (const std::exception& e) {
