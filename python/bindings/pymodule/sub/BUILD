@@ -11,10 +11,16 @@ pybind11_module(
     package_dir = "../..",
 )
 
+pybind11_module(
+    name = "func_ptr",
+    package_dir = "../..",
+)
+
 py_library(
     name = "sub",  # This is the package's name.
     deps = [
         ":inherit_check",
+        ":func_ptr",
     ],
     visibility = ["//visibility:public"],
 )
@@ -23,4 +29,10 @@ py_test_simple(
    name = "inherit_check_test",
    size = "small",
    deps = [":inherit_check"],
+)
+
+py_test_simple(
+   name = "func_ptr_test",
+   size = "small",
+   deps = [":func_ptr"],
 )
