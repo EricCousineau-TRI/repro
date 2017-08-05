@@ -12,6 +12,9 @@ classdef MexPyProxy
         end
 
         function [i] = mx_to_mx_raw(value)
+            % TODO: Change name to imply that this causes reference
+            % counting to change!
+            
             % NOTE: Casting the mxArray* pointers to uint64 (via MEX) does not work,
             % as MATLAB will shift the addresses between calls.
             i = MexPyProxy.erasure().store(value);
@@ -23,7 +26,7 @@ classdef MexPyProxy
 %             % Think of better mechanism than this hack.
 %             e.decrementReference(i);
         end
-        
+
         function [] = mx_raw_ref_incr(i)
             MexPyProxy.erasure().incrementReference(i);
         end

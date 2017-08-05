@@ -46,7 +46,6 @@ end
 fprintf('Ref count: %d\n', MexPyProxy.mx_raw_count());
 
 %% Show number of live references
-fprintf('Ref count: %d\n', MexPyProxy.mx_raw_count());
 clear objs
 fprintf('Ref count: %d\n', MexPyProxy.mx_raw_count());
 
