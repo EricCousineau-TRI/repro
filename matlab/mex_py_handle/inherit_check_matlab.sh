@@ -17,4 +17,4 @@ source ${pymodule_dir}/env/setup_target_env.sh \
 python ${pymodule_dir}/sub/test/inherit_check_test.py
 
 # Start MATLAB, running startupProject MATLAB function.
-matlab -r startupProject
+matlab # -r startupProject

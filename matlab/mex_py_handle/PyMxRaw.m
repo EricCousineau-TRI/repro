@@ -30,9 +30,14 @@ classdef PyMxRaw < handle
         function [varargout] = pyInvokeDirect(obj, method, varargin)
             assert(~strcmp(method, 'pyInvokeDirect'));
             varargout = cell(1, nargout);
-            [varargout{:}] = obj.PyBaseObj.(method)(varargin{:});
+            method_py = obj.PyBaseObj.(method);
+%             method_proxy = PyProxy.fromPyValue(method_py);
+            fprintf('ml: pyInvokeDirect %s - start\n', method);
+%             [varargout{:}] = method_proxy(varargin{:});
+            [varargout{:}] = method_py(varargin{:});
+            fprintf('ml: pyInvokeDirect %s - finish\n', method);
         end
-        
+
         % TODO: Make protected
         function [py] = pyObj(obj)
             py = obj.PyBaseObj;
