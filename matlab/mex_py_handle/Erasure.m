@@ -5,14 +5,13 @@ classdef Erasure < handle
         % Permit storing [] values, so use an external sentinel.
         References
         % Debugging
-        Debug = true
+        Debug = false
     end
 
     methods
         function obj = Erasure()
             obj.Values = cell(1, 0);
             obj.References = zeros(1, 0);
-            obj.Debug = false;
             obj.resize(2);
         end
         
