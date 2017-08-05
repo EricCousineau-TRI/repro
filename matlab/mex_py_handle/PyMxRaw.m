@@ -30,7 +30,7 @@ classdef PyMxRaw < handle
         function [varargout] = pyInvokeDirect(obj, method, varargin)
             assert(~strcmp(method, 'pyInvokeDirect'));
             varargout = cell(1, nargout);
-            method_py = obj.PyBaseObj.(method);
+            method_py = py.getattr(obj.PyBaseObj, method);
 %             method_proxy = PyProxy.fromPyValue(method_py);
             fprintf('ml: pyInvokeDirect %s - start\n', method);
 %             [varargout{:}] = method_proxy(varargin{:});

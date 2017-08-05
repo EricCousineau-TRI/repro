@@ -5,17 +5,18 @@
 [submodule "externals/benchmark"]
 	path = externals/benchmark
 	url = git@github.com:EricCousineau-TRI/benchmark.git
+	branch = bazel-master
 [submodule "externals/eigen"]
 	path = externals/eigen
 	url = git@github.com:EricCousineau-TRI/eigen.git
 	branch = feature/possible_tri_fix
 [submodule "externals/flann"]
 	path = externals/flann
-	url = git://github.com/mariusmuja/flann.git
+	url = https://github.com/mariusmuja/flann.git
 	branch = master
 [submodule "externals/kythe"]
 	path = externals/kythe
-	url = https://github.com/EricCousineau-TRI/kythe/
+	url = ./externals/kythe
 	branch = feature/bazel_external
 [submodule "externals/pcl"]
 	path = externals/pcl
@@ -23,6 +24,7 @@
 [submodule "externals/pybind11"]
 	path = externals/pybind11
 	url = http://github.com/RobotLocomotion/pybind11
+	branch = feature/hack
 [submodule "externals/vtk"]
 	path = externals/vtk
 	url = git://vtk.org/VTK.git
