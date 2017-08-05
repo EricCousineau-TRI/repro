@@ -12,11 +12,13 @@ py_pass_thru = py_simple.pass_thru;
 
 %%
 cpp = ic.CppExtend()
-% py = ice.PyExtend(@adder)
 py = ice.PyExtend(py_pass_thru);
 value = int64(4);
 
 c = cpp.dispatch(value)
+py.dispatch(value)
+
+py = ice.PyExtend(@adder)
 py.dispatch(value)
 
 % %%

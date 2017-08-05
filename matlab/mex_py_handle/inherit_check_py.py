@@ -2,6 +2,7 @@ from pymodule.sub import inherit_check as ic
 
 class PyExtend(ic.Base):
     def __init__(self, func):
+        super(PyExtend, self).__init__()
         self.func = func
     def pure(self, value):
         print("py.pure={}".format(value))
