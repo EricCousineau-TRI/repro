@@ -20,4 +20,4 @@ fp.call(@adder)
 %% Now try to get Python -> pybind11 (C++) -> Python -> MATLAB -> Python
 meta_call = @(f) fp.call(f);
 
-py_simple.call_check(meta_call, @adder)
+py_simple.call_check(meta_call, py_pass_thru(@adder))

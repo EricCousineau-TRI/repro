@@ -251,7 +251,8 @@ classdef PyProxy % < dynamicprops
         function [m] = fromPyValue(p)
             if ~PyProxy.isPy(p)
                 m = p;
-            elseif PyProxy.isPyWrappable(p)
+            elseif PyProxy.isPyWrappable(p) && ...
+                    ~strcmp(class(p), 'py.py_mex_proxy.MxFunc')
                 m = PyProxy(p);
             else
                 cls = class(p);
@@ -279,8 +280,9 @@ classdef PyProxy % < dynamicprops
                         % Possibly include as an option in the ctor?
                         % (This will mess with NumPyProxy)
                         m = NumPyProxy(p);
-                    case 'py.py_mex_proxy.MxRaw'
-                        m = MexPyProxy.mx_raw_to_mx(p.value);
+                    case {'py.py_mex_proxy.MxRaw', 'py.py_mex_proxy.MxFunc'}
+                        mx_raw = int64(p.mx_raw);
+                        m = MexPyProxy.mx_raw_to_mx(mx_raw);
                     otherwise
                         % Generate proxy
                         m = PyProxy(p);
