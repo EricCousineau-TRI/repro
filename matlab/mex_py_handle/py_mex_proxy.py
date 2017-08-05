@@ -1,9 +1,10 @@
 from ctypes import *
 
 # py_raw_t (mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in)
-c_mx_feval_py_raw_t = CFUNCTYPE(c_uint64, c_uint64, c_int, c_uint64)
+# - Use PYFUNCTYPE so we maintain GIL (so that MATLAB doesn't get huffy and puffy about it).
+c_mx_feval_py_raw_t = PYFUNCTYPE(c_uint64, c_uint64, c_int, c_uint64)
 
-c_simple_t = CFUNCTYPE(c_int)
+c_simple_t = PYFUNCTYPE(c_int)
 
 # void* (void*) - but use ctypes to extract void* from py_object
 c_py_raw_to_py_t = CFUNCTYPE(py_object, c_void_p)  # Use py_object so ctypes can cast to void*
