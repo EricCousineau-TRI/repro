@@ -228,8 +228,14 @@ classdef PyProxy % < dynamicprops
                         p = m;
                     end
                 otherwise
-                    % Defer to MATLAB:Python.
-                    p = m;
+                    if isa(m, 'PyMxRaw')
+                        % Pass a direct reference to the underlying object.
+                        % TODO: Have 'PyMxRaw' just derive from `PyProxy`?
+                        p = m.pyObj();
+                    else
+                        % Defer to MATLAB:Python.
+                        p = m;
+                    end
             end
         end
 
