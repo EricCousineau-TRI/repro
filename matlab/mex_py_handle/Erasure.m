@@ -4,12 +4,15 @@ classdef Erasure < handle
         Values
         % Permit storing [] values, so use an external sentinel.
         References
+        % Debugging
+        Debug = false
     end
-    
+
     methods
         function obj = Erasure()
             obj.Values = cell(1, 0);
             obj.References = zeros(1, 0);
+            obj.Debug = false;
             obj.resize(2);
         end
         
@@ -24,28 +27,43 @@ classdef Erasure < handle
             assert(obj.References(i) == 0);
             obj.Values{i} = value;
             obj.References(i) = 1;
-            fprintf('ml: Store %d -> %d\n', i, obj.References(i));
+            if obj.Debug
+                fprintf('ml: Store %d -> %d\n', i, obj.References(i));
+            end
             i = uint64(i);
         end
         
-        function [value] = reference(obj, i)
+        function [] = incrementReference(obj, i)
             % Can only reference an existing object.
             assert(obj.References(i) > 0);
             obj.References(i) = obj.References(i) + 1;
-            fprintf('ml: Ref %d -> %d\n', i, obj.References(i));
+            if obj.Debug
+                fprintf('ml: Ref %d -> %d\n', i, obj.References(i));
+            end
         end
         
-        function [value] = dereference(obj, i)
-            assert(i >= 1 && i <= obj.size());
-            assert(obj.References(i) > 0);
-            value = obj.Values{i};
+        function [] = decrementReference(obj, i)
             obj.References(i) = obj.References(i) - 1;
-            fprintf('ml: Deref %d -> %d\n', i, obj.References(i));
+            if obj.Debug
+                fprintf('ml: Deref %d -> %d\n', i, obj.References(i));
+            end
             if obj.References(i) == 0
                 % Clear cell, release reference.
                 obj.Values{i} = [];
-                fprintf('ml: Delete %d\n', i);
+                if obj.Debug
+                    fprintf('ml: Delete %d\n', i);
+                end
             end
+        end
+        
+        function [value] = retrieve(obj, i)
+            assert(obj.isValid(i));
+            value = obj.Values{i};
+        end
+        
+        function [n] = count(obj)
+            % Return number of live references.
+            n = nnz(obj.References);
         end
     end
     
@@ -61,6 +79,15 @@ classdef Erasure < handle
             new_indices = sz + 1:new_sz;
             obj.Values(new_indices) = cell(1, dsz);
             obj.References(new_indices) = false;
+        end
+        
+        function [valid] = isValid(obj, i)
+            valid = false;
+            if i >= 1 && i <= obj.size()
+                if obj.References(i) > 0
+                    valid = true;
+                end
+            end
         end
     end
 end

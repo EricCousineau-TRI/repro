@@ -11,10 +11,10 @@ PyProxy.reloadPy(py_simple);
 %%
 f = @(x) x / pi;
 a = py_simple.call_check(f, pi / 4)
-% b = py_simple.call_check(f, [pi / 4, 10 * pi])
-% fs = @(s) [s, ' world'];
-% c = py_simple.call_check(fs, 'Hello')
-% d = py_simple.call_check(fs, 'What a')
+b = py_simple.call_check(f, [pi / 4, 10 * pi])
+fs = @(s) [s, ' world'];
+c = py_simple.call_check(fs, 'Hello')
+d = py_simple.call_check(fs, 'What a')
 
 %%
 % finv = @(A, b) A \ b;
@@ -27,12 +27,16 @@ e = py_simple.call_check(@mldivide, 2 * eye(2), [2, 4]')
 py_simple.call_check(@fieldnames, struct('test', 1))
 
 obj = py_simple.Obj(@sin);
-obj.call(pi / 2)
+obj.call(pi / 4)
+
+% Show number of live references
+fprintf('Ref count: %d\n', MexPyProxy.mx_raw_count());
 clear obj
+fprintf('Ref count: %d\n', MexPyProxy.mx_raw_count());
 
 %%
 %{
-MxFunc: @(x)x/pi>
+<MxFunc: @(x)x/pi>
 
 a =
 
@@ -63,4 +67,19 @@ e =
   [NumPyProxy]
 [[ 1.]
  [ 2.]]
+<MxFunc: fieldnames>
+
+ans =
+
+  1×0 empty cell array
+
+py: Store <MxFunc: sin>
+py: Call <MxFunc: sin>
+
+ans =
+
+    0.7071
+
+Ref count: 1
+Ref count: 0
 %}

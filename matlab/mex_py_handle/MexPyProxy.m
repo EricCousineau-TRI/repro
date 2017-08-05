@@ -18,14 +18,20 @@ classdef MexPyProxy
         end
 
         function [value] = mx_raw_to_mx(i)
-            value = MexPyProxy.erasure().dereference(i);
+            e = MexPyProxy.erasure();
+            value = e.retrieve(i);
+            e.decrementReference(i);
         end
         
-        function [] = mx_ref_incr(i)
-            MexPyProxy.erasure().reference(i);
+        function [] = mx_raw_ref_incr(i)
+            MexPyProxy.erasure().incrementReference(i);
         end
-        function [] = mx_ref_decr(i)
-            MexPyProxy.erasure().dereference(i);
+        function [] = mx_raw_ref_decr(i)
+            MexPyProxy.erasure().decrementReference(i);
+        end
+        
+        function [count] = mx_raw_count()
+            count = MexPyProxy.erasure().count();
         end
 
         function py_raw_out = mx_feval_py_raw(mx_raw_handle, nout, py_raw_in)

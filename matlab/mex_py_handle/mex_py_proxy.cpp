@@ -88,17 +88,17 @@ int c_simple() {
   return 0;
 }
 
-int c_mx_ref_incr(mx_raw_t mx_raw) {
+int c_mx_raw_ref_incr(mx_raw_t mx_raw) {
   mxArray* mx_mx_raw = mxCreateUint64Value(mx_raw);
   mxArray* mx_in[] = {mx_mx_raw};
-  mexCallMATLAB(0, nullptr, 1, mx_in, "MexPyProxy.mx_ref_incr");
+  mexCallMATLAB(0, nullptr, 1, mx_in, "MexPyProxy.mx_raw_ref_incr");
   mxDestroyArray(mx_mx_raw);
 }
 
-int c_mx_ref_decr(mx_raw_t mx_raw) {
+int c_mx_raw_ref_decr(mx_raw_t mx_raw) {
   mxArray* mx_mx_raw = mxCreateUint64Value(mx_raw);
   mxArray* mx_in[] = {mx_mx_raw};
-  mexCallMATLAB(0, nullptr, 1, mx_in, "MexPyProxy.mx_ref_decr");
+  mexCallMATLAB(0, nullptr, 1, mx_in, "MexPyProxy.mx_raw_ref_decr");
   mxDestroyArray(mx_mx_raw);
 }
 
@@ -131,8 +131,8 @@ mxArray* get_c_func_ptrs() {
   const char* names[n] = {
     "c_mx_feval_py_raw",
     "c_simple",
-    "c_mx_ref_incr",
-    "c_mx_ref_decr",
+    "c_mx_raw_ref_incr",
+    "c_mx_raw_ref_decr",
   };
   // Store easily-accessible pointers.
   auto raw_cast = [](auto x) {
@@ -141,8 +141,8 @@ mxArray* get_c_func_ptrs() {
   mx_raw_t ptrs_raw[n] = {
     raw_cast(&c_mx_feval_py_raw),
     raw_cast(&c_simple),
-    raw_cast(&c_mx_ref_incr),
-    raw_cast(&c_mx_ref_decr)
+    raw_cast(&c_mx_raw_ref_incr),
+    raw_cast(&c_mx_raw_ref_decr)
   };
   mwSize dims[2] = {1, 1};
   mxArray* s = mxCreateStructArray(2, dims, n, names);
