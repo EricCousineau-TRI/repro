@@ -22,11 +22,11 @@ py.dispatch(value)
 py = ice.PyExtend(@adder)
 py.dispatch(value)
 
-% %%
-% mx = InheritCheckMx();
-% 
-% mx.pure(value)
-% mx.optional(value)
-% 
-% %%
-% mx.dispatch(value)
+%%
+mx = InheritCheckMx();
+
+mx.pure(value)
+mx.optional(value)
+
+%%
+mx.dispatch(value)

@@ -13,7 +13,15 @@ classdef PyMxRaw < handle
             % NOTE: Passing `feval` is just a cheap hack.
             % NOTE: Unwrap so that we can fiddle with values.
             pyCls = PyProxy.toPyValue(obj.PyBaseCls);
-            pyFeval = PyProxy.toPyValue(@feval);
+            
+            function [varargout] = obj_feval_mx_raw(mx_raw_obj, method, varargin)
+                MexPyProxy.mx_raw_ref_incr(mx_raw_obj);
+                mx_obj = MexPyProxy.mx_raw_to_mx(mx_raw_obj);
+                varargout = cell(1, nargout);
+                [varargout{:}] = feval(method, mx_obj, varargin{:});
+            end
+            
+            pyFeval = PyProxy.toPyValue(@obj_feval_mx_raw);
             mx_raw_obj = MexPyProxy.mx_to_mx_raw(obj);
             % Don't wrap this in a proxy just yet.
             obj.PyBaseObj = pyCls(mx_raw_obj, pyFeval);
