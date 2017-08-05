@@ -20,8 +20,8 @@ classdef MexPyProxy
         function [value] = mx_raw_to_mx(i)
             e = MexPyProxy.erasure();
             value = e.retrieve(i);
-            % Think of better mechanism than this hack.
-            e.decrementReference(i);
+%             % Think of better mechanism than this hack.
+%             e.decrementReference(i);
         end
         
         function [] = mx_raw_ref_incr(i)
@@ -52,6 +52,8 @@ classdef MexPyProxy
             py_out = cellfun(@PyProxy.toPyValue, mx_out, ...
                 'UniformOutput', false);
             py_raw_out = uint64(py_mex.py_to_py_raw(py_out));
+            % Let the mx_raw_handle 'go out of scope'
+            MexPyProxy.mx_raw_ref_decr(mx_raw_handle);
         end
 
         function [varargout] = test_call(mx_handle, varargin)
