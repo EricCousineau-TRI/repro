@@ -7,6 +7,9 @@ MexPyProxy.init();
 % mex_py_proxy('py_so_reload');
 x = MexPyProxy.test_call(@sin, pi / 4)
 
+%%
+x = MexPyProxy.test_call(@bad_func, pi / 4)
+
 % mex_py_proxy('mx_feval_py_raw');
 
 %%

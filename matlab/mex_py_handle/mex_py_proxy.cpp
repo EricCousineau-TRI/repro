@@ -53,15 +53,19 @@ int mexCallMATLABSafe(int nlhs, mxArray* plhs[], int nrhs, mxArray* prhs[],
                        const char* filename) {
   mxArray* ex = mexCallMATLABWithTrap(nlhs, plhs, nrhs, prhs, filename);
   if (ex) {
-    mexPrintf(
-        "mexCallMATLABSafe: Error calling '%s':\n", filename);
     mxArray* report = nullptr;
     mexCallMATLAB(1, &report, 1, &ex, "getReport");
-    char* errmsg = mxArrayToString(report);
-    mexPrintf(errmsg);
-    mxFree(errmsg);
+    mxArray* mxFilename = mxCreateString(filename);
+    mxArray* mxStderr = mxCreateDoubleScalar(2);
+    mxArray* mxFormat = 
+        mxCreateString("mexCallMATLABSafe:\nError calling '%s':\n%s\n");
+    mxArray* mxIn[] = {mxStderr, mxFormat, mxFilename, report};
+    mexCallMATLAB(0, nullptr, 4, mxIn, "fprintf");
     mxDestroyArray(report);
     mxDestroyArray(ex);
+    mxDestroyArray(mxFilename);
+    mxDestroyArray(mxStderr);
+    mxDestroyArray(mxFormat);
     // Failure
     return -1;
   } else {
