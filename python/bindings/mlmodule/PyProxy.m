@@ -254,6 +254,8 @@ classdef PyProxy % < dynamicprops
                         m = logical(p);
                     case 'py.str'
                         m = char(p);
+                    case 'py.unicode'
+                        m = char(p);
                     case 'py.long'
                         m = int64(p);
                     case {'py.list', 'py.tuple'}
