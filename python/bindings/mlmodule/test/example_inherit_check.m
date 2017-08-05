@@ -5,10 +5,11 @@ PyProxy.reloadPy(ic);
 PyProxy.reloadPy(ice);
 
 %%
-cpp = ic.CppExtend()
-%%
-py = ice.PyExtend() % ice.pass_thru)
 value = int64(3);
 
+cpp = ic.CppExtend()
 c = cpp.dispatch(value)
+
+%%
+py = ice.PyExtend(ice.pass_thru)
 py.dispatch(value)
