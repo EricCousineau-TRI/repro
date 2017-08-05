@@ -71,7 +71,7 @@ def simple():
     funcs['c_simple']()
     print "py: c_simple - finish"
 
-# Used by MATLAB
+# Used by MATLAB 
 # TODO: Consider having similar Erasure mechanism, since MATLAB is not pointer-friendly.
 def py_raw_to_py(py_raw):
     # py_raw - will be uint64
@@ -92,15 +92,15 @@ def mx_raw_feval_py(mx_raw_handle, nout, *py_in):
     print "py: mx_raw_feval_py - start"
     mx_feval_py_raw = funcs['c_mx_feval_py_raw']
     py_out = None
-    try:
-        py_raw_in = py_to_py_raw(py_in)
-        # py_raw_out = 
-        mx_feval_py_raw(c_uint64(mx_raw_handle), c_int(int(nout)), c_uint64(py_raw_in))
-        # py_out = py_raw_to_py(nout, py_raw_out)
-    except:
-        import sys, traceback
-        print "py: error"
-        traceback.print_exc(file=sys.stdout)
+    # try:
+    py_raw_in = py_to_py_raw(py_in)
+    # py_raw_out = 
+    mx_feval_py_raw(c_uint64(mx_raw_handle), c_int(int(nout)), c_uint64(py_raw_in))
+    # py_out = py_raw_to_py(nout, py_raw_out)
+    # except:
+    #     import sys, traceback
+    #     print "py: error"
+    #     traceback.print_exc(file=sys.stdout)
     print "py: mx_raw_feval_py - finish"
     return py_out
 

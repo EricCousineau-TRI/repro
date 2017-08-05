@@ -68,7 +68,7 @@ classdef MexPyProxy
         function [out] = py_module()
             persistent py_mex
             if isempty(py_mex)
-                py_mex = pyimport('mex_py_proxy');
+                py_mex = pyimport('py_mex_proxy');
                 py.reload(py_mex);
             end
             out = py_mex;
