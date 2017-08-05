@@ -34,7 +34,7 @@ classdef Erasure < handle
         
         function [] = incrementReference(obj, i)
             % Can only reference an existing object.
-            assert(obj.References(i) > 0);
+            assert(obj.isValid(i));
             obj.References(i) = obj.References(i) + 1;
             if obj.Debug
                 fprintf('ml: Ref %d -> %d\n', i, obj.References(i));
@@ -42,6 +42,7 @@ classdef Erasure < handle
         end
         
         function [] = decrementReference(obj, i)
+            assert(obj.isValid(i));
             obj.References(i) = obj.References(i) - 1;
             if obj.Debug
                 fprintf('ml: Deref %d -> %d\n', i, obj.References(i));

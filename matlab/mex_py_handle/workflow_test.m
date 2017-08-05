@@ -35,7 +35,7 @@ clear objs
 objs = cell(1, 2);
 for i = 1:2
     objs{i} = py_simple.Obj(@sin);
-    for j = 1:2
+    for j = 1:3
         objs{i}.call(pi / 4)
     end
 end
