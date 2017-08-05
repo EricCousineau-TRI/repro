@@ -33,14 +33,20 @@ classdef NumPyProxy < PyProxy
             t = transpose(obj);
         end
         
-        function x = mldivide(obj, b)
-            % Using NumPy directory will cause segfault :(
-            x = double(obj) \ double(b);
-%             linalg = pyimport_proxy('numpy.linalg');
-%             A = obj;
-%             x = linalg.solve(A, b);
+        function x = mldivide(A, b)
+            % Using NumPy directly will cause segfault :(
+            % Need to figure out how to dispatch based on scalar type.
+            x = double(A) \ double(b);
+            % TODO(eric.cousineau): Figure out if there is a way to get these two
+            % to play along nicely. (Or, figure out how to separate them.)
+            %{
+            linalg = pyimport_proxy('numpy.linalg');
+            % Will this cause an issue with symbolics?
+            % Are symbolics even viable? With Eigen?
+            x = linalg.solve(A, b);
+            %}
         end
-        
+
         function ind = end(obj, subscriptIndex, subscriptCount)
             p = PyProxy.getPy(obj);
             % Play naive

@@ -219,6 +219,14 @@ classdef PyProxy % < dynamicprops
                     p = py.py_mex_proxy.MxFunc(...
                         MexPyProxy.mx_to_mx_raw(m), ...
                         func2str(m));
+                case 'cell'
+                    if isempty(m)
+                        % Handle empty-case. Otherwise, MATLAB reports an error
+                        % about only allowing 1xN cell arrays (and this is 0x1).
+                        p = py.list();
+                    else
+                        p = m;
+                    end
                 otherwise
                     % Defer to MATLAB:Python.
                     p = m;

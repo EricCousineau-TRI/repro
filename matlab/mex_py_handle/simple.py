@@ -9,3 +9,6 @@ def simple():
 def call_check(f, *args):
     print f
     return f(*args)
+
+def pass_thru(value):
+    return value

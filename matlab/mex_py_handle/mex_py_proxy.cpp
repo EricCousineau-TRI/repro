@@ -5,12 +5,14 @@
 #include <stdexcept>
 #include <string>
 
+#include <mex.h>
+#include <matrix.h>
+
 using std::cout;
 using std::endl;
 using std::string;
 
-#include <mex.h>
-#include <matrix.h>
+namespace {
 
 typedef uint64_T mx_raw_t;
 typedef uint64_T py_raw_t;
@@ -53,8 +55,8 @@ const string usage =
     "        [] = mex_py_proxy('simple')\n" \
     "    'help' Show usage.";
 
-// Use internal linkage to prevent collision when dynamically linking.
-namespace {
+// <c_func_ptrs>
+// These functions will be passed from MEX to MATLAB to Python.
 
 // TODO(eric.cousineau): Consider testing ctypes.py_object and void* combos, per
 // this example:
@@ -92,7 +94,7 @@ py_raw_t c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nargout, py_raw_t py_raw_
   return py_raw_out;
 }
 
-}  // namespace
+// </c_func_ptrs>
 
 // Create MATLAB struct containing raw values pointing to functions.
 mxArray* get_c_func_ptrs() {
@@ -103,22 +105,23 @@ mxArray* get_c_func_ptrs() {
     "c_simple",
   };
   // Store easily-accessible pointers.
-  void* ptrs[n] = {
-    reinterpret_cast<void*>(&c_mx_feval_py_raw),
-    reinterpret_cast<void*>(&c_simple),
+  mx_raw_t ptrs_raw[n] = {
+    reinterpret_cast<mx_raw_t>(&c_mx_feval_py_raw),
+    reinterpret_cast<mx_raw_t>(&c_simple),
   };
   mwSize dims[2] = {1, 1};
   mxArray* s = mxCreateStructArray(2, dims, n, names);
   for (int i = 0; i < n; ++i) {
     const char* name = names[i];
-    void* ptr = ptrs[i];
+    mx_raw_t ptr_raw = ptrs_raw[i];
     int field_index = mxGetFieldNumber(s, name);
-    mx_raw_t ptr_raw = reinterpret_cast<mx_raw_t>(ptr);
     mxArray* value = mxCreateUint64Value(ptr_raw);
     mxSetFieldByNumber(s, 0, field_index, value);
   }
   return s;
 }
+
+}  // namespace
 
 // Wrap MEX function call.
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {

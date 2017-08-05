@@ -12,6 +12,8 @@ classdef MexPyProxy
         end
 
         function [i] = mx_to_mx_raw(value)
+            % NOTE: Casting the mxArray* pointers to uint64 (via MEX) does not work,
+            % as MATLAB will shift the addresses between calls.
             i = MexPyProxy.erasure().store(value);
         end
 
@@ -45,16 +47,7 @@ classdef MexPyProxy
             varargout = cellfun(@PyProxy.fromPyValue, cell(py_out), ...
                 'UniformOutput', false);
         end
-    end
 
-    methods (Static) %, Access = protected)
-        function [out] = erasure()
-            persistent e
-            if isempty(e)
-                e = Erasure();
-            end
-            out = e;
-        end
         function [out] = py_module()
             persistent py_mex
             if isempty(py_mex)
@@ -62,6 +55,16 @@ classdef MexPyProxy
                 py.reload(py_mex);
             end
             out = py_mex;
+        end
+    end
+
+    methods (Static, Access = protected)
+        function [out] = erasure()
+            persistent e
+            if isempty(e)
+                e = Erasure();
+            end
+            out = e;
         end
     end
 end
