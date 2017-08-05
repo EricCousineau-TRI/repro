@@ -10,7 +10,7 @@ PyProxy.reloadPy(ice);
 %%
 cpp = ic.CppExtend()
 py = ice.PyExtend()
-value = 'a';
+value = int64(4);
 
 c = cpp.dispatch(value)
 py.dispatch(value)
@@ -18,8 +18,8 @@ py.dispatch(value)
 %%
 mx = InheritCheckMx();
 
-mx.pure('1')
-mx.optional('2')
+mx.pure(value)
+mx.optional(value)
 
 %%
-mx.dispatch('3')
+mx.dispatch(value)

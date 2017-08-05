@@ -4,18 +4,20 @@ classdef InheritCheckMx < PyMxRaw
             mod = pyimport_proxy('inherit_check_py');
             obj@PyMxRaw(mod.PyMxExtend);
         end
-        
+
         function out = pure(~, value)
-            out = sprintf('ml.pure=%s', value);
+            out = value;
+            fprintf('ml.pure=%s\n', value);
         end
         function out = optional(~, value)
-            out = sprintf('ml.optional=%s', value);
+            out = 1000 * value;
+            fprintf('ml.optional=%s\n', value);
         end
-        
+
         % How to handle non-virtual methods?
         function out = dispatch(obj, value)
             fprintf('ml: dispatch - start\n');
-            out = obj.pyInvokeDirect('roundabout_dispatch', py.unicode(value));
+            out = obj.pyInvokeDirect('roundabout_dispatch', value);
             fprintf('ml: dispatch - done\n');
         end
     end
