@@ -14,7 +14,10 @@ namespace inherit_check {
 
 #define EX_PYBIND11_OVERLOAD_INT(ret_type, cname, name, ...) { \
         pybind11::gil_scoped_acquire gil; \
-        pybind11::function overload = pybind11::get_overload(static_cast<const cname *>(this), name); \
+        if (dynamic_cast<const cname *>(this) == nullptr) { \
+          throw std::runtime_error("Invalid cast"); \
+        } \
+        pybind11::function overload = pybind11::get_overload(dynamic_cast<const cname *>(this), name); \
         if (overload) { \
             auto o = overload(__VA_ARGS__); \
             if (pybind11::detail::cast_is_temporary_value_reference<ret_type>::value) { \
@@ -27,6 +30,7 @@ namespace inherit_check {
 
 #define EX_PYBIND11_OVERLOAD_NAME(ret_type, cname, name, fn, ...) \
     EX_PYBIND11_OVERLOAD_INT(ret_type, cname, name, __VA_ARGS__) \
+    std::cout << "pybind11: using defualt" << std::endl; \
     return cname::fn(__VA_ARGS__)
 
 #define EX_PYBIND11_OVERLOAD_PURE_NAME(ret_type, cname, name, fn, ...) \
