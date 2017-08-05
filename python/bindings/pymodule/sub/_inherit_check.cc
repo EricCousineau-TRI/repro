@@ -6,40 +6,42 @@
 #include <pybind11/stl.h>
 
 namespace py = pybind11;
-using std::string;
-using std::ostringstream;
+using namespace std;
 
 namespace inherit_check {
 
 // Simple base class.
 class Base {
  public:
-  virtual string pure(const string& value) { return ""; }
-  virtual string optional(const string& value) {
-    return "";
+  virtual int pure(int value) { return 0; }
+  virtual int optional(int value) {
+    return 0;
   }
-  string dispatch(const string& value) {
-    return "cpp.dispatch: " + pure(value) + " " + optional(value);
+  int dispatch(int value) {
+    cout << "cpp.dispatch: " << pure(value) << " " << optional(value) << endl;
+    return pure(value) + optional(value);
   }
 };
 
 class PyBase : public Base {
  public:
-  string pure(const string& value) override {
-    PYBIND11_OVERLOAD(string, Base, pure, value);
+  int pure(int value) override {
+    PYBIND11_OVERLOAD(int, Base, pure, value);
   }
-  string optional(const string& value) override {
-    PYBIND11_OVERLOAD(string, Base, optional, value);
+  int optional(int value) override {
+    PYBIND11_OVERLOAD(int, Base, optional, value);
   }
 };
 
 class CppExtend : public Base {
  public:
-  string pure(const string& value) override {
-    return "cpp.pure=" + value;
+  int pure(int value) override {
+    cout << "cpp.pure=" << value << endl;
+    return value;
   }
-  string optional(const string& value) override {
-    return "cpp.optional=" + value;
+  int optional(int value) override {
+    cout << "cpp.optional=" << value << endl;
+    return 10 * value;
   }
 };
 

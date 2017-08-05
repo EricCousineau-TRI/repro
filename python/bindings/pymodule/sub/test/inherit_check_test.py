@@ -9,17 +9,19 @@ from pymodule.sub import inherit_check as ic
 
 class PyExtend(ic.Base):
     def pure(self, value):
-        return "py.pure=" + value
+        print("py.pure={}".format(value))
+        return value
     def optional(self, value):
-        return "py.optional=" + value
+        print("py.optional={}".format(value))
+        return value * 100
 
 class TestInheritance(unittest.TestCase):
     def test_basic(self):
         cpp = ic.CppExtend()
         py = PyExtend()
-        value = "a"
-        self.assertEqual(cpp.dispatch(value), "cpp.dispatch: cpp.pure=a cpp.optional=a")
-        self.assertEqual(py.dispatch(value), "cpp.dispatch: py.pure=a py.optional=a")
+        value = 2
+        self.assertEqual(cpp.dispatch(value), 22)
+        self.assertEqual(py.dispatch(value), 202)
 
 if __name__ == '__main__':
     unittest.main()
