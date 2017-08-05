@@ -59,14 +59,20 @@ def mx_raw_feval_py(mx_raw_handle, nargout, *py_in):
     py_raw_in = py_to_py_raw(py_in)
     py_raw_out = (mx_feval_py_raw(
         c_uint64(mx_raw_handle), c_int(int(nargout)), c_uint64(py_raw_in)))
+    if py_raw_out == 0xBADF00D:
+        raise Exception("Error")
     py_out = py_raw_to_py(py_raw_out)
     return py_out
 
 def mx_raw_ref_incr(mx_raw):
-    funcs['c_mx_raw_ref_incr'](mx_raw)
+    out = funcs['c_mx_raw_ref_incr'](mx_raw)
+    if out != 0:
+        raise Exception("Error")
 
 def mx_raw_ref_decr(mx_raw):
     funcs['c_mx_raw_ref_decr'](mx_raw)
+    if out != 0:
+        raise Exception("Error")
 
 # Wrap a raw MATLAB type, and use referencing counting to tie it to the lifetime
 # of this object.

@@ -1,8 +1,13 @@
 make;
+clear all; clear classes;
 
 %%
-MexPyProxy.init();
 py_mex = MexPyProxy.py_module();
-% mex_py_proxy('py_so_reload');
+py.reload(py_mex);
+MexPyProxy.init();
+
+py.reload(pyimport('simple'));
+
+%%
 py_mex.simple();
 py.simple.simple();

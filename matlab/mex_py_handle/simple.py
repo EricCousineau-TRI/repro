@@ -4,7 +4,9 @@ def simple():
     global value
     value += 1
     # Called by MATLAB, which is called by C
-    print "py: Simple {}".format(value)
+    print "py: Simple X {}".format(value)
+    if value == 3:
+        raise Exception("Bad 3")
 
 def call_check(f, *args):
     print f
