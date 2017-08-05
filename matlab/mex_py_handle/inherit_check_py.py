@@ -13,12 +13,12 @@ class PyMxExtend(ic.Base):
         self.mx_feval = mx_feval
     def pure(self, value):
         print "py: pyInvoke pure - start"
-        out = self.mx_feval('pyInvoke', 'pure', self.mx_obj)
+        out = self.mx_feval('pyInvoke', 'pure', self.mx_obj, value)
         print "py: pyInvoke pure - finish"
         return out
     def optional(self, value):
         print "py: pyInvoke optional - start"
-        out = self.mx_feval('pyInvoke', 'optional', self.mx_obj)
+        out = self.mx_feval('pyInvoke', 'optional', self.mx_obj, value)
         print "py: pyInvoke optional - finish"
         return out
     def roundabout_dispatch(self, value):
