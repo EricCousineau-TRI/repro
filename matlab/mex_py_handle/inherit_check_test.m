@@ -18,6 +18,7 @@ value = int64(4);
 c = cpp.dispatch(value)
 py.dispatch(value)
 
+%%
 py = ice.PyExtend(@adder)
 py.dispatch(value)
 
