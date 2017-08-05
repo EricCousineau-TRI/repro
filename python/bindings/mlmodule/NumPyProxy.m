@@ -3,6 +3,9 @@ classdef NumPyProxy < PyProxy
 % A lot of stuff to do something simple, but it allows a *little* smoother
 % integration with NumPy.
 
+% TODO: Consider implementing some of these fefatures:
+% http://mathesaurus.sourceforge.net/matlab-numpy.html
+
     methods
         function obj = NumPyProxy(p)
             if isnumeric(p)
@@ -28,6 +31,14 @@ classdef NumPyProxy < PyProxy
         function t = ctranspose(obj)
             % TODO: Return conjugate if dtype implies complex
             t = transpose(obj);
+        end
+        
+        function x = mldivide(obj, b)
+            % Using NumPy directory will cause segfault :(
+            x = double(obj) \ double(b);
+%             linalg = pyimport_proxy('numpy.linalg');
+%             A = obj;
+%             x = linalg.solve(A, b);
         end
         
         function ind = end(obj, subscriptIndex, subscriptCount)

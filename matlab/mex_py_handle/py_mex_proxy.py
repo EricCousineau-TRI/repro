@@ -17,11 +17,17 @@ c_simple_t = PYFUNCTYPE(c_int)
 # mx_raw - void* representing mxArray* (mx_array_t, c_void_p)
 # mex - MEX function
 
-# MATLAB Function handle
-class MxFunc:
+class MxRaw:
     def __init__(self, value, name):
         self.value = value
         self.name = name
+    def __str__(self):
+        return "<MxRaw: {}>".format(self.name)
+
+# MATLAB Function handle
+class MxFunc(MxRaw):
+    def __init__(self, value, name):
+        MxRaw.__init__(self, value, name)
     def __str__(self):
         return "<MxFunc: {}>".format(self.name)
     def call(self, args, nargout=1, unpack_scalar=True):

@@ -26,10 +26,10 @@ mx_raw_t mxGetUint64(const mxArray* in) {
   return *static_cast<uint64_T*>(mxGetData(in));
 }
 
-string mxToStdString(mxArray* mx_in) {
+string mxToStdString(const mxArray* mx_in) {
   // From: mxmalloc.c
   const int len = mxGetN(mx_in) + 1;
-  char* buffer = mxMalloc(len);
+  char* buffer = static_cast<char*>(mxMalloc(len));
   mxGetString(mx_in, buffer, (mwSize)len);
   string out = buffer;
   mxFree(buffer);
@@ -102,10 +102,10 @@ mxArray* get_c_func_ptrs() {
     "c_mx_feval_py_raw",
     "c_simple",
   };
-  // TODO: Will this work???
+  // Store easily-accessible pointers.
   void* ptrs[n] = {
-    &c_mx_feval_py_raw,
-    &c_simple,
+    reinterpret_cast<void*>(&c_mx_feval_py_raw),
+    reinterpret_cast<void*>(&c_simple),
   };
   mwSize dims[2] = {1, 1};
   mxArray* s = mxCreateStructArray(2, dims, n, names);
@@ -124,7 +124,6 @@ mxArray* get_c_func_ptrs() {
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   try {
     ex_assert(nrhs >= 1, usage);
-
     string op = mxToStdString(prhs[0]);
     if (op == "get_c_func_ptrs") {
       ex_assert(nrhs == 1, usage);

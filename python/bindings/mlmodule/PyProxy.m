@@ -198,6 +198,10 @@ classdef PyProxy % < dynamicprops
             m_out = PyProxy.fromPyValue(py_out);
         end
         
+        function [] = reloadPy(mod)
+            py.reload(PyProxy.toPyValue(mod));
+        end
+        
         function [p] = toPyValue(m)
             switch class(m)
                 case 'double'
