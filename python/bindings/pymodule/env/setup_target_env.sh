@@ -18,8 +18,8 @@ py_binary(
 )
 EOF
 
-    echo $PWD
-    local script=$PWD/tmp/bazel_env.sh
+    local curdir=$PWD
+    local script=$curdir/tmp/bazel_env.sh
 
     # Generate environment and export it to a temporary file.
     bazel run --spawn_strategy=standalone tmp:py_shell -- \
@@ -28,10 +28,12 @@ EOF
 
     # Source environment.
     echo "[ Environment sourced for: $target ]"
-    set -x
     source $script
-    set +x
-    cd .
+    cd $curdir
+
+    echo $PYTHONPATH
 }
 
 setup_target_env-main "$@"
+
+echo $PYTHONPATH
