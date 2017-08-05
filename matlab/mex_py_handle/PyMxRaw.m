@@ -30,6 +30,8 @@ classdef PyMxRaw < handle
         end
 
         function delete(obj)
+            % NOTE: Destruction order, between MATLAB and Python, is very
+            % hairy... This will cause pain.
             MexPyProxy.mx_raw_ref_decr(obj.mx_raw_obj);
         end
 

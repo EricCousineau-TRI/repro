@@ -16,9 +16,7 @@ classdef InheritCheckMx < PyMxRaw
 
         % How to handle non-virtual methods?
         function out = dispatch(obj, value)
-            fprintf('ml: dispatch - start\n');
-            out = obj.pyInvokeDirect('roundabout_dispatch', value);
-            fprintf('ml: dispatch - done\n');
+            out = obj.pyInvokeDirect('dispatch', value);
         end
     end
 end
