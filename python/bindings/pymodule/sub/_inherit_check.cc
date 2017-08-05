@@ -14,7 +14,7 @@ namespace inherit_check {
 // Simple base class.
 class Base {
  public:
-  virtual string pure(const string& value) = 0;
+  virtual string pure(const string& value) { return ""; }
   virtual string optional(const string& value) {
     return "";
   }
@@ -26,7 +26,7 @@ class Base {
 class PyBase : public Base {
  public:
   string pure(const string& value) override {
-    PYBIND11_OVERLOAD_PURE(string, Base, pure, value);
+    PYBIND11_OVERLOAD(string, Base, pure, value);
   }
   string optional(const string& value) override {
     PYBIND11_OVERLOAD(string, Base, optional, value);

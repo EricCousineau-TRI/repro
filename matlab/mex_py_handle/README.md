@@ -3,7 +3,9 @@ An attempt to pass MATLAB function handles to Python, possibly leveraging MATLAB
 # TODO
 
 * Check `pybind11` virtual inheritance running under MATLAB
-    * See if MATLAB gets angry about releasing GIL for virtual calls.
+    * See if MATLAB gets angry about releasing GIL for virtual calls.  
+        * Presently, seems to be failing.
+        * TODO: Do an `py::eval` from `pybind11`, to see if it can call MATLAB without problem.
 * Try passing in a generic MATLAB object to Python.
     * Consider sticking to Python-inherited MATLAB objects only?
     * Pass other classes as opaque references?
