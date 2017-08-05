@@ -1,3 +1,5 @@
+#include <dlfcn.h>
+
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -6,6 +8,25 @@
 using std::cout;
 using std::endl;
 using std::string;
+
+// For GIL
+// <pybind11>
+#include <Python.h>
+
+class gil_scoped_acquire {
+    PyGILState_STATE state;
+public:
+    gil_scoped_acquire() { state = PyGILState_Ensure(); }
+    ~gil_scoped_acquire() { PyGILState_Release(state); }
+};
+
+class gil_scoped_release {
+    PyThreadState *state;
+public:
+    gil_scoped_release() { cout << "C: gil_release start" << endl; state = PyEval_SaveThread(); }
+    ~gil_scoped_release() { PyEval_RestoreThread(state); cout << "C: gil_release finish" << endl; }
+};
+// </pybind11>
 
 // https://stackoverflow.com/questions/15011674/is-it-possible-to-dereference-variable-ids
 // Can wrap around pythonic types?
@@ -29,6 +50,7 @@ mx_raw_t mxGetUint64(const mxArray* in) {
 
 // static_cast will not work, as MATLAB shifts memory around between calls.
 mx_raw_t mx_to_mx_raw(mxArray* mx) {
+  gil_scoped_release gil_release;
   cout << "keep going" << endl;
   mxArray* argin[1] = {mx};
   mxArray* argout[1] = {nullptr};
@@ -40,6 +62,7 @@ mx_raw_t mx_to_mx_raw(mxArray* mx) {
 }
 
 mxArray* mx_raw_to_mx(mx_raw_t mx_raw) {
+  gil_scoped_release gil_release;
   mxArray* argin[1] = {mxCreateUint64Value(mx_raw)};
   mxArray* argout[1] = {nullptr};
   mexCallMATLAB(1, argout, 1, argin, "MexPyProxy.mx_raw_to_mx");
@@ -58,6 +81,8 @@ void* c_void_p_pass_thru(void* in) {
 }
 
 void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
+  cout << "C: release scope" << endl;
+  gil_scoped_release gil_release;
   cout << "C: c_mx_feval_py_raw" << endl;
 
   mxArray* mx_mx_raw_handle = mxCreateUint64Value(mx_raw_handle);
@@ -83,6 +108,7 @@ void* c_mx_feval_py_raw(mx_raw_t mx_raw_handle, int nout, py_raw_t py_raw_in) {
 }
 
 int c_simple() {
+  gil_scoped_release gil_release;
   mexCallMATLAB(0, nullptr, 0, nullptr, "simple");
   return 0;
 }
@@ -152,6 +178,7 @@ mxArray* get_c_func_ptrs() {
 
 // Wrap MEX function call.
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
+  dlopen(nullptr, RTLD_LAZY | RTLD_GLOBAL);
   try {
     ex_assert(nrhs >= 1, usage);
 
