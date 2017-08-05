@@ -83,3 +83,8 @@ config_setting(
         "cpu": "k8",
     },
 )
+
+py_binary(
+    name = "py_shell",
+    srcs = ["py_shell.py"],
+)
