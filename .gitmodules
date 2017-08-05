@@ -20,6 +20,9 @@
 [submodule "externals/pcl"]
 	path = externals/pcl
 	url = http://github.com/pointcloudlibrary/pcl.git
+[submodule "externals/pybind11"]
+	path = externals/pybind11
+	url = http://github.com/RobotLocomotion/pybind11
 [submodule "externals/vtk"]
 	path = externals/vtk
 	url = git://vtk.org/VTK.git
