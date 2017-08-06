@@ -8,19 +8,19 @@ classdef InheritCheckMx < PyMxClass
         % virtual
         function out = pure(~, value)
             out = value;
-            fprintf('ml.pure=%s\n', value);
+            fprintf('ml.pure=%d\n', value);
         end
 
         % virtual
         function out = optional(~, value)
             out = 1000 * value;
-            fprintf('ml.optional=%s\n', value);
+            fprintf('ml.optional=%d\n', value);
         end
 
         % This is a concrete, non-virtual method.
         function [varargout] = dispatch(obj, varargin)
             varargout = cell(1, nargout);
-            [varargout{:}] = obj.pyInvokeDirect('dispatch', varargin);
+            [varargout{:}] = obj.pyInvokeDirect('dispatch', varargin{:});
         end
     end
 end

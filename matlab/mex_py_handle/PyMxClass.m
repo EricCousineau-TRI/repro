@@ -27,7 +27,7 @@ classdef PyMxClass < PyMxRaw
             pyargs = cellfun(@PyProxy.toPyValue, args, 'UniformOutput', false);
             pyTrampolineClsRaw = PyProxy.toPyValue(pyTrampolineCls);
             obj.PyTrampolineObj = ...
-                pyTrampolineClsRaw(pyargs);
+                pyTrampolineClsRaw(pyargs{:});
         end
         
         function [varargout] = pyInvokeVirtual(obj, method, varargin)
@@ -41,8 +41,9 @@ classdef PyMxClass < PyMxRaw
         function [varargout] = pyInvokeDirect(obj, method, varargin)
             assert(~strcmp(method, 'pyInvokeDirect'));
             varargout = cell(1, nargout);
-            method_py = obj.PyTrampolineObj.(method);
-            [varargout{:}] = method_py(varargin{:});
+            method_py = py.getattr(obj.PyTrampolineObj, method);
+            method_proxy = PyProxy.fromPyValue(method_py);
+            [varargout{:}] = method_proxy(varargin{:});
         end
 
         % TODO: Make protected

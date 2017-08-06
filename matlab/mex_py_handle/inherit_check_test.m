@@ -30,4 +30,4 @@ mx.pure(value)
 mx.optional(value)
 
 %%
-mx.dispatch(value)
+x = mx.dispatch(value)
