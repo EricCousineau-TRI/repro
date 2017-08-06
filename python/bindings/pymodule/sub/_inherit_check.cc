@@ -6,42 +6,55 @@
 #include <pybind11/stl.h>
 
 namespace py = pybind11;
-using std::string;
-using std::ostringstream;
+using namespace std;
 
 namespace inherit_check {
 
 // Simple base class.
 class Base {
  public:
-  virtual string pure(const string& value) = 0;
-  virtual string optional(const string& value) {
-    return "";
+  // Base() {
+  //   cout << "cpp.ctor" << endl;
+  // }
+  virtual int pure(int value) { return 0; }
+  virtual int optional(int value) {
+    return 0;
   }
-  string dispatch(const string& value) {
-    return "cpp.dispatch: " + pure(value) + " " + optional(value);
+  int dispatch(int value) {
+    cout << "cpp.dispatch:\n";
+    cout << "  ";
+    int pv = pure(value);
+    cout << "  ";
+    int ov = optional(value);
+    return pv + ov;
   }
 };
 
 class PyBase : public Base {
  public:
-  string pure(const string& value) override {
-    PYBIND11_OVERLOAD_PURE(string, Base, pure, value);
+  int pure(int value) override {
+    PYBIND11_OVERLOAD(int, Base, pure, value);
   }
-  string optional(const string& value) override {
-    PYBIND11_OVERLOAD(string, Base, optional, value);
+  int optional(int value) override {
+    PYBIND11_OVERLOAD(int, Base, optional, value);
   }
 };
 
 class CppExtend : public Base {
  public:
-  string pure(const string& value) override {
-    return "cpp.pure=" + value;
+  int pure(int value) override {
+    cout << "cpp.pure=" << value << endl;
+    return value;
   }
-  string optional(const string& value) override {
-    return "cpp.optional=" + value;
+  int optional(int value) override {
+    cout << "cpp.optional=" << value << endl;
+    return 10 * value;
   }
 };
+
+int call_method(Base& base) {
+  return base.dispatch(9);
+}
 
 PYBIND11_PLUGIN(_inherit_check) {
   py::module m("_inherit_check", "Simple check on inheritance");
@@ -55,6 +68,8 @@ PYBIND11_PLUGIN(_inherit_check) {
 
   py::class_<CppExtend>(m, "CppExtend", base)
     .def(py::init<>());
+
+  m.def("call_method", &call_method);
 
   return m.ptr();
 }

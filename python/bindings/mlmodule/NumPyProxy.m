@@ -3,6 +3,9 @@ classdef NumPyProxy < PyProxy
 % A lot of stuff to do something simple, but it allows a *little* smoother
 % integration with NumPy.
 
+% TODO: Consider implementing some of these fefatures:
+% http://mathesaurus.sourceforge.net/matlab-numpy.html
+
     methods
         function obj = NumPyProxy(p)
             if isnumeric(p)
@@ -30,6 +33,20 @@ classdef NumPyProxy < PyProxy
             t = transpose(obj);
         end
         
+        function x = mldivide(A, b)
+            % Using NumPy directly will cause segfault :(
+            % Need to figure out how to dispatch based on scalar type.
+            x = double(A) \ double(b);
+            % TODO(eric.cousineau): Figure out if there is a way to get these two
+            % to play along nicely. (Or, figure out how to separate them.)
+            %{
+            linalg = pyimport_proxy('numpy.linalg');
+            % Will this cause an issue with symbolics?
+            % Are symbolics even viable? With Eigen?
+            x = linalg.solve(A, b);
+            %}
+        end
+
         function ind = end(obj, subscriptIndex, subscriptCount)
             p = PyProxy.getPy(obj);
             % Play naive

@@ -198,6 +198,10 @@ classdef PyProxy % < dynamicprops
             m_out = PyProxy.fromPyValue(py_out);
         end
         
+        function [] = reloadPy(mod)
+            py.reload(PyProxy.toPyValue(mod));
+        end
+        
         function [p] = toPyValue(m)
             switch class(m)
                 case 'double'
@@ -211,12 +215,36 @@ classdef PyProxy % < dynamicprops
                     end
                 case {'PyProxy', 'NumPyProxy'}
                     p = PyProxy.getPy(m);
+                case {'function_handle'}
+                    mx_raw = MexPyProxy.mx_to_mx_raw(m);
+                    p = py.py_mex_proxy.MxFunc(...
+                        mx_raw, ...
+                        func2str(m));
+                    % The above object will effecitvely enforce `move` semantics.
+                    % Thus, we will let our instance `go out of scope`.
+                    MexPyProxy.mx_raw_ref_decr(mx_raw);
+                case 'cell'
+                    if isempty(m)
+                        % Handle empty-case. Otherwise, MATLAB reports an error
+                        % about only allowing 1xN cell arrays (and this is 0x1).
+                        p = py.list();
+                    else
+                        p = m;
+                    end
                 otherwise
-                    % Defer to MATLAB:Python.
-                    p = m;
+                    if isa(m, 'PyMxClass')
+                        p = m.pyTrampolineObj();
+                    elseif isa(m, 'PyMxRaw')
+                        % Pass a direct reference to the underlying object.
+                        % TODO: Have 'PyMxRaw' just derive from `PyProxy`?
+                        p = m.pyRawRef();
+                    else
+                        % Defer to MATLAB:Python.
+                        p = m;
+                    end
             end
         end
-        
+
         function [out] = isPy(p)
             cls = class(p);
             if length(cls) >= 3 && strcmp(cls(1:3), 'py.')
@@ -229,7 +257,8 @@ classdef PyProxy % < dynamicprops
         function [m] = fromPyValue(p)
             if ~PyProxy.isPy(p)
                 m = p;
-            elseif PyProxy.isPyWrappable(p)
+            elseif PyProxy.isPyWrappable(p) && ...
+                    ~strcmp(class(p), 'py.py_mex_proxy.MxFunc')
                 m = PyProxy(p);
             else
                 cls = class(p);
@@ -238,9 +267,11 @@ classdef PyProxy % < dynamicprops
                         m = logical(p);
                     case 'py.str'
                         m = char(p);
+                    case 'py.unicode'
+                        m = char(p);
                     case 'py.long'
                         m = int64(p);
-                    case 'py.list'
+                    case {'py.list', 'py.tuple'}
                         m = cell(p);
                     case 'py.NoneType'
                         m = [];
@@ -255,9 +286,19 @@ classdef PyProxy % < dynamicprops
                         % Possibly include as an option in the ctor?
                         % (This will mess with NumPyProxy)
                         m = NumPyProxy(p);
+                    case {'py.py_mex_proxy.MxRaw', 'py.py_mex_proxy.MxFunc'}
+                        mx_raw = int64(p.mx_raw);
+                        m = MexPyProxy.mx_raw_to_mx(mx_raw);
                     otherwise
-                        % Generate proxy
-                        m = PyProxy(p);
+                        if py.py_mex_proxy.is_trampoline(p)
+                            mx_raw_p = p.mx_obj;
+                            % See above
+                            mx_raw = int64(mx_raw_p.mx_raw);
+                            m = MexPyProxy.mx_raw_to_mx(mx_raw);
+                        else
+                            % Generate proxy
+                            m = PyProxy(p);
+                        end
                 end
             end
         end

@@ -23,13 +23,18 @@ numpy_repository(
     python_version = "2.7",
 )
 
-github_archive(
+new_local_repository(
     name = "pybind11",
-    repository = "RobotLocomotion/pybind11",
-    commit = "6d72785766558047ee2e2075198c07d8c25eb631",
+    path = "externals/pybind11",
     build_file = "tools/pybind11.BUILD",
-    sha256 = "08b4813b3b17f607efc4e8ba8b73bf55759ba744cab125e9fc666b5161cb1d0a",
 )
+# github_archive(
+#     name = "pybind11",
+#     repository = "RobotLocomotion/pybind11",
+#     commit = "6d72785766558047ee2e2075198c07d8c25eb631",
+#     build_file = "tools/pybind11.BUILD",
+#     sha256 = "08b4813b3b17f607efc4e8ba8b73bf55759ba744cab125e9fc666b5161cb1d0a",
+# )
 
 # Jerry-rig VTK
 load("//tools:vtk.bzl", "vtk_repository")

@@ -20,7 +20,7 @@ cc_binary(
     ],
 )
 
-cur_package = "//python_scratch/pybind11/dup_check/"
+cur_package = "//python/pybind11/dup_check/"
 
 py_library(
     name = "dup_check",
