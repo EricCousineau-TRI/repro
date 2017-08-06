@@ -31,3 +31,7 @@ mx.optional(value)
 
 %%
 x = mx.dispatch(value)
+
+%%
+% TODO: Resolve simple reference leak here... From circular references?
+MexPyProxy.mx_raw_count()
