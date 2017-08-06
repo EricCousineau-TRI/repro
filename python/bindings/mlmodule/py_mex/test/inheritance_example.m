@@ -25,6 +25,11 @@ inherit_check_py.call_method(cpp)
 inherit_check_py.call_method(py)
 inherit_check_py.call_method(mx)
 
+%% Test explicitly calling an upstream class's method
+cls = inheritance_example_py.PyExtend;
+cls.pure(mx, 5)
+mx.pure(6)
+
 %%
 % Unfortunately, reference counting is hacky. Manually do a `gc` cycle
 % counting step, otherwise we accumulate references.

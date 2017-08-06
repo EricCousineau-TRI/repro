@@ -14,8 +14,7 @@ class PyExtend(ic.Base):
         return value * 100
 
 # Example Trampoline class
-class PyMxExtend(py_mex_proxy.PyMxClass(ic.Base)):
-    # How to handle different constructor arguments with multiple inheritance?
+class PyMxExtend(py_mex_proxy.PyMxClass(PyExtend)):
     def __init__(self, mx_obj):
         super(PyMxExtend, self).__init__(mx_obj=mx_obj)
         self._mx_decl_virtual('pure')
