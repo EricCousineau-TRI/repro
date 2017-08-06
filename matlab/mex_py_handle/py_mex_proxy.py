@@ -117,6 +117,8 @@ class MxFunc(MxRaw):
         return "<MxFunc: {}>".format(self.disp)
 
     def call(self, args, nargout=1, unpack_scalar=True):
+        if self.mx_raw is None:
+            raise Exception("Already destroyed")
         out = mx_raw_feval_py(self.mx_raw, nargout, *args)
         if len(out) == 1 and unpack_scalar:
             out = out[0]

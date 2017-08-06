@@ -33,8 +33,8 @@ def PyMxClass(BaseCls):
         def _mx_free(self):
             # Explicitly permit free'ing due to cyclic references... and inability
             # to access MATLAB's reference counting...
-            self.mx_obj.free()
-            self.mx_obj = None
+            self._mx_obj.free()
+            self._mx_obj = None
 
         def _mx_decl(self, method):
             # Add method
