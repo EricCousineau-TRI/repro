@@ -2,37 +2,26 @@ classdef PyMxClass < handle
 % Class representing a MATLAB extension of a Python object.
 
     properties (Access = protected)
-%         PyMxRawObj 
         PyTrampolineCls
         PyTrampolineObj
     end
 
     methods
-        function obj = PyMxClass(pyTrampolineCls)
-%             % NOTE: See `pybind11`s definition of a trampoline class.
-%             obj@PyMxRaw();
-%             
+        function obj = PyMxClass(pyTrampolineCls, varargin)
+            % NOTE: See `pybind11`s definition of a trampoline class.
             % This should be proxied.
             obj.PyTrampolineCls = pyTrampolineCls;
-
-            % Construct base proxy and pass object.
-            % NOTE: Passing `feval` is just a cheap hack.
-            function [varargout] = obj_feval_mx_raw(tobj, method, varargin)
-                varargout = cell(1, nargout);
-                [varargout{:}] = feval(method, tobj, varargin{:});
-            end
-            
             % How to do proper reference counting with trampoline classes?
             
             % Create object, but don't let the proxy remove the good stuff.
             % Let trampoline handle conversion stuff.
-            py_mx_raw = PyMxRaw(obj);
-            args = {py_mx_raw, @obj_feval_mx_raw};
-            % WARNING: This looks like a circular reference...
-            pyargs = cellfun(@PyProxy.toPyValue, args, 'UniformOutput', false);
+            % WARNING: This is a circular reference...
+            py_mx_obj = PyMxRaw(obj);
+            pyargin = cellfun(@PyProxy.toPyValue, varargin, 'UniformOutput', false);
             pyTrampolineClsRaw = PyProxy.toPyValue(pyTrampolineCls);
             obj.PyTrampolineObj = ...
-                pyTrampolineClsRaw(pyargs{:});
+                pyTrampolineClsRaw(pyargin{:}, ...
+                        pyargs('mx_obj', py_mx_obj.pyRawRef()));
         end
         
         function [] = free(obj)
@@ -41,9 +30,8 @@ classdef PyMxClass < handle
             % reference counting for a parent/child object pair (if they
             % can't represent the same slot in one reference counting
             % mechanism?)
-%             mx_raw = int64(obj.PyTrampolineObj.mx_obj.mx_raw);
-%             MexPyProxy.mx_raw_ref_decr(mx_raw);
-            obj.PyTrampolineObj.free();
+            free = py.getattr(obj.PyTrampolineObj, '_mx_free');
+            free();
             obj.PyTrampolineObj = [];
         end
         
@@ -63,7 +51,6 @@ classdef PyMxClass < handle
             [varargout{:}] = method_proxy(varargin{:});
         end
 
-        % TODO: Make protected
         function [py] = pyTrampolineObj(obj)
             py = obj.PyTrampolineObj;
         end

@@ -3,6 +3,9 @@ classdef InheritCheckMx < PyMxClass
         function obj = InheritCheckMx()
             mod = pyimport_proxy('inherit_check_py');
             obj@PyMxClass(mod.PyMxExtend);
+            % NOTE: There's no way to do a MATLAB-style concrete call,
+            % .e.g. pure@PyMxClass(obj, value)  - or whatever the syntax
+            % is.
         end
 
         % virtual

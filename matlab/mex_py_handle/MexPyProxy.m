@@ -9,6 +9,10 @@ classdef MexPyProxy
             % Initialize pointers, permit Python to have access to them.
             c_func_ptrs = mex_py_proxy('get_c_func_ptrs');
             py_mex.init_c_func_ptrs(c_func_ptrs);
+            
+            mx_funcs = struct();
+            mx_funcs.feval = PyProxy.toPyValue(@feval);
+            py_mex.init_mx_funcs(mx_funcs);
         end
 
         function [i] = mx_to_mx_raw(value)
@@ -71,6 +75,7 @@ classdef MexPyProxy
             persistent py_mex
             if isempty(py_mex)
                 py_mex = pyimport('py_mex_proxy');
+                fprintf('py_mex_proxy reload\n');
                 py.reload(py_mex);
             end
             out = py_mex;

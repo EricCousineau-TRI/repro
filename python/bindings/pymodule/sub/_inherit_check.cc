@@ -13,6 +13,9 @@ namespace inherit_check {
 // Simple base class.
 class Base {
  public:
+  // Base() {
+  //   cout << "cpp.ctor" << endl;
+  // }
   virtual int pure(int value) { return 0; }
   virtual int optional(int value) {
     return 0;

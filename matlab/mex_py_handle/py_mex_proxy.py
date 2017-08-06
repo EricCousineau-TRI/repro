@@ -35,6 +35,15 @@ def init_c_func_ptrs(funcs_in):
     funcs['c_mx_raw_ref_decr'] = \
         c_mx_raw_ref_t(funcs_in['c_mx_raw_ref_decr'])
 
+def init_mx_funcs(mx_funcs_in):
+    global mx_funcs
+    mx_funcs = mx_funcs_in
+
+def mx_feval(*args, **kwargs):
+    feval = mx_funcs['feval']
+    # See MxFunc signature.
+    return feval(*args, **kwargs)
+
 # Test function
 def simple():
     funcs['c_simple']()
