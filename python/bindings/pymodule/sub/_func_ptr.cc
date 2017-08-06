@@ -14,15 +14,21 @@ using std::ostringstream;
 
 namespace func_ptr {
 
-int call(const std::function<int(int)>& func) {
-  cout << "c pybind11: call" << endl;
+int call_cpp(const std::function<int(int)>& func) {
+  cout << "cpp: call_cpp" << endl;
   return func(1);
+}
+
+int func_cpp(int value) {
+  cout << "cpp: func_cpp" << endl;
+  return 10000 * value;
 }
 
 PYBIND11_PLUGIN(_func_ptr) {
   py::module m("_func_ptr", "Call Python method.");
-  m.def("call", &call);
+  m.def("call_cpp", &call_cpp);
+  m.def("func_cpp", &func_cpp);
   return m.ptr();
 }
 
-}  // namespace inherit_check
+}  // namespace func_ptr

@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-from ctypes import *
+from __future__ import absolute_import, print_function
+
+import traceback
+from ctypes import PYFUNCTYPE, c_uint64, c_int
 
 from util import Erasure
 
@@ -16,6 +19,8 @@ debug = False
 
 # py_raw_t (mx_raw_t mx_raw_handle, int nargout, py_raw_t py_raw_in)
 mx_raw_t = c_uint64
+# TODO: For py_raw_t, consider using py_object in lieu of c_uint64.
+# (No need for .util.Erasure, then.)
 py_raw_t = c_uint64
 c_mx_feval_py_raw_t = PYFUNCTYPE(py_raw_t, mx_raw_t, c_int, py_raw_t)
 c_mx_raw_ref_t = PYFUNCTYPE(c_int, mx_raw_t)
@@ -23,17 +28,15 @@ c_mx_raw_ref_t = PYFUNCTYPE(c_int, mx_raw_t)
 # Simple example.
 c_simple_t = PYFUNCTYPE(c_int)
 
+# Globals
 mx_funcs = {}
 funcs = {}
 
 def free():
-    print "Free"
     global funcs
     global mx_funcs
-    del funcs
-    del mx_funcs
-    funcs = None
-    mx_funcs = None
+    funcs = {}
+    mx_funcs = {}
 
 # For obtaining function pointers from a MEX function.
 def init_c_func_ptrs(funcs_in):
@@ -52,14 +55,14 @@ def init_mx_funcs(mx_funcs_in):
     global mx_funcs
     mx_funcs = mx_funcs_in
 
+# Test function
+def simple():
+    funcs['c_simple']()
+
 def mx_feval(*args, **kwargs):
     feval = mx_funcs['feval']
     # See MxFunc signature.
     return feval(*args, **kwargs)
-
-# Test function
-def simple():
-    funcs['c_simple']()
 
 # Used by MATLAB 
 # TODO: Consider returning to using ctypes.
@@ -73,16 +76,14 @@ def py_to_py_raw(py):
     py_raw = erasure.store(py)
     return py_raw
 
-import traceback
-
 # Used by Python
+# Marhsal types to opaque, C-friendly types, that will then be passed
+# to MATLAB via `MexPyProxy.mx_feval_py_raw`.
 def mx_raw_feval_py(mx_raw_handle, nargout, *py_in):
-    # Marhsal types to opaque, C-friendly types, that will then be passed
-    # to MATLAB via `MexPyProxy.mx_feval_py_raw`.
     mx_feval_py_raw = funcs['c_mx_feval_py_raw']
     py_raw_in = py_to_py_raw(py_in)
     if debug:
-        print "py.erasure: {}".format(erasure._values)
+        print("py.erasure: {}".format(erasure._values))
     py_raw_out = (mx_feval_py_raw(
         c_uint64(mx_raw_handle), c_int(int(nargout)), c_uint64(py_raw_in)))
     if py_raw_out == 0xBADF00D:
@@ -90,7 +91,7 @@ def mx_raw_feval_py(mx_raw_handle, nargout, *py_in):
         raise Exception("Error")
     py_out = py_raw_to_py(py_raw_out)
     if debug:
-        print "py.erasure: {}".format(erasure._values)
+        print("py.erasure: {}".format(erasure._values))
     return py_out
 
 def mx_raw_ref_incr(mx_raw):
@@ -112,14 +113,15 @@ class MxRaw(object):
         self.mx_raw = mx_raw
         self.disp = disp
         mx_raw_ref_incr(self.mx_raw)
-        # print "py: Store {}".format(self)
+        if debug:
+            print("py: Store {}".format(self))
     def free(self):
         if self.mx_raw is not None:
             mx_raw_ref_decr(self.mx_raw)
             self.mx_raw = None
     def __del__(self):
         if debug:
-            print "py: Destroy {}".format(self)
+            print("py: Destroy {}".format(self))
         self.free()
     def __str__(self):
         return "<MxRaw: {}>".format(self.disp)
@@ -144,3 +146,33 @@ class MxFunc(MxRaw):
 
 def is_trampoline(obj):
     return hasattr(obj, 'mx_obj')
+
+# Type inheritance composition.
+# (Multiple inheritance is an unwanted beast at this moment.)
+def PyMxClass(BaseCls):
+    class PyMxClassImpl(BaseCls):
+        def __init__(self, mx_obj, *args, **kwargs):
+            super(PyMxClassImpl, self).__init__(*args, **kwargs)
+            # `mx_obj` should be a `MxRaw`
+            # TODO: This should be a weak reference to the MATLAB object...
+            # but there doesn't seem to be a way to do that...
+            assert mx_obj is not None
+            self._mx_obj = mx_obj
+
+        def _mx_virtual(self, method, *args):
+            assert self._mx_obj is not None
+            return mx_feval('pyInvokeVirtual', self._mx_obj, method, *args)
+
+        def _mx_free(self):
+            # Explicitly permit free'ing due to cyclic references... and inability
+            # to access MATLAB's reference counting...
+            self._mx_obj.free()
+            self._mx_obj = None
+
+        def _mx_decl_virtual(self, method):
+            # Add method
+            def func(*args):
+                return self._mx_virtual(method, *args)
+            self.__dict__[method] = func
+
+    return PyMxClassImpl
