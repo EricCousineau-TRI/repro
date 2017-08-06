@@ -1,5 +1,5 @@
-%%
-setup;
+% %%
+% setup;
 
 %%
 inherit_check_py = pyimport_proxy('pymodule.sub.inherit_check');

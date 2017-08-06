@@ -1,13 +1,11 @@
 classdef MexPyProxy
     methods (Static)
         function [] = preclear()
-            addpath(fullfile(pwd, 'py_proxy'));
             py_mex = MexPyProxy.py_module();
             py_mex.free();
         end
 
         function [] = init()
-            addpath(fullfile(pwd, 'py_proxy'));
             % Initialize erasure.
             e = MexPyProxy.erasure(); %#ok<NASGU>
             % Get Python module.
@@ -80,6 +78,8 @@ classdef MexPyProxy
         function [out] = py_module()
             persistent py_mex
             if isempty(py_mex)
+                dir = fileparts(mfilename('fullpath'));
+                addpath(dir, fileparts(dir));
                 py_mex = pyimport('py_mex_proxy');
                 fprintf('py_mex_proxy reload\n');
                 py.reload(py_mex);

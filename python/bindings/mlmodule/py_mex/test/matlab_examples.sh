@@ -7,7 +7,7 @@ set -e -u
 source_dir=$(cd $(dirname $BASH_SOURCE) && pwd)
 cd $source_dir
 
-pymodule_dir=$source_dir/../../python/bindings/pymodule
+pymodule_dir=$source_dir/../../../pymodule
 
 # Source Bazel python environment
 source ${pymodule_dir}/env/setup_target_env.sh \
@@ -18,4 +18,4 @@ python ${pymodule_dir}/sub/test/inherit_check_test.py
 python ${pymodule_dir}/sub/test/func_ptr_test.py
 
 # Start MATLAB, running startupProject MATLAB function.
-matlab # -r startupProject
+matlab -r "addpath(fullfile(pwd, '..')); setup;"

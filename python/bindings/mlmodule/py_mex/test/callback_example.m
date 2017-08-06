@@ -1,5 +1,5 @@
-%%
-setup;
+% %%
+% setup;
 
 %% 
 func_ptr_py = pyimport_proxy('pymodule.sub.func_ptr');

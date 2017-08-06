@@ -1,8 +1,8 @@
 classdef MxExtend < PyMxClass
     methods
         function obj = MxExtend()
-            mod = pyimport_proxy('inherit_check_py');
-            obj@PyMxClass(mod.PyMxExtend);
+            inheritance_example_py = pyimport_proxy('inheritance_example');
+            obj@PyMxClass(inheritance_example_py.PyMxExtend);
             % NOTE: There's no way to do a MATLAB-style concrete call,
             % .e.g. pure@PyMxClass(obj, value)  - or whatever the syntax
             % is.
