@@ -50,7 +50,7 @@ clear mx
 MexPyProxy.erasure()
 
 %%
-mx = InheritCheckMx();
+mx = MxExtend();
 mx.free();
 
 %%

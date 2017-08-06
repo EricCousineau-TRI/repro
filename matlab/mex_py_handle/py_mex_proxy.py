@@ -3,6 +3,8 @@ from ctypes import *
 
 from util import Erasure
 
+debug = False
+
 # py - Python
 # py_raw - Raw Python points (py_object, c_void_p)
 # mx - MATLAB / mxArray*
@@ -79,14 +81,16 @@ def mx_raw_feval_py(mx_raw_handle, nargout, *py_in):
     # to MATLAB via `MexPyProxy.mx_feval_py_raw`.
     mx_feval_py_raw = funcs['c_mx_feval_py_raw']
     py_raw_in = py_to_py_raw(py_in)
-    print "py.erasure: {}".format(erasure._values)
+    if debug:
+        print "py.erasure: {}".format(erasure._values)
     py_raw_out = (mx_feval_py_raw(
         c_uint64(mx_raw_handle), c_int(int(nargout)), c_uint64(py_raw_in)))
     if py_raw_out == 0xBADF00D:
         traceback.print_stack()
         raise Exception("Error")
     py_out = py_raw_to_py(py_raw_out)
-    print "py.erasure: {}".format(erasure._values)
+    if debug:
+        print "py.erasure: {}".format(erasure._values)
     return py_out
 
 def mx_raw_ref_incr(mx_raw):
@@ -114,7 +118,8 @@ class MxRaw(object):
             mx_raw_ref_decr(self.mx_raw)
             self.mx_raw = None
     def __del__(self):
-        print "py: Destroy {}".format(self)
+        if debug:
+            print "py: Destroy {}".format(self)
         self.free()
     def __str__(self):
         return "<MxRaw: {}>".format(self.disp)
