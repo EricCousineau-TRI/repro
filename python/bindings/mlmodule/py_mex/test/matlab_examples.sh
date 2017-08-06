@@ -18,4 +18,4 @@ python ${pymodule_dir}/sub/test/inherit_check_test.py
 python ${pymodule_dir}/sub/test/func_ptr_test.py
 
 # Start MATLAB, running startupProject MATLAB function.
-matlab -r "addpath(fullfile(pwd, '..')); setup;"
+matlab -r "run('../startupProject');"
