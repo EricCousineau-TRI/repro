@@ -28,6 +28,7 @@ class PyMxExtend(ic.Base):
         print "py: free"
         del self.mx_obj
         del self.mx_virtual
+        del self
     def pure(self, value):
         return self.mx_virtual('pure', value)
     def optional(self, value):
