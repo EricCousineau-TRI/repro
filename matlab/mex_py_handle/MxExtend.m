@@ -1,6 +1,6 @@
-classdef InheritCheckMx < PyMxClass
+classdef MxExtend < PyMxClass
     methods
-        function obj = InheritCheckMx()
+        function obj = MxExtend()
             mod = pyimport_proxy('inherit_check_py');
             obj@PyMxClass(mod.PyMxExtend);
             % NOTE: There's no way to do a MATLAB-style concrete call,

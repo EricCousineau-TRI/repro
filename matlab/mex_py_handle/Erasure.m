@@ -5,7 +5,7 @@ classdef Erasure < handle
         % Permit storing [] values, so use an external sentinel.
         References
         % Debugging
-        Debug = true
+        Debug = false
         % For edge cases
         Fresh = true
     end

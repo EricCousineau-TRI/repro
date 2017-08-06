@@ -52,6 +52,10 @@ class CppExtend : public Base {
   }
 };
 
+int call_method(Base& base) {
+  return base.dispatch(9);
+}
+
 PYBIND11_PLUGIN(_inherit_check) {
   py::module m("_inherit_check", "Simple check on inheritance");
 
@@ -64,6 +68,8 @@ PYBIND11_PLUGIN(_inherit_check) {
 
   py::class_<CppExtend>(m, "CppExtend", base)
     .def(py::init<>());
+
+  m.def("call_method", &call_method);
 
   return m.ptr();
 }

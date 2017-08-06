@@ -1,5 +1,11 @@
 classdef MexPyProxy
     methods (Static)
+        function [] = preclear()
+            addpath(fullfile(pwd, 'py_proxy'));
+            py_mex = MexPyProxy.py_module();
+            py_mex.free();
+        end
+
         function [] = init()
             addpath(fullfile(pwd, 'py_proxy'));
             % Initialize erasure.

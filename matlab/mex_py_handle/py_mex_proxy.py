@@ -21,7 +21,18 @@ c_mx_raw_ref_t = PYFUNCTYPE(c_int, mx_raw_t)
 # Simple example.
 c_simple_t = PYFUNCTYPE(c_int)
 
+mx_funcs = {}
 funcs = {}
+
+def free():
+    print "Free"
+    global funcs
+    global mx_funcs
+    del funcs
+    del mx_funcs
+    funcs = None
+    mx_funcs = None
+
 # For obtaining function pointers from a MEX function.
 def init_c_func_ptrs(funcs_in):
     global funcs

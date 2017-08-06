@@ -1,5 +1,8 @@
-clear all; clear classes;
 make;
+
+%%
+MexPyProxy.preclear(); % Prevent C functions from getting mixed up.
+clear all; clear classes;
 MexPyProxy.init();
 
 %%
@@ -15,15 +18,18 @@ cpp = ic.CppExtend()
 py = ice.PyExtend(py_pass_thru);
 value = int64(4);
 
-c = cpp.dispatch(value)
+cpp.dispatch(value)
 py.dispatch(value)
+
+ic.call_method(cpp)
+ic.call_method(py)
 
 %%
 py = ice.PyExtend(@adder)
 py.dispatch(value)
 
 %%
-mx = InheritCheckMx();
+mx = MxExtend();
 
 %%
 mx.pure(value)
@@ -31,6 +37,8 @@ mx.optional(value)
 
 %%
 x = mx.dispatch(value)
+% Test calling through a bound method
+ic.call_method(mx)
 
 %%
 MexPyProxy.erasure()
@@ -43,6 +51,7 @@ MexPyProxy.erasure()
 
 %%
 mx = InheritCheckMx();
+mx.free();
 
 %%
 % TODO: Resolve simple reference leak here... From circular references?
