@@ -24,6 +24,10 @@ class PyMxExtend(ic.Base):
             return mx_obj_feval_mx_raw(
                 mx_obj, 'pyInvokeVirtual', method, *args)
         self.mx_virtual = mx_virtual
+    def free(self):
+        print "py: free"
+        del self.mx_obj
+        del self.mx_virtual
     def pure(self, value):
         return self.mx_virtual('pure', value)
     def optional(self, value):

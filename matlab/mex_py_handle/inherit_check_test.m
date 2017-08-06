@@ -33,5 +33,17 @@ mx.optional(value)
 x = mx.dispatch(value)
 
 %%
+MexPyProxy.erasure()
+
+clear py
+mx.free();
+clear mx
+
+MexPyProxy.erasure()
+
+%%
+mx = InheritCheckMx();
+
+%%
 % TODO: Resolve simple reference leak here... From circular references?
 MexPyProxy.mx_raw_count()

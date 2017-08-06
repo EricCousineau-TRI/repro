@@ -1,17 +1,17 @@
-classdef PyMxClass < PyMxRaw
+classdef PyMxClass < handle
 % Class representing a MATLAB extension of a Python object.
-% TODO: Rename this to PyMxClass. Make PyMxRaw handle reference counting.
 
     properties (Access = protected)
+%         PyMxRawObj 
         PyTrampolineCls
         PyTrampolineObj
     end
 
     methods
         function obj = PyMxClass(pyTrampolineCls)
-            % NOTE: See `pybind11`s definition of a trampoline class.
-            obj@PyMxRaw();
-            
+%             % NOTE: See `pybind11`s definition of a trampoline class.
+%             obj@PyMxRaw();
+%             
             % This should be proxied.
             obj.PyTrampolineCls = pyTrampolineCls;
 
@@ -22,12 +22,29 @@ classdef PyMxClass < PyMxRaw
                 [varargout{:}] = feval(method, tobj, varargin{:});
             end
             
+            % How to do proper reference counting with trampoline classes?
+            
             % Create object, but don't let the proxy remove the good stuff.
-            args = {obj.pyRawRef(), @obj_feval_mx_raw};
+            % Let trampoline handle conversion stuff.
+            py_mx_raw = PyMxRaw(obj);
+            args = {py_mx_raw, @obj_feval_mx_raw};
+            % WARNING: This looks like a circular reference...
             pyargs = cellfun(@PyProxy.toPyValue, args, 'UniformOutput', false);
             pyTrampolineClsRaw = PyProxy.toPyValue(pyTrampolineCls);
             obj.PyTrampolineObj = ...
                 pyTrampolineClsRaw(pyargs{:});
+        end
+        
+        function [] = free(obj)
+            % TODO: Since there is a circular reference, objects must be
+            % explicitly freed... Is there a better way to synchronize
+            % reference counting for a parent/child object pair (if they
+            % can't represent the same slot in one reference counting
+            % mechanism?)
+%             mx_raw = int64(obj.PyTrampolineObj.mx_obj.mx_raw);
+%             MexPyProxy.mx_raw_ref_decr(mx_raw);
+            obj.PyTrampolineObj.free();
+            obj.PyTrampolineObj = [];
         end
         
         function [varargout] = pyInvokeVirtual(obj, method, varargin)

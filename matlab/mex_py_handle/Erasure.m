@@ -1,5 +1,5 @@
 classdef Erasure < handle
-    properties (Access = protected)
+    properties %(Access = protected)
         % Stored values.
         Values
         % Permit storing [] values, so use an external sentinel.

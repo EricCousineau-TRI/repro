@@ -4,27 +4,30 @@ classdef PyMxRaw < handle
         mx_raw_obj
         
         % Python `MxRaw` object
-        % - This is not a circular reference. Rather, it's that this points
-        % to MxRaw, which points to the raw value.
-        % (Weird, but that's how it goes when we don't have proper bindings
-        % :(  )
+        % - Need to try and avoid circular references with this design...
         PyRawRef
     end
 
     methods
-        function obj = PyMxRaw(disp_value)
-            if nargin < 1
-                disp_value = 'ml.PyMxRaw';
+        function obj = PyMxRaw(value, disp_value)
+            if nargin < 2
+                disp_value = sprintf('PyMxRaw:%s', class(value));
             end
-            obj.mx_raw_obj = MexPyProxy.mx_to_mx_raw(obj);
+            % Create and increment reference count.
+            obj.mx_raw_obj = MexPyProxy.mx_to_mx_raw(value);
+            % Create Python object.
             obj.PyRawRef = py.py_mex_proxy.MxRaw(obj.mx_raw_obj, disp_value);
-        end
-
-        function delete(obj)
-            % NOTE: Destruction order, between MATLAB and Python, is very
-            % hairy... This will cause pain.
+            % Decrement reference count after creating here.
             MexPyProxy.mx_raw_ref_decr(obj.mx_raw_obj);
         end
+% 
+%         function delete(obj)
+%             % NOTE: Destruction order, between MATLAB and Python, is very
+%             % hairy... This will cause pain.
+%             MexPyProxy.mx_raw_ref_decr(obj.mx_raw_obj);
+%             value = MexPyProxy.mx_raw_to_mx(obj.mx_raw_obj);
+%             fprintf('PyMxRaw: remove %s\n', class(value));
+%         end
 
         function [py_ref] = pyRawRef(obj)
             py_ref = obj.PyRawRef;
