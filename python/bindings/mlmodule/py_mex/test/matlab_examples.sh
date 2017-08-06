@@ -19,3 +19,6 @@ python ${pymodule_dir}/sub/test/func_ptr_test.py
 
 # Start MATLAB, running startupProject MATLAB function.
 matlab -r "run('../startupProject');"
+
+# # https://www.mathworks.com/matlabcentral/newsreader/view_thread/241754
+# matlab -nojvm -nosplash -D"valgrind --error-limit=no --tool=memcheck" -r "run('../startupProject');"
