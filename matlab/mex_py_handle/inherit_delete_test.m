@@ -10,13 +10,17 @@ PyProxy.reloadPy(pys);
 %%
 MexPyProxy.erasure()
 mx = InheritCheckMx();
+% Hack: For reference counting.
+mxc = onCleanup(@() mx.free());
+mx.dispatch(int64(1));
 MexPyProxy.erasure()
-mx.free();
-clear mx
+%%
+clear mx mxc
 MexPyProxy.erasure()
 
 %%
 clear all;
+
 %%
 MexPyProxy.erasure()
 x = PyMxRaw(1);

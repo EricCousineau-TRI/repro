@@ -20,19 +20,20 @@ class PyMxExtend(ic.Base):
         super(PyMxExtend, self).__init__()
         # This should be a `py_mex_proxy.MxRaw`
         self.mx_obj = mx_obj
-        def mx_virtual(method, *args):
-            return mx_obj_feval_mx_raw(
-                mx_obj, 'pyInvokeVirtual', method, *args)
-        self.mx_virtual = mx_virtual
+        self.mx_obj_feval_mx_raw = mx_obj_feval_mx_raw
+    def _mx_virtual(self, method, *args):
+        return self.mx_obj_feval_mx_raw(
+            self.mx_obj, 'pyInvokeVirtual', method, *args)
     def free(self):
         print "py: free"
-        del self.mx_obj
-        del self.mx_virtual
-        del self
+        self.mx_obj.free()
+        self.mx_obj = None
+        self.mx_obj_feval_mx_raw.free()
+        self.mx_obj_feval_mx_raw = None
     def pure(self, value):
-        return self.mx_virtual('pure', value)
+        return self._mx_virtual('pure', value)
     def optional(self, value):
-        return self.mx_virtual('optional', value)
+        return self._mx_virtual('optional', value)
     # def dispatch(self, value):
     #     # print "Sidetrack: {}".format(value)
     #     # return self.pure(value) + self.optional(value)

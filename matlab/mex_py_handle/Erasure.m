@@ -6,6 +6,8 @@ classdef Erasure < handle
         References
         % Debugging
         Debug = true
+        % For edge cases
+        Fresh = true
     end
 
     methods
@@ -16,6 +18,7 @@ classdef Erasure < handle
         end
         
         function [i] = store(obj, value)
+            obj.Fresh = false;
             i = find(obj.References == 0, 1, 'first');
             if isempty(i)
                 i = obj.size() + 1;
@@ -37,15 +40,19 @@ classdef Erasure < handle
             assert(obj.isValid(i));
             obj.References(i) = obj.References(i) + 1;
             if obj.Debug
-                fprintf('ml: Ref %d -> %d\n', i, obj.References(i));
+                fprintf('ml: Incr %d -> %d\n', i, obj.References(i));
             end
         end
         
         function [] = decrementReference(obj, i)
+            if obj.Fresh
+                fprintf('(Ignoring dead reference during "clear".)\n');
+                return;
+            end
             assert(obj.isValid(i));
             obj.References(i) = obj.References(i) - 1;
             if obj.Debug
-                fprintf('ml: Deref %d -> %d\n', i, obj.References(i));
+                fprintf('ml: Decr %d -> %d\n', i, obj.References(i));
             end
             if obj.References(i) == 0
                 % Clear cell, release reference.
