@@ -22,3 +22,7 @@ class Obj(object):
     def call(self, *args):
         print "py: Call {}".format(self.func)
         return self.func(*args)
+
+class Store(object):
+    def __init__(self, value):
+        self.value = value
