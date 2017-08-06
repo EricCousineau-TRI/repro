@@ -31,4 +31,6 @@ class PyMxExtend(ic.Base):
     # def dispatch(self, value):
     #     # print "Sidetrack: {}".format(value)
     #     # return self.pure(value) + self.optional(value)
+    #     print "py: dispatch"
+    #     # return 1
     #     return ic.Base.dispatch(self, value)
