@@ -19,9 +19,6 @@ clear mx mxc
 MexPyProxy.erasure()
 
 %%
-clear all;
-
-%%
 MexPyProxy.erasure()
 x = PyMxRaw(1);
 MexPyProxy.erasure()
