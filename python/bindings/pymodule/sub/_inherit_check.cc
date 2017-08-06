@@ -56,8 +56,8 @@ int call_method(Base& base) {
   return base.dispatch(9);
 }
 
-PYBIND11_PLUGIN(_inherit_check) {
-  py::module m("_inherit_check", "Simple check on inheritance");
+PYBIND11_MODULE(_inherit_check, m) {
+  // Simple check on inheritance
 
   py::class_<Base, PyBase> base(m, "Base");
   base
@@ -70,8 +70,6 @@ PYBIND11_PLUGIN(_inherit_check) {
     .def(py::init<>());
 
   m.def("call_method", &call_method);
-
-  return m.ptr();
 }
 
 }  // namespace inherit_check

@@ -24,11 +24,10 @@ int func_cpp(int value) {
   return 10000 * value;
 }
 
-PYBIND11_PLUGIN(_func_ptr) {
-  py::module m("_func_ptr", "Call Python method.");
+PYBIND11_MODULE(_func_ptr, m) {
+  // Call function pointers.
   m.def("call_cpp", &call_cpp);
   m.def("func_cpp", &func_cpp);
-  return m.ptr();
 }
 
 }  // namespace func_ptr
