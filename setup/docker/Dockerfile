@@ -6,5 +6,5 @@ RUN apt update && \
      yes "Y" | /root/repro/setup/ubuntu/16.04/install_prereqs.sh \
      && rm -rf /var/lib/apt/lists/* \
      && apt-get clean all
-RUN cd /root/repro && bazel run //python/bindings/pymodule:typebinding_test
+RUN cd /root/repro && bazel run //python/bindings/pymodule:type_binding_test
 ENTRYPOINT ["bash"]
