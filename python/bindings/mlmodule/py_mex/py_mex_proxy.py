@@ -150,6 +150,12 @@ def is_trampoline(obj):
 # Type inheritance composition.
 # (Multiple inheritance is an unwanted beast at this moment.)
 def PyMxClass(BaseCls):
+    # TODO(eric.cousineau): Consider adopting Python's style of inheritance:
+    # If the method exists in the child class, just call that directly.
+    # Otherwise, call the nominal version.
+    # Perhaps override __getattribute__ here, with `mx_feval('ismethod', self._mx_obj, ...)`?
+    # But only do this for bound methods on the actual BaseCls instance, to avoid
+    # variable from getting overridden.
     class PyMxClassImpl(BaseCls):
         def __init__(self, mx_obj, *args, **kwargs):
             super(PyMxClassImpl, self).__init__(*args, **kwargs)
