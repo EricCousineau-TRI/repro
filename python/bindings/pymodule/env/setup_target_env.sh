@@ -36,11 +36,14 @@ py_binary(
 )
 EOF
 
+    # Easier way to do this?
+    # --spawn_strategy=standalone does not seem to do it...
+
     # Generate environment and export it to a temporary file.
     # How to add additional flags? Like `-c dbg`?
     (
         cd ${script_dir}
-        bazel run --spawn_strategy=standalone :py_shell -- \
+        bazel run :py_shell -- \
             bash -c "export -p > $script" \
                 || { echo "Error for target: ${target}"; return 1;  }
     ) || return 1;
