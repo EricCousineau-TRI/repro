@@ -16,11 +16,19 @@ setup_target_env-main() {
     # any necessary dependencies are pulled in.
     local script_dir=$(dirname $script)
     mkdir -p ${script_dir}
+    local py_shell=${script_dir}/py_shell.py
+    test -L ${py_shell} && rm ${py_shell}
+    ln -s ${source_dir}/py_shell.py ${py_shell}
+
     cat > ${script_dir}/BUILD <<EOF
+# Add visibility to isolate this from something like "bazel build //..."?
+package(default_visibility = ["//visibility:private"])
+# This is used to execute commands using other targets under its environment
+# setup.
 # NOTE: This is a temporary file. Do not version control!
 py_binary(
     name = "py_shell",
-    srcs = ["//tools:py_shell"],
+    srcs = ["py_shell.py"],
     deps = [
         "${target}",
     ],
@@ -29,16 +37,22 @@ py_binary(
 EOF
 
     # Generate environment and export it to a temporary file.
-     # > /dev/null 2>&1 
-    bazel run --spawn_strategy=standalone -c dbg //python/bindings/pymodule/env/tmp:py_shell -- \
-        bash -c "export -p > $script" \
-            || { echo "Error for target: ${target}"; return 1;  }
+    # How to add additional flags? Like `-c dbg`?
+    (
+        cd ${script_dir}
+        bazel run --spawn_strategy=standalone :py_shell -- \
+            bash -c "export -p > $script" \
+                || { echo "Error for target: ${target}"; return 1;  }
+    ) || return 1;
     # Override PWD
     echo "declare -x PWD=$PWD" >> $script
 }
 
+bazel info workspace || return 1
+
 echo $BASH_SOURCE
-script=$(cd $(dirname $BASH_SOURCE) && pwd)/tmp/bazel_env.sh
+source_dir=$(cd $(dirname $BASH_SOURCE) && pwd)
+script=$(pwd)/.tmp/bazel_env.sh
 echo $script
 setup_target_env-main "$@" && {
     source $script;
