@@ -31,9 +31,11 @@ If the above test fails, you should fix it before moving on.
 
 # Running
 
-To run the example, use the following script to open MATLAB up with the correct environment:
+To run the example, use the following script to open MATLAB up with the correct environment (replace `${base}` with the correct path):
 
-    cd repro
+    cd ${base}/drake
+    export DRAKE=${PWD}
+    cd ${base}/repro
     ./python/bindings/mlmodule/demo/matlab_with_pythonpath_drake.sh
 
 Then try out the two MATLAB scripts:
