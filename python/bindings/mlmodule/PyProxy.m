@@ -38,6 +38,11 @@ classdef PyProxy % < dynamicprops
             p = obj.pySelf;
         end
         
+        function [ps] = properties(obj)
+            pys = py.py_proxy_helper.get_matlab_compatible_properties(obj.pySelf);
+            ps = cellfun(@char, cell(pys), 'UniformOutput', false);
+        end
+        
         function r = subsref(obj, S)
             p = PyProxy.getPy(obj);
             s = S(1);
