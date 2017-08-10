@@ -2,7 +2,7 @@ mp = pyimport_proxy('pydrake.solvers.mathematicalprogram');
 
 % QP test
 prog = mp.MathematicalProgram();
-x = prog.NewContinuousVariables(int32(2),'x'); % Note: py_relax_overload not used
+x = prog.NewContinuousVariables(int32(2),'x');
 prog.AddLinearConstraint(x(1) >= 1);
 prog.AddLinearConstraint(x(2) >= 1);
 prog.AddQuadraticCost(eye(2), zeros(2, 1), x);
@@ -21,3 +21,5 @@ assert(maxabs(x_sol - x_expected) < tol);
 size(x)
 x(:)
 (2 + x^2) * (x(1) + x(2))
+
+% NOTE: Horzcat is not working
