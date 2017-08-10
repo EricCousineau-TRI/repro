@@ -14,15 +14,15 @@ classdef NumPyProxy < PyProxy
             end
             obj@PyProxy(p);
         end
-        
+    end
+    
+    methods (Hidden = true)
         function out = isArithmetic(obj)
             p = PyProxy.getPy(obj);
             helper = pyimport('proxy_helper'); % Put on PYTHONPATH
             out = helper.np_is_arithemtic(p);
         end
-    end
-    
-    methods
+
         function t = transpose(obj)
             p = PyProxy.getPy(obj);
             t = NumPyProxy(p.T);

@@ -28,7 +28,9 @@ classdef PyProxy % < dynamicprops
             % Python form
             obj.pySelf = pySelf;
         end
-        
+    end
+    
+    methods (Hidden = true)
         function disp(obj)
             disp('  [PyProxy]');
             disp(obj.pySelf);
@@ -98,7 +100,7 @@ classdef PyProxy % < dynamicprops
     
     %% Operator overloads
     % @ref https://www.mathworks.com/help/matlab/matlab_oop/implementing-operators-for-your-class.html
-    methods
+    methods (Hidden = true)
         % How to handle concatenation?
         function r = plus(a, b)
             % Quick hack for now - delegte overloads to Python.
@@ -173,7 +175,7 @@ classdef PyProxy % < dynamicprops
     end
     
     %% Helper methods
-    methods (Static)
+    methods (Static, Hidden = true)
         function out = isPyFunc(p)
             % @ref http://stackoverflow.com/questions/624926/how-to-detect-whether-a-python-variable-is-a-function
             out = py.hasattr(p, '__call__');
