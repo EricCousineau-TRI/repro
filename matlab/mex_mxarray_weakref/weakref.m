@@ -1,29 +1,38 @@
 classdef weakref < handle
-    properties
-        Listener
-        
-        % Debugging
+% How to implement a proper weak reference?
+    properties (Access = private)
         Ref
-        MetaListener
+        Listener
+        ListenerClosure
     end
+
     methods
         function obj = weakref(ref, storeRef)
             assert(isa(ref, 'handle'));
-            % How to implement a weak reference?
+            % Attach a listener to attempt to make a weak reference, per
+            % the lifetime indications in the documentation:
+            % https://www.mathworks.com/help/releases/R2016b/matlab/matlab_oop/listener-lifecycle.html
+
+            % - This does not get called.
             obj.Listener = event.listener(ref, 'ObjectBeingDestroyed', ...
-                @(src, data) fprintf('weak ref: original destroyed\n'));
-            % For debugging, store a direct reference.
+                @(varargin) fprintf('weak ref: original destroyed (non-closure callback)\n'));
+            % - This does get called, when storeRef is true.
+            obj.ListenerClosure = event.listener(ref, 'ObjectBeingDestroyed', ...
+                @(varargin) obj.destroyed(varargin{:}));
+            % Store reference conditionally.
             if storeRef
                 obj.Ref = ref;
             end
-%             % Track lifetime of listener.
-%             obj.MetaListener = event.listener(obj.Listener, ...
-%                 'ObjectBeingDestroyed', ...
-%                 @(src, data) fprintf('Listener destroyed\n'));
         end
+
         function ref = get(obj)
-            % What happens if the source goes out of scope?
             ref = obj.Listener.Source{1};
+        end
+    end
+
+    methods (Access = private)
+        function destroyed(obj, ref, eventData) %#ok<INUSD>
+            fprintf('weak ref: original destroyed (closure callback)\n');
         end
     end
 end
