@@ -17,3 +17,6 @@ clear x_strong
 fprintf('weak ref: \n'); disp(x_weak.get());
 % How to make this work?
 assert(isempty(x_weak.get()));
+
+%%
+clear
