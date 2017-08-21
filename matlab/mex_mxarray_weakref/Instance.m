@@ -1,9 +1,9 @@
-classdef Obj < handle
+classdef Instance < handle
     properties
         Value
     end
     methods
-        function obj = Obj(value)
+        function obj = Instance(value)
             obj.Value = value;
         end
         function disp(obj)
