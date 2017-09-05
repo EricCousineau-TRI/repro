@@ -209,3 +209,12 @@ cc_binary(
     name = "tpl_impl",
     srcs = ["tpl_impl.cc"],
 )
+
+cc_binary(
+    name = "gtest_op",
+    srcs = ["gtest_op.cc"],
+    deps = [
+        "@gtest//:main",
+    ],
+    testonly = 1,
+)

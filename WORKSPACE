@@ -36,6 +36,14 @@ new_local_repository(
 #     sha256 = "08b4813b3b17f607efc4e8ba8b73bf55759ba744cab125e9fc666b5161cb1d0a",
 # )
 
+github_archive(
+    name = "gtest",
+    repository = "google/googletest",
+    commit = "release-1.8.0",
+    sha256 = "58a6f4277ca2bc8565222b3bbd58a177609e9c488e8a72649359ba51450db7d8",  # noqa
+    build_file = "tools/gtest.BUILD",
+)
+
 # Jerry-rig VTK
 load("//tools:vtk.bzl", "vtk_repository")
 vtk_repository(
