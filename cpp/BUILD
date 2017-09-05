@@ -204,3 +204,8 @@ cc_binary(
         "stl_pod.cc",
     ],
 )
+
+cc_binary(
+    name = "tpl_impl",
+    srcs = ["tpl_impl.cc"],
+)
