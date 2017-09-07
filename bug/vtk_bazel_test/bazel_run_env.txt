@@ -1,0 +1,11 @@
+declare -x BAZEL_REAL="/usr/bin/bazel-real"
+declare -x DISPLAY=":1"
+declare -x GUROBI_PATH="/home/eacousineau/local/opt/gurobi702/linux64"
+declare -x HOME="/home/eacousineau"
+declare -x OLDPWD
+declare -x PATH="/usr/local/bin:/usr/bin:/bin"
+declare -x PWD="/home/eacousineau/.cache/bazel/_bazel_eacousineau/78f86b7b95b0ef2252566e27f0e9f796/execroot/master/bazel-out/clang-3.9-linux-opt/bin/drake/systems/sensors/rgbd_camera_test.runfiles/drake"
+declare -x SHELL="/bin/bash"
+declare -x SHLVL="2"
+declare -x TERM="screen"
+declare -x USER="eacousineau"
