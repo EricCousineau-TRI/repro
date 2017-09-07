@@ -218,3 +218,8 @@ cc_binary(
     ],
     testonly = 1,
 )
+
+cc_binary(
+    name = "shared_ptr_release",
+    srcs = ["shared_ptr_release.cc"],
+)
