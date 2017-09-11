@@ -1,0 +1,41 @@
++ job=10638
++ ./pub.py
++ ./sub.py
+pub 0
+
+pub 1
+channel: DRAKE_DRAW_FRAMES_A
+  name: b
+  timestamp: 1
+
+pub 2
+channel: DRAKE_DRAW_FRAMES_A
+  name: b
+  timestamp: 2
+
++ ./pub.py --do_sleep
+pub 0
+channel: DRAKE_DRAW_FRAMES_A
+  name: a
+  timestamp: 0
+channel: DRAKE_DRAW_FRAMES_B
+  name: b
+  timestamp: 0
+
+pub 1
+channel: DRAKE_DRAW_FRAMES_A
+  name: a
+  timestamp: 1
+channel: DRAKE_DRAW_FRAMES_B
+  name: b
+  timestamp: 1
+
+pub 2
+channel: DRAKE_DRAW_FRAMES_A
+  name: a
+  timestamp: 2
+channel: DRAKE_DRAW_FRAMES_B
+  name: b
+  timestamp: 2
+
++ kill -s STOP 10638
