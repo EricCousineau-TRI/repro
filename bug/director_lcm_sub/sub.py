@@ -16,6 +16,8 @@ try:
         messageClass = viewer_draw_t,
         callback = callback,
         callbackNeedsChannel = True)
+    # Workaround:
+    sub.setNotifyAllMessagesEnabled(True)
 
     app = consoleapp.ConsoleApp()
     app.start()
