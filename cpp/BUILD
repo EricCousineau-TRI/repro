@@ -223,3 +223,8 @@ cc_binary(
     name = "shared_ptr_release",
     srcs = ["shared_ptr_release.cc"],
 )
+
+cc_binary(
+    name = "lambda_stack_capture",
+    srcs = ["lambda_stack_capture.cc"],
+)
