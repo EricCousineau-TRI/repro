@@ -228,3 +228,8 @@ cc_binary(
     name = "lambda_stack_capture",
     srcs = ["lambda_stack_capture.cc"],
 )
+
+cc_binary(
+    name = "raw_string",
+    srcs = ["raw_string.cc"],
+)
