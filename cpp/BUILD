@@ -233,3 +233,8 @@ cc_binary(
     name = "raw_string",
     srcs = ["raw_string.cc"],
 )
+
+cc_binary(
+    name = "func_target",
+    srcs = ["func_target.cc"],
+)

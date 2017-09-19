@@ -3,10 +3,11 @@
 
 using namespace std;
 
-const string value = R"(.
+const string value =
+    R"_(.
 Hello
 world
-.)";
+.)_";
 
 int main() {
   cout << "---\n";
