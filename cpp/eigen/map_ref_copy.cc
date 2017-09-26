@@ -40,8 +40,14 @@ int main() {
   A << 1, 2, 3,
        4, 5, 6,
        7, 8, 9;
-
   cout << PRINT(A);
+
+  Ref<MatrixXd> A_block = A.block(1, 1, 2, 2);
+  EVAL(A *= 2);
+  cout
+    << PRINT(A)
+    << PRINT(A_block);
+
 
   auto A_rt = A.row(0).transpose();
   auto Ac_rt = Ac.row(0).transpose();
