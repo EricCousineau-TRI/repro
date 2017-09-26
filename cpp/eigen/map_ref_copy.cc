@@ -13,44 +13,48 @@ class RefMap : public Eigen::Map<PlainObjectType> {
 
   template <typename PlainObjectTypeIn>
   RefMap(PlainObjectTypeIn&& in)
-    : Base(in.data(), in.rows(), in.cols()) {}
+    : Base(in.data(), in.rows(), in.cols()) {
+    std::cout << "stride: (" << in.outerStride()
+      << ", " << in.innerStride() << ")" << std::endl;
+  }
 };
 
 int main() {
   using namespace Eigen;
 
-  MatrixXd X(3, 3);
-  const MatrixXd& X_c(X);
-  X << 1, 2, 3,
+  MatrixXd A(3, 3);
+  const MatrixXd& Ac(A);
+  A << 1, 2, 3,
        4, 5, 6,
        7, 8, 9;
 
-  auto Xr = X.row(0).transpose();
-  auto X_cr = X_c.row(0).transpose();
+  auto A_rt = A.row(0).transpose();
+  auto Ac_rt = Ac.row(0).transpose();
 
-  // Map<Vector3d> Y(X);
-  RefMap<Vector3d> Y(Xr);
-  RefMap<const Vector3d> Y_c(Xr);
+  // Map<Vector3d> A_refmap(A);
+  RefMap<Vector3d> A_refmap(A_rt);
+  RefMap<const Vector3d> Ac_crefmap(Ac_rt);
 
-  // RefMap<Vector3d> Yc(X_cr);  // Fails as expected.
-  RefMap<const Vector3d> Yc_c(X_cr);
+  RefMap<const Vector3d> A_crefmap(A_rt);
+  // RefMap<Vector3d> Ac_refmap(Ac_rt);  // Fails as expected.
 
-  std::cout << PRINT(Y.transpose());
+  std::cout
+    << PRINT(A_rt.transpose())
+    << PRINT(A_refmap.transpose())
+    << PRINT(Ac_crefmap.transpose());
 
-  // Try to induce a copy.
-  Ref<const Vector3d> Z_c(Xr);
-  Ref<const Matrix<double, 1, 3, RowMajor>> A_c(X_cr);
+  // This induces a copy.
+  Ref<const Vector3d> A_cref(A_rt);
+  Ref<const Matrix<double, 1, 3, RowMajor>> A_cref_row(Ac_rt);
 
-  std::cout << A_c << std::endl;
-
-  X *= 3;
-
-  std::cout << "---\n"
-    << PRINT(Y.transpose())
-    << PRINT(Y_c.transpose())
-    << PRINT(Xr.transpose())
-    << PRINT(Z_c.transpose())
-    << PRINT(A_c);
+  std::cout << "---\n";
+  EVAL(A *= 3);
+  std::cout  
+    << PRINT(A_rt.transpose())
+    << PRINT(A_refmap.transpose())
+    << PRINT(A_crefmap.transpose())
+    << PRINT(A_cref.transpose())
+    << PRINT(A_cref_row);
 
   return 0;
 }
