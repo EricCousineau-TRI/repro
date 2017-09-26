@@ -11,6 +11,11 @@ class RefMap;
 
 namespace internal {
 
+// Eigen/src/Core/Ref.h
+template <typename PlainObjectType>
+struct traits<RefMap<PlainObjectType>>
+    : public traits<Ref<PlainObjectType>> {};
+
 // Eigen/src/Core/CoreEvaluators.h
 template<typename PlainObjectType> 
 struct evaluator<RefMap<PlainObjectType> >
@@ -27,11 +32,6 @@ struct evaluator<RefMap<PlainObjectType> >
     : mapbase_evaluator<XprType, PlainObjectType>(ref) 
   { }
 };
-
-// Eigen/src/Core/Ref.h
-template <typename PlainObjectType>
-struct traits<RefMap<PlainObjectType>>
-    : public traits<Ref<PlainObjectType>> {};
 
 }  // namespace internal
 
@@ -96,42 +96,46 @@ int main() {
     << PRINT(A_block_refmap);
 
 
-  auto A_rt = A.row(0).transpose();
-  auto Ac_rt = Ac.row(0).transpose();
+  auto A_r = A.row(0);
+  auto Ac_r = Ac.row(0);
 
-  cout << PRINT(A_rt.transpose());
+  cout << PRINT(A_r);
 
-  // Ref<Vector3d> A_ref(A_rt);  // Fails as expected.
+  // Ref<Vector3d> A_ref(A_r);  // Fails as expected.
   // These induce a copy.
-  Ref<const Vector3d> A_cref(A_rt);
-  cout << PRINT(A_cref.transpose());
+  Ref<const Vector3d> A_rt_cref(A_r.transpose());
+  cout << PRINT(A_rt_cref);
 
-  Ref<const Matrix<double, 1, 3, RowMajor>> A_cref_row(Ac_rt);
-  cout << PRINT(A_cref_row.transpose());
+  Ref<const Matrix<double, 1, 3, RowMajor>> Ac_r_cref_row(Ac_r);
+  cout << PRINT(Ac_r_cref_row);
 
   RefMap<Vector3d> A_c_refmap(A.col(0));
-  cout << PRINT(A_c_refmap.transpose());
+  cout << PRINT(A_c_refmap);
+
+  // Fails as expected.
+  // RefMap<Vector3d> A_r_refmap(A.row(0));
+  // cout << PRINT(A_r_refmap);
 
   // // Will fail.
   // RefMap<RowVector3d> A_r_refmap(A.row(0));
   // cout << PRINT(A_r_refmap);
 
   // // Will also fail.
-  // RefMap<Vector3d> A_refmap(A_rt);
-  // RefMap<const Vector3d> Ac_crefmap(Ac_rt);
+  // RefMap<Vector3d> A_refmap(A_r);
+  // RefMap<const Vector3d> Ac_crefmap(Ac_r);
 
-  // RefMap<const Vector3d> A_crefmap(A_rt);
-  // // RefMap<Vector3d> Ac_refmap(Ac_rt);  // Fails as expected.
+  // RefMap<const Vector3d> A_crefmap(A_r);
+  // // RefMap<Vector3d> Ac_refmap(Ac_r);  // Fails as expected.
   // cout << PRINT(Ac_crefmap.transpose());
 
   // std::cout << "---\n";
   // EVAL(A *= 3);
   // std::cout  
-  //   << PRINT(A_rt.transpose())
+  //   << PRINT(A_r.transpose())
   //   << PRINT(A_refmap.transpose())
   //   << PRINT(A_crefmap.transpose())
-  //   << PRINT(A_cref.transpose())
-  //   << PRINT(A_cref_row);
+  //   << PRINT(A_rt_cref.transpose())
+  //   << PRINT(Ac_r_cref_row);
 
   return 0;
 }
