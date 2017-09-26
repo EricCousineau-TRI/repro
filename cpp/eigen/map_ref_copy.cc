@@ -3,29 +3,53 @@
 #include <iostream>
 #include <Eigen/Dense>
 
-template <typename PlainObjectType>
-class RefMap : public Eigen::Map<PlainObjectType> {
- public:
-  typedef Eigen::Map<PlainObjectType> Base;
+namespace Eigen {
 
-  template <typename PlainObjectTypeIn>
-  RefMap(PlainObjectTypeIn&& in)
-      : Base(in.data(), in.rows(), in.cols()) {
-#ifndef _NDEBUG
-    if (in.size() > 0) {
+template <typename PlainObjectType>
+class RefMap;
+
+namespace internal {
+
+// This should be fine because there are no special traits for Ref<const T>
+template <typename PlainObjectType>
+struct traits<RefMap<PlainObjectType>>
+    : public traits<Ref<PlainObjectType>> {};
+
+}  // namespace internal
+
+template <typename PlainObjectType>
+class RefMap : public Eigen::RefBase<RefMap<PlainObjectType>> {
+ public:
+  typedef Eigen::RefBase<RefMap<PlainObjectType>> Base;
+
+  template <typename PlainObjectTypeInF>
+  RefMap(PlainObjectTypeInF&& expr) {
+    typedef std::decay_t<decltype(expr.derived())> Derived;
+    typedef internal::traits<Ref<Derived>> Traits;
+    static_assert(
+      Traits::template match<Derived>::MatchAtCompileTime,
+      "STORAGE_LAYOUT_DOES_NOT_MATCH");
+    static_assert(
+      !Derived::IsPlainObjectBase,
+      "BAD_F00D");
+    Base::construct(expr.const_cast_derived());
+
+    if (expr.size() > 0) {
       // Ensure that we have properly strided data
       // E.g., guard against getting the nested expression data / strides in
       // a transpose() expression.
-      const int fin = in.size() - 1;
+      const int last = expr.size() - 1;
       eigen_assert(
-        &this->coeffRef(0) == &in.coeffRef(0) &&
-        &this->coeffRef(fin) == &in.coeffRef(fin) &&
-        "ERROR: Data and stride for input object (PlainObjectTypeIn) do not \
+        &this->coeffRef(0) == &expr.coeffRef(0) &&
+        &this->coeffRef(last) == &expr.coeffRef(last) &&
+        "ERROR: Data and stride for input object (PlainObjectTypeInF) do not \
 match those of template parameter (PlainObjectType).");
     }
-#endif  // _NDEBUG
   }
 };
+
+}  // namespace Eigen
+
 
 #define EVAL(x) std::cout << ">>> " #x ";" << std::endl; x; std::cout << std::endl
 #define PRINT(x) ">>> " #x << std::endl << (x) << std::endl << std::endl
