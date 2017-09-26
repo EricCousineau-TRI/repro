@@ -18,34 +18,37 @@ struct traits<RefMap<PlainObjectType>>
 }  // namespace internal
 
 template <typename PlainObjectType>
-class RefMap : public Eigen::RefBase<RefMap<PlainObjectType>> {
+class RefMap : public RefBase<RefMap<PlainObjectType>> {
  public:
-  typedef Eigen::RefBase<RefMap<PlainObjectType>> Base;
+  typedef internal::traits<RefMap> Traits;
+  typedef RefBase<RefMap<PlainObjectType>> Base;
+  EIGEN_DENSE_PUBLIC_INTERFACE(RefMap)
 
-  template <typename PlainObjectTypeInF>
-  RefMap(PlainObjectTypeInF&& expr) {
-    typedef std::decay_t<decltype(expr.derived())> Derived;
-    typedef internal::traits<Ref<Derived>> Traits;
-    static_assert(
-      Traits::template match<Derived>::MatchAtCompileTime,
-      "STORAGE_LAYOUT_DOES_NOT_MATCH");
-    static_assert(
-      !Derived::IsPlainObjectBase,
-      "BAD_F00D");
-    Base::construct(expr.const_cast_derived());
+  template <typename Derived>
+  EIGEN_DEVICE_FUNC inline RefMap(const DenseBase<Derived>& expr) {
+    // typedef internal::traits<Ref<Derived>> Traits;
+    // static_assert(
+    //   Traits::template match<Derived>::MatchAtCompileTime,
+    //   "STORAGE_LAYOUT_DOES_NOT_MATCH");
+    // static_assert(
+    //   !Derived::IsPlainObjectBase,
+    //   "BAD_F00D");
+    // Base::construct(expr.const_cast_derived());
 
-    if (expr.size() > 0) {
-      // Ensure that we have properly strided data
-      // E.g., guard against getting the nested expression data / strides in
-      // a transpose() expression.
-      const int last = expr.size() - 1;
-      eigen_assert(
-        &this->coeffRef(0) == &expr.coeffRef(0) &&
-        &this->coeffRef(last) == &expr.coeffRef(last) &&
-        "ERROR: Data and stride for input object (PlainObjectTypeInF) do not \
-match those of template parameter (PlainObjectType).");
-    }
+//     if (expr.size() > 0) {
+//       // Ensure that we have properly strided data
+//       // E.g., guard against getting the nested expression data / strides in
+//       // a transpose() expression.
+//       const int last = expr.size() - 1;
+//       eigen_assert(
+//         &this->coeffRef(0) == &expr.coeffRef(0) &&
+//         &this->coeffRef(last) == &expr.coeffRef(last) &&
+//         "ERROR: Data and stride for input object (PlainObjectTypeInF) do not
+// match those of template parameter (PlainObjectType).");
+//     }
   }
+
+  EIGEN_INHERIT_ASSIGNMENT_OPERATORS(RefMap)
 };
 
 }  // namespace Eigen
@@ -86,29 +89,29 @@ int main() {
   Ref<const Matrix<double, 1, 3, RowMajor>> A_cref_row(Ac_rt);
   cout << PRINT(A_cref_row.transpose());
 
-  RefMap<Vector3d> A_c_refmap(A.col(0));
+  RefMap<const Vector3d> A_c_refmap(A.col(0));
   cout << PRINT(A_c_refmap.transpose());
 
-  // Will fail.
-  RefMap<RowVector3d> A_r_refmap(A.row(0));
-  cout << PRINT(A_r_refmap);
+  // // Will fail.
+  // RefMap<RowVector3d> A_r_refmap(A.row(0));
+  // cout << PRINT(A_r_refmap);
 
-  // Will also fail.
-  RefMap<Vector3d> A_refmap(A_rt);
-  RefMap<const Vector3d> Ac_crefmap(Ac_rt);
+  // // Will also fail.
+  // RefMap<Vector3d> A_refmap(A_rt);
+  // RefMap<const Vector3d> Ac_crefmap(Ac_rt);
 
-  RefMap<const Vector3d> A_crefmap(A_rt);
-  // RefMap<Vector3d> Ac_refmap(Ac_rt);  // Fails as expected.
-  cout << PRINT(Ac_crefmap.transpose());
+  // RefMap<const Vector3d> A_crefmap(A_rt);
+  // // RefMap<Vector3d> Ac_refmap(Ac_rt);  // Fails as expected.
+  // cout << PRINT(Ac_crefmap.transpose());
 
-  std::cout << "---\n";
-  EVAL(A *= 3);
-  std::cout  
-    << PRINT(A_rt.transpose())
-    << PRINT(A_refmap.transpose())
-    << PRINT(A_crefmap.transpose())
-    << PRINT(A_cref.transpose())
-    << PRINT(A_cref_row);
+  // std::cout << "---\n";
+  // EVAL(A *= 3);
+  // std::cout  
+  //   << PRINT(A_rt.transpose())
+  //   << PRINT(A_refmap.transpose())
+  //   << PRINT(A_crefmap.transpose())
+  //   << PRINT(A_cref.transpose())
+  //   << PRINT(A_cref_row);
 
   return 0;
 }
