@@ -3,6 +3,9 @@
 #include <iostream>
 #include <Eigen/Dense>
 
+#define EVAL(x) std::cout << ">>> " #x ";" << std::endl; x; std::cout << std::endl
+#define PRINT(x) ">>> " #x << std::endl << (x) << std::endl << std::endl
+
 template <typename PlainObjectType>
 class RefMap : public Eigen::Map<PlainObjectType> {
  public:
@@ -32,7 +35,7 @@ int main() {
   // RefMap<Vector3d> Yc(X_cr);  // Fails as expected.
   RefMap<const Vector3d> Yc_c(X_cr);
 
-  std::cout << Y.transpose() << std::endl;
+  std::cout << PRINT(Y.transpose());
 
   // Try to induce a copy.
   Ref<const Vector3d> Z_c(Xr);
@@ -42,13 +45,12 @@ int main() {
 
   X *= 3;
 
-  std::cout
-      << "---\n"
-      << Y.transpose() << "\n"
-      << Y_c.transpose() << "\n"
-      << Xr.transpose() << "\n"
-      << Z_c.transpose() << "\n"
-      << A_c << "\n";
+  std::cout << "---\n"
+    << PRINT(Y.transpose())
+    << PRINT(Y_c.transpose())
+    << PRINT(Xr.transpose())
+    << PRINT(Z_c.transpose())
+    << PRINT(A_c);
 
   return 0;
 }
