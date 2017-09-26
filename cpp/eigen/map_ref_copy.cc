@@ -119,7 +119,7 @@ int main() {
 
   // Works.
   RefMap<Vector3d> A_c_refmap(A.col(0));
-  A_c_refmap *= 10;
+  A_c_refmap *= 3;
   cout << PRINT(A_c_refmap);
   cout << PRINT(A);
 
@@ -135,28 +135,29 @@ int main() {
   // RefMap<const Vector3d> A_rt_crefmap(A_r.transpose());
   // cout << PRINT(A_rt_crefmap);
 
-  RefMap<RowVector3d> A_r_refmap(A.block(0, 0, 1, 3));
-  cout << PRINT(A_r_refmap);
 
+  // // This does not work: Does not provide the same stride access.
+  // RefMap<RowVector3d> A_r_refmap(A.block(0, 0, 1, 3));
 
+  RefMap<MatrixXd> A_r_refmap_x(A.block(0, 0, 1, 3));
+
+  cout
+    << PRINT(A.block(0, 0, 1, 3))
+    // << PRINT(A_r_refmap)
+    << PRINT(A_r_refmap_x);
 
 
   // // Will also fail.
-  // RefMap<Vector3d> A_refmap(A_r);
-  // RefMap<const Vector3d> Ac_crefmap(Ac_r);
+  RefMap<Vector3d> A_refmap(A.col(0));
+  RefMap<const Vector3d> Ac_crefmap(Ac.col(0));
 
-  // RefMap<const Vector3d> A_crefmap(A_r);
-  // // RefMap<Vector3d> Ac_refmap(Ac_r);  // Fails as expected.
-  // cout << PRINT(Ac_crefmap.transpose());
-
-  // std::cout << "---\n";
-  // EVAL(A *= 3);
-  // std::cout  
-  //   << PRINT(A_r.transpose())
-  //   << PRINT(A_refmap.transpose())
-  //   << PRINT(A_crefmap.transpose())
-  //   << PRINT(A_rt_cref.transpose())
-  //   << PRINT(Ac_r_cref_row);
+  std::cout << "---\n";
+  EVAL(A *= 3);
+  std::cout  
+    << PRINT(A_r)
+    << PRINT(A_refmap)
+    << PRINT(Ac_crefmap)
+    << PRINT(Ac_crefmap);
 
   return 0;
 }
