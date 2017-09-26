@@ -3,9 +3,6 @@
 #include <iostream>
 #include <Eigen/Dense>
 
-#define EVAL(x) std::cout << ">>> " #x ";" << std::endl; x; std::cout << std::endl
-#define PRINT(x) ">>> " #x << std::endl << (x) << std::endl << std::endl
-
 template <typename PlainObjectType>
 class RefMap : public Eigen::Map<PlainObjectType> {
  public:
@@ -14,14 +11,24 @@ class RefMap : public Eigen::Map<PlainObjectType> {
   template <typename PlainObjectTypeIn>
   RefMap(PlainObjectTypeIn&& in)
       : Base(in.data(), in.rows(), in.cols()) {
+#ifndef _NDEBUG
     if (in.size() > 0) {
-      // Do simple check to ensure we match.
-      assert(&this->coeffRef(0) == &in.coeffRef(0));
-      int fin = in.size() - 1;
-      assert(&this->coeffRef(fin) == &in.coeffRef(fin));
+      // Ensure that we have properly strided data
+      // E.g., guard against getting the nested expression data / strides in
+      // a transpose() expression.
+      const int fin = in.size() - 1;
+      eigen_assert(
+        &this->coeffRef(0) == &in.coeffRef(0) &&
+        &this->coeffRef(fin) == &in.coeffRef(fin) &&
+        "ERROR: Data and stride for input object (PlainObjectTypeIn) do not \
+match those of template parameter (PlainObjectType).");
     }
+#endif  // _NDEBUG
   }
 };
+
+#define EVAL(x) std::cout << ">>> " #x ";" << std::endl; x; std::cout << std::endl
+#define PRINT(x) ">>> " #x << std::endl << (x) << std::endl << std::endl
 
 int main() {
   using namespace Eigen;
@@ -34,6 +41,8 @@ int main() {
        4, 5, 6,
        7, 8, 9;
 
+  cout << PRINT(A);
+
   auto A_rt = A.row(0).transpose();
   auto Ac_rt = Ac.row(0).transpose();
 
@@ -45,7 +54,16 @@ int main() {
   cout << PRINT(A_cref.transpose());
 
   Ref<const Matrix<double, 1, 3, RowMajor>> A_cref_row(Ac_rt);
+  cout << PRINT(A_cref_row.transpose());
 
+  RefMap<Vector3d> A_c_refmap(A.col(0));
+  cout << PRINT(A_c_refmap.transpose());
+
+  // Will fail.
+  RefMap<RowVector3d> A_r_refmap(A.row(0));
+  cout << PRINT(A_r_refmap);
+
+  // Will also fail.
   RefMap<Vector3d> A_refmap(A_rt);
   RefMap<const Vector3d> Ac_crefmap(Ac_rt);
 
