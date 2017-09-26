@@ -5,25 +5,22 @@
 
 namespace Eigen {
 
-template<typename PlainObjectType, int Options = 0,
-         typename StrideType = typename internal::conditional<PlainObjectType::IsVectorAtCompileTime,InnerStride<1>,OuterStride<> >::type > class RefMap;
+// Eigen/src/Core/util/ForwardDeclarations.h
+template<typename PlainObjectType>
+class RefMap;
 
 namespace internal {
 
-// This should be fine because there are no special traits for Ref<const T>
-template <typename PlainObjectType, int Options, typename StrideType>
-struct traits<RefMap<PlainObjectType, Options, StrideType>>
-    : public traits<Ref<PlainObjectType, Options, StrideType>> {};
-
-template<typename PlainObjectType, int RefOptions, typename StrideType> 
-struct evaluator<RefMap<PlainObjectType, RefOptions, StrideType> >
-  : public mapbase_evaluator<RefMap<PlainObjectType, RefOptions, StrideType>, PlainObjectType>
+// Eigen/src/Core/CoreEvaluators.h
+template<typename PlainObjectType> 
+struct evaluator<RefMap<PlainObjectType> >
+  : public mapbase_evaluator<RefMap<PlainObjectType>, PlainObjectType>
 {
-  typedef RefMap<PlainObjectType, RefOptions, StrideType> XprType;
+  typedef RefMap<PlainObjectType> XprType;
   
   enum {
-    Flags = evaluator<Map<PlainObjectType, RefOptions, StrideType> >::Flags,
-    Alignment = evaluator<Map<PlainObjectType, RefOptions, StrideType> >::Alignment
+    Flags = evaluator<Map<PlainObjectType> >::Flags,
+    Alignment = evaluator<Map<PlainObjectType> >::Alignment
   };
 
   EIGEN_DEVICE_FUNC explicit evaluator(const XprType& ref)
@@ -31,10 +28,16 @@ struct evaluator<RefMap<PlainObjectType, RefOptions, StrideType> >
   { }
 };
 
+// Eigen/src/Core/Ref.h
+template <typename PlainObjectType>
+struct traits<RefMap<PlainObjectType>>
+    : public traits<Ref<PlainObjectType>> {};
+
 }  // namespace internal
 
-template<typename PlainObjectType, int Options, typename StrideType> class RefMap
-  : public RefBase<RefMap<PlainObjectType, Options, StrideType> >
+// Eigen/src/Core/Ref.h
+template<typename PlainObjectType> class RefMap
+  : public RefBase<RefMap<PlainObjectType> >
 {
   private:
     typedef internal::traits<RefMap> Traits;
@@ -46,8 +49,6 @@ template<typename PlainObjectType, int Options, typename StrideType> class RefMa
     typedef RefBase<RefMap> Base;
     EIGEN_DENSE_PUBLIC_INTERFACE(RefMap)
 
-
-    #ifndef EIGEN_PARSED_BY_DOXYGEN
     template<typename Derived>
     EIGEN_DEVICE_FUNC inline RefMap(PlainObjectBase<Derived>& expr,
                                  typename internal::enable_if<bool(Traits::template match<Derived>::MatchAtCompileTime),Derived>::type* = 0)
@@ -58,11 +59,6 @@ template<typename PlainObjectType, int Options, typename StrideType> class RefMa
     template<typename Derived>
     EIGEN_DEVICE_FUNC inline RefMap(const DenseBase<Derived>& expr,
                                  typename internal::enable_if<bool(Traits::template match<Derived>::MatchAtCompileTime),Derived>::type* = 0)
-    #else
-    /** Implicit constructor from any dense expression */
-    template<typename Derived>
-    inline RefMap(DenseBase<Derived>& expr)
-    #endif
     {
       EIGEN_STATIC_ASSERT(bool(internal::is_lvalue<Derived>::value), THIS_EXPRESSION_IS_NOT_A_LVALUE__IT_IS_READ_ONLY);
       EIGEN_STATIC_ASSERT(bool(Traits::template match<Derived>::MatchAtCompileTime), STORAGE_LAYOUT_DOES_NOT_MATCH);
@@ -72,7 +68,6 @@ template<typename PlainObjectType, int Options, typename StrideType> class RefMa
 
     EIGEN_INHERIT_ASSIGNMENT_OPERATORS(RefMap)
 };
-
 
 }  // namespace Eigen
 
@@ -92,11 +87,13 @@ int main() {
        7, 8, 9;
   cout << PRINT(A);
 
-  Ref<MatrixXd> A_block = A.block(1, 1, 2, 2);
+  Ref<MatrixXd> A_block_ref = A.block(1, 1, 2, 2);
+  RefMap<MatrixXd> A_block_refmap = A.block(1, 1, 2, 2);
   EVAL(A *= 2);
   cout
     << PRINT(A)
-    << PRINT(A_block);
+    << PRINT(A_block_ref)
+    << PRINT(A_block_refmap);
 
 
   auto A_rt = A.row(0).transpose();
