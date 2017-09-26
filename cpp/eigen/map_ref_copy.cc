@@ -14,19 +14,30 @@ class RefMap : public Eigen::Map<PlainObjectType> {
 };
 
 int main() {
-  Eigen::VectorXd X(3);
-  const Eigen::VectorXd& X_c(X);
+  using namespace Eigen;
+
+  VectorXd X(3);
+  const VectorXd& X_c(X);
   X << 1, 2, 3;
 
-  // Eigen::Map<Eigen::Vector3d> Y(X);
-  RefMap<Eigen::Vector3d> Y(X);
-  RefMap<const Eigen::Vector3d> Y_c(X);
+  // Map<Vector3d> Y(X);
+  RefMap<Vector3d> Y(X);
+  RefMap<const Vector3d> Y_c(X);
 
-  // RefMap<Eigen::Vector3d> Yc(X_c);  // Fails as expected.
-  RefMap<const Eigen::Vector3d> Yc_c(X_c);
-
+  // RefMap<Vector3d> Yc(X_c);  // Fails as expected.
+  RefMap<const Vector3d> Yc_c(X_c);
 
   std::cout << Y.transpose() << std::endl;
+
+  // Try to induce a copy.
+  Ref<const Vector3d> Z_c(X);
+  Ref<Matrix<double, 1, 3, RowMajor>> A_c(X.transpose());
+
+  std::cout << A_c << std::endl;
+
+  X *= 3;
+
+  std::cout << "---\n" << Z_c.transpose() << "\n" << A_c << "\n";
 
   return 0;
 }
