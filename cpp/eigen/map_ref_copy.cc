@@ -3,9 +3,12 @@
 #include <iostream>
 #include <Eigen/Dense>
 
+// This adapts Ref<Derived> as RefMap<Derived> to be non-copy-friendly.
+// Source taken from Eigen v3.3.3 (git-hg sha: 9e97af7).
+
 namespace Eigen {
 
-// Eigen/src/Core/util/ForwardDeclarations.h
+// Adapted From: Eigen/src/Core/util/ForwardDeclarations.h
 // @note We must preserve all three template parameters for evaluators to stay
 // in sync with Ref<>.
 template<
@@ -19,12 +22,12 @@ class RefMap;
 
 namespace internal {
 
-// Eigen/src/Core/Ref.h
+// Adapted From: Eigen/src/Core/Ref.h
 template <typename PlainObjectType, int Options, typename StrideType>
 struct traits<RefMap<PlainObjectType, Options, StrideType>>
     : public traits<Ref<PlainObjectType, Options, StrideType>> {};
 
-// Eigen/src/Core/CoreEvaluators.h
+// Adapted From: Eigen/src/Core/CoreEvaluators.h
 template<typename PlainObjectType, int RefOptions, typename StrideType> 
 struct evaluator<RefMap<PlainObjectType, RefOptions, StrideType> >
   : public mapbase_evaluator<RefMap<PlainObjectType, RefOptions, StrideType>, PlainObjectType>
@@ -43,7 +46,19 @@ struct evaluator<RefMap<PlainObjectType, RefOptions, StrideType> >
 
 }  // namespace internal
 
-// Eigen/src/Core/Ref.h
+// Adapted From: Eigen/src/Core/Ref.h
+/**
+ * Provides Ref<Derived> semantics even for Ref<const Derived> cases.
+ *
+ * Eigen has a specialization of Ref<const Derived> to permit it implicitly copy
+ * storage-incompatible matrices and store a local copy the intended Derived
+ * type.
+ * This class, on the other hand, will throw an error rather than permit
+ * a copy to be created, such that it ensures that always refers back to the
+ * original data.
+ *
+ * @ref https://forum.kde.org/viewtopic.php?f=74&t=141703
+ */
 template<typename PlainObjectType, int Options, typename StrideType> class RefMap
   : public RefBase<RefMap<PlainObjectType, Options, StrideType> >
 {
@@ -68,7 +83,8 @@ template<typename PlainObjectType, int Options, typename StrideType> class RefMa
     EIGEN_DEVICE_FUNC inline RefMap(const DenseBase<Derived>& expr,
                                  typename internal::enable_if<bool(Traits::template match<Derived>::MatchAtCompileTime),Derived>::type* = 0)
     {
-      EIGEN_STATIC_ASSERT(bool(internal::is_lvalue<Derived>::value), THIS_EXPRESSION_IS_NOT_A_LVALUE__IT_IS_READ_ONLY);
+      // We actually do want this to happen, so disable this caveat.
+      // EIGEN_STATIC_ASSERT(bool(internal::is_lvalue<Derived>::value), THIS_EXPRESSION_IS_NOT_A_LVALUE__IT_IS_READ_ONLY);
       EIGEN_STATIC_ASSERT(bool(Traits::template match<Derived>::MatchAtCompileTime), STORAGE_LAYOUT_DOES_NOT_MATCH);
       EIGEN_STATIC_ASSERT(!Derived::IsPlainObjectBase,THIS_EXPRESSION_IS_NOT_A_LVALUE__IT_IS_READ_ONLY);
       Base::construct(expr.const_cast_derived());
@@ -119,7 +135,7 @@ int main() {
 
   // Works.
   RefMap<Vector3d> A_c_refmap(A.col(0));
-  A_c_refmap *= 3;
+  EVAL(A_c_refmap *= 10);
   cout << PRINT(A_c_refmap);
   cout << PRINT(A);
 
@@ -147,16 +163,27 @@ int main() {
     << PRINT(A_r_refmap_x);
 
 
-  // // Will also fail.
+  // Check interop between RefMap<> and Ref<>.
   RefMap<Vector3d> A_refmap(A.col(0));
   RefMap<const Vector3d> Ac_crefmap(Ac.col(0));
 
-  std::cout << "---\n";
+  Ref<Vector3d> A_ref_2(A_refmap);
+  Ref<const Vector3d> Ac_cref_2(Ac_crefmap);
+
+  EVAL(A_ref_2.array() += 2);
+
+  std::cout
+    << PRINT(A)
+    << PRINT(A_refmap)
+    << PRINT(A_ref_2)
+    << PRINT(Ac_crefmap)
+    << PRINT(Ac_cref_2);
+
   EVAL(A *= 3);
-  std::cout  
+  std::cout
+    << PRINT(A)
     << PRINT(A_r)
     << PRINT(A_refmap)
-    << PRINT(Ac_crefmap)
     << PRINT(Ac_crefmap);
 
   return 0;
