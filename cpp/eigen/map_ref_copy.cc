@@ -6,26 +6,34 @@
 namespace Eigen {
 
 // Eigen/src/Core/util/ForwardDeclarations.h
-template<typename PlainObjectType>
+// @note We must preserve all three template parameters for evaluators to stay
+// in sync with Ref<>.
+template<
+    typename PlainObjectType,
+    int Options = 0,
+    typename StrideType =
+        typename internal::conditional<
+            PlainObjectType::IsVectorAtCompileTime,
+                InnerStride<1>, OuterStride<>>::type>
 class RefMap;
 
 namespace internal {
 
 // Eigen/src/Core/Ref.h
-template <typename PlainObjectType>
-struct traits<RefMap<PlainObjectType>>
-    : public traits<Ref<PlainObjectType>> {};
+template <typename PlainObjectType, int Options, typename StrideType>
+struct traits<RefMap<PlainObjectType, Options, StrideType>>
+    : public traits<Ref<PlainObjectType, Options, StrideType>> {};
 
 // Eigen/src/Core/CoreEvaluators.h
-template<typename PlainObjectType> 
-struct evaluator<RefMap<PlainObjectType> >
-  : public mapbase_evaluator<RefMap<PlainObjectType>, PlainObjectType>
+template<typename PlainObjectType, int RefOptions, typename StrideType> 
+struct evaluator<RefMap<PlainObjectType, RefOptions, StrideType> >
+  : public mapbase_evaluator<RefMap<PlainObjectType, RefOptions, StrideType>, PlainObjectType>
 {
-  typedef RefMap<PlainObjectType> XprType;
+  typedef RefMap<PlainObjectType, RefOptions, StrideType> XprType;
   
   enum {
-    Flags = evaluator<Map<PlainObjectType> >::Flags,
-    Alignment = evaluator<Map<PlainObjectType> >::Alignment
+    Flags = evaluator<Map<PlainObjectType, RefOptions, StrideType> >::Flags,
+    Alignment = evaluator<Map<PlainObjectType, RefOptions, StrideType> >::Alignment
   };
 
   EIGEN_DEVICE_FUNC explicit evaluator(const XprType& ref)
@@ -36,8 +44,8 @@ struct evaluator<RefMap<PlainObjectType> >
 }  // namespace internal
 
 // Eigen/src/Core/Ref.h
-template<typename PlainObjectType> class RefMap
-  : public RefBase<RefMap<PlainObjectType> >
+template<typename PlainObjectType, int Options, typename StrideType> class RefMap
+  : public RefBase<RefMap<PlainObjectType, Options, StrideType> >
 {
   private:
     typedef internal::traits<RefMap> Traits;
@@ -109,6 +117,7 @@ int main() {
   Ref<const Matrix<double, 1, 3, RowMajor>> Ac_r_cref_row(Ac_r);
   cout << PRINT(Ac_r_cref_row);
 
+  // Works.
   RefMap<Vector3d> A_c_refmap(A.col(0));
   cout << PRINT(A_c_refmap);
 
