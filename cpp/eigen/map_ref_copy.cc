@@ -5,51 +5,74 @@
 
 namespace Eigen {
 
-template <typename PlainObjectType>
-class RefMap;
+template<typename PlainObjectType, int Options = 0,
+         typename StrideType = typename internal::conditional<PlainObjectType::IsVectorAtCompileTime,InnerStride<1>,OuterStride<> >::type > class RefMap;
 
 namespace internal {
 
 // This should be fine because there are no special traits for Ref<const T>
-template <typename PlainObjectType>
-struct traits<RefMap<PlainObjectType>>
-    : public traits<Ref<PlainObjectType>> {};
+template <typename PlainObjectType, int Options, typename StrideType>
+struct traits<RefMap<PlainObjectType, Options, StrideType>>
+    : public traits<Ref<PlainObjectType, Options, StrideType>> {};
+
+template<typename PlainObjectType, int RefOptions, typename StrideType> 
+struct evaluator<RefMap<PlainObjectType, RefOptions, StrideType> >
+  : public mapbase_evaluator<RefMap<PlainObjectType, RefOptions, StrideType>, PlainObjectType>
+{
+  typedef RefMap<PlainObjectType, RefOptions, StrideType> XprType;
+  
+  enum {
+    Flags = evaluator<Map<PlainObjectType, RefOptions, StrideType> >::Flags,
+    Alignment = evaluator<Map<PlainObjectType, RefOptions, StrideType> >::Alignment
+  };
+
+  EIGEN_DEVICE_FUNC explicit evaluator(const XprType& ref)
+    : mapbase_evaluator<XprType, PlainObjectType>(ref) 
+  { }
+};
 
 }  // namespace internal
 
-template <typename PlainObjectType>
-class RefMap : public RefBase<RefMap<PlainObjectType>> {
- public:
-  typedef internal::traits<RefMap> Traits;
-  typedef RefBase<RefMap<PlainObjectType>> Base;
-  EIGEN_DENSE_PUBLIC_INTERFACE(RefMap)
+template<typename PlainObjectType, int Options, typename StrideType> class RefMap
+  : public RefBase<RefMap<PlainObjectType, Options, StrideType> >
+{
+  private:
+    typedef internal::traits<RefMap> Traits;
+    template<typename Derived>
+    EIGEN_DEVICE_FUNC inline RefMap(const PlainObjectBase<Derived>& expr,
+                                 typename internal::enable_if<bool(Traits::template match<Derived>::MatchAtCompileTime),Derived>::type* = 0);
+  public:
 
-  template <typename Derived>
-  EIGEN_DEVICE_FUNC inline RefMap(const DenseBase<Derived>& expr) {
-    // typedef internal::traits<Ref<Derived>> Traits;
-    // static_assert(
-    //   Traits::template match<Derived>::MatchAtCompileTime,
-    //   "STORAGE_LAYOUT_DOES_NOT_MATCH");
-    // static_assert(
-    //   !Derived::IsPlainObjectBase,
-    //   "BAD_F00D");
-    // Base::construct(expr.const_cast_derived());
+    typedef RefBase<RefMap> Base;
+    EIGEN_DENSE_PUBLIC_INTERFACE(RefMap)
 
-//     if (expr.size() > 0) {
-//       // Ensure that we have properly strided data
-//       // E.g., guard against getting the nested expression data / strides in
-//       // a transpose() expression.
-//       const int last = expr.size() - 1;
-//       eigen_assert(
-//         &this->coeffRef(0) == &expr.coeffRef(0) &&
-//         &this->coeffRef(last) == &expr.coeffRef(last) &&
-//         "ERROR: Data and stride for input object (PlainObjectTypeInF) do not
-// match those of template parameter (PlainObjectType).");
-//     }
-  }
 
-  EIGEN_INHERIT_ASSIGNMENT_OPERATORS(RefMap)
+    #ifndef EIGEN_PARSED_BY_DOXYGEN
+    template<typename Derived>
+    EIGEN_DEVICE_FUNC inline RefMap(PlainObjectBase<Derived>& expr,
+                                 typename internal::enable_if<bool(Traits::template match<Derived>::MatchAtCompileTime),Derived>::type* = 0)
+    {
+      EIGEN_STATIC_ASSERT(bool(Traits::template match<Derived>::MatchAtCompileTime), STORAGE_LAYOUT_DOES_NOT_MATCH);
+      Base::construct(expr.derived());
+    }
+    template<typename Derived>
+    EIGEN_DEVICE_FUNC inline RefMap(const DenseBase<Derived>& expr,
+                                 typename internal::enable_if<bool(Traits::template match<Derived>::MatchAtCompileTime),Derived>::type* = 0)
+    #else
+    /** Implicit constructor from any dense expression */
+    template<typename Derived>
+    inline RefMap(DenseBase<Derived>& expr)
+    #endif
+    {
+      EIGEN_STATIC_ASSERT(bool(internal::is_lvalue<Derived>::value), THIS_EXPRESSION_IS_NOT_A_LVALUE__IT_IS_READ_ONLY);
+      EIGEN_STATIC_ASSERT(bool(Traits::template match<Derived>::MatchAtCompileTime), STORAGE_LAYOUT_DOES_NOT_MATCH);
+      EIGEN_STATIC_ASSERT(!Derived::IsPlainObjectBase,THIS_EXPRESSION_IS_NOT_A_LVALUE__IT_IS_READ_ONLY);
+      Base::construct(expr.const_cast_derived());
+    }
+
+    EIGEN_INHERIT_ASSIGNMENT_OPERATORS(RefMap)
 };
+
 
 }  // namespace Eigen
 
@@ -89,7 +112,7 @@ int main() {
   Ref<const Matrix<double, 1, 3, RowMajor>> A_cref_row(Ac_rt);
   cout << PRINT(A_cref_row.transpose());
 
-  RefMap<const Vector3d> A_c_refmap(A.col(0));
+  RefMap<Vector3d> A_c_refmap(A.col(0));
   cout << PRINT(A_c_refmap.transpose());
 
   // // Will fail.
