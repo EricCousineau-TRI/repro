@@ -119,15 +119,27 @@ int main() {
 
   // Works.
   RefMap<Vector3d> A_c_refmap(A.col(0));
+  A_c_refmap *= 10;
   cout << PRINT(A_c_refmap);
+  cout << PRINT(A);
 
-  // Fails as expected.
+  RefMap<const Vector3d> A_c_crefmap(A.col(0));
+  // A_c_crefmap *= 10;  // Fails as expected.
+  cout << PRINT(A_c_crefmap);
+
+  // // Fails as expected.
   // RefMap<Vector3d> A_r_refmap(A.row(0));
   // cout << PRINT(A_r_refmap);
 
-  // // Will fail.
-  // RefMap<RowVector3d> A_r_refmap(A.row(0));
-  // cout << PRINT(A_r_refmap);
+  // // Fails as expected!
+  // RefMap<const Vector3d> A_rt_crefmap(A_r.transpose());
+  // cout << PRINT(A_rt_crefmap);
+
+  RefMap<RowVector3d> A_r_refmap(A.block(0, 0, 1, 3));
+  cout << PRINT(A_r_refmap);
+
+
+
 
   // // Will also fail.
   // RefMap<Vector3d> A_refmap(A_r);
