@@ -44,21 +44,19 @@ class Flags {
 
   Flags(const Descriptor& flag)
     : flag_b_(flag) {
-    // Explicit prevent kDescriptorNone from being used.
+    // Explicitly prevent kDescriptorNone from being used.
     if (flag == kDescriptorNone) {
-      throw std::runtime_error("Cannot explicit pass kDescriptorNone");
+      throw std::runtime_error("Cannot explicitly pass kDescriptorNone");
     }
   }
 
   Flags& operator|=(const Flags& other) {
     flags_a_ = static_cast<Field>(flags_a_ | other.flags_a_);
-    if (flag_b_ == kDescriptorNone) {
-      flag_b_ = other.flag_b_;
-    } else {
+    if (flag_b_ != kDescriptorNone)
       throw std::runtime_error(
           "Cannot have multiple Descriptor flags. "
-          "Can only do operator| iff (flags.b() == kDescriptorNone) == true.");
-    }
+          "Can only add flags iff (flags.b() == kDescriptorNone).");
+    flag_b_ = other.flag_b_;
     return *this;
   }
 
@@ -72,6 +70,14 @@ class Flags {
     } else {
       return flag_b_ == rhs.flag_b_;
     }
+  }
+
+  bool has_fields() const {
+    return flags_a_ != kFieldNone;
+  }
+
+  bool has_descriptors() const {
+    return flag_b_ != kDescriptorNone;
   }
 
   operator string() const {
