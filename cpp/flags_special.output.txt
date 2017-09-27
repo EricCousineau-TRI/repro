@@ -1,0 +1,23 @@
+>>> Flags flags = kFlagA1 | kFlagA2 | kFlagB1;
+
+>>> flags
+(kFlagA1 | kFlagA2 | kFlagB::1 | )
+
+>>> flags & kFlagA1
+1
+
+>>> flags & kFlagA2
+1
+
+>>> flags & kFlagA3
+0
+
+>>> flags & kFlagB1
+1
+
+>>> flags & kFlagB2
+0
+
+>>> flags & kFlagBInherit
+0
+
