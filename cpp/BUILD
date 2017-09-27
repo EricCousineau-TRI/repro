@@ -238,3 +238,8 @@ cc_binary(
     name = "func_target",
     srcs = ["func_target.cc"],
 )
+
+cc_binary(
+    name = "flags_special",
+    srcs = ["flags_special.cc"],
+)
