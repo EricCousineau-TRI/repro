@@ -1,23 +1,23 @@
->>> Flags flags = kFlagA1 | kFlagA2 | kFlagB1;
+>>> Flags flags = kField1 | kField2 | kDescriptor1;
 
 >>> flags
-(kFlagA1 | kFlagA2 | kFlagB::1 | )
+(kField1 | kField2 | kDescriptor::1 | )
 
->>> flags & kFlagA1
+>>> flags & kField1
 1
 
->>> flags & kFlagA2
+>>> flags & kField2
 1
 
->>> flags & kFlagA3
+>>> flags & kField3
 0
 
->>> flags & kFlagB1
+>>> flags & kDescriptor1
 1
 
->>> flags & kFlagB2
+>>> flags & kDescriptor2
 0
 
->>> flags & kFlagBInherit
+>>> flags & kDescriptorInherit
 0
 
