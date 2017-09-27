@@ -25,6 +25,12 @@ bool operator!=(const FlagB& lhs, const FlagB& rhs) {
   return lhs.name != rhs.name;
 }
 
+#define EVAL(x) std::cout << ">>> " #x ";" << std::endl; x; std::cout << std::endl
+#define PRINT(x) ">>> " #x << std::endl << (x) << std::endl << std::endl
+
+class Flags;
+std::ostream& operator<<(std::ostream& os, const Flags& flags);
+
 const FlagB
   kFlagBNone{"None"},
   kFlagBInherit{"Inherit"},
@@ -62,9 +68,9 @@ class Flags {
 
   bool operator&(const Flags& rhs) const {
     if (flags_a_ & rhs.flags_a_) {
-      return flag_b_ == rhs.flag_b_;
+      return true;
     } else {
-      return false;
+      return flag_b_ == rhs.flag_b_;
     }
   }
 
@@ -102,9 +108,6 @@ Flags operator|(const int& lhs, const FlagB& rhs) {
 Flags operator|(const FlagB& lhs, const Flags& rhs) {
   return Flags(lhs) | rhs;
 }
-
-#define EVAL(x) std::cout << ">>> " #x ";" << std::endl; x; std::cout << std::endl
-#define PRINT(x) ">>> " #x << std::endl << (x) << std::endl << std::endl
 
 int main() {
   EVAL(Flags flags = kFlagA1 | kFlagA2 | kFlagB1);
