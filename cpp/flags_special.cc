@@ -72,6 +72,9 @@ class Flags {
     }
   }
 
+  // Cannot define `operator bool()`, because it will make overloads for binary
+  // operators ambiguous (since `bool` is compatible with `int`).
+
   bool has_fields() const {
     return flags_a_ != kFieldNone;
   }
