@@ -13,6 +13,9 @@ int main() {
     oss << "iter " << i;
     ScopedTimerMessage timer_scope(timer, oss.str());
     ScopedWithTimer<> timer(oss.str());
+    {
+      SCOPED_TIMER(inner_loop);
+    }
     sleep(dt);
   }
   return 0;

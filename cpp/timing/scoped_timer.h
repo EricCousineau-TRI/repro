@@ -13,6 +13,8 @@ using Clock = std::chrono::steady_clock;
 using Duration = std::chrono::duration<double>;
 using TimePoint = std::chrono::time_point<Clock, Duration>;
 
+template <typename ... Args>
+void unused(Args&&...) {}
 
 inline void sleep(double seconds) {
   int ms = std::round(seconds * 1000);
@@ -95,5 +97,15 @@ class ScopedWithTimer {
   Timer timer_;
   T scoped_;
 };
+
+#define SCOPED_TIMER_EX(var, message) \
+    timing::ScopedWithTimer<> var(\
+        "[TIMING] " + \
+        std::string(__FILE__) + ":" + std::to_string(__LINE__) + "\n" + \
+        "  " + std::string(__func__) + " - " + std::string(message) + "\n" + \
+        "  Time (s): "); \
+    unused(var)
+
+#define SCOPED_TIMER(var) SCOPED_TIMER_EX(timer_##var, #var)
 
 }  // namespace timing
