@@ -13,9 +13,12 @@ class TestClass {
 
   int value() const { return value_; }
   string name() const { return name_; }
+
+  void set_value(int value) { value_ = value; }
+  void set_name(const char* name) { name_ = name; }
  private:
-  const int value_{};
-  const char* const name_{};
+  int value_{};
+  const char* name_{};
 };
 
 class Bleh {
@@ -34,6 +37,20 @@ int main() {
   cout
     << PRINT(is_literal_type<TestClass>::value)
     << PRINT(is_literal_type<Bleh>::value);
+
+  // constexpr Bleh a(5);  // Compiler error.
+  constexpr TestClass b(1, "Hello");
+
+  cout
+    << PRINT(b.value())
+    << PRINT(b.name());
+
+  TestClass c(2, "World");
+  c.set_value(10);
+  c.set_name("World!!!");
+  cout
+    << PRINT(c.value())
+    << PRINT(c.name());
 
   return 0;
 }
