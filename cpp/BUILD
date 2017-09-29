@@ -243,3 +243,8 @@ cc_binary(
     name = "flags_special",
     srcs = ["flags_special.cc"],
 )
+
+cc_binary(
+    name = "constexpr_class",
+    srcs = ["constexpr_class.cc"],
+)
