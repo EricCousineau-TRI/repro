@@ -30,8 +30,8 @@ class Bleh {
   int value_{};
 };
 
-// TODO(eric.cousineau): Replace with the success of is_literal_type.
-// @ref 
+// TODO(eric.cousineau): Replace with the successor of is_literal_type.
+// @ref https://stackoverflow.com/a/40352351/7829525
 
 int main() {
   cout
