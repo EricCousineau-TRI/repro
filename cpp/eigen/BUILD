@@ -42,8 +42,11 @@ cc_binary(
 
 cc_binary(
     name = "matrix_stack",
-    srcs = ["matrix_stack.cc", "//cpp:name_trait.h"],
-    deps = ["@eigen//:eigen"],
+    srcs = ["matrix_stack.cc"],
+    deps = [
+        "//cpp:name_trait",
+        "@eigen//:eigen",
+    ],
 )
 
 cc_binary(
