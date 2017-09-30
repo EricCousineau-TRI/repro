@@ -12,22 +12,16 @@ pybind11_module(
 )
 
 py_library(
-    name = "scalar_type",  # This is the package's name.
+    name = "tpl",  # This is the package's name.
     deps = [
         ":scalar_type",
-        ":func_ptr",
+        "//cpp:name_trait",
     ],
     visibility = ["//visibility:public"],
 )
 
 py_test_simple(
-   name = "inherit_check_test",
+   name = "scalar_type_test",
    size = "small",
-   deps = [":inherit_check"],
-)
-
-py_test_simple(
-   name = "func_ptr_test",
-   size = "small",
-   deps = [":func_ptr"],
+   deps = [":scalar_type"],
 )
