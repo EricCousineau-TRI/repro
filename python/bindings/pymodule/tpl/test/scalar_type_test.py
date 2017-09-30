@@ -5,7 +5,7 @@ from __future__ import print_function, absolute_import
 # import pymodule
 from pymodule.tpl import scalar_type as st
 
-print("\n".join(sorted(globals().keys())))
+print("\n".join(sorted(st.__dict__.keys())))
 
 # class PyExtend(ic.Base):
 #     def pure(self, value):

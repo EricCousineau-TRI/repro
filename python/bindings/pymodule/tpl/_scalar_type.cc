@@ -110,9 +110,9 @@ void register_base(py::module m) {
   // http://pybind11.readthedocs.io/en/stable/advanced/misc.html
   auto locals = py::dict("cls"_a=base);
   auto globals = m.attr("__dict__");
-  py::eval(R"(
-    cls.stuff = 10
-  )", globals, locals);
+  py::eval<py::eval_statements>(R"(#
+cls.stuff = 10
+)", globals, locals);
 
   // // Register the type in Python.
   // // TODO: How to execute Python with arguments?
@@ -128,12 +128,13 @@ void register_base(py::module m) {
 PYBIND11_PLUGIN(_scalar_type) {
   py::module m("_scalar_type", "Simple check on scalar / template types");
 
-  py::eval(R"(
-    # Dictionary.
-    #   Key: (T, U)
-    #   Value: PyType
-    _base_types = {}
-  )", m);
+  auto globals = m.attr("__dict__");
+  py::eval<py::eval_statements>(R"(#
+# Dictionary.
+#   Key: (T, U)
+#   Value: PyType
+base_types = {}
+)", globals);
 
   register_base<float, int16_t>(m);
   register_base<double, int64_t>(m);
