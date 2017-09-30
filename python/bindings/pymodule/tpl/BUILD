@@ -9,13 +9,15 @@ package(default_visibility = ["//visibility:public"])
 pybind11_module(
     name = "scalar_type",
     package_dir = "../..",
+    deps = [
+      "//cpp:name_trait",
+    ]
 )
 
 py_library(
     name = "tpl",  # This is the package's name.
     deps = [
         ":scalar_type",
-        "//cpp:name_trait",
     ],
     visibility = ["//visibility:public"],
 )

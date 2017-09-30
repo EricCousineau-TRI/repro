@@ -6,13 +6,17 @@
 #include <cstddef>
 #include <cmath>
 #include <sstream>
+#include <string>
 
+#include <pybind11/cast.h>
+#include <pybind11/eval.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 #include "cpp/name_trait.h"
 
 namespace py = pybind11;
+using namespace py::literals;
 using namespace std;
 
 namespace scalar_type {
@@ -20,7 +24,12 @@ namespace scalar_type {
 template <typename T = float, typename U = int16_t>
 class Base;
 
+}
+
+using scalar_type::Base;
 NAME_TRAIT_TPL(Base)
+
+namespace scalar_type {
 
 // Simple base class.
 template <typename T, typename U>
@@ -36,9 +45,10 @@ class Base {
 
   virtual U pure(T value) = 0;
   virtual U optional(T value) {
-    cout << "Base<T, U>"
-    return U{value};
+    cout << py_name() << endl;
+    return static_cast<U>(value);
   }
+
   int dispatch(int value) {
     cout << "cpp.dispatch:\n";
     cout << "  ";
@@ -55,7 +65,7 @@ class Base {
   }
 
  private:
-  template <typename Tc, typename Uc> Base;
+  template <typename Tc, typename Uc> friend class Base;
   T t_{};
   U u_{};
 };
@@ -63,11 +73,15 @@ class Base {
 template <typename T, typename U>
 class PyBase : public Base<T, U> {
  public:
-  int pure(int value) override {
-    PYBIND11_OVERLOAD_PURE(int, Base, pure, value);
+  typedef Base<T, U> B;
+
+  using B::B;
+
+  U pure(T value) override {
+    PYBIND11_OVERLOAD_PURE(U, B, pure, value);
   }
-  int optional(int value) override {
-    PYBIND11_OVERLOAD(int, Base, optional, value);
+  U optional(T value) override {
+    PYBIND11_OVERLOAD(U, B, optional, value);
   }
 };
 
@@ -77,24 +91,28 @@ void call_method(const Base<T, U>& base) {
 }
 
 template <typename T, typename U>
-void register(py::handle m) {
+void register_base(py::module m) {
   string name = Base<T, U>::py_name();
   typedef Base<T, U> C;
   typedef PyBase<T, U> PyC;
-  py::class_<C, PyC> base(m, name);
+  py::class_<C, PyC> base(m, name.c_str());
   base
-    .def(py::init<>())
+    .def(py::init<T, U>())
     .def("pure", &C::pure)
     .def("optional", &C::optional)
     .def("dispatch", &C::dispatch);
 
+  // // Can't figure this out...
+  // m.def("call_method", py::overload_cast<const Base<T, U>&>(&call_method));
+
   // http://pybind11.readthedocs.io/en/stable/advanced/pycpp/object.html#casting-back-and-forth
   // http://pybind11.readthedocs.io/en/stable/advanced/pycpp/utilities.html
   // http://pybind11.readthedocs.io/en/stable/advanced/misc.html
-  auto locals = py::dict("cls"_a=base)
-  py::exec(R"(
+  auto locals = py::dict("cls"_a=base);
+  auto globals = m.attr("__dict__");
+  py::eval(R"(
     cls.stuff = 10
-  )", py::globals(), locals);
+  )", globals, locals);
 
   // // Register the type in Python.
   // // TODO: How to execute Python with arguments?
@@ -110,18 +128,15 @@ void register(py::handle m) {
 PYBIND11_PLUGIN(_scalar_type) {
   py::module m("_scalar_type", "Simple check on scalar / template types");
 
-  py::exec(R"(
+  py::eval(R"(
     # Dictionary.
     #   Key: (T, U)
     #   Value: PyType
     _base_types = {}
   )", m);
 
-  register<float, int16_t>(m);
-  register<double, int64_t>(m);
-
-  // Will this do all overloads?
-  m.def("call_method", &call_method);
+  register_base<float, int16_t>(m);
+  register_base<double, int64_t>(m);
 
   return m.ptr();
 }
