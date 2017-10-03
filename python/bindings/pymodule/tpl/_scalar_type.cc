@@ -43,6 +43,9 @@ class Base {
     : Base(static_cast<T>(other.t_),
            static_cast<U>(other.u_)) {}
 
+  T t() const { return t_; }
+  U u() const { return u_; }
+
   virtual U pure(T value) = 0;
   virtual U optional(T value) {
     cout << py_name() << endl;
@@ -50,7 +53,7 @@ class Base {
   }
 
   U dispatch(T value) {
-    cout << "cpp.dispatch:\n";
+    cout << "cpp.dispatch [" << py_name() << "]:\n";
     cout << "  ";
     U pv = pure(value);
     cout << "  ";
@@ -165,6 +168,8 @@ void register_base(py::module m) {
   py::class_<C, PyC> base(m, name.c_str());
   base
     .def(py::init<T, U>())
+    .def("t", &C::t)
+    .def("u", &C::u)
     .def("pure", &C::pure)
     .def("optional", &C::optional)
     .def("dispatch", &C::dispatch);

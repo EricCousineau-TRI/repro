@@ -41,6 +41,11 @@ def _Child(T=long, U=float):
             print("py: optional")
             return T(2 * u)
 
+        def do_to(self, Tc, Uc):
+            # Scalar conversion.
+            ChildTc = ChildT(Tc, Uc)
+            return ChildTc(Tc(self.t()), Uc(self.u()))
+
     # Change name for clarity.
     Child.__name__ = "Child__T_{}__U_{}".format(T.__name__, U.__name__)
     return Child
@@ -65,6 +70,13 @@ print(Child == Child)
 print(ChildT(long, float) == ChildT(float, long))
 
 c = Child(2, 5.5)
+print(type(c))
 c.pure(1)
 c.optional(2)
 c.dispatch(3)
+
+cc = c.do_to(float, long)
+print(type(cc))
+cc.pure(1.5)
+cc.optional(1.5)
+cc.dispatch(1.5)
