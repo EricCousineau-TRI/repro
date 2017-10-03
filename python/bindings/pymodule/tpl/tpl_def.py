@@ -4,8 +4,8 @@
 
 def _tpl_name(name, param_names, params):
     items = []
-    for (name, value) in zip(param_names, params):
-        items.append('{}_{}'.format(name, value))
+    for (param_name, param_type) in zip(param_names, params):
+        items.append('{}_{}'.format(param_name, param_type.__name__))
     params_str = '__'.join(items)
     return '{}__{}'.format(name, params_str)
 
@@ -44,15 +44,20 @@ class Template(object):
         """ Adds instantiation. """
         params = _params_resolve(params_in, self._param_names)
         # Do not double-register existing class.
-        assert not is_tpl_cls(cls)
+        if is_tpl_cls(cls):
+            self._check_tpl_cls(cls)
         # Ensure that we do not already have this tuple.
-        assert params not in self._instantiations
+        assert params not in self._instantiations, "Param tuple already registered"
         # Add it.
         self._instantiations[params] = cls
         # Update class.
         cls._tpl = self
         if override_name:
             cls.__name__ = _tpl_name(self.name, self._param_names, params)
+
+    def _check_tpl_cls(self, cls):
+        # Do not permit any existing template.
+        raise RuntimeError("Class already has template associated with it")
 
 class ChildTemplate(Template):
     def __init__(self, name, parent, **kwargs):
@@ -62,12 +67,23 @@ class ChildTemplate(Template):
     def add_instantiations_with_func(self, func, params_list=None):
         if params_list is None:
             params_list = self._parent._instantiations.keys()
+        print(func)
         for params in params_list:
+            print(params)
             cls = func(*params)
+            print(cls)
             # Sanity check.
             base_cls = self._parent(*params)
             assert issubclass(cls, base_cls)
             self.add_instantiation(params, cls)
+
+    def _check_tpl_cls(self, cls):
+        # Permit inherited tpl class ONLY.
+        if cls._tpl == self._parent:
+            pass
+        else:
+            # Raise the original error.
+            raise RuntimeError("Class already has template associated with it (and is not the parent template)")
 
 def is_tpl_cls(cls):
     return hasattr(cls, '_tpl') and isinstance(cls._tpl, Template)
