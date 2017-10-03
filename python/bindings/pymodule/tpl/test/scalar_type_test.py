@@ -11,14 +11,15 @@ print("\n".join(sorted(st.__dict__.keys())))
 print(st.Base__T_double__U_int.type_tup)
 print(st.Base__T_int__U_double.type_tup)
 
-base_types = {
-    (long, float): st.Base__T_int__U_double,
-    (float, long): st.Base__T_double__U_int,
-    }
-
-def BaseTpl(T=long, U=float):
-    types = (T, U)
-    return base_types[types]
+BaseTpl = Template(
+    name = 'Base',
+    param_names = ('T', 'U'),
+    param_defaults = (long, float),
+)
+BaseTpl.add_instantiation(
+    (long, float), st.Base__T_int__U_double)
+BaseTpl.add_instantiation(
+    (float, long), st.Base__T_double__U_int)
 
 # Default class.
 Base = BaseTpl()
@@ -26,6 +27,8 @@ Base = BaseTpl()
 print(Base)
 print(BaseTpl(long, float))
 print(BaseTpl(float, long))
+assert is_tpl_cls(Base)
+assert is_tpl_of(Base, BaseTpl)
 
 # Should only define these classes once.
 def _Child(T=long, U=float):

@@ -14,10 +14,12 @@ py_library(
 pybind11_module(
     name = "scalar_type",
     package_dir = "../..",
-    deps = [
+    py_deps = [
         ":tpl_def",
+    ],
+    deps = [
         "//cpp:name_trait",
-    ]
+    ],
 )
 
 py_library(

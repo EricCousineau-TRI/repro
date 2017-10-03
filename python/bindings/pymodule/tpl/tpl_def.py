@@ -2,14 +2,12 @@
 
 # Template definitions.
 
-def _params_str(names, values):
-    items = ''
-    for (name, value) in zip(names, values):
-        items.append('{}_{}'.format(name, value))
-    return '__'.join(items)
-
 def _tpl_name(name, param_names, params):
-    return '{}__{}'.format(name, _params_str(param_names, params))
+    items = []
+    for (name, value) in zip(param_names, params):
+        items.append('{}_{}'.format(name, value))
+    params_str = '__'.join(items)
+    return '{}__{}'.format(name, params_str)
 
 def _params_resolve(params, param_names):
     if isinstance(params, dict):
@@ -28,12 +26,12 @@ class Template(object):
 
     def __call__(self, *args, **kwargs):
         """ Gets concrete class associate with the given arguments. """
-        # Can only have `args[0]` or `kwargs`, but not both.
+        # Can only have `args` or `kwargs`, but not both (for now).
         # TODO(eric.cousineau): Permit multiple "holes" for defaults?
         # Not necessary for now.
         if len(args) > 0:
-            assert len(args) == 1
-            params = args[0]
+            assert len(kwargs) == 0
+            params = args
         elif len(kwargs) > 0:
             params = _params_resolve(kwargs, self._param_names)
         else:
@@ -42,24 +40,25 @@ class Template(object):
         cls = self._instantiations[params]
         return cls
 
-    def add_instantiation(params_in, cls, override_name=True):
+    def add_instantiation(self, params_in, cls, override_name=True):
         """ Adds instantiation. """
         params = _params_resolve(params_in, self._param_names)
-        # Do not double-register.
-        assert not is_tpl(cls)
+        # Do not double-register existing class.
+        assert not is_tpl_cls(cls)
         # Ensure that we do not already have this tuple.
-        assert params not in self.instantiations
+        assert params not in self._instantiations
         # Add it.
-        self.instantiations[params] 
+        self._instantiations[params] = cls
+        # Update class.
         cls._tpl = self
         if override_name:
-            cls.__name__ = _tpl_name(self.name, self.param_names, params)
+            cls.__name__ = _tpl_name(self.name, self._param_names, params)
 
 def is_tpl_cls(cls):
-    return has_attr(cls, '_tpl') and isinstance(cls._tpl, Template)
+    return hasattr(cls, '_tpl') and isinstance(cls._tpl, Template)
 
 def is_tpl_of(cls, tpl):
-    return is_tpl(cls) and cls._tpl == tpl
+    return is_tpl_cls(cls) and cls._tpl == tpl
 
 """
 BaseTpl = Template(
