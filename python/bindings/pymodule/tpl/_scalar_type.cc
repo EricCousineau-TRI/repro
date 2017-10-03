@@ -90,6 +90,8 @@ void call_method(const Base<T, U>& base) {
   base.dispatch();
 }
 
+/// Retuns the PyTypeObject from the resultant expression type.
+/// @note This may incur a copy due to implementation details.
 template <typename T>
 py::handle py_type_eval(const T& value) {
   auto locals = py::dict("model_value"_a=value);
@@ -131,10 +133,17 @@ struct py_type_impl<T, true> {
   }
 };
 
+/// Gets the PyTypeObject representing the Python-compatible type for `T`.
+/// @note If this is a custom type, ensure that it has been fully registered
+/// before calling this.
+/// @note If this is a builtin type, note that some information may be lost.
+///   e.g. T=vector<int>  ->  <type 'list'>
+///        T=int64_t      ->  <type 'long'>
+///        T=int16_t      ->  <type 'long'>
+///        T=double       ->  <type 'float'>
+///        T=float        ->  <type 'float'>
 template <typename T>
 py::handle py_type() {
-  // How to get Python object from Python class?
-  // Rely on automatic conversion.
   py::handle type =
         py_type_impl<T, std::is_default_constructible<T>::value>::run();
   if (type) {
