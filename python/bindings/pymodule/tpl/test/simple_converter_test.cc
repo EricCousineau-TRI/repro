@@ -7,6 +7,7 @@
 
 #include "cpp/name_trait.h"
 
+using namespace std;
 using namespace simple_converter;
 
 template <typename T = float, typename U = int16_t>

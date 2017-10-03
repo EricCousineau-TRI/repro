@@ -6,7 +6,9 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <set>
+#include <typeindex>
 #include <utility>
 #include <vector>
 
@@ -29,14 +31,15 @@ struct hash_value {
 
 /** Computes the hash value of a tuple @p s. */
 template <typename ... Ts>
-struct hash_value<std::tuples<Ts...>> {
+struct hash_value<std::tuple<Ts...>> {
   size_t operator()(const std::tuple<Ts...>& s) {
-    return hash_combine(seed, std::make_sequence(sizeof...(Ts)));
+    return impl(s, std::make_index_sequence<sizeof...(Ts)>());
   }
 
  private:
   template <size_t ... Is>
-  size_t impl(const std::tuple<Ts...>& s, std::index_sequence<Is...> seq) {
+  size_t impl(const std::tuple<Ts...>& s, std::index_sequence<Is...> seq = {}) {
+    size_t seed{};
     return hash_combine(seed, std::get<Is>(s)...);
   }
 };
@@ -66,28 +69,31 @@ struct type_pack {
   }
 
   static size_t hash() {
-    return drake::hash_value(make_type_index_tuple());
+    return drake::hash_value<type_index_tuple>(make_type_index_tuple());
   }
 
-  template <template <typename...> typename Tpl>
+  template <template <typename...> class Tpl>
   using type = Tpl<Ts...>;
 };
 
-template <template <typename ... Ts> typename Tpl, typename ... Ts>
-using type_pack_inner = type_pack<Ts...>;
+template <typename T>
+using type_pack_inner = std::false_type;  // Cause ugly death.
+
+template <template <typename ... Ts> class Tpl, typename ... Ts>
+using type_pack_inner<Tpl<Ts...>> = type_pack<Ts...>;
 
 // - END: Added
 
 // Simple (less robust) version of Drake's SystemScalarConverter
-template <template <typename...> typename Tpl>
-class Converter {
+template <template <typename...> class Tpl>
+class SimpleConverter {
  public:
   typedef std::function<void*(const void*)> ErasedConverter;
   typedef std::pair<size_t, size_t> Key;  
   typedef std::map<Key, ErasedConverter> Conversions;
 
   template <typename Pack>
-  using type = typename Pack::type<Tpl>;
+  using type = typename Pack::template type<Tpl>;
 
   template <typename Type>
   using pack = type_pack_inner<Type>;
