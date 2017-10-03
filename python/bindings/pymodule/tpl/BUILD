@@ -6,11 +6,17 @@ load("//tools:pybind11.bzl", "pybind11_module")
 
 package(default_visibility = ["//visibility:public"])
 
+py_library(
+    name = "tpl_def",
+    srcs = ["tpl_def.py"],
+)
+
 pybind11_module(
     name = "scalar_type",
     package_dir = "../..",
     deps = [
-      "//cpp:name_trait",
+        ":tpl_def",
+        "//cpp:name_trait",
     ]
 )
 
@@ -23,7 +29,7 @@ py_library(
 )
 
 py_test_simple(
-   name = "scalar_type_test",
-   size = "small",
-   deps = [":scalar_type"],
+    name = "scalar_type_test",
+    size = "small",
+    deps = [":scalar_type"],
 )

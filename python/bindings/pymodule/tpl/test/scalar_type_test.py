@@ -4,6 +4,8 @@ from __future__ import print_function, absolute_import
 # import unittest
 # import pymodule
 from pymodule.tpl import scalar_type as st
+from pymodule.tpl.tpl_def import Template, is_tpl_cls, is_tpl_of
+
 
 print("\n".join(sorted(st.__dict__.keys())))
 print(st.Base__T_double__U_int.type_tup)
