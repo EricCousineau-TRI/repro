@@ -46,13 +46,13 @@ class Base {
   T t() const { return t_; }
   U u() const { return u_; }
 
-  virtual U pure(T value) = 0;
-  virtual U optional(T value) {
+  virtual U pure(T value) const = 0;
+  virtual U optional(T value) const {
     cout << py_name() << endl;
     return static_cast<U>(value);
   }
 
-  U dispatch(T value) {
+  U dispatch(T value) const {
     cout << "cpp.dispatch [" << py_name() << "]:\n";
     cout << "  ";
     U pv = pure(value);
@@ -80,17 +80,17 @@ class PyBase : public Base<T, U> {
 
   using B::B;
 
-  U pure(T value) override {
+  U pure(T value) const override {
     PYBIND11_OVERLOAD_PURE(U, B, pure, value);
   }
-  U optional(T value) override {
+  U optional(T value) const override {
     PYBIND11_OVERLOAD(U, B, optional, value);
   }
 };
 
 template <typename T, typename U>
 void call_method(const Base<T, U>& base) {
-  base.dispatch();
+  base.dispatch(T{});
 }
 
 /// Retuns the PyTypeObject from the resultant expression type.
@@ -175,7 +175,9 @@ void register_base(py::module m) {
     .def("dispatch", &C::dispatch);
 
   // // Can't figure this out...
-  // m.def("call_method", py::overload_cast<const Base<T, U>&>(&call_method));
+  // Can't get `overload_cast` to infer `Return` type.
+  typedef void (*call_method_t)(const Base<T, U>&);
+  m.def("call_method", static_cast<call_method_t>(&call_method));
 
   // http://pybind11.readthedocs.io/en/stable/advanced/pycpp/object.html#casting-back-and-forth
   // http://pybind11.readthedocs.io/en/stable/advanced/pycpp/utilities.html

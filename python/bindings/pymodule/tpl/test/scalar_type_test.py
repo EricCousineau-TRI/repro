@@ -81,3 +81,7 @@ cc.pure(1.5)
 cc.optional(1.5)
 help(cc.dispatch)
 cc.dispatch(1.5)
+
+print("---")
+st.call_method(c)
+st.call_method(cc)
