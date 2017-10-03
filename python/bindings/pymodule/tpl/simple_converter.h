@@ -1,6 +1,7 @@
 #pragma once
 
 // BEGIN: drake/common/hash.h
+#include <cassert>
 #include <cstddef>
 #include <functional>
 #include <iostream>

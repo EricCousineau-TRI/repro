@@ -30,6 +30,20 @@ py_library(
     visibility = ["//visibility:public"],
 )
 
+cc_library(
+    name = "simple_converter",
+    srcs = ["simple_converter.h"],
+)
+
+cc_binary(
+    name = "simple_converter_test",
+    srcs = ["test/simple_converter_test.cc"],
+    deps = [
+        ":simple_converter",
+        "//cpp:name_trait",
+    ],
+)
+
 py_test_simple(
     name = "scalar_type_test",
     size = "small",
