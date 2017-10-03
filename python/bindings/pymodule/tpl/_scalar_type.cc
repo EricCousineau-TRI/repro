@@ -49,12 +49,12 @@ class Base {
     return static_cast<U>(value);
   }
 
-  int dispatch(int value) {
+  T dispatch(U value) {
     cout << "cpp.dispatch:\n";
     cout << "  ";
-    int pv = pure(value);
+    T pv = pure(value);
     cout << "  ";
-    int ov = optional(value);
+    T ov = optional(value);
     return pv + ov;
   }
 
@@ -145,8 +145,10 @@ PYBIND11_PLUGIN(_scalar_type) {
 base_types = {}
 )", globals);
 
-  register_base<float, int16_t>(m);
-  register_base<double, int64_t>(m);
+  // No difference between (float, double) and (int16_t, int64_t)
+  // Gonna use other combos.
+  register_base<double, int>(m);
+  register_base<int, double>(m);
 
   return m.ptr();
 }
