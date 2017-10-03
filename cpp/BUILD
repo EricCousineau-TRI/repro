@@ -253,3 +253,17 @@ cc_binary(
     name = "constexpr_class",
     srcs = ["constexpr_class.cc"],
 )
+
+cc_library(
+    name = "simple_converter",
+    srcs = ["simple_converter.h"],
+)
+
+cc_binary(
+    name = "simple_converter_test",
+    srcs = ["simple_converter_test.cc"],
+    deps = [
+        ":simple_converter",
+        ":name_trait",
+    ],
+)
