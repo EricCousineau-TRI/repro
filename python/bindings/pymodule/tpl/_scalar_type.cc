@@ -90,8 +90,14 @@ void call_method(const Base<T, U>& base) {
   base.dispatch();
 }
 
+template <typename T>
+py::handle py_type_eval(const T& value) {
+  auto locals = py::dict("model_value"_a=value);
+  return py::eval("type(model_value)", py::object(), locals);
+}
+
 template <typename T, bool is_default_constructible = false>
-struct py_type_try {
+struct py_type_impl {
   static py::handle run() {
     // Check registered C++ types.
     const auto& internals = py::detail::get_internals();
@@ -107,17 +113,20 @@ struct py_type_try {
 };
 
 template <typename T>
-struct py_type_try<T, true> {
+struct py_type_impl<T, true> {
   static py::handle run() {
     // First check registration.
-    py::handle attempt = py_type_try<T, false>::run();
+    py::handle attempt = py_type_impl<T, false>::run();
     if (attempt) {
       return attempt;
     } else {
       // Next, check through default construction and using cast
       // implementations.
-      auto locals = py::dict("model_value"_a=T{});
-      return py::eval("type(model_value)", py::object(), locals);
+      try {
+        return py_type_eval(T{});
+      } catch (const py::cast_error&) {
+        return py::handle();
+      }
     }
   }
 };
@@ -127,7 +136,7 @@ py::handle py_type() {
   // How to get Python object from Python class?
   // Rely on automatic conversion.
   py::handle type =
-        py_type_try<T, std::is_default_constructible<T>::value>::run();
+        py_type_impl<T, std::is_default_constructible<T>::value>::run();
   if (type) {
     return type;
   } else {
@@ -135,7 +144,9 @@ py::handle py_type() {
   }
 }
 
-struct A {};
+struct A {
+  explicit A(int x) {}
+};
 
 template <typename T, typename U>
 void register_base(py::module m) {
