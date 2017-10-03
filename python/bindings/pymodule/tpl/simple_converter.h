@@ -114,9 +114,11 @@ class SimpleConverter {
   typedef std::pair<size_t, size_t> Key;  
   typedef std::map<Key, ErasedConverter> Conversions;
 
+  /// Get type from a type_pack.
   template <typename Pack>
   using type = typename Pack::template type<Tpl>;
 
+  /// Get type_pack from a type.
   template <typename Type>
   using pack = type_pack_inner_constrained<Type, Tpl>;
 
@@ -139,10 +141,8 @@ class SimpleConverter {
     conversions_[key] = erased;
   }
 
-  template <typename PackTo, typename PackFrom>
+  template <typename To, typename From>
   void AddCopyConveter() {
-    using To = type<PackTo>;
-    using From = type<PackFrom>;
     Converter<To, From> converter = [](const From& from) {
       return std::unique_ptr<To>(new To(from));
     };

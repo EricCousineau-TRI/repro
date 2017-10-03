@@ -58,15 +58,12 @@ class Base {
 
 
 int main() {
-  using PackA = type_pack<float, int>;
-  using PackB = type_pack<int, float>;
-
-  SimpleConverter<Base> converter;
-  converter.AddCopyConveter<PackA, PackB>();
-  converter.AddCopyConveter<PackB, PackA>();
-
   using BaseA = Base<float, int>;
   using BaseB = Base<int, float>;
+
+  SimpleConverter<Base> converter;
+  converter.AddCopyConveter<BaseA, BaseB>();
+  converter.AddCopyConveter<BaseB, BaseA>();
 
   BaseA a(1.5, 10);
   BaseB b(1, 10.5);
