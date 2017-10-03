@@ -29,7 +29,6 @@ class Base {
   T t() const { return t_; }
   U u() const { return u_; }
 
-  virtual U pure(T value) const = 0;
   virtual U optional(T value) const {
     cout << py_name() << endl;
     return static_cast<U>(value);
@@ -57,5 +56,12 @@ class Base {
 
 
 int main() {
+  using PackA = type_pack<float, int>;
+  using PackB = type_pack<int, float>;
+
+  SimpleConverter<Base> converter;
+  converter.AddCopyConveter<PackA, PackB>();
+  converter.AddCopyConveter<PackB, PackA>();
+
   return 0;
 }

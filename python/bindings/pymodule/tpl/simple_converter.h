@@ -60,16 +60,19 @@ namespace simple_converter {
 // - BEGIN: Added
 template <typename ... Ts>
 struct type_pack {
-  // Make tuple of equal size.
-  typedef std::tuple<std::conditional<true, Ts, std::type_index>...>
-      type_index_tuple;
+  // // Make tuple of equal size.
+  // typedef std::tuple<
+  //     std::conditional<std::is_same<Ts, Ts>::value, std::type_index>...>::value
+  //     type_index_tuple;
 
-  static type_index_tuple make_type_index_tuple() {
+  static auto make_type_index_tuple() {
     return std::make_tuple(std::type_index(typeid(Ts))...);
   }
 
+  typedef decltype(make_type_index_tuple()) type_index_tuple;
+
   static size_t hash() {
-    return drake::hash_value<type_index_tuple>(make_type_index_tuple());
+    return drake::hash_value<type_index_tuple>()(make_type_index_tuple());
   }
 
   template <template <typename...> class Tpl>
@@ -99,7 +102,7 @@ using type_pack_inner = typename type_pack_inner_impl<T>::type;
 
 template <typename T, template <typename...> class Tpl>
 using type_pack_inner_constrained =
-    typename type_pack_inner_impl<T>::template type_constraind<Tpl>;
+    typename type_pack_inner_impl<T>::template type_constrained<Tpl>;
 
 // - END: Added
 
@@ -129,11 +132,21 @@ class SimpleConverter {
   void Add(const Converter<From, To>& converter) {
     ErasedConverter erased = [converter](const void* from_raw) {
       const From* from = static_cast<const From*>(from_raw);
-      return converter(from).release();
+      return converter(*from).release();
     };
     Key key = get_key<From, To>();
     assert(conversions_.find(key) == conversions_.end());
     conversions_[key] = erased;
+  }
+
+  template <typename PackFrom, typename PackTo>
+  void AddCopyConveter() {
+    using From = type<PackFrom>;
+    using To = type<PackTo>;
+    Converter<From, To> converter = [](const From& from) {
+      return std::unique_ptr<To>(new To(from));
+    };
+    Add(converter);
   }
 
   template <typename From, typename To>
