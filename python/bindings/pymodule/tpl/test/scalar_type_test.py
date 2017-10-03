@@ -9,21 +9,50 @@ print("\n".join(sorted(st.__dict__.keys())))
 print(st.Base__T_double__U_int.type_tup)
 print(st.Base__T_int__U_double.type_tup)
 
-# class PyExtend(ic.Base):
-#     def pure(self, value):
-#         print("py.pure={}".format(value))
-#         return value
-#     def optional(self, value):
-#         print("py.optional={}".format(value))
-#         return value * 100
+base_types = {
+    (long, float): st.Base__T_int__U_double,
+    (float, long): st.Base__T_double__U_int,
+    }
 
-# class TestInheritance(unittest.TestCase):
-#     def test_basic(self):
-#         cpp = ic.CppExtend()
-#         py = PyExtend()
-#         value = 2
-#         self.assertEqual(cpp.dispatch(value), 22)
-#         self.assertEqual(py.dispatch(value), 202)
+def BaseT(*args):
+    return base_types[args]
 
-# if __name__ == '__main__':
-#     unittest.main()
+# Default class.
+Base = BaseT(long, float)
+
+print(Base)
+print(BaseT(long, float))
+print(BaseT(float, long))
+
+# Should only define these classes once.
+def _Child(T, U):
+    Base = BaseT(T, U)
+    class Child(Base):
+        def __init__(self, t, u):
+            Base.__init__(self, t, u)
+
+        def pure(self, u):
+            print("py: pure")
+            return T(u)
+
+        def optional(self, u):
+            print("py: optional")
+            return T(2 * u)
+
+    return Child
+
+child_types = {
+    (long, float): _Child(long, float),
+    (float, long): _Child(float, long),
+    }
+
+def ChildT(*args):
+    return child_types[args]
+Child = ChildT(long, float)
+
+print(Child)
+print(ChildT(long, float))
+print(ChildT(float, long))
+
+print(Child == Child)
+print(ChildT(long, float) == ChildT(float, long))

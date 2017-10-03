@@ -49,12 +49,12 @@ class Base {
     return static_cast<U>(value);
   }
 
-  T dispatch(U value) {
+  U dispatch(T value) {
     cout << "cpp.dispatch:\n";
     cout << "  ";
-    T pv = pure(value);
+    U pv = pure(value);
     cout << "  ";
-    T ov = optional(value);
+    U ov = optional(value);
     return pv + ov;
   }
 
