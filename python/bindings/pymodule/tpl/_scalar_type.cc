@@ -90,6 +90,14 @@ void call_method(const Base<T, U>& base) {
   base.dispatch();
 }
 
+template <typename T>
+py::object py_type() {
+  // How to get Python object from Python class?
+  // Rely on automatic conversion.
+  auto locals = py::dict("value"_a=T{});
+  return py::eval("type(value)", py::object(), locals);
+}
+
 template <typename T, typename U>
 void register_base(py::module m) {
   string name = Base<T, U>::py_name();
@@ -108,10 +116,11 @@ void register_base(py::module m) {
   // http://pybind11.readthedocs.io/en/stable/advanced/pycpp/object.html#casting-back-and-forth
   // http://pybind11.readthedocs.io/en/stable/advanced/pycpp/utilities.html
   // http://pybind11.readthedocs.io/en/stable/advanced/misc.html
-  auto locals = py::dict("cls"_a=base);
+  auto type_tup = py::dict("T"_a=py_type<T>(), "U"_a=py_type<U>());
+  auto locals = py::dict("cls"_a=base, "type_tup"_a=type_tup);
   auto globals = m.attr("__dict__");
   py::eval<py::eval_statements>(R"(#
-cls.stuff = 10
+cls.type_tup = type_tup
 )", globals, locals);
 
   // // Register the type in Python.

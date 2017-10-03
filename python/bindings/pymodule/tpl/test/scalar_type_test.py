@@ -6,8 +6,8 @@ from __future__ import print_function, absolute_import
 from pymodule.tpl import scalar_type as st
 
 print("\n".join(sorted(st.__dict__.keys())))
-print(st.Base__T_double__U_int64_t.stuff)
-print(st.Base__T_float__U_int16_t.stuff)
+print(st.Base__T_double__U_int64_t.type_tup)
+print(st.Base__T_float__U_int16_t.type_tup)
 
 # class PyExtend(ic.Base):
 #     def pure(self, value):
