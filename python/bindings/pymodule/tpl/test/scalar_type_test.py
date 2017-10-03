@@ -24,19 +24,30 @@ print(BaseTpl(float, long))
 assert is_tpl_cls(Base)
 assert is_tpl_of(Base, BaseTpl)
 
+# Test direct inheritance.
+class ChildDirect(Base):
+    def __init__(self, t, u):
+        Base.__init__(self, t, u)
+    def pure(self, t):
+        print("py direct: pure")
+        return 1.
+    def optional(self, t):
+        print("py direct: optional")
+        return 2.
+
 # Should only define these classes once.
-def _Child(T=long, U=float):
+def _def_Child(T=long, U=float):
     Base = BaseTpl(T, U)
     class Child(Base):
         def __init__(self, t, u):
             Base.__init__(self, t, u)
 
         def pure(self, t):
-            print("py: pure")
+            print("py: pure [{}]".format(type(self).__name__))
             return U(t)
 
         def optional(self, t):
-            print("py: optional")
+            print("py: optional [{}]".format(type(self).__name__))
             return U(2 * t)
 
         def do_to(self, Tc, Uc):
@@ -49,7 +60,7 @@ ChildTpl = ChildTemplate(
     name = 'Child',
     parent = BaseTpl)
 
-ChildTpl.add_instantiations_with_func(_Child)
+ChildTpl.add_instantiations_with_func(_def_Child)
 
 # Default instantiation.
 Child = ChildTpl()
@@ -70,19 +81,27 @@ assert issubclass(Child, Base)
 # Check other instantiation.
 assert issubclass(ChildTpl(float, long), BaseTpl(float, long))
 
+cd = ChildDirect(2, 5.5)
+print(type(cd))
+cd.pure(1)
+cd.optional(2)
+cd.dispatch(3)
+print("---")
+
 c = Child(2, 5.5)
 print(type(c))
 c.pure(1)
 c.optional(2)
 c.dispatch(3)
+print("---")
 
 cc = c.do_to(float, long)
 print(type(cc))
 cc.pure(1.5)
 cc.optional(1.5)
-help(cc.dispatch)
 cc.dispatch(1.5)
 
 print("---")
+st.call_method(cd)
 st.call_method(c)
 st.call_method(cc)

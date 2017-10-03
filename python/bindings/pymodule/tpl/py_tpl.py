@@ -99,8 +99,7 @@ BaseTpl = Template(
 )
 BaseTpl.add_instantiation(
     params = (),  # Can be map or tuple.
-    cls = ...,
-)
+    cls = ...)
 # Default instantiation.
 Base = BaseTpl()
 
@@ -122,11 +121,9 @@ def _Child(T=?, U=?):
     return Child
 
 # Inherits `default`.
-ChildTpl = create_tpl_child(
+ChildTpl = ChildTemplate(
     name = 'Child',
-    parent = BaseTpl,
-    def_func = _Child,
-)
+    parent = BaseTpl)
 Child = ChildTpl()
 
 """
