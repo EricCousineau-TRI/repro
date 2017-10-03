@@ -58,7 +58,7 @@ def _def_Child(T=long, U=float):
     return Child
 
 def _convert_Child():
-    converter = BaseConverter()
+    converter = st.BaseConverter()
     def add_conversion(params_to, params_from):
         cls_from = ChildTpl(*params_from)
         cls_to = ChildTpl(*params_to)

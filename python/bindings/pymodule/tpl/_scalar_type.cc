@@ -260,8 +260,9 @@ base_types = {}
   register_base<int, double>(m, &info);
 
   // // Register BaseConverter...
-  // py::class_<BaseConverter> base_converter(m, "BaseConverter");
-  // base_converter    
+  py::class_<BaseConverter> base_converter(m, "BaseConverter");
+  base_converter
+    .def(py::init<>());
   //   .def("add_converter", [info](py::tuple params, py::function py_converter) {
   //     // Get BaseConverter::Key from the paramerters.
   //     cout << "Need to implement" << endl;

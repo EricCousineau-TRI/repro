@@ -114,6 +114,8 @@ class SimpleConverter {
   typedef std::pair<size_t, size_t> Key;  
   typedef std::map<Key, ErasedConverter> Conversions;
 
+  SimpleConverter() = default;
+
   /// Get type from a type_pack.
   template <typename Pack>
   using get_type = typename Pack::template type<Tpl>;
