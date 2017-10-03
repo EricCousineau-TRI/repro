@@ -7,15 +7,15 @@ load("//tools:pybind11.bzl", "pybind11_module")
 package(default_visibility = ["//visibility:public"])
 
 py_library(
-    name = "tpl_def",
-    srcs = ["tpl_def.py"],
+    name = "py_tpl",
+    srcs = ["py_tpl.py"],
 )
 
 pybind11_module(
     name = "scalar_type",
     package_dir = "../..",
     py_deps = [
-        ":tpl_def",
+        ":py_tpl",
     ],
     deps = [
         "//cpp:name_trait",

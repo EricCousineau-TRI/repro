@@ -3,7 +3,7 @@ from __future__ import print_function, absolute_import
 
 # import unittest
 from pymodule.tpl import scalar_type as st
-from pymodule.tpl.tpl_def import Template, ChildTemplate, is_tpl_cls, is_tpl_of
+from pymodule.tpl.py_tpl import Template, ChildTemplate, is_tpl_cls, is_tpl_of
 
 BaseTpl = Template(
     name = 'Base',
