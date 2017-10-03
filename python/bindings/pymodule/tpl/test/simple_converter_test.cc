@@ -63,5 +63,18 @@ int main() {
   converter.AddCopyConveter<PackA, PackB>();
   converter.AddCopyConveter<PackB, PackA>();
 
+  using BaseA = Base<float, int>;
+  using BaseB = Base<int, float>;
+
+  BaseA a(1.5, 10);
+  BaseB b(1, 10.5);
+
+  std::unique_ptr<BaseA> a_b = converter.Convert<BaseA>(b);
+  cout << a_b->t() << " " << a_b->u() << endl;
+
+  cout << static_cast<float>(1) << endl;
+
+  // converter.Convert<BaseB>(b);  // Fails as expected.
+
   return 0;
 }

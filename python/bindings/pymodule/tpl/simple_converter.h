@@ -120,38 +120,40 @@ class SimpleConverter {
   template <typename Type>
   using pack = type_pack_inner_constrained<Type, Tpl>;
 
-  template <typename From, typename To>
+  template <typename To, typename From>
   using Converter = std::function<std::unique_ptr<To> (const From&)>;
 
-  template <typename From, typename To>
+  template <typename To, typename From>
   inline static Key get_key() {
-    return Key(pack<From>::hash(), pack<To>::hash());
+    return Key(pack<To>::hash(), pack<From>::hash());
   }
 
-  template <typename From, typename To>
+  template <typename To, typename From>
   void Add(const Converter<From, To>& converter) {
     ErasedConverter erased = [converter](const void* from_raw) {
       const From* from = static_cast<const From*>(from_raw);
       return converter(*from).release();
     };
-    Key key = get_key<From, To>();
+    Key key = get_key<To, From>();
     assert(conversions_.find(key) == conversions_.end());
     conversions_[key] = erased;
   }
 
-  template <typename PackFrom, typename PackTo>
+  template <typename PackTo, typename PackFrom>
   void AddCopyConveter() {
-    using From = type<PackFrom>;
     using To = type<PackTo>;
-    Converter<From, To> converter = [](const From& from) {
+    using From = type<PackFrom>;
+    Converter<To, From> converter = [](const From& from) {
       return std::unique_ptr<To>(new To(from));
     };
     Add(converter);
   }
 
-  template <typename From, typename To>
+  template <typename To, typename From>
   std::unique_ptr<To> Convert(const From& from) {
-    Key key = get_key<From, To>();
+    Key key = get_key<To, From>();
+    // Should not attempt idempontent conversion.
+    assert(key.first != key.second);
     auto iter = conversions_.find(key);
     assert(iter != conversions_.end());
     ErasedConverter erased = iter->second;
