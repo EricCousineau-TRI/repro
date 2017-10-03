@@ -90,13 +90,52 @@ void call_method(const Base<T, U>& base) {
   base.dispatch();
 }
 
+template <typename T, bool is_default_constructible = false>
+struct py_type_try {
+  static py::handle run() {
+    // Check registered C++ types.
+    const auto& internals = py::detail::get_internals();
+    const auto& types_cpp = internals.registered_types_cpp;
+    auto iter = types_cpp.find(std::type_index(typeid(T)));
+    if (iter != types_cpp.end()) {
+      auto info = static_cast<const py::detail::type_info*>(iter->second);
+      return py::handle((PyObject*)info->type);
+    } else {
+      return py::handle();
+    }
+  }
+};
+
 template <typename T>
-py::object py_type() {
+struct py_type_try<T, true> {
+  static py::handle run() {
+    // First check registration.
+    py::handle attempt = py_type_try<T, false>::run();
+    if (attempt) {
+      return attempt;
+    } else {
+      // Next, check through default construction and using cast
+      // implementations.
+      auto locals = py::dict("model_value"_a=T{});
+      return py::eval("type(model_value)", py::object(), locals);
+    }
+  }
+};
+
+template <typename T>
+py::handle py_type() {
   // How to get Python object from Python class?
   // Rely on automatic conversion.
-  auto locals = py::dict("value"_a=T{});
-  return py::eval("type(value)", py::object(), locals);
+  py::handle type =
+        py_type_try<T, std::is_default_constructible<T>::value>::run();
+  if (type) {
+    return type;
+  } else {
+    throw std::runtime_error("Could not find type of: " + py::type_id<T>());
+  }
 }
+
+struct A {};
 
 template <typename T, typename U>
 void register_base(py::module m) {
@@ -116,12 +155,20 @@ void register_base(py::module m) {
   // http://pybind11.readthedocs.io/en/stable/advanced/pycpp/object.html#casting-back-and-forth
   // http://pybind11.readthedocs.io/en/stable/advanced/pycpp/utilities.html
   // http://pybind11.readthedocs.io/en/stable/advanced/misc.html
-  auto type_tup = py::dict("T"_a=py_type<T>(), "U"_a=py_type<U>());
+  auto type_tup = py::dict(
+      "T"_a=py_type<T>(), "U"_a=py_type<U>(),
+      "Z"_a=py_type<vector<T>>(),
+      "Y"_a=py_type<A>()
+  );
   auto locals = py::dict("cls"_a=base, "type_tup"_a=type_tup);
   auto globals = m.attr("__dict__");
   py::eval<py::eval_statements>(R"(#
 cls.type_tup = type_tup
 )", globals, locals);
+
+  // registered_types_py
+  // registered_types_cpp
+  // registered_instances
 
   // // Register the type in Python.
   // // TODO: How to execute Python with arguments?
@@ -136,6 +183,8 @@ cls.type_tup = type_tup
 
 PYBIND11_PLUGIN(_scalar_type) {
   py::module m("_scalar_type", "Simple check on scalar / template types");
+
+  py::class_<A> a(m, "A");
 
   auto globals = m.attr("__dict__");
   py::eval<py::eval_statements>(R"(#
