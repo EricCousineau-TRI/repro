@@ -129,7 +129,7 @@ class SimpleConverter {
   }
 
   template <typename To, typename From>
-  void Add(const Converter<From, To>& converter) {
+  void Add(const Converter<To, From>& converter) {
     ErasedConverter erased = [converter](const void* from_raw) {
       const From* from = static_cast<const From*>(from_raw);
       return converter(*from).release();
