@@ -33,13 +33,13 @@ def _Child(T=long, U=float):
         def __init__(self, t, u):
             Base.__init__(self, t, u)
 
-        def pure(self, u):
+        def pure(self, t):
             print("py: pure")
-            return T(u)
+            return U(t)
 
-        def optional(self, u):
+        def optional(self, t):
             print("py: optional")
-            return T(2 * u)
+            return U(2 * t)
 
         def do_to(self, Tc, Uc):
             # Scalar conversion.
@@ -79,4 +79,5 @@ cc = c.do_to(float, long)
 print(type(cc))
 cc.pure(1.5)
 cc.optional(1.5)
+help(cc.dispatch)
 cc.dispatch(1.5)
