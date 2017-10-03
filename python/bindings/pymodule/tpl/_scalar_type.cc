@@ -14,6 +14,7 @@
 #include <pybind11/stl.h>
 
 #include "cpp/name_trait.h"
+#include "cpp/simple_converter.h"
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -31,13 +32,29 @@ NAME_TRAIT_TPL(Base)
 
 namespace scalar_type {
 
+using simple_converter::SimpleConverter;
+
+typedef SimpleConverter<Base> BaseConverter;
+
 // Simple base class.
 template <typename T, typename U>
 class Base {
  public:
-  Base(T t, U u)
+  Base(T t, U u, std::unique_ptr<BaseConverter> converter = nullptr)
     : t_(t),
-      u_(u) {}
+      u_(u) {
+    if (!converter) {
+      converter_.reset(new BaseConverter());
+
+      typedef Base<double, int> A;
+      typedef Base<int, double> B;
+      converter_->AddCopyConverter<A, B>();
+      converter_->AddCopyConverter<B, A>();
+    } else {
+      converter_ = std::move(converter);
+    }
+  }
+
   template <typename Tc, typename Uc>
   Base(const Base<Tc, Uc>& other)
     : Base(static_cast<T>(other.t_),
@@ -46,7 +63,7 @@ class Base {
   T t() const { return t_; }
   U u() const { return u_; }
 
-  virtual U pure(T value) const = 0;
+  virtual U pure(T value) const { return U{}; } // = 0 -- Do not use for concrete converter example.
   virtual U optional(T value) const {
     cout << py_name() << endl;
     return static_cast<U>(value);
@@ -67,11 +84,19 @@ class Base {
       "__U_" + name_trait<U>::name();
   }
 
+  template <typename To>
+  std::unique_ptr<To> DoTo() const {
+    return converter_->Convert<To>(*this);
+  }
+
  private:
   template <typename Tc, typename Uc> friend class Base;
+
   T t_{};
   U u_{};
+  std::unique_ptr<BaseConverter> converter_;
 };
+
 
 template <typename T, typename U>
 class PyBase : public Base<T, U> {
@@ -87,6 +112,7 @@ class PyBase : public Base<T, U> {
     PYBIND11_OVERLOAD(U, B, optional, value);
   }
 };
+
 
 template <typename T, typename U>
 void call_method(const Base<T, U>& base) {
@@ -160,8 +186,13 @@ struct A {
   explicit A(int x) {}
 };
 
+struct reg_info {
+  // py::tuple params  ->  size_t (type_pack<Tpl<...>>::hash)
+  py::dict mapping;
+};
+
 template <typename T, typename U>
-void register_base(py::module m) {
+void register_base(py::module m, reg_info* info) {
   string name = Base<T, U>::py_name();
   typedef Base<T, U> C;
   typedef PyBase<T, U> PyC;
@@ -176,22 +207,23 @@ void register_base(py::module m) {
 
   // // Can't figure this out...
   // Can't get `overload_cast` to infer `Return` type.
+  // Have to explicitly cast... :(
   typedef void (*call_method_t)(const Base<T, U>&);
   m.def("call_method", static_cast<call_method_t>(&call_method));
 
   // http://pybind11.readthedocs.io/en/stable/advanced/pycpp/object.html#casting-back-and-forth
   // http://pybind11.readthedocs.io/en/stable/advanced/pycpp/utilities.html
   // http://pybind11.readthedocs.io/en/stable/advanced/misc.html
-  auto type_tup = py::dict(
-      "T"_a=py_type<T>(), "U"_a=py_type<U>(),
-      "Z"_a=py_type<vector<T>>(),
-      "Y"_a=py_type<A>()
-  );
-  auto locals = py::dict("cls"_a=base, "type_tup"_a=type_tup);
-  auto globals = m.attr("__dict__");
-  py::eval<py::eval_statements>(R"(#
-cls.type_tup = type_tup
-)", globals, locals);
+  auto type_tup = py::make_tuple(py_type<T>(), py_type<U>());
+  size_t hash = BaseConverter::hash<C>();
+
+  info->mapping[type_tup] = hash;
+
+//   auto locals = py::dict("cls"_a=base, "type_tup"_a=type_tup);
+//   auto globals = m.attr("__dict__");
+//   py::eval<py::eval_statements>(R"(#
+// cls.type_tup = type_tup
+// )", globals, locals);
 
   // registered_types_py
   // registered_types_cpp
@@ -223,8 +255,17 @@ base_types = {}
 
   // No difference between (float, double) and (int16_t, int64_t)
   // Gonna use other combos.
-  register_base<double, int>(m);
-  register_base<int, double>(m);
+  reg_info info;
+  register_base<double, int>(m, &info);
+  register_base<int, double>(m, &info);
+
+  // // Register BaseConverter...
+  // py::class_<BaseConverter> base_converter(m, "BaseConverter");
+  // base_converter    
+  //   .def("add_converter", [info](py::tuple params, py::function py_converter) {
+  //     // Get BaseConverter::Key from the paramerters.
+  //     cout << "Need to implement" << endl;
+  //   });
 
   return m.ptr();
 }

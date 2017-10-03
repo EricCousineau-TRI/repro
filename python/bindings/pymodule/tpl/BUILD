@@ -19,6 +19,7 @@ pybind11_module(
     ],
     deps = [
         "//cpp:name_trait",
+        "//cpp:simple_converter",
     ],
 )
 

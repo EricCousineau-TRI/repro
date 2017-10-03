@@ -116,18 +116,23 @@ class SimpleConverter {
 
   /// Get type from a type_pack.
   template <typename Pack>
-  using type = typename Pack::template type<Tpl>;
+  using get_type = typename Pack::template type<Tpl>;
 
   /// Get type_pack from a type.
   template <typename Type>
-  using pack = type_pack_inner_constrained<Type, Tpl>;
+  using get_pack = type_pack_inner_constrained<Type, Tpl>;
 
   template <typename To, typename From>
   using Converter = std::function<std::unique_ptr<To> (const From&)>;
 
   template <typename To, typename From>
   inline static Key get_key() {
-    return Key(pack<To>::hash(), pack<From>::hash());
+    return Key(hash<To>(), hash<From>());
+  }
+
+  template <typename T>
+  inline static size_t hash() {
+    return get_pack<T>::hash();
   }
 
   template <typename To, typename From>
@@ -142,7 +147,7 @@ class SimpleConverter {
   }
 
   template <typename To, typename From>
-  void AddCopyConveter() {
+  void AddCopyConverter() {
     Converter<To, From> converter = [](const From& from) {
       return std::unique_ptr<To>(new To(from));
     };
@@ -152,7 +157,7 @@ class SimpleConverter {
   template <typename To, typename From>
   std::unique_ptr<To> Convert(const From& from) {
     Key key = get_key<To, From>();
-    // Should not attempt idempontent conversion.
+    // Should not attempt idempotent conversion.
     assert(key.first != key.second);
     auto iter = conversions_.find(key);
     assert(iter != conversions_.end());

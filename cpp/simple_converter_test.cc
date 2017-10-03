@@ -62,8 +62,8 @@ int main() {
   using BaseB = Base<int, float>;
 
   SimpleConverter<Base> converter;
-  converter.AddCopyConveter<BaseA, BaseB>();
-  converter.AddCopyConveter<BaseB, BaseA>();
+  converter.AddCopyConverter<BaseA, BaseB>();
+  converter.AddCopyConverter<BaseB, BaseA>();
 
   BaseA a(1.5, 10);
   BaseB b(1, 10.5);

@@ -40,7 +40,8 @@ def _def_Child(T=long, U=float):
     Base = BaseTpl(T, U)
     class Child(Base):
         def __init__(self, t, u):
-            Base.__init__(self, t, u)
+            # Add the same converter per instance.
+            Base.__init__(self, t, u, _convert_Child())
 
         def pure(self, t):
             print("py: pure [{}]".format(type(self).__name__))
@@ -55,6 +56,21 @@ def _def_Child(T=long, U=float):
             ChildTc = ChildTpl(Tc, Uc)
             return ChildTc(Tc(self.t()), Uc(self.u()))
     return Child
+
+def _convert_Child():
+    converter = BaseConverter()
+    def add_conversion(params_to, params_from):
+        cls_from = ChildTpl(*params_from)
+        cls_to = ChildTpl(*params_to)
+        def func(obj_from):
+            assert isinstance(obj_from, cls_from)
+            obj_to = obj_from.do_to(*params_to)
+            assert isinstance(obj_to, cls_to)
+            return obj_to
+        converter.Add(func)
+    add_conversion(params_to=(long, float), params_from=(float, long))
+    add_conversion(params_to=(float, long), params_from=(long, float))
+    return converter
 
 ChildTpl = ChildTemplate(
     name = 'Child',
