@@ -2,20 +2,14 @@
 from __future__ import print_function, absolute_import
 
 # import unittest
-# import pymodule
 from pymodule.tpl import scalar_type as st
-from pymodule.tpl.tpl_def import Template, is_tpl_cls, is_tpl_of
-
-
-print("\n".join(sorted(st.__dict__.keys())))
-print(st.Base__T_double__U_int.type_tup)
-print(st.Base__T_int__U_double.type_tup)
+from pymodule.tpl.tpl_def import Template, ChildTemplate, is_tpl_cls, is_tpl_of
 
 BaseTpl = Template(
     name = 'Base',
     param_names = ('T', 'U'),
-    param_defaults = (long, float),
-)
+    param_defaults = (long, float))
+
 BaseTpl.add_instantiation(
     (long, float), st.Base__T_int__U_double)
 BaseTpl.add_instantiation(
@@ -33,7 +27,6 @@ assert is_tpl_of(Base, BaseTpl)
 # Should only define these classes once.
 def _Child(T=long, U=float):
     Base = BaseTpl(T, U)
-
     class Child(Base):
         def __init__(self, t, u):
             Base.__init__(self, t, u)
@@ -50,19 +43,13 @@ def _Child(T=long, U=float):
             # Scalar conversion.
             ChildTc = ChildTpl(Tc, Uc)
             return ChildTc(Tc(self.t()), Uc(self.u()))
-
-    # Change name for clarity.
-    Child.__name__ = "Child__T_{}__U_{}".format(T.__name__, U.__name__)
     return Child
 
-child_types = {
-    (long, float): _Child(long, float),
-    (float, long): _Child(float, long),
-    }
+ChildTpl = ChildTemplate(
+    name = 'Child',
+    parent = BaseTpl)
 
-def ChildTpl(T=long, U=float):
-    types = (T, U)
-    return child_types[types]
+ChildTpl.add_instantiations_with_func(_Child)
 
 # Default instantiation.
 Child = ChildTpl()
@@ -71,8 +58,17 @@ print(Child)
 print(ChildTpl(long, float))
 print(ChildTpl(float, long))
 
-print(Child == Child)
+# Check type identity persistence.
+print(Child == ChildTpl())
 print(ChildTpl(long, float) == ChildTpl(float, long))
+
+assert is_tpl_cls(Child)
+assert is_tpl_of(Child, ChildTpl)
+
+# Check default instantiation.
+assert issubclass(Child, Base)
+# Check other instantiation.
+assert issubclass(ChildTpl(float, long), BaseTpl(float, long))
 
 c = Child(2, 5.5)
 print(type(c))

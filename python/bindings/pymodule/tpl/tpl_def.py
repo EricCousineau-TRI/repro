@@ -54,6 +54,21 @@ class Template(object):
         if override_name:
             cls.__name__ = _tpl_name(self.name, self._param_names, params)
 
+class ChildTemplate(Template):
+    def __init__(self, name, parent, **kwargs):
+        Template.__init__(self, name, parent._param_names, parent._param_defaults, **kwargs)
+        self._parent = parent
+
+    def add_instantiations_with_func(self, func, params_list=None):
+        if params_list is None:
+            params_list = self._parent._instantiations.keys()
+        for params in params_list:
+            cls = func(*params)
+            # Sanity check.
+            base_cls = self._parent(*params)
+            assert issubclass(cls, base_cls)
+            self.add_instantiation(params, cls)
+
 def is_tpl_cls(cls):
     return hasattr(cls, '_tpl') and isinstance(cls._tpl, Template)
 
