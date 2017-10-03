@@ -14,20 +14,20 @@ base_types = {
     (float, long): st.Base__T_double__U_int,
     }
 
-def BaseT(T=long, U=float):
+def BaseTpl(T=long, U=float):
     types = (T, U)
     return base_types[types]
 
 # Default class.
-Base = BaseT()
+Base = BaseTpl()
 
 print(Base)
-print(BaseT(long, float))
-print(BaseT(float, long))
+print(BaseTpl(long, float))
+print(BaseTpl(float, long))
 
 # Should only define these classes once.
 def _Child(T=long, U=float):
-    Base = BaseT(T, U)
+    Base = BaseTpl(T, U)
 
     class Child(Base):
         def __init__(self, t, u):
@@ -43,7 +43,7 @@ def _Child(T=long, U=float):
 
         def do_to(self, Tc, Uc):
             # Scalar conversion.
-            ChildTc = ChildT(Tc, Uc)
+            ChildTc = ChildTpl(Tc, Uc)
             return ChildTc(Tc(self.t()), Uc(self.u()))
 
     # Change name for clarity.
@@ -55,19 +55,19 @@ child_types = {
     (float, long): _Child(float, long),
     }
 
-def ChildT(T=long, U=float):
+def ChildTpl(T=long, U=float):
     types = (T, U)
     return child_types[types]
 
 # Default instantiation.
-Child = ChildT()
+Child = ChildTpl()
 
 print(Child)
-print(ChildT(long, float))
-print(ChildT(float, long))
+print(ChildTpl(long, float))
+print(ChildTpl(float, long))
 
 print(Child == Child)
-print(ChildT(long, float) == ChildT(float, long))
+print(ChildTpl(long, float) == ChildTpl(float, long))
 
 c = Child(2, 5.5)
 print(type(c))
