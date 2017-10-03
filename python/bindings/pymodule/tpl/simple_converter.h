@@ -77,10 +77,29 @@ struct type_pack {
 };
 
 template <typename T>
-using type_pack_inner = std::false_type;  // Cause ugly death.
+struct type_pack_inner_impl {
+  static_assert(!std::is_same<T, T>::value, "Wrong template");
+};
 
 template <template <typename ... Ts> class Tpl, typename ... Ts>
-using type_pack_inner<Tpl<Ts...>> = type_pack<Ts...>;
+struct type_pack_inner_impl<Tpl<Ts...>> {
+  using type = type_pack<Ts...>;
+
+  template <template <typename...> class TplIn>
+  using type_constrained =
+      typename std::conditional<
+          std::is_same<TplIn<Ts...>, Tpl<Ts...>>::value, 
+            type,
+            std::false_type
+      >::type;
+};
+
+template <typename T>
+using type_pack_inner = typename type_pack_inner_impl<T>::type;
+
+template <typename T, template <typename...> class Tpl>
+using type_pack_inner_constrained =
+    typename type_pack_inner_impl<T>::template type_constraind<Tpl>;
 
 // - END: Added
 
@@ -96,10 +115,10 @@ class SimpleConverter {
   using type = typename Pack::template type<Tpl>;
 
   template <typename Type>
-  using pack = type_pack_inner<Type>;
+  using pack = type_pack_inner_constrained<Type, Tpl>;
 
   template <typename From, typename To>
-  typedef std::function<std::unique_ptr<To> (const From&)> Converter;
+  using Converter = std::function<std::unique_ptr<To> (const From&)>;
 
   template <typename From, typename To>
   inline static Key get_key() {
@@ -111,7 +130,7 @@ class SimpleConverter {
     ErasedConverter erased = [converter](const void* from_raw) {
       const From* from = static_cast<const From*>(from_raw);
       return converter(from).release();
-    }
+    };
     Key key = get_key<From, To>();
     assert(conversions_.find(key) == conversions_.end());
     conversions_[key] = erased;
