@@ -118,6 +118,10 @@ void call_method(const Base<T, U>& base) {
   base.dispatch(T{});
 }
 
+std::unique_ptr<Base<double, int>> do_convert(const Base<int, double>& value) {
+  return value.DoTo<Base<double, int>>();
+}
+
 /// Retuns the PyTypeObject from the resultant expression type.
 /// @note This may incur a copy due to implementation details.
 template <typename T>
@@ -282,6 +286,8 @@ base_types = {}
     // Get BaseConverter::Key from the paramerters.
     cout << "Need to implement" << endl;
   };
+
+  m.def("do_convert", &do_convert);
 
   // // Register BaseConverter...
   py::class_<BaseConverter> base_converter(m, "BaseConverter");

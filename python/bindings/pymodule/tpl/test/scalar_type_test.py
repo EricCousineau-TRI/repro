@@ -121,3 +121,7 @@ print("---")
 st.call_method(cd)
 st.call_method(c)
 st.call_method(cc)
+
+print("---")
+cc_c = st.do_convert(c)
+cc_c.dispatch(2.5)
