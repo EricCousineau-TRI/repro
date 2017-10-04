@@ -131,6 +131,8 @@ template <typename T, bool is_default_constructible = false>
 struct py_type_impl {
   static py::handle run() {
     // Check registered C++ types.
+
+    // NOTE: This seems to be implemented by `get_type_info(type_info)
     const auto& internals = py::detail::get_internals();
     const auto& types_cpp = internals.registered_types_cpp;
     auto iter = types_cpp.find(std::type_index(typeid(T)));
@@ -240,6 +242,17 @@ void register_base(py::module m, reg_info* info) {
   // )", m);
 }
 
+// template <typename K, typename T>
+// T get_dict_item(const py::dict& d, const K& key) {
+//   for (auto iter : d) {
+//     auto item = *iter;
+//     if (item.first == key) {
+//       return T{item.second};
+//     }
+//   }
+//   throw std::runtime_error("Did not find things");
+// }
+
 PYBIND11_PLUGIN(_scalar_type) {
   py::module m("_scalar_type", "Simple check on scalar / template types");
 
@@ -259,14 +272,41 @@ base_types = {}
   register_base<double, int>(m, &info);
   register_base<int, double>(m, &info);
 
+  auto converter =
+      [info](py::tuple params_to, py::tuple params_from,
+             py::function py_converter) {
+    BaseConverter::Key key {
+        py::cast<size_t>(info.mapping[params_to]),
+        py::cast<size_t>(info.mapping[params_from])
+      };
+
+    BaseConverter::ErasedConverter erased =
+        [key, py_converter](const void* from_raw) {
+      // Cheat: If this is called from Python, assume it is a registered instance.
+
+      // See: get_object_handle
+      const auto& internals = py::detail::get_internals();
+      auto iter = internals.registered_instances.find(from_raw);
+      assert(iter != internals.registered_instances.end());
+      py::handle py_from((PyObject*)iter->second);
+      py::handle py_to = py_converter(py_from);
+      // We know that this should be a C++ object. Return the void* from this instance.
+      // TODO: Memory management?
+
+      // NOTE: Just using type_caster_generic::load's method.
+      void* value =
+          reinterpret_cast<py::detail::instance<void>*>(py_to.ptr())->value;
+      return value;
+    };
+    // Get BaseConverter::Key from the paramerters.
+    cout << "Need to implement" << endl;
+  };
+
   // // Register BaseConverter...
   py::class_<BaseConverter> base_converter(m, "BaseConverter");
   base_converter
-    .def(py::init<>());
-  //   .def("add_converter", [info](py::tuple params, py::function py_converter) {
-  //     // Get BaseConverter::Key from the paramerters.
-  //     cout << "Need to implement" << endl;
-  //   });
+    .def(py::init<>())
+    .def("Add", converter);
 
   return m.ptr();
 }
