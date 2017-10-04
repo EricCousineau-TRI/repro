@@ -45,3 +45,16 @@ py_test_simple(
     size = "small",
     deps = [":scalar_type"],
 )
+
+
+
+pybind11_module(
+    name = "ownership",
+    package_dir = "../..",
+)
+
+py_test_simple(
+    name = "ownership_test",
+    size = "small",
+    deps = [":ownership"],
+)
