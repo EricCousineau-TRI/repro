@@ -279,20 +279,21 @@ base_types = {}
 
       py::handle py_from((PyObject*)iter->second);
       cout << "cpp.2. Calling python" << endl;
-      py::object py_to = py_converter(py_from);
+      py::handle py_to = py_converter(py_from);
 
       // We know that this should be a C++ object. Return the void* from this instance.
 
       cout << "cpp.3. Returning" << endl;
       // NOTE: Just using type_caster_generic::load's method.
-      void* value =
-          reinterpret_cast<py::detail::instance<void>*>(py_to.ptr())->value;
+      auto inst = reinterpret_cast<py::detail::instance<void>*>(py_to.ptr());
+      void* value = inst->value;
 
       // TODO: Memory management?
       // How to maintain reference information pass erasure???
       // This is a BAD hack.
-      py_to.inc_ref();
-      py_to.ptr() = nullptr;
+      // py_to.inc_ref();
+      // py_to.ptr() = nullptr;
+      inst->owned = false;
 
       return value;
     };

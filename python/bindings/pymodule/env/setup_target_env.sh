@@ -43,7 +43,7 @@ EOF
     # How to add additional flags? Like `-c dbg`?
     (
         cd ${script_dir}
-        bazel run :py_shell -- \
+        bazel run ${ARGS:-} :py_shell -- \
             bash -c "export -p > $script_priv" \
                 || { echo "Error for target: ${target}"; return 1;  }
     ) || return 1;
