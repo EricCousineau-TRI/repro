@@ -130,6 +130,13 @@ st.call_method(c)
 st.call_method(cc)
 
 print("---")
+func = lambda: ChildTpl(float, long)(6.5, 3)
+print("Check")
+owne = st.take_ownership(func)
+owne.dispatch(3.5)
+print("Good")
+
+print("---")
 cc_c = st.do_convert(c)
 print("Try dispatch")
 cc_c.dispatch(2.5)

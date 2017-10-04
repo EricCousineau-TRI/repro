@@ -121,9 +121,18 @@ void call_method(const Base<T, U>& base) {
 std::unique_ptr<Base<double, int>> do_convert(const Base<int, double>& value) {
   cout << "Attempt conversion" << endl;
   // std::unique_ptr<Base<double, int>> out(value.DoTo<Base<double, int>>());
-  auto out = std::make_unique<Base<double, int>>(8.5, 10);
+  auto out = std::make_unique<Base<double, int>>(8.5, 10);  // Not equivalent...
+  // Try to create an instance of `ChildTpl`.
   cout << "Got it" << endl;
   return out;
+}
+
+
+// How can this work?
+std::unique_ptr<Base<double, int>> take_ownership(py::function func) {
+  py::handle out_py = func();
+  Base<double, int>* out = py::cast<Base<double, int>*>(out_py);
+  return std::unique_ptr<Base<double, int>>(out);
 }
 
 /// Retuns the PyTypeObject from the resultant expression type.
@@ -311,6 +320,8 @@ base_types = {}
   base_converter
     .def(py::init<>())
     .def("Add", converter);
+
+  m.def("take_ownership", &take_ownership);
 
   return m.ptr();
 }
