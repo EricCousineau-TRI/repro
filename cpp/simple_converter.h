@@ -166,11 +166,12 @@ class SimpleConverter {
     auto iter = conversions_.find(key);
     assert(iter != conversions_.end());
     ErasedConverter erased = iter->second;
-    std::unique_ptr<To> out(
-        static_cast<To*>(erased(&from)));
+    To* out = static_cast<To*>(erased(&from));
+    // To* out = dynamic_cast<To*>(erased(&from));
+    assert(out != nullptr);
     // TEMP
     std::cout << out->t() << " -- " << out->u() << std::endl;
-    return out;
+    return std::unique_ptr<To>(out);
   }
 
  private:

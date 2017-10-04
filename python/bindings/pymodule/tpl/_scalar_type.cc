@@ -276,16 +276,23 @@ base_types = {}
       const auto& internals = py::detail::get_internals();
       auto iter = internals.registered_instances.find(from_raw);
       assert(iter != internals.registered_instances.end());
+
       py::handle py_from((PyObject*)iter->second);
       cout << "cpp.2. Calling python" << endl;
       py::handle py_to = py_converter(py_from);
+
       // We know that this should be a C++ object. Return the void* from this instance.
-      // TODO: Memory management?
 
       cout << "cpp.3. Returning" << endl;
       // NOTE: Just using type_caster_generic::load's method.
       void* value =
           reinterpret_cast<py::detail::instance<void>*>(py_to.ptr())->value;
+
+      // TODO: Memory management?
+      // How to maintain reference information pass erasure???
+      // This is a BAD hack.
+      py_to.ptr() = nullptr;
+
       return value;
     };
 
