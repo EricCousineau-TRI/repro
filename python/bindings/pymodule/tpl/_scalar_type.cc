@@ -279,7 +279,7 @@ base_types = {}
 
       py::handle py_from((PyObject*)iter->second);
       cout << "cpp.2. Calling python" << endl;
-      py::handle py_to = py_converter(py_from);
+      py::object py_to = py_converter(py_from);
 
       // We know that this should be a C++ object. Return the void* from this instance.
 
@@ -291,6 +291,7 @@ base_types = {}
       // TODO: Memory management?
       // How to maintain reference information pass erasure???
       // This is a BAD hack.
+      py_to.inc_ref();
       py_to.ptr() = nullptr;
 
       return value;
