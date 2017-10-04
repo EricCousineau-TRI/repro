@@ -40,18 +40,17 @@ typedef SimpleConverter<Base> BaseConverter;
 template <typename T, typename U>
 class Base {
  public:
-  Base(T t, U u, std::unique_ptr<BaseConverter> converter = nullptr)
+  Base(T t, U u, BaseConverter* converter = nullptr)
     : t_(t),
       u_(u) {
+    converter_.reset(new BaseConverter());
     if (!converter) {
-      converter_.reset(new BaseConverter());
-
       typedef Base<double, int> A;
       typedef Base<int, double> B;
       converter_->AddCopyConverter<A, B>();
       converter_->AddCopyConverter<B, A>();
     } else {
-      converter_ = std::move(converter);
+      *converter_ = *converter;
     }
   }
 
@@ -208,7 +207,8 @@ void register_base(py::module m, reg_info* info) {
   typedef PyBase<T, U> PyC;
   py::class_<C, PyC> base(m, name.c_str());
   base
-    .def(py::init<T, U, std::unique_ptr<BaseConverter>>())
+    .def(py::init<T, U, BaseConverter*>(),
+         py::arg("t"), py::arg("u"), py::arg("converter") = nullptr) //.none(true))
     .def("t", &C::t)
     .def("u", &C::u)
     .def("pure", &C::pure)
