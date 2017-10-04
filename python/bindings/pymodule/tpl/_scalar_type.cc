@@ -20,6 +20,8 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace std;
 
+using namespace simple_converter;
+
 namespace scalar_type {
 
 template <typename T = float, typename U = int16_t>
@@ -31,8 +33,6 @@ using scalar_type::Base;
 NAME_TRAIT_TPL(Base)
 
 namespace scalar_type {
-
-using simple_converter::SimpleConverter;
 
 typedef SimpleConverter<Base> BaseConverter;
 
@@ -119,6 +119,7 @@ void call_method(const Base<T, U>& base) {
 }
 
 std::unique_ptr<Base<double, int>> do_convert(const Base<int, double>& value) {
+  cout << "Attempt conversion" << endl;
   return value.DoTo<Base<double, int>>();
 }
 
@@ -260,6 +261,7 @@ base_types = {}
       [info](BaseConverter* self,
              py::tuple params_to, py::tuple params_from,
              py::function py_converter) {
+    // Get BaseConverter::Key from the paramerters.
     BaseConverter::Key key {
         py::cast<size_t>(info.mapping[params_to]),
         py::cast<size_t>(info.mapping[params_from])
@@ -283,8 +285,10 @@ base_types = {}
           reinterpret_cast<py::detail::instance<void>*>(py_to.ptr())->value;
       return value;
     };
-    // Get BaseConverter::Key from the paramerters.
-    cout << "Need to implement" << endl;
+
+    cout << "Registering" << endl;
+
+    SimpleConverterAttorney<Base>::AddErased(self, key, erased);
   };
 
   m.def("do_convert", &do_convert);

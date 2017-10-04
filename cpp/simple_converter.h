@@ -106,6 +106,9 @@ using type_pack_inner_constrained =
 
 // - END: Added
 
+template <template <typename...> class Tpl>
+class SimpleConverterAttorney;
+
 // Simple (less robust) version of Drake's SystemScalarConverter
 template <template <typename...> class Tpl>
 class SimpleConverter {
@@ -144,8 +147,7 @@ class SimpleConverter {
       return converter(*from).release();
     };
     Key key = get_key<To, From>();
-    assert(conversions_.find(key) == conversions_.end());
-    conversions_[key] = erased;
+    AddErased(key, erased);
   }
 
   template <typename To, typename From>
@@ -171,6 +173,24 @@ class SimpleConverter {
 
  private:
   Conversions conversions_;
+
+  void AddErased(Key key, ErasedConverter erased) {
+    assert(conversions_.find(key) == conversions_.end());
+    conversions_[key] = erased;
+  }
+
+  friend class SimpleConverterAttorney<Tpl>;
+};
+
+template <template <typename...> class Tpl>
+class SimpleConverterAttorney {
+ public:
+  using Client = SimpleConverter<Tpl>;
+  static void AddErased(
+      Client* client, typename Client::Key key,
+      typename Client::ErasedConverter erased) {
+    client->AddErased(key, erased);
+  }
 };
 
 }  // namespace simple_converter
