@@ -12,7 +12,7 @@ bc2 = ownership.check_creation_b(factory_b, True)
 print(bc2.value())
 
 # This causes memory leaks, as expected.
-ac = ownership.check_creation_a(factory_a, False)
-print(ac.value())
 ac2 = ownership.check_creation_a(factory_a, True)
 print(ac2.value())
+ac = ownership.check_creation_a(factory_a, False)
+print(ac.value())

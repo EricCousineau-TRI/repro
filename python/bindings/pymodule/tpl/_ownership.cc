@@ -36,14 +36,17 @@ typedef Base<A_> A;
 typedef Base<B_> B;
 
 unique_ptr<A> check_creation_a(py::function py_factory, bool do_copy) {
+  // unique_ptr<A> in = py::cast<unique_ptr<A>>(py_factory());  // Does not work.
+  // BOTH of these cause issues...
   A* in = py::cast<A*>(py_factory());
   if (do_copy) {
-    // This should be fine.
+    // This should be fine-ish.
     unique_ptr<A> out(new A(in->value() * 2));
     return out;
   } else {
     // Should cause an error.
     return unique_ptr<A>(in);
+    // return in;
   }
 }
 
