@@ -164,6 +164,14 @@ struct py_type_impl<T, true> {
   }
 };
 
+// http://pybind11.readthedocs.io/en/stable/advanced/pycpp/object.html#casting-back-and-forth
+// http://pybind11.readthedocs.io/en/stable/advanced/pycpp/utilities.html
+// http://pybind11.readthedocs.io/en/stable/advanced/misc.html
+
+// registered_types_py
+// registered_types_cpp
+// registered_instances
+
 /// Gets the PyTypeObject representing the Python-compatible type for `T`.
 /// @note If this is a custom type, ensure that it has been fully registered
 /// before calling this.
@@ -213,9 +221,6 @@ void register_base(py::module m, reg_info* info) {
   typedef void (*call_method_t)(const Base<T, U>&);
   m.def("call_method", static_cast<call_method_t>(&call_method));
 
-  // http://pybind11.readthedocs.io/en/stable/advanced/pycpp/object.html#casting-back-and-forth
-  // http://pybind11.readthedocs.io/en/stable/advanced/pycpp/utilities.html
-  // http://pybind11.readthedocs.io/en/stable/advanced/misc.html
   auto type_tup = py::make_tuple(py_type<T>(), py_type<U>());
   size_t hash = BaseConverter::hash<C>();
 
@@ -226,32 +231,7 @@ void register_base(py::module m, reg_info* info) {
 //   py::eval<py::eval_statements>(R"(#
 // cls.type_tup = type_tup
 // )", globals, locals);
-
-  // registered_types_py
-  // registered_types_cpp
-  // registered_instances
-
-  // // Register the type in Python.
-  // // TODO: How to execute Python with arguments?
-  // // How to convert a C++ typeid to a Python type, and vice versa?
-  // // py::detail::type_info, detail::get_type_info
-  // auto cls = py::exec();
-  // auto locals = py::dict("params"_a=types, "cls"_a=cls);
-  // py::exec(R"(
-  //   _base_types[
-  // )", m);
 }
-
-// template <typename K, typename T>
-// T get_dict_item(const py::dict& d, const K& key) {
-//   for (auto iter : d) {
-//     auto item = *iter;
-//     if (item.first == key) {
-//       return T{item.second};
-//     }
-//   }
-//   throw std::runtime_error("Did not find things");
-// }
 
 PYBIND11_PLUGIN(_scalar_type) {
   py::module m("_scalar_type", "Simple check on scalar / template types");
