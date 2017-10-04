@@ -120,7 +120,10 @@ void call_method(const Base<T, U>& base) {
 
 std::unique_ptr<Base<double, int>> do_convert(const Base<int, double>& value) {
   cout << "Attempt conversion" << endl;
-  return value.DoTo<Base<double, int>>();
+  // std::unique_ptr<Base<double, int>> out(value.DoTo<Base<double, int>>());
+  auto out = std::make_unique<Base<double, int>>(8.5, 10);
+  cout << "Got it" << endl;
+  return out;
 }
 
 /// Retuns the PyTypeObject from the resultant expression type.
