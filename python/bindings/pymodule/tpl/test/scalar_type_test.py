@@ -67,9 +67,9 @@ def _convert_Child():
             obj_to = obj_from.do_to(*params_to)
             assert isinstance(obj_to, cls_to)
             return obj_to
-        converter.Add(func)
-    add_conversion(params_to=(long, float), params_from=(float, long))
-    add_conversion(params_to=(float, long), params_from=(long, float))
+        converter.Add(params_to, params_from, func)
+    add_conversion((long, float), (float, long))
+    add_conversion((float, long), (long, float))
     return converter
 
 ChildTpl = ChildTemplate(

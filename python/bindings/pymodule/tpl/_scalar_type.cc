@@ -208,7 +208,7 @@ void register_base(py::module m, reg_info* info) {
   typedef PyBase<T, U> PyC;
   py::class_<C, PyC> base(m, name.c_str());
   base
-    .def(py::init<T, U>())
+    .def(py::init<T, U, std::unique_ptr<BaseConverter>>())
     .def("t", &C::t)
     .def("u", &C::u)
     .def("pure", &C::pure)
@@ -253,7 +253,8 @@ base_types = {}
   register_base<int, double>(m, &info);
 
   auto converter =
-      [info](py::tuple params_to, py::tuple params_from,
+      [info](BaseConverter* self,
+             py::tuple params_to, py::tuple params_from,
              py::function py_converter) {
     BaseConverter::Key key {
         py::cast<size_t>(info.mapping[params_to]),
