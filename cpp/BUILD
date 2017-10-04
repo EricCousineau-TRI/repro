@@ -267,3 +267,8 @@ cc_binary(
         ":name_trait",
     ],
 )
+
+cc_binary(
+    name = "unique_ptr_stuff",
+    srcs = ["unique_ptr_stuff.cc"],
+)
