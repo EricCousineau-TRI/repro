@@ -2,7 +2,7 @@
 # This file contains rules for Bazel; see drake/doc/bazel.rst.
 
 load("//tools:python.bzl", "py_test_simple")
-load("//tools:pybind11.bzl", "pybind11_module")
+load("//tools:pybind11.bzl", "pybind11_module") #, "pybind11_binary")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -22,6 +22,15 @@ pybind11_module(
         "//cpp:simple_converter",
     ],
 )
+
+# # How to get this to work???
+# pybind11_binary(
+#     name = "scalar_type_embed_test",
+#     srcs = ["test/scalar_type_embed_test.cc"],
+#     pybind11_deps = [
+#         ":scalar_type",
+#     ],
+# )
 
 py_library(
     name = "tpl",  # This is the package's name.
