@@ -168,6 +168,8 @@ class SimpleConverter {
     ErasedConverter erased = iter->second;
     std::unique_ptr<To> out(
         static_cast<To*>(erased(&from)));
+    // TEMP
+    std::cout << out->t() << " -- " << out->u() << std::endl;
     return out;
   }
 

@@ -270,23 +270,24 @@ base_types = {}
     BaseConverter::ErasedConverter erased =
         [key, py_converter](const void* from_raw) {
       // Cheat: If this is called from Python, assume it is a registered instance.
+      cout << "cpp.1. Attempting conversion" << endl;
 
       // See: get_object_handle
       const auto& internals = py::detail::get_internals();
       auto iter = internals.registered_instances.find(from_raw);
       assert(iter != internals.registered_instances.end());
       py::handle py_from((PyObject*)iter->second);
+      cout << "cpp.2. Calling python" << endl;
       py::handle py_to = py_converter(py_from);
       // We know that this should be a C++ object. Return the void* from this instance.
       // TODO: Memory management?
 
+      cout << "cpp.3. Returning" << endl;
       // NOTE: Just using type_caster_generic::load's method.
       void* value =
           reinterpret_cast<py::detail::instance<void>*>(py_to.ptr())->value;
       return value;
     };
-
-    cout << "Registering" << endl;
 
     SimpleConverterAttorney<Base>::AddErased(self, key, erased);
   };

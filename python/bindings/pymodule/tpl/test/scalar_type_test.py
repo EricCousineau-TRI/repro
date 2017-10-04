@@ -54,7 +54,11 @@ def _def_Child(T=long, U=float):
         def do_to(self, Tc, Uc):
             # Scalar conversion.
             ChildTc = ChildTpl(Tc, Uc)
-            return ChildTc(Tc(self.t()), Uc(self.u()))
+            out = ChildTc(Tc(self.t()), Uc(self.u()))
+            print("py.do_to:")
+            out.dispatch(Tc())
+            print("  {} - {}".format(out.t(), out.u()))
+            return out
     return Child
 
 def _convert_Child():
@@ -63,9 +67,12 @@ def _convert_Child():
         cls_from = ChildTpl(*params_from)
         cls_to = ChildTpl(*params_to)
         def func(obj_from):
+            print("py.1: Sanity check")
             assert isinstance(obj_from, cls_from)
+            print("py.2: Call method")
             obj_to = obj_from.do_to(*params_to)
             assert isinstance(obj_to, cls_to)
+            print("py.3: Return")
             return obj_to
         converter.Add(params_to, params_from, func)
     add_conversion((long, float), (float, long))
@@ -124,4 +131,6 @@ st.call_method(cc)
 
 print("---")
 cc_c = st.do_convert(c)
+print("Try dispatch")
 cc_c.dispatch(2.5)
+print("Try again")
