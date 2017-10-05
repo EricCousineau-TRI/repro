@@ -39,11 +39,12 @@ unique_ptr<A> check_creation_a(py::function py_factory, bool do_copy) {
   // unique_ptr<A> in = py::cast<unique_ptr<A>>(py_factory());  // Does not work.
   // BOTH of these cause issues...
   A* in{};
-  auto getrefcount = py::module::import("sys").attr("getrefcount");
+  // auto getrefcount = py::module::import("sys").attr("getrefcount");
+  auto getrefcount = [](py::handle obj) { return obj.ref_count(); };
   {
     py::object py_in = py_factory();
-    cout << "ref count: " << getrefcount(py_in).cast<int>() << endl;
-    cout << "ref count (tmp): " << getrefcount(py_factory()).cast<int>() << endl;
+    cout << "ref count: " << getrefcount(py_in) << endl;
+    cout << "ref count (tmp): " << getrefcount(py_factory()) << endl;
     in = py::cast<A*>(py_in);
   }
   if (do_copy) {
@@ -59,11 +60,11 @@ unique_ptr<A> check_creation_a(py::function py_factory, bool do_copy) {
 
 shared_ptr<B> check_creation_b(py::function py_factory, bool do_copy) {
   shared_ptr<B> in;
-  auto getrefcount = py::module::import("sys").attr("getrefcount");
+  auto getrefcount = [](py::handle obj) { return obj.ref_count(); };
   {
     py::object py_in = py_factory();
-    cout << "ref count: " << getrefcount(py_in).cast<int>() << endl;
-    cout << "ref count (tmp): " << getrefcount(py_factory()).cast<int>() << endl;
+    cout << "ref count: " << getrefcount(py_in) << endl;
+    cout << "ref count (tmp): " << getrefcount(py_factory()) << endl;
     in = py::cast<shared_ptr<B>>(py_factory());
   }
   if (do_copy) {
