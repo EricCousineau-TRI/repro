@@ -38,7 +38,14 @@ typedef Base<B_> B;
 unique_ptr<A> check_creation_a(py::function py_factory, bool do_copy) {
   // unique_ptr<A> in = py::cast<unique_ptr<A>>(py_factory());  // Does not work.
   // BOTH of these cause issues...
-  A* in = py::cast<A*>(py_factory());
+  A* in{};
+  auto getrefcount = py::module::import("sys").attr("getrefcount");
+  {
+    py::object py_in = py_factory();
+    cout << "ref count: " << getrefcount(py_in).cast<int>() << endl;
+    cout << "ref count (tmp): " << getrefcount(py_factory()).cast<int>() << endl;
+    in = py::cast<A*>(py_in);
+  }
   if (do_copy) {
     // This should be fine-ish.
     unique_ptr<A> out(new A(in->value() * 2));
@@ -51,7 +58,14 @@ unique_ptr<A> check_creation_a(py::function py_factory, bool do_copy) {
 }
 
 shared_ptr<B> check_creation_b(py::function py_factory, bool do_copy) {
-  shared_ptr<B> in = py::cast<shared_ptr<B>>(py_factory());
+  shared_ptr<B> in;
+  auto getrefcount = py::module::import("sys").attr("getrefcount");
+  {
+    py::object py_in = py_factory();
+    cout << "ref count: " << getrefcount(py_in).cast<int>() << endl;
+    cout << "ref count (tmp): " << getrefcount(py_factory()).cast<int>() << endl;
+    in = py::cast<shared_ptr<B>>(py_factory());
+  }
   if (do_copy) {
     // This should be fine.
     shared_ptr<B> out(new B(in->value() * 2));
