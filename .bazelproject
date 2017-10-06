@@ -5,4 +5,4 @@ directories:
   python/pybind11_include
 
 targets:
-  //python/bindings/pymodule/move:move
+  //python/bindings/pymodule/...:all
