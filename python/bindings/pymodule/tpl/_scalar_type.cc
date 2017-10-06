@@ -250,8 +250,8 @@ void register_base(py::module m, reg_info* info) {
 // )", globals, locals);
 }
 
-PYBIND11_PLUGIN(_scalar_type) {
-  py::module m("_scalar_type", "Simple check on scalar / template types");
+PYBIND11_MODULE(_scalar_type, m) {
+  m.doc() = "Simple check on scalar / template types";
 
   py::class_<A> a(m, "A");
 
@@ -322,8 +322,6 @@ base_types = {}
     .def("Add", converter);
 
   m.def("take_ownership", &take_ownership);
-
-  return m.ptr();
 }
 
 }  // namespace scalar_type

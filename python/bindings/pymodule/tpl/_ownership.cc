@@ -77,8 +77,8 @@ shared_ptr<B> check_creation_b(py::function py_factory, bool do_copy) {
   }
 }
 
-PYBIND11_PLUGIN(_ownership) {
-  py::module m("_ownership", "Check ownership possibilites");
+PYBIND11_MODULE(_ownership, m) {
+  m.doc() = "Check ownership possibilites";
 
   py::class_<A>(m, "A")
     .def(py::init<int>())
@@ -89,8 +89,6 @@ PYBIND11_PLUGIN(_ownership) {
 
   m.def("check_creation_a", &check_creation_a);
   m.def("check_creation_b", &check_creation_b);
-
-  return m.ptr();
 }
 
 }  // namespace scalar_type
