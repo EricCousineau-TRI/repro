@@ -27,16 +27,15 @@ int main(int, char**) {
 
   cout << "Eval" << endl;
 
-  py::exec(
-R"(def create_obj():
+//  py::exec(R"(
+//obj = move.Test(20)
+//print(obj.value())
+//)", py::globals());
+
+  py::exec(R"(
+def create_obj():
     return move.Test(10)
 
-obj = move.Test(20)
-print(obj.value())
-)", py::globals());
-
-  py::exec(
-R"(
 obj = move.check_creation(create_obj)
 print(obj.value())
 )", py::globals());
