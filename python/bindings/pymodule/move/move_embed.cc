@@ -31,7 +31,7 @@ int main(int, char**) {
 R"(def create_obj():
     return move.Test(10)
 
-obj = move.Test(10)
+obj = move.Test(20)
 print(obj.value())
 )", py::globals());
 
