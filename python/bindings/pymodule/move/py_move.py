@@ -17,8 +17,13 @@ class PyMove(object):
         self._obj = None
         ref_count = sys.getrefcount(obj)
         print("- release post: {}".format(ref_count))
-        assert ref_count == 2, "Got ref count: {}".format(ref_count)
-        return obj
+        # Cannot use `assert ...`, because it will leave a latent reference?
+        # Consider a `with` reference?
+        if ref_count != 2:
+            obj = None
+            raise AssertionError("Got ref count: {}".format(ref_count))
+        else:
+            return obj
 
 
 def move(obj):
@@ -39,7 +44,6 @@ if __name__ == '__main__':
             print("As expected")
         print("- post 1: {}".format(sys.getrefcount(obj)))
         # del obj_mv
-        del mv
         # del _
         # print(globals())
         print("- post 2: {}".format(sys.getrefcount(obj)))
@@ -47,7 +51,7 @@ if __name__ == '__main__':
         print("---")
         mv = move(obj)
         print("- pre: {}".format(sys.getrefcount(obj)))
-        del obj
+        obj = None
         # obj = None
         mv.release()
         print("Good")
