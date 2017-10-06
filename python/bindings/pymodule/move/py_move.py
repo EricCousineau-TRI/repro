@@ -4,6 +4,8 @@ import weakref
 
 def _check_unique(obj):
     assert obj is not None
+
+# Can a `weakref` be used to get `refcount`?
     
 class PyMove(object):
     """ Provide a wrapper to permit passing an object to be owned by C++ """
@@ -12,17 +14,16 @@ class PyMove(object):
         self._obj = obj
 
     def release(self):
-        print("- release pre: {}".format(sys.getrefcount(self._obj)))
         obj = self._obj
         self._obj = None
         ref_count = sys.getrefcount(obj)
-        print("- release post: {}".format(ref_count))
         # Cannot use `assert ...`, because it will leave a latent reference?
         # Consider a `with` reference?
-        if ref_count != 2:
+        if ref_count > 2:
             obj = None
-            raise AssertionError("Got ref count: {}".format(ref_count))
+            raise AssertionError("Object refernce is not unique, got {} extra references".format(ref_count - 2))
         else:
+            assert ref_count == 2
             return obj
 
 
@@ -40,8 +41,8 @@ if __name__ == '__main__':
             # This increases the refcount?
             mv.release()
             pass
-        except AssertionError:
-            print("As expected")
+        except AssertionError, e:
+            print("Got expected error: {}".format(e))
         print("- post 1: {}".format(sys.getrefcount(obj)))
         # del obj_mv
         # del _
