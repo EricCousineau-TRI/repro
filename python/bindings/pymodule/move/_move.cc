@@ -34,18 +34,19 @@ class Test {
 };
 
 unique_ptr<Test> check_creation(py::function create_obj) {
-  auto PyMove = py::module::import("pymodule.move.py_move").attr("PyMove");
-  py::object obj_move = create_obj();
-  auto locals = py::dict("obj_move"_a=obj_move, "PyMove"_a=PyMove);
-  bool is_good =
-      py::eval("isinstance(obj_move, PyMove)", py::globals(), locals).cast<bool>();
-  if (!is_good) {
-    throw std::runtime_error("Must return a PyMove instance");
-  }
+//  auto PyMove = py::module::import("pymodule.move.py_move").attr("PyMove");
+//  py::object obj_move = create_obj();
+//  auto locals = py::dict("obj_move"_a=obj_move, "PyMove"_a=PyMove);
+//  bool is_good =
+//      py::eval("isinstance(obj_move, PyMove)", py::globals(), locals).cast<bool>();
+//  if (!is_good) {
+//    throw std::runtime_error("Must return a PyMove instance");
+//  }
   /// using itype = intrinsic_t<type>;
   /// type_caster - operator *itype&()
-//  auto ptr = py::cast<shared_ptr<Test>>(obj_move);
-  py::object obj = obj_move.attr("release")();
+//  py::object obj = obj_move.attr("release")();
+
+  py::object obj = create_obj();
   unique_ptr<Test> in = py::cast<unique_ptr<Test>>(std::move(obj));
   return in;
 }
@@ -64,5 +65,7 @@ PYBIND11_MODULE(_move, m) {
 
 // Export this to get access as we desire.
 void custom_init_move(py::module& m) {
+  cout << " - Begin reg" << endl;
   move::PYBIND11_CONCAT(pybind11_init_, _move)(m);
+  cout << " - End reg" << endl;
 }

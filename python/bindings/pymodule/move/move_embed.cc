@@ -17,17 +17,17 @@ int main(int, char**) {
 
   cout << "Start" << endl;
 
-//  py::module m;
-//  custom_init_move(m);
+  py::module m("_move");
+  custom_init_move(m);
 
   cout << "Registered" << endl;
 
   py::dict globals = py::globals();
-//  globals["move"] = m;
+  globals["move"] = m;
 
   cout << "Eval" << endl;
 
-  py::eval(
+  py::exec(
 R"(def create_obj():
     return move.Test(10)
 
@@ -35,9 +35,9 @@ obj = move.Test(10)
 print(obj.value())
 )", py::globals());
 
-  py::eval(
+  py::exec(
 R"(
-obj = move.check_creation(create_obj, False)
+obj = move.check_creation(create_obj)
 print(obj.value())
 )", py::globals());
 
