@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 import sys
+import weakref
 
 def _check_unique(obj):
     assert obj is not None
-    ref_count = sys.getrefcount(obj)
-    assert ref_count == 2, "Got ref count: {}".format(ref_count)
-
+    
 class PyMove(object):
     """ Provide a wrapper to permit passing an object to be owned by C++ """
     def __init__(self, obj):
@@ -13,9 +12,12 @@ class PyMove(object):
         self._obj = obj
 
     def release(self):
+        print("- release pre: {}".format(sys.getrefcount(self._obj)))
         obj = self._obj
         self._obj = None
-        _check_unique(obj)
+        ref_count = sys.getrefcount(obj)
+        print("- release post: {}".format(ref_count))
+        assert ref_count == 2, "Got ref count: {}".format(ref_count)
         return obj
 
 
@@ -24,13 +26,30 @@ def move(obj):
 
 
 if __name__ == '__main__':
-    obj = [1, 2, 3]
-    try:
-        obj_mv = move(obj).release()
-    except AssertionError, e:
-        print("As expected")
+    def main():
+        obj = [1, 2, 3]
+        print("- pre 1: {}".format(sys.getrefcount(obj)))
+        mv = move(obj)
+        print("- pre 2: {}".format(sys.getrefcount(obj)))
+        try:
+            # This increases the refcount?
+            mv.release()
+            pass
+        except AssertionError:
+            print("As expected")
+        print("- post 1: {}".format(sys.getrefcount(obj)))
+        # del obj_mv
+        del mv
+        # del _
+        # print(globals())
+        print("- post 2: {}".format(sys.getrefcount(obj)))
 
-    mv = move(obj)
-    obj = None
-    mv.release()
-    print("Good")
+        print("---")
+        mv = move(obj)
+        print("- pre: {}".format(sys.getrefcount(obj)))
+        del obj
+        # obj = None
+        mv.release()
+        print("Good")
+
+    main()
