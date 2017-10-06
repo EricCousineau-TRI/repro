@@ -140,7 +140,7 @@ std::unique_ptr<Base<double, int>> take_ownership(py::function func) {
 template <typename T>
 py::handle py_type_eval(const T& value) {
   auto locals = py::dict("model_value"_a=value);
-  return py::eval("type(model_value)", py::object(), locals);
+  return py::eval("type(model_value)", py::globals(), locals);
 }
 
 template <typename T, bool is_default_constructible = false>
@@ -250,8 +250,8 @@ void register_base(py::module m, reg_info* info) {
 // )", globals, locals);
 }
 
-PYBIND11_PLUGIN(_scalar_type) {
-  py::module m("_scalar_type", "Simple check on scalar / template types");
+PYBIND11_MODULE(_scalar_type, m) {
+  m.doc() = "Simple check on scalar / template types";
 
   py::class_<A> a(m, "A");
 
@@ -296,16 +296,16 @@ base_types = {}
       // We know that this should be a C++ object. Return the void* from this instance.
 
       cout << "cpp.3. Returning" << endl;
-      // NOTE: Just using type_caster_generic::load's method.
-      auto inst = reinterpret_cast<py::detail::instance<void>*>(py_to.ptr());
-      void* value = inst->value;
+      // // NOTE: Just using type_caster_generic::load's method.
+      auto inst = reinterpret_cast<py::detail::instance*>(py_to.ptr());
+      void* value = inst->get_value_and_holder().value_ptr();
 
-      // TODO: Memory management?
-      // How to maintain reference information pass erasure???
-      // This is a BAD hack.
-      // py_to.inc_ref();
-      // py_to.ptr() = nullptr;
-      inst->owned = false;
+      // // TODO: Memory management?
+      // // How to maintain reference information pass erasure???
+      // // This is a BAD hack.
+      // // py_to.inc_ref();
+      // // py_to.ptr() = nullptr;
+      // inst->owned = false;
 
       return value;
     };
@@ -322,8 +322,6 @@ base_types = {}
     .def("Add", converter);
 
   m.def("take_ownership", &take_ownership);
-
-  return m.ptr();
 }
 
 }  // namespace scalar_type

@@ -12,10 +12,9 @@ std::pair<string, double> Consumer1(double value) {
   return Producer(value);
 }
 
-PYBIND11_PLUGIN(_consumer_1) {
-  py::module m("_consumer_1", "Simple check on inheritance");
+PYBIND11_MODULE(_consumer_1, m) {
+  m.doc() = "Simple check on inheritance";
   m.def("consume", &Consumer1);
-  return m.ptr();
 }
 
 }  // namespace global_check
