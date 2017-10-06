@@ -11,6 +11,14 @@ py_library(
     srcs = ["py_move.py"],
 )
 
+py_library(
+    name = "move_lib",  # This is the package's name.
+    deps = [
+        ":move",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 pybind11_module(
     name = "move",
     package_dir = "../..",

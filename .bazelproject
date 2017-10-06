@@ -1,9 +1,8 @@
 # Copied from drake-distro
 directories:
-  .
-  -externals
-  -build
+  tools
+  python/bindings/pymodule
+  externals/pybind11
 
 targets:
-  //...:all
-
+  //python/bindings/pymodule/move:move

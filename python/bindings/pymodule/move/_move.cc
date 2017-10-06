@@ -20,7 +20,12 @@ namespace move {
 class Test {
  public:
   Test(int value)
-      : value_(value) {}
+      : value_(value) {
+    cout << "Test::Test(int)\n";
+  }
+  ~Test() {
+    cout << "Test::~Test()\n";
+  }
 
   int value() const { return value_; }
 
