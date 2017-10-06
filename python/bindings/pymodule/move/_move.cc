@@ -42,7 +42,9 @@ unique_ptr<Test> check_creation(py::function create_obj) {
   if (!is_good) {
     throw std::runtime_error("Must return a PyMove instance");
   }
-
+  /// using itype = intrinsic_t<type>;
+  /// type_caster - operator *itype&()
+//  auto ptr = py::cast<shared_ptr<Test>>(obj_move);
   py::object obj = obj_move.attr("release")();
   unique_ptr<Test> in = py::cast<unique_ptr<Test>>(std::move(obj));
   return in;
