@@ -2,7 +2,7 @@
 directories:
   tools
   python/bindings/pymodule
-  externals/pybind11
+  python/pybind11_include
 
 targets:
   //python/bindings/pymodule/move:move
