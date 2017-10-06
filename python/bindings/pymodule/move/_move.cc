@@ -60,4 +60,9 @@ PYBIND11_MODULE(_move, m) {
   m.def("check_creation", &check_creation);
 }
 
-}  // namespace scalar_type
+}  // namespace move
+
+// Export this to get access as we desire.
+void custom_init_move(py::module& m) {
+  move::PYBIND11_CONCAT(pybind11_init_, _move)(m);
+}

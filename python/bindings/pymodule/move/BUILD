@@ -41,3 +41,13 @@ cc_library(
         "//python:pybind11_include",
     ],
 )
+
+cc_binary(
+    name = "move_embed",
+    srcs = [
+        "move_embed.cc",
+    ],
+    deps = [
+        ":_move",
+    ],
+)
