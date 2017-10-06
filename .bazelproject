@@ -1,8 +1,8 @@
 # Copied from drake-distro
 directories:
   tools
-  python/bindings/pymodule
   python/pybind11_include
+  python/pybind11_tests
 
 targets:
-  //python/bindings/pymodule/...:all
+  //python/pybind11_tests/...:all
