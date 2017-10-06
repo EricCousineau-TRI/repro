@@ -17,10 +17,9 @@ using namespace std;
 
 namespace move {
 
-template <typename T>
-class Base {
+class Test {
  public:
-  Base(int value)
+  Test(int value)
       : value_(value) {}
 
   int value() const { return value_; }
@@ -29,67 +28,29 @@ class Base {
   int value_{};
 };
 
-class A_ {};
-class B_ {};
-
-typedef Base<A_> A;
-typedef Base<B_> B;
-
-unique_ptr<A> check_creation_a(py::function py_factory, bool do_copy) {
-  // unique_ptr<A> in = py::cast<unique_ptr<A>>(py_factory());  // Does not work.
-  // BOTH of these cause issues...
-  A* in{};
-  // auto getrefcount = py::module::import("sys").attr("getrefcount");
-  auto getrefcount = [](py::handle obj) { return obj.ref_count(); };
-  {
-    py::object py_in = py_factory();
-    cout << "ref count: " << getrefcount(py_in) << endl;
-    cout << "ref count (tmp): " << getrefcount(py_factory()) << endl;
-    in = py::cast<A*>(py_in);
+unique_ptr<Test> check_creation(py::function create_obj) {
+  auto PyMove = py::module::import("pymodule.move.py_move").attr("PyMove");
+  py::object obj_move = create_obj();
+  auto locals = py::dict("obj_move"_a=obj_move, "PyMove"_a=PyMove);
+  bool is_good =
+      py::eval("isinstance(obj_move, PyMove)", py::globals(), locals).cast<bool>();
+  if (!is_good) {
+    throw std::runtime_error("Must return a PyMove instance");
   }
-  if (do_copy) {
-    // This should be fine-ish.
-    unique_ptr<A> out(new A(in->value() * 2));
-    return out;
-  } else {
-    // Should cause an error.
-    return unique_ptr<A>(in);
-    // return in;
-  }
+
+  py::object obj = obj_move.attr("release")();
+  unique_ptr<Test> in = py::cast<unique_ptr<Test>>(std::move(obj));
+  return in;
 }
 
-shared_ptr<B> check_creation_b(py::function py_factory, bool do_copy) {
-  shared_ptr<B> in;
-  auto getrefcount = [](py::handle obj) { return obj.ref_count(); };
-  {
-    py::object py_in = py_factory();
-    cout << "ref count: " << getrefcount(py_in) << endl;
-    cout << "ref count (tmp): " << getrefcount(py_factory()) << endl;
-    in = py::cast<shared_ptr<B>>(py_factory());
-  }
-  if (do_copy) {
-    // This should be fine.
-    shared_ptr<B> out(new B(in->value() * 2));
-    return out;
-  } else {
-    // Should work as well?
-    return in;
-  }
-}
-
-PYBIND11_MODULE(_ownership, m) {
+PYBIND11_MODULE(_move, m) {
   m.doc() = "Check move possibilites";
 
-  py::class_<A>(m, "A")
+  py::class_<Test>(m, "Test")
     .def(py::init<int>())
-    .def("value", &A::value);
-  py::class_<B, std::shared_ptr<B>>(m, "B")
-    .def(py::init<int>())
-    .def("value", &B::value);
+    .def("value", &Test::value);
 
-  m.def("check_creation_a", &check_creation_a);
-  m.def("check_creation_b", &check_creation_b);
+  m.def("check_creation", &check_creation);
 }
 
 }  // namespace scalar_type
-
