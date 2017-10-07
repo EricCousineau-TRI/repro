@@ -20,7 +20,8 @@
 	url = http://github.com/pointcloudlibrary/pcl.git
 [submodule "externals/pybind11"]
 	path = externals/pybind11
-	url = http://github.com/RobotLocomotion/pybind11
+	url = http://github.com/EricCousineau-TRI/pybind11.git
+	branch = feature/py_move
 [submodule "externals/vtk"]
 	path = externals/vtk
 	url = git://vtk.org/VTK.git
