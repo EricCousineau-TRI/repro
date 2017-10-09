@@ -9,6 +9,8 @@ def _check_unique(obj):
     
 class PyMove(object):
     """ Provide a wrapper to permit passing an object to be owned by C++ """
+    _is_move_container = True
+
     def __init__(self, obj):
         assert obj is not None
         self._obj = obj
@@ -33,6 +35,10 @@ def move(obj):
 
 if __name__ == '__main__':
     def main():
+        mv = PyMove([])
+        assert hasattr(mv, '_is_move_container')
+        print("Contract satisfied")
+
         obj = [1, 2, 3]
         print("- pre 1: {}".format(sys.getrefcount(obj)))
         mv = move(obj)
