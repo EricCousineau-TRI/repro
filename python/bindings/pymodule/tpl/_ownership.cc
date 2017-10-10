@@ -7,6 +7,7 @@
 #include <string>
 
 #include <pybind11/cast.h>
+#include <pybind11/embed.h>
 #include <pybind11/eval.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -17,61 +18,38 @@ using namespace std;
 
 namespace ownership {
 
-template <typename T>
-class Base {
+class A {
  public:
-  Base(int value)
-      : value_(value) {}
+  A(int value)
+      : value_(value) {
+    cout << "A::A(" << value << ")" << endl;
+  }
+  virtual ~A() {
+    cout << "A::~A()" << endl;
+  }
 
-  int value() const { return value_; }
+  virtual int value() const { return value_; }
 
  private:
   int value_{};
 };
 
-class A_ {};
-class B_ {};
-
-typedef Base<A_> A;
-typedef Base<B_> B;
-
-unique_ptr<A> check_creation_a(py::function py_factory, bool do_copy) {
-  // unique_ptr<A> in = py::cast<unique_ptr<A>>(py_factory());  // Does not work.
-  // BOTH of these cause issues...
-  unique_ptr<A> in{};
-  // auto getrefcount = py::module::import("sys").attr("getrefcount");
-  auto getrefcount = [](py::handle obj) { return obj.ref_count(); };
-  {
-    py::object py_in = py_factory();
-    cout << "ref count: " << getrefcount(py_in) << endl;
-    cout << "ref count (tmp): " << getrefcount(py_factory()) << endl;
-    py::list li(1);
-    li[0] = std::move(py_in);
-    in = py::cast<unique_ptr<A>>(std::move(li));
-  }
-  if (do_copy) {
-    // This should be fine-ish.
-    unique_ptr<A> out(new A(in->value() * 2));
-    return out;
-  } else {
-//    // Should cause an error.
-//    return unique_ptr<A>(in);
-     return in;
-  }
+unique_ptr<A> create_instance() {
+  return make_unique<A>(50);
 }
 
-shared_ptr<B> check_creation_b(py::function py_factory, bool do_copy) {
-  shared_ptr<B> in;
+shared_ptr<A> check_creation(py::function py_factory, bool do_copy) {
+  shared_ptr<A> in;
   auto getrefcount = [](py::handle obj) { return obj.ref_count(); };
   {
     py::object py_in = py_factory();
     cout << "ref count: " << getrefcount(py_in) << endl;
     cout << "ref count (tmp): " << getrefcount(py_factory()) << endl;
-    in = py::cast<shared_ptr<B>>(py_factory());
+    in = py::cast<shared_ptr<A>>(py_factory());
   }
   if (do_copy) {
     // This should be fine.
-    shared_ptr<B> out(new B(in->value() * 2));
+    shared_ptr<A> out(new A(in->value() * 2));
     return out;
   } else {
     // Should work as well?
@@ -79,19 +57,70 @@ shared_ptr<B> check_creation_b(py::function py_factory, bool do_copy) {
   }
 }
 
+class PyA : public A {
+ public:
+  using A::A;
+  ~PyA() {
+    cout << "PyA::~PyA()" << endl;
+  }
+  int value() const override {
+    PYBIND11_OVERLOAD(int, A, value);
+  }
+};
+
 PYBIND11_MODULE(_ownership, m) {
   m.doc() = "Check ownership possibilites";
 
-  py::class_<A>(m, "A")
+  py::class_<A, PyA, std::shared_ptr<A>>(m, "A")
     .def(py::init<int>())
     .def("value", &A::value);
-  py::class_<B, std::shared_ptr<B>>(m, "B")
-    .def(py::init<int>())
-    .def("value", &B::value);
 
-  m.def("check_creation_a", &check_creation_a);
-  m.def("check_creation_b", &check_creation_b);
+  m.def("create_instance", &create_instance);
+  m.def("check_creation", &check_creation);
 }
 
 }  // namespace scalar_type
 
+int main(int, char**) {
+  py::scoped_interpreter guard{};
+
+  cout << "Start" << endl;
+
+  py::module m("ownership");
+  ownership::pybind11_init__ownership(m);
+
+  cout << "Registered" << endl;
+
+  py::dict globals = py::globals();
+  globals["m"] = m;
+
+  cout << "Eval" << endl;
+
+  py::exec(R"""(
+class Child(m.A):
+  def __init__(self, value):
+    m.A.__init__(self, value)
+    print("Child.__init__({})".format(value))
+  def __del__(self):
+    print("Child.__del__")
+  def value(self):
+    print("Child.value")
+    return 10 * m.A.value(self)
+)""");
+
+  py::exec(R"""(
+factory = lambda: m.create_instance()
+obj = m.check_creation(factory, False)
+print(obj.value())
+del obj
+
+factory = lambda: Child(10)
+obj = m.check_creation(factory, False)
+print(obj.value())
+del obj
+)""", py::globals());
+
+  cout << "Done" << endl;
+
+  return 0;
+}
