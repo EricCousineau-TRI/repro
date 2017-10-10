@@ -39,22 +39,8 @@ unique_ptr<A> create_instance() {
 }
 
 shared_ptr<A> check_creation(py::function py_factory, bool do_copy) {
-  shared_ptr<A> in;
-  auto getrefcount = [](py::handle obj) { return obj.ref_count(); };
-  {
-    py::object py_in = py_factory();
-    cout << "ref count: " << getrefcount(py_in) << endl;
-    cout << "ref count (tmp): " << getrefcount(py_factory()) << endl;
-    in = py::cast<shared_ptr<A>>(py_factory());
-  }
-  if (do_copy) {
-    // This should be fine.
-    shared_ptr<A> out(new A(in->value() * 2));
-    return out;
-  } else {
-    // Should work as well?
-    return in;
-  }
+  shared_ptr<A> in = py::cast<shared_ptr<A>>(py_factory());
+  return in;
 }
 
 class PyA : public A {
@@ -124,3 +110,21 @@ del obj
 
   return 0;
 }
+
+
+/*
+$ ./ownership_embed
+Start
+Registered
+Eval
+A::A(50)
+50
+A::~A()
+A::A(10)
+Child.__init__(10)
+Child.__del__
+10
+PyA::~PyA()
+A::~A()
+Done
+*/
