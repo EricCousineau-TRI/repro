@@ -24,6 +24,7 @@ class Template(object):
         self._param_defaults = param_defaults
         self._instantiations = {}
 
+    # TODO(eric.cousineau): Consider using [] to be commensurate with CTypes style?
     def __call__(self, *args, **kwargs):
         """ Gets concrete class associate with the given arguments. """
         # Can only have `args` or `kwargs`, but not both (for now).

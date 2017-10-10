@@ -3,6 +3,8 @@ directories:
   tools
   python/pybind11_include
   python/pybind11_tests
+  python/bindings
 
 targets:
   //python/pybind11_tests/...:all
+  //python/bindings/...:all
