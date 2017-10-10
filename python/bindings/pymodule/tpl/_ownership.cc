@@ -39,7 +39,10 @@ unique_ptr<A> create_instance() {
 }
 
 shared_ptr<A> check_creation(py::function py_factory, bool do_copy) {
-  shared_ptr<A> in = py::cast<shared_ptr<A>>(py_factory());
+  py::object obj = py_factory();
+  cout << "-- C++ value --" << endl;
+  cout << obj.attr("value")().cast<int>() << endl;
+  shared_ptr<A> in = py::cast<shared_ptr<A>>(obj);
   return in;
 }
 
@@ -50,6 +53,7 @@ class PyA : public A {
     cout << "PyA::~PyA()" << endl;
   }
   int value() const override {
+    cout << "PyA::value()" << endl;
     PYBIND11_OVERLOAD(int, A, value);
   }
 };
@@ -90,7 +94,7 @@ class Child(m.A):
   def __del__(self):
     print("Child.__del__")
   def value(self):
-    print("Child.value")
+    print("Child.value()")
     return 10 * m.A.value(self)
 )""");
 
@@ -102,6 +106,7 @@ del obj
 
 factory = lambda: Child(10)
 obj = m.check_creation(factory, False)
+print("-- Python value --")
 print(obj.value())
 del obj
 )""", py::globals());
@@ -118,11 +123,19 @@ Start
 Registered
 Eval
 A::A(50)
+-- C++ value --
+50
 50
 A::~A()
 A::A(10)
 Child.__init__(10)
+-- C++ value --
+Child.value()
+PyA::value()
+100
 Child.__del__
+-- Python value --
+PyA::value()
 10
 PyA::~PyA()
 A::~A()
