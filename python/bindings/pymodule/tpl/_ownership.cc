@@ -18,6 +18,8 @@ using namespace std;
 
 namespace ownership {
 
+int global = 0;
+
 class A {
  public:
   A(int value)
@@ -29,6 +31,10 @@ class A {
   }
 
   virtual int value() const { return value_; }
+
+  void debug_hook() {
+    global += 1;
+  }
 
  private:
   int value_{};
@@ -46,9 +52,9 @@ shared_ptr<A> check_creation(py::function py_factory, bool do_copy) {
   return in;
 }
 
-class PyA : public A {
+class PyA : public py::trampoline<A> {
  public:
-  using A::A;
+  using py::trampoline<A>::trampoline;
   ~PyA() {
     cout << "PyA::~PyA()" << endl;
   }
@@ -63,7 +69,8 @@ PYBIND11_MODULE(_ownership, m) {
 
   py::class_<A, PyA, std::shared_ptr<A>>(m, "A")
     .def(py::init<int>())
-    .def("value", &A::value);
+    .def("value", &A::value)
+    .def("debug_hook", &A::debug_hook);
 
   m.def("create_instance", &create_instance);
   m.def("check_creation", &check_creation);
@@ -92,6 +99,7 @@ class Child(m.A):
     m.A.__init__(self, value)
     print("Child.__init__({})".format(value))
   def __del__(self):
+    m.A.debug_hook(self)
     print("Child.__del__")
   def value(self):
     print("Child.value()")
@@ -104,6 +112,17 @@ obj = m.check_creation(factory, False)
 print(obj.value())
 del obj
 
+print("---")
+c = Child(30)
+factory = lambda: c
+obj = m.check_creation(factory, False)
+print("-- Python value --")
+print(obj.value())
+del obj
+del factory
+del c
+
+print("---")
 factory = lambda: Child(10)
 obj = m.check_creation(factory, False)
 print("-- Python value --")
