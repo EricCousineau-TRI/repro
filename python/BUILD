@@ -8,7 +8,7 @@ cc_library(
     includes = ["pybind11_include"],
     deps = [
         "@eigen//:eigen",
-        "@numpy//:numpy",
+        # "@numpy//:numpy",
         "@python//:python",
     ],
 )

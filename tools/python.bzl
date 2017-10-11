@@ -65,6 +65,10 @@ def _impl(repository_ctx):
     linkopts = result.stdout.strip().split(" ")
     linkopts = [linkopt for linkopt in linkopts if linkopt]
 
+    print("Python:")
+    print("  Include: {}".format(includes))
+    print("  Libs: {}".format(linkopts))
+
     for i in reversed(range(len(linkopts))):
         if not linkopts[i].startswith("-"):
             linkopts[i - 1] += " " + linkopts.pop(i)
