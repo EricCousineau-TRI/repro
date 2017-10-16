@@ -272,3 +272,8 @@ cc_binary(
     name = "unique_ptr_stuff",
     srcs = ["unique_ptr_stuff.cc"],
 )
+
+cc_binary(
+    name = "shared_ptr_stuff",
+    srcs = ["shared_ptr_stuff.cc"],
+)

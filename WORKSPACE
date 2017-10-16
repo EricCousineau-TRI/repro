@@ -1,14 +1,24 @@
 workspace(name = "repro")
 
 load("//tools:github.bzl", "github_archive")
+load("//tools:bitbucket.bzl", "bitbucket_archive")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
-github_archive(
+# github_archive(
+#     name = "eigen",
+#     repository = "RobotLocomotion/eigen-mirror",
+#     commit = "d3ee2bc648be3d8be8c596a9a0aefef656ff8637",
+#     build_file = "tools/eigen.BUILD",
+#     sha256 = "db797e2857d3d6def92ec2c46aa04577d3e1bb371d6fe14e6bdfc088dcaf2e9e",
+# )
+bitbucket_archive(
     name = "eigen",
-    repository = "RobotLocomotion/eigen-mirror",
-    commit = "d3ee2bc648be3d8be8c596a9a0aefef656ff8637",
+    repository = "eigen/eigen",
+    # N.B. See #5785; do your best not to have to bump this to a newer commit.
+    commit = "3.3.3",
+    sha256 = "94878cbfa27b0d0fbc64c00d4aafa137f678d5315ae62ba4aecddbd4269ae75f",  # noqa
+    strip_prefix = "eigen-eigen-67e894c6cd8f",
     build_file = "tools/eigen.BUILD",
-    sha256 = "db797e2857d3d6def92ec2c46aa04577d3e1bb371d6fe14e6bdfc088dcaf2e9e",
 )
 
 load("//tools:python.bzl", "python_repository")
@@ -17,11 +27,11 @@ python_repository(
     version = "2.7",
 )
 
-load("//tools:numpy.bzl", "numpy_repository")
-numpy_repository(
-    name = "numpy",
-    python_version = "2.7",
-)
+# load("//tools:numpy.bzl", "numpy_repository")
+# numpy_repository(
+#     name = "numpy",
+#     python_version = "2.7",
+# )
 
 new_local_repository(
     name = "pybind11",

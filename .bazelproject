@@ -1,9 +1,10 @@
 # Copied from drake-distro
 directories:
-  .
-  -externals
-  -build
+  tools
+  python/pybind11_include
+  python/pybind11_tests
+  python/bindings
 
 targets:
-  //...:all
-
+  //python/pybind11_tests/...:all
+  //python/bindings/...:all

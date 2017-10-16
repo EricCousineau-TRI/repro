@@ -46,11 +46,17 @@ py_test_simple(
     deps = [":scalar_type"],
 )
 
-
-
 pybind11_module(
     name = "ownership",
     package_dir = "../..",
+)
+
+cc_binary(
+    name = "ownership_embed",
+    srcs = ["_ownership.cc"],
+    deps = [
+        "//python:pybind11_include",
+    ],
 )
 
 py_test_simple(
