@@ -22,4 +22,12 @@ std::pair<std::string, T> Producer(const T& value) {
   return std::make_pair(os.str(), global);
 }
 
+inline std::pair<std::string, double> ProducerB(double value) {
+  static double global{};
+  global += value;
+  std::ostringstream os;
+  os << "Ptr: " << &global;
+  return std::make_pair(os.str(), global);
+}
+
 }  // namespace global_check

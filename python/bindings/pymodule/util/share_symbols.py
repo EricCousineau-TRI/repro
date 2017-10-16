@@ -3,6 +3,8 @@ import sys
 import ctypes
 
 # Will this work on Mac?
+# How will this affect other modules?
+# Will this aversely affect `pybind11` internals?
 
 # @ref https://stackoverflow.com/a/19664308
 
