@@ -11,7 +11,6 @@ namespace global_check {
 struct Impl {
   static double global;
 };
-double Impl::global{};
 
 template <typename T>
 std::pair<std::string, T> Producer(const T& value) {

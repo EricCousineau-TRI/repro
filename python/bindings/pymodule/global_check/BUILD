@@ -6,17 +6,28 @@ load("//tools:pybind11.bzl", "pybind11_module_share")
 
 package(default_visibility = ["//visibility:private"])
 
+cc_library(
+  name = "producer",
+  srcs = [
+    "producer.h",
+    "producer.cc",
+  ],
+  # If 0 - can simply load object code in. Yas.
+  # If 1 - have to use `ShareSymbols` crap.
+  linkstatic = 0,
+)
+
 pybind11_module_share(
     name = "consumer_1",
-    srcs = [
-        "producer.h",
-    ],
+    # srcs = ["producer.h"],
+    deps = [":producer"],
     package_dir = "../..",
 )
 
 pybind11_module_share(
     name = "consumer_2",
-    srcs = ["producer.h"],
+    # srcs = ["producer.h"],
+    deps = [":producer"],
     package_dir = "../..",
 )
 
