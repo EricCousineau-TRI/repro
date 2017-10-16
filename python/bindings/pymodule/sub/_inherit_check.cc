@@ -30,7 +30,7 @@ class Base {
   }
 };
 
-class PyBase : public A {
+class PyBase : public Base {
  public:
   int pure(int value) override {
     PYBIND11_OVERLOAD(int, Base, pure, value);
@@ -40,7 +40,7 @@ class PyBase : public A {
   }
 };
 
-class CppExtend : public A {
+class CppExtend : public Base {
  public:
   int pure(int value) override {
     cout << "cpp.pure=" << value << endl;
@@ -52,14 +52,14 @@ class CppExtend : public A {
   }
 };
 
-int call_method(A& base) {
+int call_method(Base& base) {
   return base.dispatch(9);
 }
 
 PYBIND11_MODULE(_inherit_check, m) {
   m.doc() = "Simple check on inheritance";
 
-  py::class_<A, PyBase> base(m, "Base");
+  py::class_<Base, PyBase> base(m, "Base");
   base
     .def(py::init<>())
     .def("pure", &Base::pure)

@@ -39,7 +39,7 @@ template <typename ... Args, typename Method>
 auto py_relax_overload_cast(const Method& method) {
   using Base = typename detail::mem_fn_class<Method>::type;
   auto relaxed = [=](
-      A* self, const typename py_relax_type<Args>::type&... args) {
+      Base* self, const typename py_relax_type<Args>::type&... args) {
     return (self->*method)(args...);
   };
   return relaxed;

@@ -29,12 +29,12 @@ class Base;
 
 }
 
-using scalar_type::A;
+using scalar_type::Base;
 NAME_TRAIT_TPL(Base)
 
 namespace scalar_type {
 
-typedef SimpleConverter<A> BaseConverter;
+typedef SimpleConverter<Base> BaseConverter;
 
 // Simple base class.
 template <typename T, typename U>
@@ -45,8 +45,8 @@ class Base {
       u_(u) {
     converter_.reset(new BaseConverter());
     if (!converter) {
-      typedef A<double, int> A;
-      typedef A<int, double> B;
+      typedef Base<double, int> A;
+      typedef Base<int, double> B;
       converter_->AddCopyConverter<A, B>();
       converter_->AddCopyConverter<B, A>();
     } else {
@@ -55,8 +55,8 @@ class Base {
   }
 
   template <typename Tc, typename Uc>
-  Base(const A<Tc, Uc>& other)
-    : A(static_cast<T>(other.t_),
+  Base(const Base<Tc, Uc>& other)
+    : Base(static_cast<T>(other.t_),
            static_cast<U>(other.u_)) {}
 
   T t() const { return t_; }
@@ -89,7 +89,7 @@ class Base {
   }
 
  private:
-  template <typename Tc, typename Uc> friend class A;
+  template <typename Tc, typename Uc> friend class Base;
 
   T t_{};
   U u_{};
@@ -98,9 +98,9 @@ class Base {
 
 
 template <typename T, typename U>
-class PyBase : public A<T, U> {
+class PyBase : public Base<T, U> {
  public:
-  typedef A<T, U> B;
+  typedef Base<T, U> B;
 
   using B::B;
 
@@ -114,14 +114,14 @@ class PyBase : public A<T, U> {
 
 
 template <typename T, typename U>
-void call_method(const A<T, U>& base) {
+void call_method(const Base<T, U>& base) {
   base.dispatch(T{});
 }
 
-std::unique_ptr<A<double, int>> do_convert(const A<int, double>& value) {
+std::unique_ptr<Base<double, int>> do_convert(const Base<int, double>& value) {
   cout << "Attempt conversion" << endl;
   // std::unique_ptr<Base<double, int>> out(value.DoTo<Base<double, int>>());
-  auto out = std::make_unique<A<double, int>>(8.5, 10);  // Not equivalent...
+  auto out = std::make_unique<Base<double, int>>(8.5, 10);  // Not equivalent...
   // Try to create an instance of `ChildTpl`.
   cout << "Got it" << endl;
   return out;
@@ -129,10 +129,10 @@ std::unique_ptr<A<double, int>> do_convert(const A<int, double>& value) {
 
 
 // How can this work?
-std::unique_ptr<A<double, int>> take_ownership(py::function func) {
+std::unique_ptr<Base<double, int>> take_ownership(py::function func) {
   py::handle out_py = func();
-  A<double, int>* out = py::cast<A<double, int>*>(out_py);
-  return std::unique_ptr<A<double, int>>(out);
+  Base<double, int>* out = py::cast<Base<double, int>*>(out_py);
+  return std::unique_ptr<Base<double, int>>(out);
 }
 
 /// Retuns the PyTypeObject from the resultant expression type.
@@ -220,7 +220,7 @@ struct reg_info {
 template <typename T, typename U>
 void register_base(py::module m, reg_info* info) {
   string name = Base<T, U>::py_name();
-  typedef A<T, U> C;
+  typedef Base<T, U> C;
   typedef PyBase<T, U> PyC;
   py::class_<C, PyC> base(m, name.c_str());
   base
@@ -235,7 +235,7 @@ void register_base(py::module m, reg_info* info) {
   // // Can't figure this out...
   // Can't get `overload_cast` to infer `Return` type.
   // Have to explicitly cast... :(
-  typedef void (*call_method_t)(const A<T, U>&);
+  typedef void (*call_method_t)(const Base<T, U>&);
   m.def("call_method", static_cast<call_method_t>(&call_method));
 
   auto type_tup = py::make_tuple(py_type<T>(), py_type<U>());
@@ -310,7 +310,7 @@ base_types = {}
       return value;
     };
 
-    SimpleConverterAttorney<A>::AddErased(self, key, erased);
+    SimpleConverterAttorney<Base>::AddErased(self, key, erased);
   };
 
   m.def("do_convert", &do_convert);
