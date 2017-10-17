@@ -33,6 +33,15 @@ cc_library(
   linkstatic = 0,
 )
 
+cc_binary(
+  name = "producer_main",
+  srcs = ["producer_main.cc"],
+  deps = [
+    ":producer",
+  ],
+  linkstatic = 0,
+)
+
 pybind11_module_share(
     name = "consumer_1",
     # srcs = ["producer.h"],
