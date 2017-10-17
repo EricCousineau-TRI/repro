@@ -34,12 +34,21 @@ cc_library(
 )
 
 cc_binary(
-  name = "producer_main",
+  name = "producer_main_linkshared",
   srcs = ["producer_main.cc"],
   deps = [
     ":producer",
   ],
   linkstatic = 0,
+)
+
+cc_binary(
+  name = "producer_main_linkstatic",
+  srcs = ["producer_main.cc"],
+  deps = [
+    ":producer",
+  ],
+  linkstatic = 1,
 )
 
 pybind11_module_share(
