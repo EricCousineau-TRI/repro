@@ -6,14 +6,30 @@ load("//tools:pybind11.bzl", "pybind11_module_share")
 
 package(default_visibility = ["//visibility:private"])
 
+# Check into drawbacks of: https://github.com/bazelbuild/bazel/issues/492
 cc_library(
-  name = "producer",
-  srcs = [
-    "producer.h",
-    "producer.cc",
-  ],
+  name = "producer_linkstatic",
+  hdrs = ["producer_linkstatic.h"],
+  srcs = ["producer_linkstatic.cc"],
+  linkstatic = 1,
+)
+
+cc_library(
+  name = "producer_linkshared",
+  hdrs = ["producer_linkshared.h"],
+  srcs = ["producer_linkshared.cc"],
   # If 0 - can simply load object code in. Yas.
   # If 1 - have to use `ShareSymbols` crap.
+  linkstatic = 0,
+)
+
+cc_library(
+  name = "producer",
+  hdrs = ["producer.h"],
+  deps = [
+    ":producer_linkshared",
+    ":producer_linkstatic",
+  ],
   linkstatic = 0,
 )
 

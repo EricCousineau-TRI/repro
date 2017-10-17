@@ -8,18 +8,18 @@ using std::string;
 
 namespace global_check {
 
-std::pair<string, double> Consumer2(double value) {
+std::pair<string, double> consume_linkstatic(double value) {
   return Producer(value);
 }
 
-std::pair<string, double> Consumer2B(double value) {
+std::pair<string, double> consume_linkshared(double value) {
   return ProducerB(value);
 }
 
 PYBIND11_MODULE(_consumer_2, m) {
-  m.doc() = "Simple check on inheritance";
-  m.def("consume", &Consumer2);
-  m.def("consume_b", &Consumer2B);
+  m.doc() = "Linking tests";
+  m.def("consume_linkstatic", &consume_linkstatic);
+  m.def("consume_linkshared", &consume_linkshared);
 }
 
 }  // namespace global_check
