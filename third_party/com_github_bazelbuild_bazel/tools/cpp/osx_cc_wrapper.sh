@@ -30,6 +30,8 @@ set -eu
 GCC=/usr/bin/gcc
 INSTALL_NAME_TOOL="/usr/bin/install_name_tool"
 
+echo "Calling osx_cc_wrapper.sh" >&2
+
 LIBS=
 LIB_DIRS=
 RPATH=
@@ -59,7 +61,7 @@ ${GCC} "$@"
 function get_library_path() {
     for libdir in ${LIB_DIRS}; do
         if [ -f ${libdir}/lib$1.so ]; then
-            echo "${libdir}/lib$1.so"
+            echo "${libdir}/lib$1.so" >&2
         fi
     done
 }
