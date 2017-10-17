@@ -30,7 +30,10 @@ set -eu
 GCC=/usr/bin/gcc
 INSTALL_NAME_TOOL="/usr/bin/install_name_tool"
 
-echo "Calling osx_cc_wrapper.sh" >&2
+# # echo "Hello world: ORIGIN = $ORIGIN"
+# echo "Calling osx_cc_wrapper.sh" >&2
+echo "$PWD"
+# echo "$@" >&2
 
 LIBS=
 LIB_DIRS=
@@ -55,8 +58,31 @@ for i in "$@"; do
     fi
 done
 
+
+# TODO(eric.cousineau): Make robust against spaces?
+fix_rpath() {
+    python - "$@" <<EOF
+import sys, os
+var = '\$ORIGIN'
+pre = '-Wl,-rpath,'
+out_dir=os.path.dirname("${OUTPUT}")
+args = []
+for arg in sys.argv[1:]:
+    if arg.startswith(pre + var):
+        arg = pre + os.path.realpath(arg.replace(pre + var, out_dir))
+    args.append(arg)
+print(" ".join(args))
+EOF
+}
+
 # Call gcc
-${GCC} "$@"
+echo "+${GCC} $(fix_rpath "$@")"
+${GCC} $(fix_rpath "$@")
+
+# TODO: Use https://github.com/opencv/opencv/issues/5447 to fix this issue.
+# Or consider disabling Security Integrity Protection (SIP) on Mac:
+# https://www.tensorflow.org/install/install_mac
+otool -L $OUTPUT || echo "Not an output"
 
 function get_library_path() {
     for libdir in ${LIB_DIRS}; do
