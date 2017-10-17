@@ -51,7 +51,9 @@ for i in "$@"; do
         LIB_DIRS="${BASH_REMATCH[1]} $LIB_DIRS"
     elif [[ "$i" =~ ^-Wl,-rpath,\$ORIGIN/(.*)$ ]]; then
         # rpath
+        echo "---"
         RPATH=${BASH_REMATCH[1]}
+        echo "I HAVE MATCH: ${RPATH}"
     elif [[ "$i" = "-o" ]]; then
         # output is coming
         OUTPUT=1
@@ -76,8 +78,9 @@ EOF
 }
 
 # Call gcc
-echo "+${GCC} $(fix_rpath "$@")"
-${GCC} $(fix_rpath "$@")
+#echo "+${GCC} $(fix_rpath "$@")"
+#${GCC} $(fix_rpath "$@")
+${GCC} "$@"
 
 # TODO: Use https://github.com/opencv/opencv/issues/5447 to fix this issue.
 # Or consider disabling Security Integrity Protection (SIP) on Mac:
@@ -110,12 +113,17 @@ function get_otool_path() {
     get_realpath $1 | sed 's|^.*/bazel-out/|bazel-out/|'
 }
 
+echo "Checking RPath"
 # Do replacements in the output
 if [ -n "${RPATH}" ]; then
     for lib in ${LIBS}; do
+        echo "${lib} - ${LIBS} - ${LIB_DIRS}"
         libpath=$(get_library_path ${lib})
+        echo "libpath: ${libpath}"
         if [ -n "${libpath}" ]; then
+            set -x
             ${INSTALL_NAME_TOOL} -change $(get_otool_path "${libpath}") "@loader_path/${RPATH}/lib${lib}.so" "${OUTPUT}"
+            set +x
         fi
     done
 fi
