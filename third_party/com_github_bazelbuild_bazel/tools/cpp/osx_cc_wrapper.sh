@@ -30,11 +30,6 @@ set -eu
 GCC=/usr/bin/gcc
 INSTALL_NAME_TOOL="/usr/bin/install_name_tool"
 
-# # echo "Hello world: ORIGIN = $ORIGIN"
-# echo "Calling osx_cc_wrapper.sh" >&2
-echo "$PWD"
-# echo "$@" >&2
-
 LIBS=
 LIB_DIRS=
 RPATH=
@@ -51,46 +46,20 @@ for i in "$@"; do
         LIB_DIRS="${BASH_REMATCH[1]} $LIB_DIRS"
     elif [[ "$i" =~ ^-Wl,-rpath,\$ORIGIN/(.*)$ ]]; then
         # rpath
-        echo "---"
         RPATH=${BASH_REMATCH[1]}
-        echo "I HAVE MATCH: ${RPATH}"
     elif [[ "$i" = "-o" ]]; then
         # output is coming
         OUTPUT=1
     fi
 done
 
-
-# TODO(eric.cousineau): Make robust against spaces?
-fix_rpath() {
-    python - "$@" <<EOF
-import sys, os
-var = '\$ORIGIN'
-pre = '-Wl,-rpath,'
-out_dir=os.path.dirname("${OUTPUT}")
-args = []
-for arg in sys.argv[1:]:
-    if arg.startswith(pre + var):
-        arg = pre + os.path.realpath(arg.replace(pre + var, out_dir))
-    args.append(arg)
-print(" ".join(args))
-EOF
-}
-
 # Call gcc
-#echo "+${GCC} $(fix_rpath "$@")"
-#${GCC} $(fix_rpath "$@")
 ${GCC} "$@"
-
-# TODO: Use https://github.com/opencv/opencv/issues/5447 to fix this issue.
-# Or consider disabling Security Integrity Protection (SIP) on Mac:
-# https://www.tensorflow.org/install/install_mac
-otool -L $OUTPUT || echo "Not an output"
 
 function get_library_path() {
     for libdir in ${LIB_DIRS}; do
         if [ -f ${libdir}/lib$1.so ]; then
-            echo "${libdir}/lib$1.so" >&2
+            echo "${libdir}/lib$1.so"
         fi
     done
 }
@@ -113,17 +82,12 @@ function get_otool_path() {
     get_realpath $1 | sed 's|^.*/bazel-out/|bazel-out/|'
 }
 
-echo "Checking RPath"
 # Do replacements in the output
 if [ -n "${RPATH}" ]; then
     for lib in ${LIBS}; do
-        echo "${lib} - ${LIBS} - ${LIB_DIRS}"
         libpath=$(get_library_path ${lib})
-        echo "libpath: ${libpath}"
         if [ -n "${libpath}" ]; then
-            set -x
             ${INSTALL_NAME_TOOL} -change $(get_otool_path "${libpath}") "@loader_path/${RPATH}/lib${lib}.so" "${OUTPUT}"
-            set +x
         fi
     done
 fi
