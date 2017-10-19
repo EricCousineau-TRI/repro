@@ -1,6 +1,7 @@
 [submodule "externals/Super4PCS"]
 	path = externals/Super4PCS
 	url = https://github.com/nmellado/Super4PCS.git
+	branch = master
 [submodule "externals/benchmark"]
 	path = externals/benchmark
 	url = https://github.com/EricCousineau-TRI/benchmark.git
@@ -20,8 +21,9 @@
 	url = http://github.com/pointcloudlibrary/pcl.git
 [submodule "externals/pybind11"]
 	path = externals/pybind11
-	url = http://github.com/pybind/pybind11
-	branch = stable
+	url = http://github.com/EricCousineau-TRI/pybind11.git
+	branch = upstreaming_attempt_2
 [submodule "externals/vtk"]
 	path = externals/vtk
 	url = git://vtk.org/VTK.git
+	branch = master
