@@ -1,6 +1,11 @@
+# -*- python -*-
+
+# load("//tools/lint:lint.bzl", "add_lint_tests")
+
 package(default_visibility = ["//visibility:public"])
 
-# === CROSSTOOL rules ===
+# Note that we would typically name this file BUILD.bazel, however Bazel fails
+# to find the CROSSTOOL file if we do that.
 
 # The default toolchain selector for Drake.
 #
@@ -11,12 +16,10 @@ package(default_visibility = ["//visibility:public"])
 # former.
 #
 # On Linux, we support --compiler strings "clang-3.9", "gcc-4.9", and "gcc-5",
-# each of which does exactly what you would expect. "clang-3.9" is the default
-# for convenience, because the Drake install instructions provide it on both
-# Trusty and Xenial. No wrapper script is needed for any of these compilers, so
-# the cc_toolchain rule does not provide one. Support for "gcc-6" is
-# experimental without any guarantees. Note that it is not in our supported
-# configurations yet. See
+# each of which does exactly what you would expect. "clang-3.9" is the default.
+# No wrapper script is needed for any of these compilers, so the cc_toolchain
+# rule does not provide one. Support for "gcc-6" is experimental without any
+# guarantees. Note that it is not in our supported configurations yet. See
 # http://drake.mit.edu/developers.html#supported-configurations for more
 # information.
 cc_toolchain_suite(
@@ -24,13 +27,52 @@ cc_toolchain_suite(
     toolchains = {
         "darwin|compiler": "cc_toolchain_apple",
         "k8|clang-3.9": "cc_toolchain_linux",
-        "k8|gcc-4.9": "cc_toolchain_linux",
         "k8|gcc-5": "cc_toolchain_linux",
         "k8|gcc-6": "cc_toolchain_linux",
     },
 )
 
+filegroup(
+    name = "empty",
+    srcs = [],
+    visibility = ["//visibility:private"],
+)
 
+# This filegroup contains the files on which every toolchain component should
+# always depend, regardless of platform. It is a useful place for the outputs
+# of rules that check preconditions for the entire build.  (At the moment, we
+# do not have any such files, although we once did.)
+filegroup(
+    name = "universal_toolchain_deps",
+    visibility = ["//visibility:private"],
+)
+
+# A compiler wrapper script that adjusts linker paths on OS X.
+filegroup(
+    name = "osx_cc_wrapper",
+    srcs = [
+        "osx_cc_wrapper.sh",
+        "//third_party:com_github_bazelbuild_bazel/tools/cpp/osx_cc_wrapper.sh",  # noqa
+    ],
+    visibility = ["//visibility:private"],
+)
+
+filegroup(
+    name = "apple_toolchain_deps",
+    srcs = [
+        ":osx_cc_wrapper",
+        ":universal_toolchain_deps",
+    ],
+    visibility = ["//visibility:private"],
+)
+
+filegroup(
+    name = "linux_toolchain_deps",
+    srcs = [
+        ":universal_toolchain_deps",
+    ],
+    visibility = ["//visibility:private"],
+)
 
 cc_toolchain(
     name = "cc_toolchain_linux",
@@ -46,21 +88,57 @@ cc_toolchain(
     supports_param_files = 0,
 )
 
-# This filegroup contains the files on which every toolchain component should
-# always depend, regardless of platform. It is a useful place for the outputs
-# of rules that check preconditions for the entire build.
-filegroup(
-    name = "universal_toolchain_deps",
-    srcs = [], # ["ccache.txt"],  # ccache.txt is an output of :ccache_is_bad
-    visibility = ["//visibility:private"],
+cc_toolchain(
+    name = "cc_toolchain_apple",
+    all_files = ":apple_toolchain_deps",
+    compiler_files = ":apple_toolchain_deps",
+    cpu = "darwin",
+    dwp_files = ":apple_toolchain_deps",
+    dynamic_runtime_libs = [":empty"],
+    linker_files = ":apple_toolchain_deps",
+    objcopy_files = ":apple_toolchain_deps",
+    static_runtime_libs = [":empty"],
+    strip_files = ":apple_toolchain_deps",
+    supports_param_files = 0,
 )
 
-filegroup(
-    name = "linux_toolchain_deps",
-    srcs = [
-        ":universal_toolchain_deps",
-    ],
-    visibility = ["//visibility:private"],
+config_setting(
+    name = "debug",
+    values = {"compilation_mode": "dbg"},
+)
+
+config_setting(
+    name = "apple_debug",
+    values = {
+        "compilation_mode": "dbg",
+        "cpu": "darwin",
+    },
+)
+
+config_setting(
+    name = "linux",
+    values = {"cpu": "k8"},
+)
+
+config_setting(
+    name = "apple",
+    values = {"cpu": "darwin"},
+)
+
+config_setting(
+    name = "gcc6-linux",
+    values = {
+        "compiler": "gcc-6",
+        "cpu": "k8",
+    },
+)
+
+config_setting(
+    name = "gcc5-linux",
+    values = {
+        "compiler": "gcc-5",
+        "cpu": "k8",
+    },
 )
 
 config_setting(
@@ -72,11 +150,6 @@ config_setting(
 )
 
 config_setting(
-    name = "linux",
-    values = {"cpu": "k8"},
-)
-
-config_setting(
     name = "clang3.9-linux",
     values = {
         "compiler": "clang-3.9",
@@ -84,7 +157,4 @@ config_setting(
     },
 )
 
-py_binary(
-    name = "py_shell",
-    srcs = ["py_shell.py"],
-)
+# add_lint_tests()
