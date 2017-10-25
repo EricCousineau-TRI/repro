@@ -1,27 +1,29 @@
 [submodule "externals/Super4PCS"]
 	path = externals/Super4PCS
 	url = https://github.com/nmellado/Super4PCS.git
+	branch = master
 [submodule "externals/benchmark"]
 	path = externals/benchmark
-	url = https://github.com/EricCousineau-TRI/benchmark.git
-	branch = bazel-master
+	url = git@github.com:EricCousineau-TRI/benchmark.git
 [submodule "externals/eigen"]
 	path = externals/eigen
-	url = https://github.com/EricCousineau-TRI/eigen.git
+	url = hg::https://bitbucket.org/eigen/eigen
+	branch = tmp
 [submodule "externals/flann"]
 	path = externals/flann
-	url = https://github.com/mariusmuja/flann.git
+	url = git://github.com/mariusmuja/flann.git
+	branch = master
 [submodule "externals/kythe"]
 	path = externals/kythe
 	url = https://github.com/EricCousineau-TRI/kythe/
-	branch = master
 [submodule "externals/pcl"]
 	path = externals/pcl
 	url = http://github.com/pointcloudlibrary/pcl.git
 [submodule "externals/pybind11"]
 	path = externals/pybind11
 	url = http://github.com/pybind/pybind11
-	branch = stable
+	branch = feature/py_move_shared
 [submodule "externals/vtk"]
 	path = externals/vtk
 	url = git://vtk.org/VTK.git
+	branch = master
