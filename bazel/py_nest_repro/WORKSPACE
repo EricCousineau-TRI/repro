@@ -1,0 +1,8 @@
+workspace(name = "py_nest_repro")
+
+local_repository(
+    name = "sub_example",
+    path = __workspace_dir__ + "/sub_example",
+)
+
+
