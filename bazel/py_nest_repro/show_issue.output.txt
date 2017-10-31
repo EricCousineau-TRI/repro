@@ -1,0 +1,43 @@
++ bazel --bazelrc=/dev/null version
+Build label: 0.6.1
+Build target: bazel-out/local-fastbuild/bin/src/main/java/com/google/devtools/build/lib/bazel/BazelServer_deploy.jar
+Build time: Thu Oct 5 21:54:59 2017 (1507240499)
+Build timestamp: 1507240499
+Build timestamp as int: 1507240499
++ echo '[ Working ]'
+[ Working ]
++ cd sub_example
++ bazel --bazelrc=/dev/null run //src/sub_example:usage_test
+Loading: 
+Loading: 0 packages loaded
+INFO: Analysed target //src/sub_example:usage_test (0 packages loaded).
+INFO: Found 1 target...
+[0 / 3] BazelWorkspaceStatusAction stable-status.txt
+Target //src/sub_example:usage_test up-to-date:
+  bazel-bin/src/sub_example/usage_test
+INFO: Elapsed time: 0.530s, Critical Path: 0.00s
+INFO: Build completed successfully, 1 total action
+
+INFO: Running command line: bazel-bin/src/sub_example/usage_test
+/home/.../execroot/sub_example/bazel-out/local-fastbuild/bin/src/sub_example/usage_test.runfiles/sub_example/src/sub_example/__init__.pyc
+Got module
++ echo '[ Not Working ]'
+[ Not Working ]
++ bazel --bazelrc=/dev/null run :usage_test
+Loading: 
+Loading: 0 packages loaded
+INFO: Analysed target //:usage_test (0 packages loaded).
+INFO: Found 1 target...
+[0 / 3] BazelWorkspaceStatusAction stable-status.txt
+Target //:usage_test up-to-date:
+  bazel-bin/usage_test
+INFO: Elapsed time: 0.546s, Critical Path: 0.01s
+INFO: Build completed successfully, 1 total action
+
+INFO: Running command line: bazel-bin/usage_test
+/home/.../execroot/py_nest_repro/bazel-out/local-fastbuild/bin/usage_test.runfiles/sub_example/__init__.pyc
+Traceback (most recent call last):
+  File "/home/.../execroot/py_nest_repro/bazel-out/local-fastbuild/bin/usage_test.runfiles/py_nest_repro/test/usage_test.py", line 5, in <module>
+    sub_example.check()
+AttributeError: 'module' object has no attribute 'check'
+[31m[1mERROR: [0mNon-zero return code '1' from command: Process exited with status 1
