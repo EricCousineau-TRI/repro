@@ -8,18 +8,19 @@ py_binary(
     srcs = ["multi_file.py", "single_file.py"],
 )
 
-sh_test(
+py_test(
     name = "single_file_test",
     srcs = [":single_file"],
+    main = "single_file.py",
 )
 
 cc_binary(
     name = "single_file_cc",
     srcs = ["single_file.cc"],
+    data = [":single_file"],
 )
 
 sh_test(
     name = "single_file_cc_test",
     srcs = ["single_file_cc"],
 )
-
