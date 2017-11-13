@@ -277,3 +277,8 @@ cc_binary(
     name = "shared_ptr_stuff",
     srcs = ["shared_ptr_stuff.cc"],
 )
+
+cc_binary(
+    name = "cast",
+    srcs = ["cast.cc"],
+)
