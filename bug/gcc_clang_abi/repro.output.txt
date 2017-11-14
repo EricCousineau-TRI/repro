@@ -1,0 +1,22 @@
+[ Will fail ]
+clang++-3.9 -std=c++1y -shared -fPIC lib.cc -o liblib.so
+g++-4.9 -std=c++1y -c main.cc -o main.o
+g++-4.9 -std=c++1y main.o -o main -Wl,-rpath=/home/eacousineau/proj/tri/repo/repro/bug/gcc_clang_abi -L/home/eacousineau/proj/tri/repo/repro/bug/gcc_clang_abi -llib -lstdc++
+main.o: In function `main':
+main.cc:(.text+0x20): undefined reference to `lib::get_value()'
+collect2: error: ld returned 1 exit status
+Makefile:18: recipe for target 'main' failed
+make: *** [main] Error 1
+liblib.so:
+0000000000000870 T lib::get_value[abi:cxx11]()
+main.o:
+                 U lib::get_value()
+
+[ Won't fail ]
+clang++-3.9 -std=c++1y -shared -fPIC lib.cc -o liblib.so
+g++-5 -std=c++1y -c main.cc -o main.o
+g++-5 -std=c++1y main.o -o main -Wl,-rpath=/home/eacousineau/proj/tri/repo/repro/bug/gcc_clang_abi -L/home/eacousineau/proj/tri/repo/repro/bug/gcc_clang_abi -llib -lstdc++
+liblib.so:
+0000000000000870 T lib::get_value[abi:cxx11]()
+main.o:
+                 U lib::get_value[abi:cxx11]()
