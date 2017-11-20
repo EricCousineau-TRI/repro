@@ -282,3 +282,8 @@ cc_binary(
     name = "cast",
     srcs = ["cast.cc"],
 )
+
+cc_binary(
+    name = "alias_test",
+    srcs = ["alias_test.cc"],
+)
