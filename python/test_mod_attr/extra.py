@@ -9,10 +9,14 @@ def check_direct():
 def check_from():
     # Prints true, that it is 
     from mod import extra
+    print(extra)
 
 check_direct()
 del sys.modules["mod"]
 check_from()
+del sys.modules["mod"]
+check_from()
+del sys.modules["mod"]
 
-# print(hasattr(mod, "extra"))
-# print(dir(mod))
+# Check star.
+from mod import *

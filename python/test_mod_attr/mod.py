@@ -26,7 +26,8 @@ class ModuleShim(object):
         else:
             # Otherwise, use the handler, and store the result.
             try:
-                value = self._handler(name)
+                import_type = self._get_import_type()
+                value = self._handler(name, import_type)
             except AttributeError as e:
                 if e.message:
                     raise e
@@ -40,35 +41,47 @@ class ModuleShim(object):
         # Redirect writes to the original module.
         setattr(self._orig_module, name, value)
 
+    def _get_import_type(self):
+        # Check if this came from direct usage, `mod.{var}`, a 
+        sub = traceback.extract_stack()[-3:-1]
+        assert sub[1][2] == "__getattr__"
+        caller_text = sub[0][3].strip()
+        if caller_text.startswith("from "):
+            if caller_text.endswith("*"):
+                return "from_all"
+            else:
+                return "from_direct"
+        else:
+            return "direct"
+
     @classmethod
     def install(cls, name, handler):
-        """ Hook into module's attribute accessors and mutators. """
+        """ Hook into module's attribute accessors and mutators.
+        @param name
+            Module name. Generally should be __name__.
+        @param handler
+            Function of the form `handler(var, import_type)`, where `var` is
+            the variable name and `import_type` is the type of import:
+              "direct" implies this is called via `import mod; mod.{var}`
+              "from_direct" implies this is called via `from mod import {var}`
+              "from_all" implies this is called via `from mod import *`
+        """
         old_module = sys.modules[name]
         new_module = cls(old_module, handler)
         sys.modules[name] = new_module
 
 
-def in_from_import():
-    stack = traceback.extract_stack()
-    print("\n".join(map(str, stack)))
-    FUNC = 2
-    assert stack[-2][2] == "_handler"
-    assert stack[-3][2] == "__getattr__"
-    if stack[-4][3].lstrip().startswith("from "):
-        return True
-    else:
-        return False
-
-def _handler(name):
+def _handler(name, import_type):
     if name == "extra":
-        print(in_from_import())
-        sys.stderr.write(
-            "`import mod; mod.extra` will soon be deprecated. " +
-            "Please use `import mod.extra` instead.\n")
+        print(import_type)
+        if import_type == "direct":
+            sys.stderr.write(
+                "`import mod; mod.extra` will soon be deprecated. " +
+                "Please use `import mod.extra` instead.\n")
         return 10
     else:
         raise AttributeError()
 
 
-__all__ = locals().keys() # + ["extra"]
+__all__ = locals().keys() + ["extra"]
 ModuleShim.install(__name__, _handler)
