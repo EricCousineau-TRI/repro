@@ -1,4 +1,5 @@
 import sys
+import traceback
 
 value = 5
 
@@ -24,7 +25,14 @@ class ModuleShim(object):
             return getattr(m, name)
         else:
             # Otherwise, use the handler, and store the result.
-            value = self._handler(name)
+            try:
+                value = self._handler(name)
+            except AttributeError as e:
+                if e.message:
+                    raise e
+                else:
+                    raise AttributeError(
+                        "'module' object has no attribute '{}'".format(name))
             setattr(m, name, value)
             return value
 
@@ -35,22 +43,32 @@ class ModuleShim(object):
     @classmethod
     def install(cls, name, handler):
         """ Hook into module's attribute accessors and mutators. """
-        import sys
         old_module = sys.modules[name]
         new_module = cls(old_module, handler)
         sys.modules[name] = new_module
 
 
+def in_from_import():
+    stack = traceback.extract_stack()
+    print("\n".join(map(str, stack)))
+    FUNC = 2
+    assert stack[-2][2] == "_handler"
+    assert stack[-3][2] == "__getattr__"
+    if stack[-4][3].lstrip().startswith("from "):
+        return True
+    else:
+        return False
+
 def _handler(name):
     if name == "extra":
+        print(in_from_import())
         sys.stderr.write(
             "`import mod; mod.extra` will soon be deprecated. " +
             "Please use `import mod.extra` instead.\n")
         return 10
     else:
-        raise AttributeError(
-            "'module' object has no attribute '{}'".format(name))
+        raise AttributeError()
 
 
-__all__ = locals().keys() + ["extra"]
+__all__ = locals().keys() # + ["extra"]
 ModuleShim.install(__name__, _handler)
