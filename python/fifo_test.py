@@ -43,6 +43,7 @@ def writer_loop():
     # Wait for a bit.
     time.sleep(writer_wait)
     # Open FIFO for writing.
+    print("Writer: Opened")
     f = open(filepath, 'wb')
     # Write some info.
     f.write(token_1)
@@ -51,6 +52,7 @@ def writer_loop():
     # Write final token (while reader is waiting) and close file.
     f.write(token_2)
     f.close()
+    print("Writer: Closed")
     time.sleep(writer_wait)
     writer_event.set()  # Close file.
     print("[ - Writer Done ]")
@@ -66,6 +68,7 @@ def reader_loop():
     reader_event.set()  # Start timing for open.
     # Ensure that opening for read blocks until it is open for writing.
     f = open(filepath, 'rb')
+    print("Reader: Opened")
     elapsed = time.time() - start
     assert elapsed >= writer_wait, "{} < {}".format(elapsed, writer_wait)
     # Expect the basics.
@@ -74,6 +77,8 @@ def reader_loop():
     wait(writer_event)  # Close file.
     # Read.
     assert f.read(len(token_2)) == token_2
+    f.close()
+    print("Reader: Closed")
     print("[ - Reader Done ]")
     reader_success = True
 
