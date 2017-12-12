@@ -1,14 +1,23 @@
 #!/usr/bin/python
 
-import tempfile
 from StringIO import StringIO
-# import networkx as nx
-import pydotplus as pydot
+
+import pydot  # sudo pip install pydot
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-# sudo apt install python-networkx python-pygraphviz # DOES NOT WORK
-# pip install networkx pygraphviz pydotplus
+def plot_dot(dot_text):
+    """Renders a DOT graph in matplotlib."""
+    # @ref https://stackoverflow.com/a/18522941/7829525
+    # Tried (reason ignored): pydotplus (`pydot` works), networkx
+    # (`read_dot` does not work robustly?), pygraphviz (coupled with
+    # `networkx`).
+    g = pydot.graph_from_dot_data(dot_text)
+    s = StringIO()
+    g.write_png(s)
+    s.seek(0)
+    plt.axis('off')
+    plt.imshow(plt.imread(s), aspect="equal")
 
 dot = """
 digraph _46955600 {
@@ -58,28 +67,6 @@ _46955600_u2 -> 46915616:u1 [color=blue];
 }
 }
 """
-
-# filename = 'tmp.dot'
-# with open(filename, 'w') as f:
-#     f.write(dot)
-
-# # https://stackoverflow.com/questions/4596962/display-graph-without-saving-using-pydot
-
-# g = pydot.graph_from_dot_file(filename)
-# png = filename + '.png'
-# g.write_png(png)
-
-# plt.axis('off')
-# plt.imshow(plt.imread(png), aspect="equal")
-
-def plot_dot(dot_text):
-    """Renders a DOT graph in matplotlib. """
-    g = pydot.graph_from_dot_data(dot_text)
-    s = StringIO()
-    g.write_png(s)
-    s.seek(0)
-    plt.axis('off')
-    plt.imshow(plt.imread(s), aspect="equal")
 
 plot_dot(dot)
 plt.show()
