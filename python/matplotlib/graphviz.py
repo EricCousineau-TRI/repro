@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-# import tempfile
+import tempfile
+from StringIO import StringIO
 # import networkx as nx
 import pydotplus as pydot
 import matplotlib.pyplot as plt
@@ -58,36 +59,27 @@ _46955600_u2 -> 46915616:u1 [color=blue];
 }
 """
 
-filename = 'tmp.dot'
-with open(filename, 'w') as f:
-    f.write(dot)
+# filename = 'tmp.dot'
+# with open(filename, 'w') as f:
+#     f.write(dot)
 
-# https://stackoverflow.com/questions/4596962/display-graph-without-saving-using-pydot
+# # https://stackoverflow.com/questions/4596962/display-graph-without-saving-using-pydot
 
-g = pydot.graph_from_dot_file(filename)
-png = filename + '.png'
-g.write_png(png)
+# g = pydot.graph_from_dot_file(filename)
+# png = filename + '.png'
+# g.write_png(png)
 
-plt.imshow(plt.imread(png), aspect="equal")
+# plt.axis('off')
+# plt.imshow(plt.imread(png), aspect="equal")
+
+def plot_dot(dot_text):
+    """Renders a DOT graph in matplotlib. """
+    g = pydot.graph_from_dot_data(dot_text)
+    s = StringIO()
+    g.write_png(s)
+    s.seek(0)
+    plt.axis('off')
+    plt.imshow(plt.imread(s), aspect="equal")
+
+plot_dot(dot)
 plt.show()
-
-# G = nx.drawing.nx_pydot.read_dot('tmp.dot')
-# print(G)
-# nx.drawing.nx_pydot.write_dot(G, 'tmp_2.dot')
-
-
-
-# nx.draw(G, with_labels=True)
-# plt.draw()
-# plt.show()
-
-
-# import matplotlib.pyplot as plt
-# import networkx as nx
-# G=nx.dodecahedral_graph()
-# print(G)
-# nx.drawing.nx_pydot.write_dot(G, 'tmp_do.dot')
-# nx.draw(G)  # networkx draw()
-# plt.draw()  # pyplot draw()
-# plt.show()
-
