@@ -112,30 +112,31 @@ int main(int, char**) {
   cout << "Eval" << endl;
 
   py::exec(R"""(
-class ChildParent(m.A):
+class PyA(m.A):
   def __init__(self, value):
     m.A.__init__(self, value)
     self.extra = [value * 2]
-    print("Child.__init__({})".format(value))
+    print("PyA.__init__({})".format(value))
   def __del__(self):
     m.A.debug_hook(self)
-    print("Child.__del__")
+    print("PyA.__del__")
   def value(self):
     # TODO(eric.cousineau): Fix this...
-    print("Child.value() (extra = {})".format(self.extra))
+    print("PyA.value() (extra = {})".format(self.extra))
     return 10 * m.A.value(self)
 
-class Child(ChildParent):
+class Child(PyA):
   def __init__(self, value):
-    ChildParent.__init__(self, value)
+    PyA.__init__(self, value)
+    print("Child.__init__({})".format(value))
     self.sub_extra = [value * 3]
   def __del__(self):
-    print("Sub-Child.__del__")
-    ChildParent.__del__(self)
+    print("Child.__del__")
+    PyA.__del__(self)
     self.debug_hook()
   def value(self):
-    print("Sub-Child.value() (sub_extra = {})".format(self.sub_extra))
-    return 10 * ChildParent.value(self)
+    print("Child.value() (sub_extra = {})".format(self.sub_extra))
+    return 10 * PyA.value(self)
 )""");
 
   py::exec(R"""(

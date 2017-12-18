@@ -29,7 +29,7 @@ python_repository(
 
 python_repository(
     name = "python3",
-    version = "2.7",
+    version = "3.5",
 )
 
 # load("//tools:numpy.bzl", "numpy_repository")
