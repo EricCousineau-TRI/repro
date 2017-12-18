@@ -5,9 +5,22 @@ cc_library(
     ]),
     includes = ["include"],
     deps = [
-        "@eigen//:eigen",
+        "@eigen",
         # "@numpy//:numpy",
-        "@python//:python",
+        "@python",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "include3",
+    srcs = glob([
+        "include/**/*.h",
+    ]),
+    includes = ["include"],
+    deps = [
+        "@eigen",
+        "@python3//:python",
     ],
     visibility = ["//visibility:public"],
 )
@@ -29,6 +42,16 @@ cc_binary(
     ],
     deps = [
         ":include",
+    ],
+)
+
+cc_binary(
+    name = "test_shared_ptr_owner3",
+    srcs = [
+        "custom_tests/test_shared_ptr_owner.cc",
+    ],
+    deps = [
+        ":include3",
     ],
 )
 

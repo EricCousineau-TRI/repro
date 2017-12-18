@@ -11,7 +11,7 @@ z = Child()
 def print_referrers(obj):
     import gc
     import inspect
-    refs = gc.get_referrers(Base)
+    refs = gc.get_referrers(obj)
     for ref in refs:
         print(ref)
         try:
@@ -21,4 +21,5 @@ def print_referrers(obj):
         except Exception as e:
             pass
         print("---")
+
 print_referrers(Base)
