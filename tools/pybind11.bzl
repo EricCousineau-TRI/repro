@@ -27,7 +27,7 @@ def pybind11_module(name, srcs = [], deps = [], py_deps = [], package_dir = ".."
         linkstatic = 0,
         deps = deps + [
             # "@pybind11//:pybind11",
-            "//python:pybind11_include",
+            "//python/pybind11:include",
         ],
     )
 

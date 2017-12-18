@@ -61,7 +61,7 @@ class PyDog(m.Dog):
     pass
 
 for cls in m.Dog, PyDog:
-  molly = [cls("Molly") for _ in range(10)]
+  molly = [cls("Molly") for _ in range(1)]
   del molly
   gc.collect()
 )""");

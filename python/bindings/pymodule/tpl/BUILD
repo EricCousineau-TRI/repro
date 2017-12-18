@@ -55,7 +55,7 @@ cc_binary(
     name = "ownership_embed",
     srcs = ["_ownership.cc"],
     deps = [
-        "//python:pybind11_include",
+        "//python/pybind11:include",
     ],
 )
 

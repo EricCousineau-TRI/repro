@@ -38,7 +38,7 @@ cc_library(
     srcs = [
         "_move.cc"],
     deps = [
-        "//python:pybind11_include",
+        "//python/pybind11:include",
     ],
 )
 

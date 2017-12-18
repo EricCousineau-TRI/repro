@@ -9,6 +9,7 @@ cc_library(
         # "@numpy//:numpy",
         "@python//:python",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_binary(
