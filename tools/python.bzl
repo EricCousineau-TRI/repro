@@ -65,7 +65,9 @@ def _impl(repository_ctx):
     linkopts = result.stdout.strip().split(" ")
     linkopts = [linkopt for linkopt in linkopts if linkopt]
 
-    print("Python:")
+    print("Python: {}".format(repository_ctx.attr.name))
+    print("  Config: {}".format(python_config))
+    print("  Cflags: {}".format(cflags))
     print("  Include: {}".format(includes))
     print("  Libs: {}".format(linkopts))
 
