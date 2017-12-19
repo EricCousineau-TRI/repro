@@ -70,3 +70,9 @@ cc_binary(
     srcs = ["custom_tests/test_poly.cc"],
     deps = [":include"],
 )
+
+cc_binary(
+    name = "test_unique_ptr_stuff",
+    srcs = ["custom_tests/test_unique_ptr_stuff.cc"],
+    deps = [":include"],
+)
