@@ -46,6 +46,9 @@ class AContainer {
       as_.push_back(a);
       return as_.back();
     }
+    shared_ptr<A> get(int i) {
+      return as_.at(i);
+    }
     vector<shared_ptr<A>> release_list() {
       return std::move(as_);
     }
@@ -88,6 +91,7 @@ PYBIND11_MODULE(_ownership, m) {
   py::class_<AContainer, shared_ptr<AContainer>>(m, "AContainer")
     .def(py::init<>())
     .def("add", &AContainer::add)
+    .def("get", &AContainer::get)
     .def("release_list", &AContainer::release_list);
 
   m.def("create_instance", &create_instance);
@@ -139,10 +143,19 @@ class Child(PyA):
     return 10 * PyA.value(self)
 )""");
 
+//  py::exec(R"""(
+//print("Create")
+//obj = Child(10)
+//del obj
+//print("Destroy");
+//)""");
+
   py::exec(R"""(
 print("Create")
-obj = Child(10)
-del obj
+c = m.AContainer()
+c.add(Child(10))
+print(c.get(0).value())
+del c
 print("Destroy");
 )""");
 
@@ -174,23 +187,23 @@ print("Destroy");
 //del obj
 //)""");
 
-  py::exec(R"""(
-print("---")
-c = m.AContainer()
-# Pass back through to reclaim
-out = c.add(Child(20))
-# See what happens if the value is destructed
-print("-- Python value 1 --")
-print(out.value())
-del out
-print("Get list")
-li = c.release_list()
-print("-- Python value 2 --")
-print(li[0].value())
-print("Remove container(s)")
-del c
-del li
-)""");
+//  py::exec(R"""(
+//print("---")
+//c = m.AContainer()
+//# Pass back through to reclaim
+//out = c.add(Child(20))
+//# See what happens if the value is destructed
+//print("-- Python value 1 --")
+//print(out.value())
+//del out
+//print("Get list")
+//li = c.release_list()
+//print("-- Python value 2 --")
+//print(li[0].value())
+//print("Remove container(s)")
+//del c
+//del li
+//)""");
 
   cout << "Done" << endl;
 
