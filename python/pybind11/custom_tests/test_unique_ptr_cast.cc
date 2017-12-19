@@ -192,7 +192,22 @@ void terminal_func(unique_ptr<Base> ptr) {
   cout << "Destroyed in C++" << endl;
 }
 
+class Simple {};
+
+void terminal_func_simple(unique_ptr<Simple> ptr) {
+  ptr.reset();
+}
+
+unique_ptr<Simple> pass_thru_simple(unique_ptr<Simple> ptr) {
+  return ptr;
+}
+
 PYBIND11_MODULE(_move, m) {
+  py::class_<Simple>(m, "Simple")
+      .def(py::init<>());
+  m.def("terminal_func_simple", &terminal_func_simple);
+  m.def("pass_thru_simple", &pass_thru_simple);
+
   py::class_<Base, PyBase>(m, "Base")
     .def(py::init<int>())
     .def("value", &Base::value);
@@ -291,6 +306,14 @@ class PyMove:
 // Export this to get access as we desire.
 void custom_init_move(py::module& m) {
   PYBIND11_CONCAT(pybind11_init_, _move)(m);
+}
+
+void check_cpp_simple() {
+  cout << "\n[ check_cpp_simple ]\n";
+  py::exec(R"(
+m.terminal_func_simple(m.Simple())
+m.pass_thru_simple(m.Simple())
+)");
 }
 
 void check_pure_cpp_simple() {
@@ -423,13 +446,14 @@ int main() {
     custom_init_move(m);
     py::globals()["m"] = m;
 
-//    check_pass_thru();
-//    check_pure_cpp_simple();
-//    check_pure_cpp();
-//    check_py_child();
-//    check_casting();
-//    check_casting_without_explicit_base();
-//    check_terminal();
+    check_cpp_simple();
+    check_pass_thru();
+    check_pure_cpp_simple();
+    check_pure_cpp();
+    check_py_child();
+    check_casting();
+    check_casting_without_explicit_base();
+    check_terminal();
     check_container();
   }
 
