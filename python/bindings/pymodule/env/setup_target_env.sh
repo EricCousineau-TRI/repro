@@ -2,6 +2,11 @@
 
 # Expose environment from a Bazel target to test with things like MATLAB.
 
+# TODO: Figure out how to get this to work well in a bash function.
+# Perhaps it's forking due to how `&&` operates???
+
+# TODO: Make it easier to process arguments. Just shift?
+
 # NOTE: When trying to just execute a desired command, like `bash -i` or
 # `matlab`, there are errors about `ioctl` and stuff like that, when using
 # `bazel run`...
@@ -42,6 +47,7 @@ EOF
     # Generate environment and export it to a temporary file.
     # How to add additional flags? Like `-c dbg`?
     (
+        set -x
         cd ${script_dir}
         bazel run ${ARGS:-} :py_shell -- \
             bash -c "export -p > $script_priv" \

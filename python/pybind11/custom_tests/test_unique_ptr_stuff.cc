@@ -22,22 +22,34 @@ int main() {
   py::scoped_interpreter guard{};
   py::module m("test_unique_ptr_stuff");
 
-  class UniquePtrHeld {};
-  py::class_<UniquePtrHeld>(m, "UniquePtrHeld")
-      .def(py::init<>());
-
-  m.def("unique_ptr_pass_through",
-      [](std::unique_ptr<UniquePtrHeld> obj) {
-          return obj;
+  class SharedPtrHeld {
+   public:
+    SharedPtrHeld(int value)
+      : value_(value) {}
+    int value() const { return value_; }
+   private:
+    int value_;
+  };
+  py::class_<SharedPtrHeld, std::shared_ptr<SharedPtrHeld>>(m, "SharedPtrHeld")
+      .def(py::init<int>())
+      .def("value", &SharedPtrHeld::value);
+  m.def("shared_ptr_held_in_unique_ptr",
+      []() {
+          return std::make_unique<SharedPtrHeld>(1);
+      });
+  m.def("shared_ptr_held_func",
+      [](std::shared_ptr<SharedPtrHeld> obj) {
+          return obj != nullptr;
       });
 
   py::dict globals = py::globals();
   globals["m"] = m;
 
   py::exec(R"""(
-obj = m.UniquePtrHeld()
-obj_ref = m.unique_ptr_pass_through(obj)
-print(obj_ref)
+obj = m.shared_ptr_held_in_unique_ptr()
+print(obj.value())
+#assert m.shared_ptr_held_func(obj) == True
+print(obj)
 )""");
 
   cout << "[ Done ]" << endl;
