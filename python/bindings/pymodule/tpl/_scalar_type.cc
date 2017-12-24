@@ -79,8 +79,8 @@ class Base {
 
   // TODO: Use `typeid()` and dynamic dispatching?
   static string py_name() {
-    return "Base__T_" + name_trait<T>::name() +
-      "__U_" + name_trait<U>::name();
+    return "Base[T=" + name_trait<T>::name() +
+      ", U=" + name_trait<U>::name() + "]";
   }
 
   template <typename To>
@@ -218,7 +218,7 @@ struct reg_info {
 };
 
 template <typename T, typename U>
-void register_base(py::module m, reg_info* info) {
+void register_base(py::module m, reg_info* info, py::object tpl) {
   string name = Base<T, U>::py_name();
   typedef Base<T, U> C;
   typedef PyBase<T, U> PyC;
@@ -243,6 +243,9 @@ void register_base(py::module m, reg_info* info) {
 
   info->mapping[type_tup] = hash;
 
+  tpl.attr("add_instantiation")(
+      type_tup, base);
+
 //   auto locals = py::dict("cls"_a=base, "type_tup"_a=type_tup);
 //   auto globals = m.attr("__dict__");
 //   py::eval<py::eval_statements>(R"(#
@@ -255,19 +258,24 @@ PYBIND11_MODULE(_scalar_type, m) {
 
   py::class_<A> a(m, "A");
 
-  auto globals = m.attr("__dict__");
-  py::eval<py::eval_statements>(R"(#
-# Dictionary.
-#   Key: (T, U)
-#   Value: PyType
-base_types = {}
-)", globals);
+  py::handle py_tpl = py::module::import("pymodule.tpl.py_tpl");
+  py::handle tpl_cls = py_tpl.attr("Template");
 
+  using arg = py::arg;
+
+  py::object tpl = tpl_cls(
+      arg("name") = "Base",
+      arg("param_names") = py::make_tuple("T", "U"),
+      arg("param_defaults") = py::eval("int, float"));
   // No difference between (float, double) and (int16_t, int64_t)
   // Gonna use other combos.
   reg_info info;
-  register_base<double, int>(m, &info);
-  register_base<int, double>(m, &info);
+  register_base<double, int>(m, &info, tpl);
+  register_base<int, double>(m, &info, tpl);
+  // Add to module.
+  m.attr("BaseTpl") = tpl;
+  // Default instantiation.
+  m.attr("Base") = tpl();
 
   auto converter =
       [info](BaseConverter* self,

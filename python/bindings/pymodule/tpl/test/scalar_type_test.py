@@ -5,22 +5,24 @@ from __future__ import print_function, absolute_import
 from pymodule.tpl import scalar_type as st
 from pymodule.tpl.py_tpl import Template, ChildTemplate, is_tpl_cls, is_tpl_of
 
-BaseTpl = Template(
-    name = 'Base',
-    param_names = ('T', 'U'),
-    param_defaults = (long, float))
+# BaseTpl = Template(
+#     name = 'Base',
+#     param_names = ('T', 'U'),
+#     param_defaults = (int, float))
 
-BaseTpl.add_instantiation(
-    (long, float), st.Base__T_int__U_double)
-BaseTpl.add_instantiation(
-    (float, long), st.Base__T_double__U_int)
+# BaseTpl.add_instantiation(
+#     (int, float), st.Base__T_int__U_double)
+# BaseTpl.add_instantiation(
+#     (float, int), st.Base__T_double__U_int)
 
-# Default class.
-Base = BaseTpl()
+# # Default class.
+# Base = BaseTpl()
+BaseTpl = st.BaseTpl
+Base = st.Base
 
 print(Base)
-print(BaseTpl(long, float))
-print(BaseTpl(float, long))
+print(BaseTpl(int, float))
+print(BaseTpl(float, int))
 assert is_tpl_cls(Base)
 assert is_tpl_of(Base, BaseTpl)
 
@@ -36,12 +38,15 @@ class ChildDirect(Base):
         return 2.
 
 # Should only define these classes once.
-def _def_Child(T=long, U=float):
+def _def_Child(T=int, U=float):
     Base = BaseTpl(T, U)
     class Child(Base):
-        def __init__(self, t, u):
+        def __init__(self, t, u, other=None):
             # Add the same converter per instance.
-            Base.__init__(self, t, u, _convert_Child())
+            if other is not None:
+                Base.__init__(self, other, _convert_Child())
+            else:
+                Base.__init__(self, t, u, _convert_Child())
 
         def pure(self, t):
             print("py: pure [{}]".format(type(self).__name__))
@@ -75,8 +80,8 @@ def _convert_Child():
             print("py.3: Return")
             return obj_to
         converter.Add(params_to, params_from, func)
-    add_conversion((long, float), (float, long))
-    add_conversion((float, long), (long, float))
+    add_conversion((int, float), (float, int))
+    add_conversion((float, int), (int, float))
     return converter
 
 ChildTpl = ChildTemplate(
@@ -89,12 +94,12 @@ ChildTpl.add_instantiations_with_func(_def_Child)
 Child = ChildTpl()
 
 print(Child)
-print(ChildTpl(long, float))
-print(ChildTpl(float, long))
+print(ChildTpl(int, float))
+print(ChildTpl(float, int))
 
 # Check type identity persistence.
 print(Child == ChildTpl())
-print(ChildTpl(long, float) == ChildTpl(float, long))
+print(ChildTpl(int, float) == ChildTpl(float, int))
 
 assert is_tpl_cls(Child)
 assert is_tpl_of(Child, ChildTpl)
@@ -102,7 +107,7 @@ assert is_tpl_of(Child, ChildTpl)
 # Check default instantiation.
 assert issubclass(Child, Base)
 # Check other instantiation.
-assert issubclass(ChildTpl(float, long), BaseTpl(float, long))
+assert issubclass(ChildTpl(float, int), BaseTpl(float, int))
 
 cd = ChildDirect(2, 5.5)
 print(type(cd))
@@ -118,7 +123,7 @@ c.optional(2)
 c.dispatch(3)
 print("---")
 
-cc = c.do_to(float, long)
+cc = c.do_to(float, int)
 print(type(cc))
 cc.pure(1.5)
 cc.optional(1.5)
@@ -130,7 +135,7 @@ st.call_method(c)
 st.call_method(cc)
 
 print("---")
-func = lambda: ChildTpl(float, long)(6.5, 3)
+func = lambda: ChildTpl(float, int)(6.5, 3)
 print("Check")
 owne = st.take_ownership(func)
 owne.dispatch(3.5)

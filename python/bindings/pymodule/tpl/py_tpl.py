@@ -5,9 +5,9 @@
 def _tpl_name(name, param_names, params):
     items = []
     for (param_name, param_type) in zip(param_names, params):
-        items.append('{}_{}'.format(param_name, param_type.__name__))
-    params_str = '__'.join(items)
-    return '{}__{}'.format(name, params_str)
+        items.append('{}={}'.format(param_name, param_type.__name__))
+    params_str = ', '.join(items)
+    return '{}[{}]'.format(name, params_str)
 
 def _params_resolve(params, param_names):
     if isinstance(params, dict):
@@ -38,12 +38,17 @@ class Template(object):
         else:
             assert self._param_defaults is not None
             params = self._param_defaults
+        print("params: {}".format(params))
+        print(self._instantiations.keys())
         cls = self._instantiations[params]
+        print("WooH")
         return cls
 
     def add_instantiation(self, params_in, cls, override_name=True):
         """ Adds instantiation. """
+        print("params_in: {}".format(params_in))
         params = _params_resolve(params_in, self._param_names)
+        print("params: {}".format(params))
         # Do not double-register existing class.
         if is_tpl_cls(cls):
             self._check_tpl_cls(cls)
