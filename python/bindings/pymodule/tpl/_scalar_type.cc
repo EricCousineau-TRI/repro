@@ -263,10 +263,7 @@ PYBIND11_MODULE(_scalar_type, m) {
 
   using arg = py::arg;
 
-  py::object tpl = tpl_cls(
-      arg("name") = "Base",
-      arg("param_names") = py::make_tuple("T", "U"),
-      arg("param_defaults") = py::eval("int, float"));
+  py::object tpl = tpl_cls("Base", py::eval("(int, float)"));
   // No difference between (float, double) and (int16_t, int64_t)
   // Gonna use other combos.
   reg_info info;
