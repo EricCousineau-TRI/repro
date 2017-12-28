@@ -154,6 +154,7 @@ owne.dispatch(3.5)
 print("Good")
 
 print("---")
+c.dispatch(3)
 cc_c = st.do_convert(c)
 print("Try dispatch")
 cc_c.dispatch(2.5)

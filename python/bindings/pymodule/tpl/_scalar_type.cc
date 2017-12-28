@@ -123,8 +123,8 @@ void call_method(const Base<T, U>& base) {
 
 std::unique_ptr<Base<double, int>> do_convert(const Base<int, double>& value) {
   cout << "Attempt conversion" << endl;
-  // std::unique_ptr<Base<double, int>> out(value.DoTo<Base<double, int>>());
-  auto out = std::make_unique<Base<double, int>>(8.5, 10);  // Not equivalent...
+  std::unique_ptr<Base<double, int>> out(value.DoTo<Base<double, int>>());
+  // auto out = std::make_unique<Base<double, int>>(8.5, 10);  // Not equivalent...
   // Try to create an instance of `ChildTpl`.
   cout << "Got it" << endl;
   return out;
