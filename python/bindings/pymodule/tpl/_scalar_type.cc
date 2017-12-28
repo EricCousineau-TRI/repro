@@ -239,13 +239,15 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
   base
     .def(py::init<T, U, BaseConverter*>(),
          py::arg("t"), py::arg("u"), py::arg("converter") = nullptr)
-    .def(py::init<const Base<U, T>&, BaseConverter*>(),
-         py::arg("other"), py::arg("converter") = nullptr)
     .def("t", &C::t)
     .def("u", &C::u)
     .def("pure", &C::pure)
     .def("optional", &C::optional)
     .def("dispatch", &C::dispatch);
+
+  // Register template class.
+  auto type_tup = py::make_tuple(py_type<T>(), py_type<U>());
+  tpl.attr("add_class")(type_tup, base);
 
   // // Can't figure this out...
   // Can't get `overload_cast` to infer `Return` type.
@@ -253,17 +255,15 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
   typedef void (*call_method_t)(const Base<T, U>&);
   m.def("call_method", static_cast<call_method_t>(&call_method));
 
-  auto type_tup = py::make_tuple(py_type<T>(), py_type<U>());
+  // Begin: Scalar conversion
   size_t key = BaseConverter::hash<C>();
-
   info->mapping[type_tup] = key;
 
-  // Register base conversions.
-  using To = Base<U, T>;
+  // For each conversion available:
+  // Register base conversion(s).
+  using To = C;
   using ToPtr = std::unique_ptr<To>;
-  using From = Base<T, U>;
-
-  auto conv_key = BaseConverter::get_key<To, From>();
+  using From = Base<U, T>;
 
   // Convert Py function to specific types, then erase.
   auto func_converter = [](BaseConverter* converter, py::function py_func) {
@@ -272,9 +272,12 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
     auto cpp_func = py::cast<Func>(py_func);
     converter->Add(cpp_func);
   };
+  auto conv_key = BaseConverter::get_key<To, From>();
   info->conv_mapping[conv_key] = func_converter;
-
-  tpl.attr("add_class")(type_tup, base);
+  base
+    .def(py::init<const From&, BaseConverter*>(),
+         py::arg("other"), py::arg("converter") = nullptr);
+  // End: Scalar conversion.
 }
 
 PYBIND11_MODULE(_scalar_type, m) {
