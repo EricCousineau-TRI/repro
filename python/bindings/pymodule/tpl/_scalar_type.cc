@@ -55,9 +55,10 @@ class Base {
   }
 
   template <typename Tc, typename Uc>
-  Base(const Base<Tc, Uc>& other)
+  Base(const Base<Tc, Uc>& other, BaseConverter* converter = nullptr)
     : Base(static_cast<T>(other.t_),
-           static_cast<U>(other.u_)) {}
+           static_cast<U>(other.u_),
+           converter) {}
 
   T t() const { return t_; }
   U u() const { return u_; }
@@ -79,8 +80,8 @@ class Base {
 
   // TODO: Use `typeid()` and dynamic dispatching?
   static string py_name() {
-    return "Base[T=" + name_trait<T>::name() +
-      ", U=" + name_trait<U>::name() + "]";
+    return "Base[" + name_trait<T>::name() +
+      ", " + name_trait<U>::name() + "]";
   }
 
   template <typename To>
@@ -225,7 +226,9 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
   py::class_<C, PyC> base(m, name.c_str());
   base
     .def(py::init<T, U, BaseConverter*>(),
-         py::arg("t"), py::arg("u"), py::arg("converter") = nullptr) //.none(true))
+         py::arg("t"), py::arg("u"), py::arg("converter") = nullptr)
+    .def(py::init<const Base<U, T>&, BaseConverter*>(),
+         py::arg("other"), py::arg("converter") = nullptr)
     .def("t", &C::t)
     .def("u", &C::u)
     .def("pure", &C::pure)
@@ -243,7 +246,7 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
 
   info->mapping[type_tup] = hash;
 
-  tpl.attr("add_instantiation")(
+  tpl.attr("add_class")(
       type_tup, base);
 
 //   auto locals = py::dict("cls"_a=base, "type_tup"_a=type_tup);
@@ -263,7 +266,7 @@ PYBIND11_MODULE(_scalar_type, m) {
 
   using arg = py::arg;
 
-  py::object tpl = tpl_cls("Base", py::eval("(int, float)"));
+  py::object tpl = tpl_cls("Base", py::eval("int, float"));
   // No difference between (float, double) and (int16_t, int64_t)
   // Gonna use other combos.
   reg_info info;
@@ -272,7 +275,7 @@ PYBIND11_MODULE(_scalar_type, m) {
   // Add to module.
   m.attr("BaseTpl") = tpl;
   // Default instantiation.
-  m.attr("Base") = tpl();
+  m.attr("Base") = tpl.attr("get_class")();
 
   auto converter =
       [info](BaseConverter* self,

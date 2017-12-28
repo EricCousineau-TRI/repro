@@ -3,35 +3,45 @@
 # Template definitions.
 
 def _tpl_name(name, param):
-    return '{}[{}]'.format(name, ', '.join(param))
+    param_str = [param.__name__ for param in param]
+    return '{}[{}]'.format(name, ', '.join(param_str))
 
 
 class Template(object):
     def __init__(self, name, param_default=None):
         self.name = name
-        self._param_names = param_names
-        self._param_default = param_default
-        self._instantiations = {}
+        self._param_default = tuple(param_default)
+        self._cls_map = {}
 
-    def __getitem__(self, *param):
+    def __getitem__(self, param):
         """ Gets concrete class associate with the given arguments.
 
         If called with [[]], then returns the default instantiation. """
+        if isinstance(param, tuple):
+            return self.get_class(param)
+        else:
+            # Scalar type.
+            return self.get_class((param,))
+
+    def get_class(self, param=[[]]):
         if len(param) == 1 and param[0] == []:
             assert self._param_default is not None
-            param =self._param_default
-        cls = self._instantiations[param]
+            param = self._param_default
+        print(param)
+        # print("\n".join(self._cls_map.keys()))
+        cls = self._cls_map[param]
         return cls
 
-    def add_instantiation(self, param, cls):
+    def add_class(self, param, cls):
         """ Adds instantiation. """
         # Do not double-register existing instantiation.
         if is_tpl_cls(cls):
             self._check_tpl_cls(cls)
+        param = tuple(param)
         # Ensure that we do not already have this tuple.
-        assert param not in self._instantiations, "Param tuple already registered"
+        assert param not in self._cls_map, "Param tuple already registered"
         # Add it.
-        self._instantiations[param] = cls
+        self._cls_map[param] = cls
         if self._param_default == 'first_registered':
             self._param_default = param
         # Update class.
@@ -48,15 +58,15 @@ class ChildTemplate(Template):
         Template.__init__(self, name, parent._param_default, **kwargs)
         self._parent = parent
 
-    def add_instantiation_factory(self, cls_factory, param_list=None):
+    def add_classes_with_factory(self, cls_factory, param_list=None):
         if param_list is None:
-            param_list = self._parent._instantiations.keys()
+            param_list = self._parent._cls_map.keys()
         for param in param_list:
             cls = cls_factory(*param)
             # Sanity check.
-            base_cls = self._parent(*param)
+            base_cls = self._parent[param]
             assert issubclass(cls, base_cls)
-            self.add_instantiation(param, cls)
+            self.add_class(param, cls)
 
     def _check_tpl_cls(self, cls):
         # Permit inherited tpl class ONLY.
