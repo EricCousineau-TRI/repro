@@ -55,6 +55,17 @@ def writer_loop():
     print("Writer: Closed")
     time.sleep(writer_wait)
     writer_event.set()  # Close file.
+
+    f = open(filepath, 'wb')
+    print("Writer: Re-opened")
+    wait(reader_event)
+    f.write(token_2)
+    f.flush()
+    wait(reader_event)
+    f.write(token_2)
+    f.close()
+    print("Writer: Closed")
+
     print("[ - Writer Done ]")
     writer_success = True
 
@@ -79,6 +90,17 @@ def reader_loop():
     assert f.read(len(token_2)) == token_2
     f.close()
     print("Reader: Closed")
+
+    f = open(filepath, 'rb')
+    print("Reader: Reopend")
+    reader_event.set()
+    assert f.read(len(token_2)) == token_2
+    reader_event.set()
+    # It will have closed it by now.
+    assert f.read(len(token_2)) == token_2
+    f.close()
+    print("Reader: Closed")
+
     print("[ - Reader Done ]")
     reader_success = True
 
