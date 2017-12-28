@@ -99,14 +99,14 @@ class Base {
 
 
 template <typename T, typename U>
-class PyBase : public Base<T, U> {
+class PyBase : public py::wrapper<Base<T, U>> {
  public:
-  typedef Base<T, U> B;
+  typedef py::wrapper<Base<T, U>> B;
 
   using B::B;
 
   U pure(T value) const override {
-    PYBIND11_OVERLOAD_PURE(U, B, pure, value);
+    PYBIND11_OVERLOAD(U, B, pure, value);
   }
   U optional(T value) const override {
     PYBIND11_OVERLOAD(U, B, optional, value);
