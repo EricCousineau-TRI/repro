@@ -101,15 +101,17 @@ class Base {
 template <typename T, typename U>
 class PyBase : public py::wrapper<Base<T, U>> {
  public:
-  typedef py::wrapper<Base<T, U>> B;
+  typedef Base<T, U> BaseT;
+  typedef py::wrapper<Base<T, U>> BaseW;
 
-  using B::B;
+  using BaseW::BaseW;
 
   U pure(T value) const override {
-    PYBIND11_OVERLOAD(U, B, pure, value);
+    // Do NOT use `BWrap` here as pybind uses direct RTTI on the supplied type.
+    PYBIND11_OVERLOAD(U, BaseT, pure, value);
   }
   U optional(T value) const override {
-    PYBIND11_OVERLOAD(U, B, optional, value);
+    PYBIND11_OVERLOAD(U, BaseT, optional, value);
   }
 };
 
