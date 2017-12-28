@@ -24,48 +24,41 @@ class ChildDirect(Base):
     def __init__(self, t, u):
         Base.__init__(self, t, u)
     def pure(self, t):
-        print("py direct: pure")
+        print("py direct: pure [{}]".format(type(self).__name__))
         return 1.
     def optional(self, t):
-        print("py direct: optional")
+        print("py direct: optional [{}]".format(type(self).__name__))
         return 2.
 
 # Should only define these classes once.
 def _ChildTpl_factory(T, U):
     Base = BaseTpl[T, U]
+
     class Child(Base):
         def __init__(self, *args, **kwargs):
             # Handle copy constructor overload:
-            copy_arg = "copy_other"
-            if copy_arg in kwargs:
-                other = kwargs[copy_arg]
-                print("Gruhh: {}".format(other))
-                Base.__init__(self, other, _Child_converter())
+            if "copy_other" in kwargs:
+                copy_other = kwargs["copy_other"]
+                Base.__init__(self, copy_other)
             else:
-                print(Base)
-                print(args)
                 self._init(*args, **kwargs)
 
         def _init(self, t, u):
             Base.__init__(self, t, u, _Child_converter())
 
-        def pure(self, t):
+        def pure(self, value):
             print("py: pure [{}]".format(type(self).__name__))
-            return U(t)
+            return U(2 * value)
 
-        def optional(self, t):
+        def optional(self, value):
             print("py: optional [{}]".format(type(self).__name__))
-            return U(2 * t)
+            return U(3 * value)
 
         def do_to(self, Tc, Uc):
             # Scalar conversion.
-            ChildTc = ChildTpl[Tc, Uc]
-            # out = ChildTc(Tc(self.t()), Uc(self.u()))
-            out = ChildTc(copy_other=self)
-            print("py.do_to:")
-            out.dispatch(Tc())
-            print("  {} - {}".format(out.t(), out.u()))
+            out = ChildTpl[Tc, Uc](copy_other=self)
             return out
+
     return Child
 
 
@@ -145,8 +138,6 @@ def factory():
     out = ChildTpl[float, int](6.5, 3)
     print(out)
     return out
-print("Anon")
-owne = factory()
 print("Check")
 owne = st.take_ownership(factory)
 print("dispatch")

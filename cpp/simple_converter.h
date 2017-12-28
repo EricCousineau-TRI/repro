@@ -167,10 +167,7 @@ class SimpleConverter {
     assert(iter != conversions_.end());
     ErasedConverter erased = iter->second;
     To* out = static_cast<To*>(erased(&from));
-    // To* out = dynamic_cast<To*>(erased(&from));
     assert(out != nullptr);
-    // TEMP
-    std::cout << out->t() << " -- " << out->u() << std::endl;
     return std::unique_ptr<To>(out);
   }
 

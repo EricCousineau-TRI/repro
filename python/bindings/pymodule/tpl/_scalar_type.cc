@@ -41,25 +41,24 @@ typedef SimpleConverter<Base> BaseConverter;
 template <typename T, typename U>
 class Base {
  public:
-  Base(T t, U u, BaseConverter* converter = nullptr)
+  Base(T t, U u, std::unique_ptr<BaseConverter> converter = nullptr)
     : t_(t),
-      u_(u) {
-    converter_.reset(new BaseConverter());
-    if (!converter) {
+      u_(u),
+      converter_(std::move(converter)) {
+    if (!converter_) {
+      converter_.reset(new BaseConverter());
       typedef Base<double, int> A;
       typedef Base<int, double> B;
       converter_->AddCopyConverter<A, B>();
       converter_->AddCopyConverter<B, A>();
-    } else {
-      *converter_ = *converter;
     }
   }
 
   template <typename Tc, typename Uc>
-  Base(const Base<Tc, Uc>& other, BaseConverter* converter = nullptr)
+  Base(const Base<Tc, Uc>& other)
     : Base(static_cast<T>(other.t_),
            static_cast<U>(other.u_),
-           converter) {}
+           std::make_unique<BaseConverter>(*other.converter_)) {}
 
   virtual ~Base() {
     cout << "Base::~Base" << endl;
@@ -76,10 +75,15 @@ class Base {
 
   U dispatch(T value) const {
     cout << "cpp.dispatch [" << py_name() << "]:\n";
+    cout << "value = " << value << endl;
+    cout << " .t = " << t() << endl;
+    cout << " .u = " << u() << endl;
     cout << "  ";
     U pv = pure(value);
+    cout << "  = " << pv << endl;
     cout << "  ";
     U ov = optional(value);
+    cout << "  = " << ov << endl;
     return pv + ov;
   }
 
@@ -237,7 +241,7 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
   typedef PyBase<T, U> PyC;
   py::class_<C, PyC> base(m, name.c_str());
   base
-    .def(py::init<T, U, BaseConverter*>(),
+    .def(py::init<T, U, std::unique_ptr<BaseConverter>>(),
          py::arg("t"), py::arg("u"), py::arg("converter") = nullptr)
     .def("t", &C::t)
     .def("u", &C::u)
@@ -275,8 +279,7 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
   auto conv_key = BaseConverter::get_key<To, From>();
   info->conv_mapping[conv_key] = func_converter;
   base
-    .def(py::init<const From&, BaseConverter*>(),
-         py::arg("other"), py::arg("converter") = nullptr);
+    .def(py::init<const From&>());
   // End: Scalar conversion.
 }
 
@@ -301,28 +304,27 @@ PYBIND11_MODULE(_scalar_type, m) {
   // Default instantiation.
   m.attr("Base") = tpl.attr("get_class")();
 
-  auto converter =
-      [info](BaseConverter* self,
-             py::tuple params_to, py::tuple params_from,
-             py::function py_converter) {
-    // Get BaseConverter::Key from the paramerters.
-    BaseConverter::Key key {
-        py::cast<size_t>(info.mapping[params_to]),
-        py::cast<size_t>(info.mapping[params_from])
-      };
-    // Allow pybind to convert the lambdas.
-    auto func_converter = info.conv_mapping.at(key);
-    // Now register the converter.
-    func_converter(self, py_converter);
-  };
-
   m.def("do_convert", &do_convert);
 
-  // // Register BaseConverter...
+  // Register BaseConverter...
   py::class_<BaseConverter> base_converter(m, "BaseConverter");
   base_converter
     .def(py::init<>())
-    .def("Add", converter);
+    .def(
+      "Add",
+      [info](BaseConverter* self,
+             py::tuple params_to, py::tuple params_from,
+             py::function py_converter) {
+        // Get BaseConverter::Key from the paramerters.
+        BaseConverter::Key key {
+            py::cast<size_t>(info.mapping[params_to]),
+            py::cast<size_t>(info.mapping[params_from])
+          };
+        // Allow pybind to convert the lambdas.
+        auto func_converter = info.conv_mapping.at(key);
+        // Now register the converter.
+        func_converter(self, py_converter);
+      });
 
   m.def("take_ownership", &take_ownership);
 }
