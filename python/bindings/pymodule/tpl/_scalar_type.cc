@@ -60,6 +60,10 @@ class Base {
            static_cast<U>(other.u_),
            converter) {}
 
+  virtual ~Base() {
+    cout << "Base::~Base" << endl;
+  }
+
   T t() const { return t_; }
   U u() const { return u_; }
 
@@ -302,7 +306,7 @@ PYBIND11_MODULE(_scalar_type, m) {
 
       py::handle py_from((PyObject*)iter->second);
       cout << "cpp.2. Calling python" << endl;
-      py::handle py_to = py_converter(py_from);
+      py::object py_to = py_converter(py_from);
 
       // We know that this should be a C++ object. Return the void* from this instance.
 
