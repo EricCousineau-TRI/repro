@@ -134,7 +134,7 @@ std::unique_ptr<Base<double, int>> take_ownership(py::function factory) {
   cout << "cpp call" << endl;
   py::object out_py = factory();
   cout << "cpp convert" << endl;
-  return py::cast<std::unique_ptr<Base<double, int>>>(out_py);
+  return py::cast<std::unique_ptr<Base<double, int>>>(std::move(out_py));
 }
 
 /// Retuns the PyTypeObject from the resultant expression type.
