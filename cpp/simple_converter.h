@@ -109,64 +109,15 @@ using type_pack_inner_constrained =
 template <template <typename...> class Tpl>
 class SimpleConverterAttorney;
 
-template <typename ...>
-struct Tag {};
-
-// Erased handler.
-class ErasedConverter {
- public:
-  template <typename ToPtr, typename From>
-  ErasedConverter(const Tag<ToPtr, From>& tag)
-    : to_type_(typeid(ToPtr)),
-      from_type_(typeid(From)) {}
-
-  virtual ~ErasedConverter() {}
-
-  template <typename ToPtr, typename From>
-  ToPtr&& Convert(const From& from) {
-    assert(typeid(From) == from_type_);
-    assert(typeid(ToPtr) == to_type_);
-    return std::move(*reinterpret_cast<ToPtr*>(DoConvert(&from)));
-  }
-
- protected:
-
-  virtual void* DoConvert(const void*) = 0;
-
- private:
-  std::type_index to_type_;
-  std::type_index from_type_;
-};
-
-// Function Converter.
-template <typename ToPtr, typename From>
-class FunctionConverter : public ErasedConverter {
- public:
-  using Func = std::function<ToPtr (const From&)>;
-
-  FunctionConverter(const Func& func)
-    : ErasedConverter(Tag<ToPtr, From>()),
-      func_(func) {}
- private:
-  void* DoConvert(const void* from_raw) {
-    auto from = reinterpret_cast<const From*>(from_raw);
-    to_ = func_(*from);
-    return &to_;
-  }
-  Func func_;
-  ToPtr to_{};
-};
-
 // Simple (less robust) version of Drake's SystemScalarConverter
 template <template <typename...> class Tpl>
 class SimpleConverter {
  public:
+  typedef std::function<void*(const void*)> ErasedConverter;
   typedef std::pair<size_t, size_t> Key;  
-  typedef std::map<Key, std::unique_ptr<ErasedConverter>> Conversions;
+  typedef std::map<Key, ErasedConverter> Conversions;
 
   SimpleConverter() = default;
-
-  SimpleConverter(const SimpleConverter&) = delete;
 
   /// Get type from a type_pack.
   template <typename Pack>
@@ -176,11 +127,8 @@ class SimpleConverter {
   template <typename Type>
   using get_pack = type_pack_inner_constrained<Type, Tpl>;
 
-  template <typename To>
-  using Ptr = std::unique_ptr<To>;
-
   template <typename To, typename From>
-  using Func = std::function<Ptr<To>(const From&)>;
+  using Converter = std::function<std::unique_ptr<To> (const From&)>;
 
   template <typename To, typename From>
   inline static Key get_key() {
@@ -192,25 +140,22 @@ class SimpleConverter {
     return get_pack<T>::hash();
   }
 
-  // template <typename To, typename From>
-  // void Add(std::unique_ptr<ErasedConverter> converter) {
-  //   Key key = get_key<To, From>();
-  //   assert(conversions_.find(key) == conversions_.end());
-  //   conversions_[key] = std::move(converter);
-  // }
-
   template <typename To, typename From>
-  void Add(const Func<To, From>& func) {
+  void Add(const Converter<To, From>& converter) {
+    ErasedConverter erased = [converter](const void* from_raw) {
+      const From* from = static_cast<const From*>(from_raw);
+      return converter(*from).release();
+    };
     Key key = get_key<To, From>();
-    AddErased(key, std::make_unique<FunctionConverter<Ptr<To>, From>>(func));
+    AddErased(key, erased);
   }
 
   template <typename To, typename From>
   void AddCopyConverter() {
-    Func<To, From> func = [](const From& from) {
-      return std::make_unique<To>(from);
+    Converter<To, From> converter = [](const From& from) {
+      return std::unique_ptr<To>(new To(from));
     };
-    Add(func);
+    Add(converter);
   }
 
   template <typename To, typename From>
@@ -220,20 +165,21 @@ class SimpleConverter {
     assert(key.first != key.second);
     auto iter = conversions_.find(key);
     assert(iter != conversions_.end());
-    ErasedConverter* erased = iter->second.get();
-    auto out = erased->Convert<std::unique_ptr<To>, From>(from);
+    ErasedConverter erased = iter->second;
+    To* out = static_cast<To*>(erased(&from));
+    // To* out = dynamic_cast<To*>(erased(&from));
     assert(out != nullptr);
-    // // TEMP
-    // std::cout << out->t() << " -- " << out->u() << std::endl;
-    return out;
+    // TEMP
+    std::cout << out->t() << " -- " << out->u() << std::endl;
+    return std::unique_ptr<To>(out);
   }
 
  private:
   Conversions conversions_;
 
-  void AddErased(Key key, std::unique_ptr<ErasedConverter> converter) {
+  void AddErased(Key key, ErasedConverter erased) {
     assert(conversions_.find(key) == conversions_.end());
-    conversions_[key] = std::move(converter);
+    conversions_[key] = erased;
   }
 
   friend class SimpleConverterAttorney<Tpl>;
