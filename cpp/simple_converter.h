@@ -166,6 +166,8 @@ class SimpleConverter {
 
   SimpleConverter() = default;
 
+  SimpleConverter(const SimpleConverter&) = delete;
+
   /// Get type from a type_pack.
   template <typename Pack>
   using get_type = typename Pack::template type<Tpl>;
@@ -190,16 +192,17 @@ class SimpleConverter {
     return get_pack<T>::hash();
   }
 
-  template <typename To, typename From>
-  void Add(std::unique_ptr<ErasedConverter> converter) {
-    Key key = get_key<To, From>();
-    assert(conversions_.find(key) == conversions_.end());
-    conversions_[key] = std::move(converter);
-  }
+  // template <typename To, typename From>
+  // void Add(std::unique_ptr<ErasedConverter> converter) {
+  //   Key key = get_key<To, From>();
+  //   assert(conversions_.find(key) == conversions_.end());
+  //   conversions_[key] = std::move(converter);
+  // }
 
   template <typename To, typename From>
   void Add(const Func<To, From>& func) {
-    Add<To, From>(std::make_unique<FunctionConverter<Ptr<To>, From>>(func));
+    Key key = get_key<To, From>();
+    AddErased(key, std::make_unique<FunctionConverter<Ptr<To>, From>>(func));
   }
 
   template <typename To, typename From>
@@ -228,18 +231,12 @@ class SimpleConverter {
  private:
   Conversions conversions_;
 
-  friend class SimpleConverterAttorney<Tpl>;
-};
-
-template <template <typename...> class Tpl>
-class SimpleConverterAttorney {
- public:
-  using Client = SimpleConverter<Tpl>;
-  static void AddErased(
-      Client* client, typename Client::Key key,
-      typename Client::ErasedConverter erased) {
-    client->AddErased(key, erased);
+  void AddErased(Key key, std::unique_ptr<ErasedConverter> converter) {
+    assert(conversions_.find(key) == conversions_.end());
+    conversions_[key] = std::move(converter);
   }
+
+  friend class SimpleConverterAttorney<Tpl>;
 };
 
 }  // namespace simple_converter

@@ -223,6 +223,10 @@ struct A {
 struct reg_info {
   // py::tuple params  ->  size_t (type_pack<Tpl<...>>::hash)
   py::dict mapping;
+
+  // For conversions.
+  typedef std::function<void(BaseConverter*, py::function)> PyFunc;
+  std::map<BaseConverter::Key, PyFunc> conv_mapping;
 };
 
 template <typename T, typename U>
@@ -249,18 +253,27 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
   m.def("call_method", static_cast<call_method_t>(&call_method));
 
   auto type_tup = py::make_tuple(py_type<T>(), py_type<U>());
-  size_t hash = BaseConverter::hash<C>();
+  size_t key = BaseConverter::hash<C>();
 
-  info->mapping[type_tup] = hash;
+  info->mapping[type_tup] = key;
 
-  tpl.attr("add_class")(
-      type_tup, base);
+  // Register base conversions.
+  using To = Base<U, T>;
+  using ToPtr = std::unique_ptr<To>;
+  using From = Base<T, U>;
 
-//   auto locals = py::dict("cls"_a=base, "type_tup"_a=type_tup);
-//   auto globals = m.attr("__dict__");
-//   py::eval<py::eval_statements>(R"(#
-// cls.type_tup = type_tup
-// )", globals, locals);
+  auto conv_key = BaseConverter::get_key<To, From>();
+
+  // Convert Py function to specific types, then erase.
+  auto func_converter = [](BaseConverter* converter, py::function py_func) {
+    using Func = std::function<ToPtr (const From&)>;
+    // Add type information.
+    auto cpp_func = py::cast<Func>(py_func);
+    converter->Add(cpp_func);
+  };
+  info->conv_mapping[conv_key] = func_converter;
+
+  tpl.attr("add_class")(type_tup, base);
 }
 
 PYBIND11_MODULE(_scalar_type, m) {
@@ -293,39 +306,10 @@ PYBIND11_MODULE(_scalar_type, m) {
         py::cast<size_t>(info.mapping[params_to]),
         py::cast<size_t>(info.mapping[params_from])
       };
-
-    BaseConverter::ErasedConverter erased =
-        [key, py_converter](const void* from_raw) {
-      // Cheat: If this is called from Python, assume it is a registered instance.
-      cout << "cpp.1. Attempting conversion" << endl;
-
-      // See: get_object_handle
-      const auto& internals = py::detail::get_internals();
-      auto iter = internals.registered_instances.find(from_raw);
-      assert(iter != internals.registered_instances.end());
-
-      py::handle py_from((PyObject*)iter->second);
-      cout << "cpp.2. Calling python" << endl;
-      py::object py_to = py_converter(py_from);
-
-      // We know that this should be a C++ object. Return the void* from this instance.
-
-      cout << "cpp.3. Returning" << endl;
-      // // NOTE: Just using type_caster_generic::load's method.
-      auto inst = reinterpret_cast<py::detail::instance*>(py_to.ptr());
-      void* value = inst->get_value_and_holder().value_ptr();
-
-      // // TODO: Memory management?
-      // // How to maintain reference information pass erasure???
-      // // This is a BAD hack.
-      // // py_to.inc_ref();
-      // // py_to.ptr() = nullptr;
-      // inst->owned = false;
-
-      return value;
-    };
-
-    SimpleConverterAttorney<Base>::AddErased(self, key, erased);
+    // Allow pybind to convert the lambdas.
+    auto func_converter = info.conv_mapping[key];
+    // Now register the converter.
+    func_converter(self, py_converter);
   };
 
   m.def("do_convert", &do_convert);
