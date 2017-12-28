@@ -12,6 +12,7 @@
 #include <pybind11/eval.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/functional.h>
 
 #include "cpp/name_trait.h"
 #include "cpp/simple_converter.h"
@@ -266,7 +267,7 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
 
   // Convert Py function to specific types, then erase.
   auto func_converter = [](BaseConverter* converter, py::function py_func) {
-    using Func = std::function<ToPtr (const From&)>;
+    using Func = std::function<ToPtr(const From&)>;
     // Add type information.
     auto cpp_func = py::cast<Func>(py_func);
     converter->Add(cpp_func);
@@ -307,7 +308,7 @@ PYBIND11_MODULE(_scalar_type, m) {
         py::cast<size_t>(info.mapping[params_from])
       };
     // Allow pybind to convert the lambdas.
-    auto func_converter = info.conv_mapping[key];
+    auto func_converter = info.conv_mapping.at(key);
     // Now register the converter.
     func_converter(self, py_converter);
   };
