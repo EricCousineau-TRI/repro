@@ -130,10 +130,11 @@ std::unique_ptr<Base<double, int>> do_convert(const Base<int, double>& value) {
 
 
 // How can this work?
-std::unique_ptr<Base<double, int>> take_ownership(py::function func) {
-  py::handle out_py = func();
-  Base<double, int>* out = py::cast<Base<double, int>*>(out_py);
-  return std::unique_ptr<Base<double, int>>(out);
+std::unique_ptr<Base<double, int>> take_ownership(py::function factory) {
+  cout << "cpp call" << endl;
+  py::object out_py = factory();
+  cout << "cpp convert" << endl;
+  return py::cast<std::unique_ptr<Base<double, int>>>(out_py);
 }
 
 /// Retuns the PyTypeObject from the resultant expression type.

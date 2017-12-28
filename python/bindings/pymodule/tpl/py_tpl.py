@@ -27,8 +27,6 @@ class Template(object):
         if len(param) == 1 and param[0] == []:
             assert self._param_default is not None
             param = self._param_default
-        print(param)
-        # print("\n".join(self._cls_map.keys()))
         cls = self._cls_map[param]
         return cls
 

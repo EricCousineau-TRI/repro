@@ -42,11 +42,11 @@ def _ChildTpl_factory(T, U):
                 print("Gruhh: {}".format(other))
                 Base.__init__(self, other, _Child_converter())
             else:
+                print(Base)
                 print(args)
                 self._init(*args, **kwargs)
 
         def _init(self, t, u):
-            print(t, u)
             Base.__init__(self, t, u, _Child_converter())
 
         def pure(self, t):
@@ -141,9 +141,15 @@ st.call_method(c)
 st.call_method(cc)
 
 print("---")
-func = lambda: ChildTpl[float, int](6.5, 3)
+def factory():
+    out = ChildTpl[float, int](6.5, 3)
+    print(out)
+    return out
+print("Anon")
+owne = factory()
 print("Check")
-owne = st.take_ownership(func)
+owne = st.take_ownership(factory)
+print("dispatch")
 owne.dispatch(3.5)
 print("Good")
 
