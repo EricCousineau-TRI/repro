@@ -156,16 +156,64 @@ struct get_py_types {
   }
 };
 
-template <template <...> class Tpl, typename ToPack, typename FromPack>
-void DoRegisterConversion(auto& py_cls, ToPack to_pack, FromPack from_pack) {
+
+template <
+    template <...> class Tpl, typename AddTpl,
+    typename MetaPack, size_t ... Is>
+void RegisterInstantiations(
+    py::module m, py::object tpl, const AddTpl& register,
+    MetaPack packs,
+    std::integer_sequence<Is...> = typename MetaPack::sequence{}) {
+  // Add conversion mechanisms.
+  tpl.attr("_add_py_converter_map") = py::dict();
+  // For each type: Do registration, then register converters.
+  DoRegisterInstantiation<Tpl>(
+      m, tpl, register,
+      MetaPack::get_type<Is>{},  // Instantiation type.
+      MetaPack::all_except<Is>{}  // Conversion type.
+      )...;
+}
+
+
+
+template <
+    template <...> class Tpl, typename AddTpl,
+    typename Pack, typename OtherMetaPack>
+void DoRegisterInstantiation(
+    py::module m, py::object tpl, const AddTpl& register,
+    Pack pack, OtherMetaPack other_packs) {
+  // Register instantiation in `pybind`, using `auto`-friendly syntax.
+  auto py_cls = register(pack, other_packs);
+  // Register template class `py_tpl`.
+  auto type_tup = typename Pack::bind<get_py_types>::run();
+  tpl.attr("add_class")(type_tup, py_cls);
+}
+
+
+template <
+    template <...> class Tpl, typename Converter,
+    typename ToPack,
+    typename FromMetaPack, int ... Is>
+void RegisterConversions(
+    auto& py_cls, ToPack to_pack, FromMetaPack from_packs,
+    std::integer_sequence<Is...> = typename FromMetaPack::sequence{}) {
+  DoRegisterConversion<Tpl, Converter>(
+      py_cls, to_pack, typename FromMetaPack::get_type<Is>{})...;
+}
+
+
+template <
+    template <...> class Tpl, typename Converter,
+    typename ToPack, typename FromPack>
+void DoRegisterConversion(
+    auto& py_cls, ToPack to_pack, FromPack from_pack) {
   // For each conversion available:
   // Register base conversion(s).
   using To = typename ToPack::bind<Tpl>;
   auto to_tup = typename ToPack::bind<get_py_types>::run();
   using ToPtr = std::unique_ptr<To>;
   using From = typename FromPack::bind<Tpl>;
-  // TODO: Defer this (if ever needed).
-  using Converter = BaseConverter;
+  auto from_tup = typename FromPack::bind<get_py_types>::run();
   // Add Python converter function, but bind using BaseT++ overloads via pybind.
   auto add_py_converter = [](Converter* converter, py::function py_func) {
     // Add type information.
@@ -183,33 +231,7 @@ void DoRegisterConversion(auto& py_cls, ToPack to_pack, FromPack from_pack) {
   // End: Scalar conversion.
 }
 
-template <
-    template <...> class Tpl, int typename AddTpl,
-    typename ... Pack, typename ... Packs>
-void DoRegisterInstantiation(
-    py::module m, py::object tpl, const AddTpl& register,
-    Pack pack, Packs... other_packs) {
-  // Register instantiation in `pybind`, using `auto`-friendly syntax.
-  auto py_cls = register(pack);
-  // Register template class `py_tpl`.
-  auto type_tup = typename Pack::bind<get_py_types>::run();
-  tpl.attr("add_class")(type_tup, py_cls);
 
-  // Register available conversions.
-  DoRegisterConversion<Tpl>(py_cls, pack, other_packs::get_type<Is>)...;
-}
-
-template <template <...> class Tpl, typename AddTpl, typename ... Packs>
-void RegisterInstantiations(
-    py::module m, py::object tpl, const AddTpl& register,
-    Packs... packs) {
-  // Add conversion mechanisms.
-  tpl.attr("_add_py_converter_map") = py::dict();
-  using MetaPack = type_pack<Packs...>;
-  // For each type: Do registration, then register converters.
-  DoRegisterInstantiation<Tpl>(
-    m, tpl, register, MetaPack::get_type<Is>{}, MetaPack::all_except<Is>{})...;
-}
 
 
 PYBIND11_MODULE(_scalar_type, m) {
@@ -240,9 +262,9 @@ PYBIND11_MODULE(_scalar_type, m) {
   m.attr("BaseTpl") = tpl;
 
   // Add instantiations and conversion mechanisms.
-  auto base_py = [](auto param_tag) {
+  auto base_py = [](auto param_pack, auto other_param_packs) {
     // Extract parameters.
-    using Pack = decltype(param_tag);
+    using Pack = decltype(param_pack);
     using T = typename Pack::get_type<0>;
     using U = typename Pack::get_type<1>;
     // Typedef classes.
@@ -264,13 +286,19 @@ PYBIND11_MODULE(_scalar_type, m) {
     // Can't get `overload_cast` to infer `Return` type.
     // Have to explicitly cast... :(
     m.def("call_method", static_cast<void(*)(const BaseT&)>(&call_method));
+
+    // Register conversions.
+    RegisterConversions<Base, BaseConverter>(
+        py_cls, param_pack, other_param_packs);
     return py_cls;
   };
 
   RegisterInstantiations<Base>(
     m, base_py, tpl,
-    type_pack<int, double>{},
-    type_pack<double, int>{});
+    type_pack<
+      type_pack<int, double>,
+      type_pack<double, int>
+    >{});
 
   // Default instantiation.
   m.attr("Base") = tpl.attr("get_class")();
