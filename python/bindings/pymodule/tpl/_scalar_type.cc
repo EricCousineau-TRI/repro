@@ -150,19 +150,20 @@ std::unique_ptr<Base<double, int>> take_ownership(py::function factory) {
 }
 
 template <typename T, typename U>
-void register_base(py::module m, py::object tpl) {
-  string name = Base<T, U>::py_name();
-  typedef Base<T, U> C;
-  typedef PyBase<T, U> PyC;
-  py::class_<C, PyC> base(m, name.c_str());
+void BaseTplInstantiation(py::module m, py::object tpl) {
+  typedef Base<T, U> Cls;
+  typedef PyBase<T, U> PyCls;
+  // This name will be overwritten.
+  string name = nice_type_name<Cls>();
+  py::class_<Cls, PyCls> base(m, name.c_str());
   base
     .def(py::init<T, U, std::unique_ptr<BaseConverter>>(),
          py::arg("t"), py::arg("u"), py::arg("converter") = nullptr)
-    .def("t", &C::t)
-    .def("u", &C::u)
-    .def("pure", &C::pure)
-    .def("optional", &C::optional)
-    .def("dispatch", &C::dispatch);
+    .def("t", &Cls::t)
+    .def("u", &Cls::u)
+    .def("pure", &Cls::pure)
+    .def("optional", &Cls::optional)
+    .def("dispatch", &Cls::dispatch);
 
   const TypeRegistry& type_registry = TypeRegistry::GetPyInstance();
 
@@ -170,19 +171,17 @@ void register_base(py::module m, py::object tpl) {
   auto type_tup = type_registry.GetPyTypes<T, U>();
   tpl.attr("add_class")(type_tup, base);
 
-  // // Can't figure this out...
   // Can't get `overload_cast` to infer `Return` type.
   // Have to explicitly cast... :(
-  typedef void (*call_method_t)(const Base<T, U>&);
-  m.def("call_method", static_cast<call_method_t>(&call_method));
+  m.def("call_method", static_cast<void(*)(const Cls&)>(&call_method));
 
   // For each conversion available:
   // Register base conversion(s).
-  using To = C;
+  using To = Cls;
   using ToPtr = std::unique_ptr<To>;
   using From = Base<U, T>;
   auto from_tup = type_registry.GetPyTypes<U, T>();
-  // Add Python converter function, but bind using C++ overloads via pybind.
+  // Add Python converter function, but bind using Cls++ overloads via pybind.
   auto add_py_converter = [](BaseConverter* converter, py::function py_func) {
     // Add type information.
     using Func = std::function<ToPtr(const From&)>;
@@ -210,8 +209,8 @@ PYBIND11_MODULE(_scalar_type, m) {
   m.attr("BaseTpl") = tpl;
   // Add instantiations and conversion mechanisms.
   tpl.attr("_add_py_converter_map") = py::dict();
-  register_base<double, int>(m, tpl);
-  register_base<int, double>(m, tpl);
+  BaseTplInstantiation<double, int>(m, tpl);
+  BaseTplInstantiation<int, double>(m, tpl);
   // Default instantiation.
   m.attr("Base") = tpl.attr("get_class")();
   // Register BaseConverter...
