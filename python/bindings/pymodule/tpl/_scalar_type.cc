@@ -16,6 +16,7 @@
 
 #include "cpp/name_trait.h"
 #include "cpp/simple_converter.h"
+#include "python/bindings/pymodule/tpl/cpp_tpl_types.h"
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -148,79 +149,6 @@ std::unique_ptr<Base<double, int>> take_ownership(py::function factory) {
   return py::cast<std::unique_ptr<Base<double, int>>>(std::move(out_py));
 }
 
-/// Retuns the PyTypeObject from the resultant expression type.
-/// @note This may incur a copy due to implementation details.
-template <typename T>
-py::handle py_type_eval(const T& value) {
-  auto locals = py::dict("model_value"_a=value);
-  return py::eval("type(model_value)", py::globals(), locals);
-}
-
-template <typename T, bool is_default_constructible = false>
-struct py_type_impl {
-  static py::handle run() {
-    // Check registered C++ types.
-
-    // NOTE: This seems to be implemented by `get_type_info(type_info)
-    const auto& internals = py::detail::get_internals();
-    const auto& types_cpp = internals.registered_types_cpp;
-    auto iter = types_cpp.find(std::type_index(typeid(T)));
-    if (iter != types_cpp.end()) {
-      auto info = static_cast<const py::detail::type_info*>(iter->second);
-      return py::handle((PyObject*)info->type);
-    } else {
-      return py::handle();
-    }
-  }
-};
-
-template <typename T>
-struct py_type_impl<T, true> {
-  static py::handle run() {
-    // First check registration.
-    py::handle attempt = py_type_impl<T, false>::run();
-    if (attempt) {
-      return attempt;
-    } else {
-      // Next, check through default construction and using cast
-      // implementations.
-      try {
-        return py_type_eval(T{});
-      } catch (const py::cast_error&) {
-        return py::handle();
-      }
-    }
-  }
-};
-
-// http://pybind11.readthedocs.io/en/stable/advanced/pycpp/object.html#casting-back-and-forth
-// http://pybind11.readthedocs.io/en/stable/advanced/pycpp/utilities.html
-// http://pybind11.readthedocs.io/en/stable/advanced/misc.html
-
-// registered_types_py
-// registered_types_cpp
-// registered_instances
-
-/// Gets the PyTypeObject representing the Python-compatible type for `T`.
-/// @note If this is a custom type, ensure that it has been fully registered
-/// before calling this.
-/// @note If this is a builtin type, note that some information may be lost.
-///   e.g. T=vector<int>  ->  <type 'list'>
-///        T=int64_t      ->  <type 'long'>
-///        T=int16_t      ->  <type 'long'>
-///        T=double       ->  <type 'float'>
-///        T=float        ->  <type 'float'>
-template <typename T>
-py::handle py_type() {
-  py::handle type =
-        py_type_impl<T, std::is_default_constructible<T>::value>::run();
-  if (type) {
-    return type;
-  } else {
-    throw std::runtime_error("Could not find type of: " + py::type_id<T>());
-  }
-}
-
 struct A {
   explicit A(int x) {}
 };
@@ -228,7 +156,6 @@ struct A {
 struct reg_info {
   // py::tuple params  ->  size_t (type_pack<Tpl<...>>::hash)
   py::dict mapping;
-
   // For conversions.
   typedef std::function<void(BaseConverter*, py::function)> PyFunc;
   std::map<BaseConverter::Key, PyFunc> conv_mapping;
@@ -249,8 +176,14 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
     .def("optional", &C::optional)
     .def("dispatch", &C::dispatch);
 
+  auto tr_module = py::module::import("pymodule.tpl.cpp_tpl_types");
+  py::object type_registry_py = tr_module.attr("type_registry");
+  const TypeRegistry* type_registry =
+      py::cast<const TypeRegistry*>(type_registry_py);
+
   // Register template class.
-  auto type_tup = py::make_tuple(py_type<T>(), py_type<U>());
+  auto type_tup = py::make_tuple(
+      type_registry->GetPyType<T>(), type_registry->GetPyType<U>());
   tpl.attr("add_class")(type_tup, base);
 
   // // Can't figure this out...

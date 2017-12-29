@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 # Template definitions.
+from pymodule.tpl.cpp_tpl_types import type_registry
 
 def _tpl_name(name, param):
-    param_str = [param.__name__ for param in param]
+    param_str = map(type_registry.GetCppName, param)
     return '{}[{}]'.format(name, ', '.join(param_str))
 
 

@@ -19,7 +19,7 @@ def _get_type_name(t):
   RegisterCommon();
 }
 
-py::handle TypeRegistry::DoGetPyType(const std::type_info& tinfo) {
+py::handle TypeRegistry::DoGetPyType(const std::type_info& tinfo) const {
   // Check if it's a custom-registered type.
   size_t cpp_key = std::type_index(tinfo).hash_code();
   auto iter = cpp_to_py_.find(cpp_key);
@@ -34,13 +34,13 @@ py::handle TypeRegistry::DoGetPyType(const std::type_info& tinfo) {
   }
 }
 
-py::handle TypeRegistry::GetPyTypeCanonical(py::handle py_type) {
+py::handle TypeRegistry::GetPyTypeCanonical(py::handle py_type) const {
   // Since there's no easy / good way to expose C++ type id's to Python,
   // just canonicalize Python types.
   return py_to_py_canonical_.attr("get")(py_type, py_type);
 }
 
-py::str TypeRegistry::GetCppName(py::handle py_type) {
+py::str TypeRegistry::GetCppName(py::handle py_type) const {
   py::handle py_type_fin = GetPyTypeCanonical(py_type);
   py::object out = py_name_.attr("get")(py_type_fin);
   if (out.is(py::none())) {
@@ -73,7 +73,7 @@ void TypeRegistry::RegisterCommon() {
   Register<int>("int, np.int32, ctypes.c_int32");
 }
 
-py::object TypeRegistry::eval(const std::string& expr) {
+py::object TypeRegistry::eval(const std::string& expr) const {
   return py::eval(expr, globals_, locals_);
 }
 

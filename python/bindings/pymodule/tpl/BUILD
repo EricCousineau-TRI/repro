@@ -16,10 +16,12 @@ pybind11_module(
     package_dir = "../..",
     py_deps = [
         ":py_tpl",
+        ":cpp_tpl_types",
     ],
     deps = [
         "//cpp:name_trait",
         "//cpp:simple_converter",
+        ":cpp_tpl_types_cc",
     ],
 )
 
