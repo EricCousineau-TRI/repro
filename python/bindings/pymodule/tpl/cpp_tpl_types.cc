@@ -95,6 +95,8 @@ void TypeRegistry::RegisterCommon() {
   Register<double>("float, np.double, ctypes.c_double");
   Register<float>("np.float32, ctypes.c_float");
   Register<int>("int, np.int32, ctypes.c_int32");
+  Register<uint32_t>("np.uint32, ctypes.c_uint32", "uint32_t");
+  Register<int64_t>("np.int64, ctypes.c_int64", "int64_t");
 }
 
 py::object TypeRegistry::eval(const std::string& expr) const {
