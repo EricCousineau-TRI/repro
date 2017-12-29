@@ -32,6 +32,8 @@ class TypeRegistry {
 
   py::str GetCppName(py::handle py_type) const;
 
+  py::tuple GetCppNames(py::tuple py_types) const;
+
  private:
   py::handle DoGetPyType(const std::type_info& tinfo) const;
 

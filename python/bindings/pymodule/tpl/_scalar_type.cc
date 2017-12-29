@@ -155,7 +155,7 @@ struct A {
 
 struct reg_info {
   // For conversions.
-  py::dict func_converter_map;
+  py::dict add_py_converter_map;
 };
 
 template <typename T, typename U>
@@ -191,16 +191,17 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
   using ToPtr = std::unique_ptr<To>;
   using From = Base<U, T>;
   auto from_tup = type_registry.GetPyTypes<U, T>();
-  // Convert Py function to specific types, then erase.
-  auto func_converter = [](BaseConverter* converter, py::function py_func) {
-    using Func = std::function<ToPtr(const From&)>;
+  // Add Python converter function, but bind using C++ overloads via pybind.
+  auto add_py_converter = [](BaseConverter* converter, py::function py_func) {
     // Add type information.
+    using Func = std::function<ToPtr(const From&)>;
     auto cpp_func = py::cast<Func>(py_func);
+    // Add using overload.
     converter->Add(cpp_func);
   };
   // Register function dispatch.
   auto key = py::make_tuple(type_tup, from_tup);
-  info->func_converter_map[key] = py::cpp_function(func_converter);
+  info->add_py_converter_map[key] = py::cpp_function(add_py_converter);
   // Add Python conversion.
   base
     .def(py::init<const From&>());
@@ -217,9 +218,8 @@ PYBIND11_MODULE(_scalar_type, m) {
 
   using arg = py::arg;
 
-  py::object tpl = tpl_cls("Base", py::eval("int, float"));
-  // No difference between (float, double) and (int16_t, int64_t)
-  // Gonna use other combos.
+  const TypeRegistry& type_registry = TypeRegistry::GetPyInstance();
+  py::object tpl = tpl_cls("Base", type_registry.GetPyTypes<int, double>());
   reg_info info;
   register_base<double, int>(m, &info, tpl);
   register_base<int, double>(m, &info, tpl);
@@ -239,15 +239,12 @@ PYBIND11_MODULE(_scalar_type, m) {
       [info](BaseConverter* self,
              py::tuple params_to, py::tuple params_from,
              py::function py_converter) {
-        const TypeRegistry& type_registry = TypeRegistry::GetPyInstance();
-        // Get Python-canonical keys.
-        auto key = py::make_tuple(
-            type_registry.GetPyTypesCanonical(params_to),
-            type_registry.GetPyTypesCanonical(params_from));
-        // Allow pybind to convert the lambdas.
-        auto func_converter = info.func_converter_map[key];
+        // Assume we have canonical Python types.
+        // Find our conversion function using these types.
+        auto key = py::make_tuple(params_to, params_from);
+        auto add_py_converter = info.add_py_converter_map[key];
         // Now register the converter.
-        func_converter(self, py_converter);
+        add_py_converter(self, py_converter);
       });
 
   m.def("take_ownership", &take_ownership);

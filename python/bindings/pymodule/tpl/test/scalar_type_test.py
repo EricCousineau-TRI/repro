@@ -71,6 +71,8 @@ ChildTpl.add_classes_with_factory(_ChildTpl_factory)
 def _Child_converter():
     converter = st.BaseConverter()
     def add_conversion(param_to, param_from):
+        param_to = ChildTpl.param_canonical(param_to)
+        param_from = ChildTpl.param_canonical(param_from)
         cls_from = ChildTpl.get_class(param_from)
         cls_to = ChildTpl.get_class(param_to)
         def func(obj_from):

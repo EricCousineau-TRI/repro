@@ -11,7 +11,7 @@ def _tpl_name(name, param):
 class Template(object):
     def __init__(self, name, param_default=None):
         self.name = name
-        self._param_default = tuple(param_default)
+        self._param_default = self.param_canonical(param_default)
         self._cls_map = {}
 
     def __getitem__(self, param):
@@ -29,16 +29,19 @@ class Template(object):
             assert self._param_default is not None
             param = self._param_default
         # Canonicalize.
-        param_canonical = tuple(map(type_registry.GetPyTypeCanonical, param))
-        cls = self._cls_map[param_canonical]
+        param = self.param_canonical(param)
+        cls = self._cls_map[param]
         return cls
+
+    def param_canonical(self, param):
+        return type_registry.GetPyTypesCanonical(param)
 
     def add_class(self, param, cls):
         """ Adds instantiation. """
         # Do not double-register existing instantiation.
         if is_tpl_cls(cls):
             self._check_tpl_cls(cls)
-        param = tuple(param)
+        param = self.param_canonical(param)
         # Ensure that we do not already have this tuple.
         assert param not in self._cls_map, "Param tuple already registered"
         # Add it.
@@ -62,6 +65,8 @@ class ChildTemplate(Template):
     def add_classes_with_factory(self, cls_factory, param_list=None):
         if param_list is None:
             param_list = self._parent._cls_map.keys()
+        else:
+            param_list = map(self.param_canonical, param_list)
         for param in param_list:
             cls = cls_factory(*param)
             # Sanity check.

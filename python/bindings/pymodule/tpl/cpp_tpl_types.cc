@@ -65,6 +65,14 @@ py::str TypeRegistry::GetCppName(py::handle py_type) const {
   return out;
 }
 
+py::tuple TypeRegistry::GetCppNames(py::tuple py_types) const {
+  py::tuple out(py_types.size());
+  for (int i = 0; i < py_types.size(); ++i) {
+    out[i] = GetCppName(py_types[i]);
+  }
+  return out;
+}
+
 template <typename T>
 void TypeRegistry::Register(
     const std::string& py_values,

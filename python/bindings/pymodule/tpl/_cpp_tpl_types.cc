@@ -7,7 +7,9 @@ PYBIND11_MODULE(_cpp_tpl_types, m) {
   type_registry_cls
     .def(py::init<>())
     .def("GetPyTypeCanonical", &TypeRegistry::GetPyTypeCanonical)
-    .def("GetCppName", &TypeRegistry::GetCppName);
+    .def("GetPyTypesCanonical", &TypeRegistry::GetPyTypesCanonical)
+    .def("GetCppName", &TypeRegistry::GetCppName)
+    .def("GetCppNames", &TypeRegistry::GetCppNames);
   // Create instance.
   m.attr("type_registry") = type_registry_cls();
 }
