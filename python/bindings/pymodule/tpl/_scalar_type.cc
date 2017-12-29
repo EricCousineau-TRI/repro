@@ -154,11 +154,8 @@ struct A {
 };
 
 struct reg_info {
-  // py::tuple params  ->  size_t (type_pack<Tpl<...>>::hash)
-  py::dict cpp_type_map;
   // For conversions.
-  typedef std::function<void(BaseConverter*, py::function)> PyFuncConverter;
-  std::map<BaseConverter::Key, PyFuncConverter> func_converter_map;
+  py::dict func_converter_map;
 };
 
 template <typename T, typename U>
@@ -176,14 +173,10 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
     .def("optional", &C::optional)
     .def("dispatch", &C::dispatch);
 
-  auto tr_module = py::module::import("pymodule.tpl.cpp_tpl_types");
-  py::object type_registry_py = tr_module.attr("type_registry");
-  const TypeRegistry* type_registry =
-      py::cast<const TypeRegistry*>(type_registry_py);
+  const TypeRegistry& type_registry = TypeRegistry::GetPyInstance();
 
   // Register template class.
-  auto type_tup = py::make_tuple(
-      type_registry->GetPyType<T>(), type_registry->GetPyType<U>());
+  auto type_tup = type_registry.GetPyTypes<T, U>();
   tpl.attr("add_class")(type_tup, base);
 
   // // Can't figure this out...
@@ -192,16 +185,12 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
   typedef void (*call_method_t)(const Base<T, U>&);
   m.def("call_method", static_cast<call_method_t>(&call_method));
 
-  // Begin: Scalar conversion
-  size_t key = BaseConverter::hash<C>();
-  info->cpp_type_map[type_tup] = key;
-
   // For each conversion available:
   // Register base conversion(s).
   using To = C;
   using ToPtr = std::unique_ptr<To>;
   using From = Base<U, T>;
-
+  auto from_tup = type_registry.GetPyTypes<U, T>();
   // Convert Py function to specific types, then erase.
   auto func_converter = [](BaseConverter* converter, py::function py_func) {
     using Func = std::function<ToPtr(const From&)>;
@@ -209,8 +198,10 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
     auto cpp_func = py::cast<Func>(py_func);
     converter->Add(cpp_func);
   };
-  auto conv_key = BaseConverter::get_key<To, From>();
-  info->func_converter_map[conv_key] = func_converter;
+  // Register function dispatch.
+  auto key = py::make_tuple(type_tup, from_tup);
+  info->func_converter_map[key] = py::cpp_function(func_converter);
+  // Add Python conversion.
   base
     .def(py::init<const From&>());
   // End: Scalar conversion.
@@ -248,13 +239,13 @@ PYBIND11_MODULE(_scalar_type, m) {
       [info](BaseConverter* self,
              py::tuple params_to, py::tuple params_from,
              py::function py_converter) {
-        // Get BaseConverter::Key from the paramerters.
-        BaseConverter::Key key {
-            py::cast<size_t>(info.cpp_type_map[params_to]),
-            py::cast<size_t>(info.cpp_type_map[params_from])
-          };
+        const TypeRegistry& type_registry = TypeRegistry::GetPyInstance();
+        // Get Python-canonical keys.
+        auto key = py::make_tuple(
+            type_registry.GetPyTypesCanonical(params_to),
+            type_registry.GetPyTypesCanonical(params_from));
         // Allow pybind to convert the lambdas.
-        auto func_converter = info.func_converter_map.at(key);
+        auto func_converter = info.func_converter_map[key];
         // Now register the converter.
         func_converter(self, py_converter);
       });

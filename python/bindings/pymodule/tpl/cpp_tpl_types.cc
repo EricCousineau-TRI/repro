@@ -19,6 +19,14 @@ def _get_type_name(t):
   RegisterCommon();
 }
 
+const TypeRegistry& TypeRegistry::GetPyInstance() {
+  auto tr_module = py::module::import("pymodule.tpl.cpp_tpl_types");
+  py::object type_registry_py = tr_module.attr("type_registry");
+  const TypeRegistry* type_registry =
+      py::cast<const TypeRegistry*>(type_registry_py);
+  return *type_registry;
+}
+
 py::handle TypeRegistry::DoGetPyType(const std::type_info& tinfo) const {
   // Check if it's a custom-registered type.
   size_t cpp_key = std::type_index(tinfo).hash_code();
@@ -38,6 +46,14 @@ py::handle TypeRegistry::GetPyTypeCanonical(py::handle py_type) const {
   // Since there's no easy / good way to expose C++ type id's to Python,
   // just canonicalize Python types.
   return py_to_py_canonical_.attr("get")(py_type, py_type);
+}
+
+py::tuple TypeRegistry::GetPyTypesCanonical(py::tuple py_types) const {
+  py::tuple out(py_types.size());
+  for (int i = 0; i < py_types.size(); ++i) {
+    out[i] = GetPyTypeCanonical(py_types[i]);
+  }
+  return out;
 }
 
 py::str TypeRegistry::GetCppName(py::handle py_type) const {

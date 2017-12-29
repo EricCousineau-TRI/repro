@@ -14,12 +14,21 @@ class TypeRegistry {
  public:
   TypeRegistry();
 
+  static const TypeRegistry& GetPyInstance();
+
   template <typename T>
   py::handle GetPyType() const {
     return DoGetPyType(typeid(T));
   }
 
+  template <typename ... Ts>
+  py::tuple GetPyTypes() const {
+    return py::make_tuple(GetPyType<Ts>()...);
+  }
+
   py::handle GetPyTypeCanonical(py::handle py_type) const;
+
+  py::tuple GetPyTypesCanonical(py::tuple py_types) const;
 
   py::str GetCppName(py::handle py_type) const;
 
