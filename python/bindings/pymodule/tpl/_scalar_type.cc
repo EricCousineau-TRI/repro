@@ -158,7 +158,22 @@ struct get_py_types {
 
 
 template <
-    template <...> class Tpl, typename AddTpl,
+    template <typename...> class Tpl, typename AddTpl,
+    typename Pack, typename OtherMetaPack>
+void DoRegisterInstantiation(
+    py::module m, py::object tpl,
+    const AddTpl& register,
+    Pack pack, OtherMetaPack other_packs) {
+  // Register instantiation in `pybind`, using `auto`-friendly syntax.
+  auto py_cls = register(pack, other_packs);
+  // Register template class `py_tpl`.
+  auto type_tup = typename Pack::template bind<get_py_types>::run();
+  tpl.attr("add_class")(type_tup, py_cls);
+}
+
+
+template <
+    template <typename...> class Tpl, typename AddTpl,
     typename MetaPack, size_t ... Is>
 void RegisterInstantiations(
     py::module m, py::object tpl, const AddTpl& register,
@@ -175,45 +190,18 @@ void RegisterInstantiations(
 }
 
 
-
 template <
-    template <...> class Tpl, typename AddTpl,
-    typename Pack, typename OtherMetaPack>
-void DoRegisterInstantiation(
-    py::module m, py::object tpl, const AddTpl& register,
-    Pack pack, OtherMetaPack other_packs) {
-  // Register instantiation in `pybind`, using `auto`-friendly syntax.
-  auto py_cls = register(pack, other_packs);
-  // Register template class `py_tpl`.
-  auto type_tup = typename Pack::bind<get_py_types>::run();
-  tpl.attr("add_class")(type_tup, py_cls);
-}
-
-
-template <
-    template <...> class Tpl, typename Converter,
-    typename ToPack,
-    typename FromMetaPack, int ... Is>
-void RegisterConversions(
-    auto& py_cls, ToPack to_pack, FromMetaPack from_packs,
-    std::integer_sequence<Is...> = typename FromMetaPack::sequence{}) {
-  DoRegisterConversion<Tpl, Converter>(
-      py_cls, to_pack, typename FromMetaPack::get_type<Is>{})...;
-}
-
-
-template <
-    template <...> class Tpl, typename Converter,
+    template <typename...> class Tpl, typename Converter,
     typename ToPack, typename FromPack>
 void DoRegisterConversion(
-    auto& py_cls, ToPack to_pack, FromPack from_pack) {
+    auto& py_cls, py::object tpl, ToPack to_pack, FromPack from_pack) {
   // For each conversion available:
   // Register base conversion(s).
-  using To = typename ToPack::bind<Tpl>;
-  auto to_tup = typename ToPack::bind<get_py_types>::run();
+  using To = typename ToPack::template bind<Tpl>;
+  auto to_tup = typename ToPack::template bind<get_py_types>::run();
   using ToPtr = std::unique_ptr<To>;
-  using From = typename FromPack::bind<Tpl>;
-  auto from_tup = typename FromPack::bind<get_py_types>::run();
+  using From = typename FromPack::template bind<Tpl>;
+  auto from_tup = typename FromPack::template bind<get_py_types>::run();
   // Add Python converter function, but bind using BaseT++ overloads via pybind.
   auto add_py_converter = [](Converter* converter, py::function py_func) {
     // Add type information.
@@ -229,6 +217,21 @@ void DoRegisterConversion(
   py_cls
     .def(py::init<const From&>());
   // End: Scalar conversion.
+}
+
+
+template <
+    template <typename...> class Tpl, typename Converter,
+    typename ToPack,
+    typename FromMetaPack, int ... Is>
+void RegisterConversions(
+    auto& py_cls, py::object tpl, ToPack to_pack, FromMetaPack from_packs,
+    std::integer_sequence<Is...> = typename FromMetaPack::sequence{}) {
+  // TODO(eric.cousineau): Just take all type packs, to minimize all the extra
+  // fluff.
+  DoRegisterConversion<Tpl, Converter>(
+      py_cls, to_pack,
+      typename FromMetaPack::template get_type<Is>{})...;
 }
 
 
@@ -262,11 +265,11 @@ PYBIND11_MODULE(_scalar_type, m) {
   m.attr("BaseTpl") = tpl;
 
   // Add instantiations and conversion mechanisms.
-  auto base_py = [](auto param_pack, auto other_param_packs) {
+  auto base_py = [m, tpl](auto param_pack, auto other_param_packs) {
     // Extract parameters.
     using Pack = decltype(param_pack);
-    using T = typename Pack::get_type<0>;
-    using U = typename Pack::get_type<1>;
+    using T = typename Pack::template get_type<0>;
+    using U = typename Pack::template get_type<1>;
     // Typedef classes.
     typedef Base<T, U> BaseT;
     typedef PyBase<T, U> PyBaseT;
@@ -289,7 +292,7 @@ PYBIND11_MODULE(_scalar_type, m) {
 
     // Register conversions.
     RegisterConversions<Base, BaseConverter>(
-        py_cls, param_pack, other_param_packs);
+        py_cls, tpl, param_pack, other_param_packs);
     return py_cls;
   };
 
