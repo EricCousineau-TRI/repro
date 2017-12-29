@@ -64,3 +64,12 @@ py_test_simple(
     size = "small",
     deps = [":ownership"],
 )
+
+cc_binary(
+    name = "check_types",
+    srcs = ["check_types.cc"],
+    deps = [
+        "//cpp:name_trait",
+        "//python/pybind11:include",
+    ],
+)
