@@ -118,7 +118,7 @@ class PyBase : public py::wrapper<Base<T, U>> {
 
   U pure(T value) const override {
     // Do NOT use `BWrap` here as pybind uses direct RTTI on the supplied type.
-    PYBIND11_OVERLOAD(U, BaseT, pure, value);
+    PYBIND11_OVERLOAD_PURE(U, BaseT, pure, value);
   }
   U optional(T value) const override {
     PYBIND11_OVERLOAD(U, BaseT, optional, value);
