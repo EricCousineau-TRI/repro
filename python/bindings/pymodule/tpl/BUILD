@@ -65,11 +65,29 @@ py_test_simple(
     deps = [":ownership"],
 )
 
-cc_binary(
-    name = "cpp_tpl_types",
-    srcs = ["cpp_tpl_types.cc"],
+cc_library(
+    name = "cpp_tpl_types_cc",
+    srcs = [
+        "cpp_tpl_types.h",
+        "cpp_tpl_types.cc",
+    ],
     deps = [
         "//cpp:name_trait",
         "//python/pybind11:include",
     ],
+)
+
+pybind11_module(
+    name = "cpp_tpl_types",
+    package_dir = "../..",
+    deps = [
+        ":cpp_tpl_types_cc",
+        "//cpp:simple_converter",
+    ],
+)
+
+py_test_simple(
+    name = "cpp_tpl_types_test",
+    size = "small",
+    deps = [":cpp_tpl_types"],
 )
