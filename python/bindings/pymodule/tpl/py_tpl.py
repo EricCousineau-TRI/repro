@@ -28,7 +28,9 @@ class Template(object):
         if len(param) == 1 and param[0] == []:
             assert self._param_default is not None
             param = self._param_default
-        cls = self._cls_map[param]
+        # Canonicalize.
+        param_canonical = tuple(map(type_registry.GetPyTypeCanonical, param))
+        cls = self._cls_map[param_canonical]
         return cls
 
     def add_class(self, param, cls):
