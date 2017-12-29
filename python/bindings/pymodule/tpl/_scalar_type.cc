@@ -149,13 +149,8 @@ std::unique_ptr<Base<double, int>> take_ownership(py::function factory) {
   return py::cast<std::unique_ptr<Base<double, int>>>(std::move(out_py));
 }
 
-struct reg_info {
-  // For conversions.
-  py::dict add_py_converter_map;
-};
-
 template <typename T, typename U>
-void register_base(py::module m, reg_info* info, py::object tpl) {
+void register_base(py::module m, py::object tpl) {
   string name = Base<T, U>::py_name();
   typedef Base<T, U> C;
   typedef PyBase<T, U> PyC;
@@ -197,7 +192,7 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
   };
   // Register function dispatch.
   auto key = py::make_tuple(type_tup, from_tup);
-  info->add_py_converter_map[key] = py::cpp_function(add_py_converter);
+  tpl.attr("_add_py_converter_map")[key] = py::cpp_function(add_py_converter);
   // Add Python conversion.
   base
     .def(py::init<const From&>());
@@ -212,33 +207,31 @@ PYBIND11_MODULE(_scalar_type, m) {
 
   const TypeRegistry& type_registry = TypeRegistry::GetPyInstance();
   py::object tpl = tpl_cls("Base", type_registry.GetPyTypes<int, double>());
-  reg_info info;
-  register_base<double, int>(m, &info, tpl);
-  register_base<int, double>(m, &info, tpl);
-  // Add to module.
   m.attr("BaseTpl") = tpl;
+  // Add instantiations and conversion mechanisms.
+  tpl.attr("_add_py_converter_map") = py::dict();
+  register_base<double, int>(m, tpl);
+  register_base<int, double>(m, tpl);
   // Default instantiation.
   m.attr("Base") = tpl.attr("get_class")();
-
-  m.def("do_convert", &do_convert);
-
   // Register BaseConverter...
   py::class_<BaseConverter> base_converter(m, "BaseConverter");
   base_converter
     .def(py::init<>())
     .def(
       "Add",
-      [info](BaseConverter* self,
+      [tpl](BaseConverter* self,
              py::tuple params_to, py::tuple params_from,
              py::function py_converter) {
         // Assume we have canonical Python types.
         // Find our conversion function using these types.
         auto key = py::make_tuple(params_to, params_from);
-        auto add_py_converter = info.add_py_converter_map[key];
+        auto add_py_converter = tpl.attr("_add_py_converter_map")[key];
         // Now register the converter.
         add_py_converter(self, py_converter);
       });
 
+  m.def("do_convert", &do_convert);
   m.def("take_ownership", &take_ownership);
 }
 
