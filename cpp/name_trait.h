@@ -4,9 +4,37 @@
 #include <utility>
 #include <sstream>
 
+#include <typeinfo>
+
+// __GNUG__ is defined both for gcc and clang. See:
+// https://gcc.gnu.org/onlinedocs/libstdc++/libstdc++-html-USERS-4.3/a01696.html
+#if defined(__GNUG__)
+/* clang-format off */
+#include <cxxabi.h>
+#include <cstdlib>
+/* clang-format on */
+#endif
+
 // #include <typeinfo>
 // // typeinfo(T).name() - mangled
 // // typeid(std::declval<T>()).name() - mangled
+
+template <typename T>
+std::string nice_type_name() {
+  // From drake::NiceTypeName
+  const char* typeid_name = typeid(T).name();
+#if defined(__GNUG__)
+  int status = -100;  // just in case it doesn't get set
+  char* ret = abi::__cxa_demangle(typeid_name, NULL, NULL, &status);
+  const char* const demangled_name = (status == 0) ? ret : typeid_name;
+  std::string demangled_string(demangled_name);
+  if (ret) std::free(ret);
+  return demangled_string;
+#else
+  // On other platforms, we hope the typeid name is not mangled.
+  return typeid_name;
+#endif
+}
 
 // Need to specify extra argument to permit partial specializaiton matching
 // for enable_if<>
