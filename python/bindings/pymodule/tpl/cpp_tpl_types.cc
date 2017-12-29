@@ -12,11 +12,8 @@ TypeRegistry::TypeRegistry() {
 import numpy as np; import ctypes
 
 def _get_type_name(t):
-  # Gets module + type name as a string.
-  prefix = t.__module__ + "."
-  if prefix == "__main__.":
-    prefix = ""
-  return prefix + t.__name__
+  # Gets scoped type name as a string.
+  return t.__module__ + "." + t.__name__
 )""");
 
   RegisterCommon();
@@ -71,10 +68,9 @@ void TypeRegistry::RegisterCommon() {
   // Unfortunately, this is hard to obtain from `pybind11`.
   Register<bool>("bool,");
   Register<std::string>("str,", "std::string");
-  // Use numpy values by default.
-  Register<double>("np.double, float, ctypes.c_double");
+  Register<double>("float, np.double, ctypes.c_double");
   Register<float>("np.float32, ctypes.c_float");
-  Register<int>("np.int32, int, ctypes.c_int32");
+  Register<int>("int, np.int32, ctypes.c_int32");
 }
 
 py::object TypeRegistry::eval(const std::string& expr) {
