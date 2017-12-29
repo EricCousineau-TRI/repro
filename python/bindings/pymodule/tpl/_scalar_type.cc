@@ -149,10 +149,6 @@ std::unique_ptr<Base<double, int>> take_ownership(py::function factory) {
   return py::cast<std::unique_ptr<Base<double, int>>>(std::move(out_py));
 }
 
-struct A {
-  explicit A(int x) {}
-};
-
 struct reg_info {
   // For conversions.
   py::dict add_py_converter_map;
@@ -211,12 +207,8 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
 PYBIND11_MODULE(_scalar_type, m) {
   m.doc() = "Simple check on scalar / template types";
 
-  py::class_<A> a(m, "A");
-
   py::handle py_tpl = py::module::import("pymodule.tpl.py_tpl");
   py::handle tpl_cls = py_tpl.attr("Template");
-
-  using arg = py::arg;
 
   const TypeRegistry& type_registry = TypeRegistry::GetPyInstance();
   py::object tpl = tpl_cls("Base", type_registry.GetPyTypes<int, double>());
