@@ -66,8 +66,8 @@ py_test_simple(
 )
 
 cc_binary(
-    name = "check_types",
-    srcs = ["check_types.cc"],
+    name = "cpp_tpl_types",
+    srcs = ["cpp_tpl_types.cc"],
     deps = [
         "//cpp:name_trait",
         "//python/pybind11:include",
