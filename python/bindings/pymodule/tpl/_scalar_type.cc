@@ -155,10 +155,10 @@ struct A {
 
 struct reg_info {
   // py::tuple params  ->  size_t (type_pack<Tpl<...>>::hash)
-  py::dict mapping;
+  py::dict cpp_type_map;
   // For conversions.
-  typedef std::function<void(BaseConverter*, py::function)> PyFunc;
-  std::map<BaseConverter::Key, PyFunc> conv_mapping;
+  typedef std::function<void(BaseConverter*, py::function)> PyFuncConverter;
+  std::map<BaseConverter::Key, PyFuncConverter> func_converter_map;
 };
 
 template <typename T, typename U>
@@ -194,7 +194,7 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
 
   // Begin: Scalar conversion
   size_t key = BaseConverter::hash<C>();
-  info->mapping[type_tup] = key;
+  info->cpp_type_map[type_tup] = key;
 
   // For each conversion available:
   // Register base conversion(s).
@@ -210,7 +210,7 @@ void register_base(py::module m, reg_info* info, py::object tpl) {
     converter->Add(cpp_func);
   };
   auto conv_key = BaseConverter::get_key<To, From>();
-  info->conv_mapping[conv_key] = func_converter;
+  info->func_converter_map[conv_key] = func_converter;
   base
     .def(py::init<const From&>());
   // End: Scalar conversion.
@@ -250,11 +250,11 @@ PYBIND11_MODULE(_scalar_type, m) {
              py::function py_converter) {
         // Get BaseConverter::Key from the paramerters.
         BaseConverter::Key key {
-            py::cast<size_t>(info.mapping[params_to]),
-            py::cast<size_t>(info.mapping[params_from])
+            py::cast<size_t>(info.cpp_type_map[params_to]),
+            py::cast<size_t>(info.cpp_type_map[params_from])
           };
         // Allow pybind to convert the lambdas.
-        auto func_converter = info.conv_mapping.at(key);
+        auto func_converter = info.func_converter_map.at(key);
         // Now register the converter.
         func_converter(self, py_converter);
       });
