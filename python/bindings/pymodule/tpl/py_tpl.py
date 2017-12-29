@@ -11,7 +11,9 @@ def _tpl_name(name, param):
 class Template(object):
     def __init__(self, name, param_default=None):
         self.name = name
-        self._param_default = self.param_canonical(param_default)
+        if isinstance(param_default, tuple) or isinstance(param_default, list):
+            param_default = self.param_canonical(param_default)
+        self._param_default = param_default
         self._cls_map = {}
 
     def __getitem__(self, param):

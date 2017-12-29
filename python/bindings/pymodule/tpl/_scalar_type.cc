@@ -204,13 +204,12 @@ PYBIND11_MODULE(_scalar_type, m) {
   py::handle py_tpl = py::module::import("pymodule.tpl.py_tpl");
   py::handle tpl_cls = py_tpl.attr("Template");
 
-  const TypeRegistry& type_registry = TypeRegistry::GetPyInstance();
-  py::object tpl = tpl_cls("Base", type_registry.GetPyTypes<int, double>());
+  py::object tpl = tpl_cls("Base", "first_registered");
   m.attr("BaseTpl") = tpl;
   // Add instantiations and conversion mechanisms.
   tpl.attr("_add_py_converter_map") = py::dict();
-  BaseTplInstantiation<double, int>(m, tpl);
   BaseTplInstantiation<int, double>(m, tpl);
+  BaseTplInstantiation<double, int>(m, tpl);
   // Default instantiation.
   m.attr("Base") = tpl.attr("get_class")();
   // Register BaseConverter...
