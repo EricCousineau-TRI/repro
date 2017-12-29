@@ -167,10 +167,7 @@ class SimpleConverter {
     assert(iter != conversions_.end());
     ErasedConverter erased = iter->second;
     To* out = static_cast<To*>(erased(&from));
-    // To* out = dynamic_cast<To*>(erased(&from));
     assert(out != nullptr);
-    // TEMP
-    std::cout << out->t() << " -- " << out->u() << std::endl;
     return std::unique_ptr<To>(out);
   }
 
@@ -183,17 +180,6 @@ class SimpleConverter {
   }
 
   friend class SimpleConverterAttorney<Tpl>;
-};
-
-template <template <typename...> class Tpl>
-class SimpleConverterAttorney {
- public:
-  using Client = SimpleConverter<Tpl>;
-  static void AddErased(
-      Client* client, typename Client::Key key,
-      typename Client::ErasedConverter erased) {
-    client->AddErased(key, erased);
-  }
 };
 
 }  // namespace simple_converter

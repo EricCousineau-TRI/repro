@@ -5,24 +5,17 @@ from __future__ import print_function, absolute_import
 from pymodule.tpl import scalar_type as st
 from pymodule.tpl.py_tpl import Template, ChildTemplate, is_tpl_cls, is_tpl_of
 
-# BaseTpl = Template(
-#     name = 'Base',
-#     param_names = ('T', 'U'),
-#     param_defaults = (int, float))
-
-# BaseTpl.add_instantiation(
-#     (int, float), st.Base__T_int__U_double)
-# BaseTpl.add_instantiation(
-#     (float, int), st.Base__T_double__U_int)
+import sys
+sys.stderr = sys.stdout
 
 # # Default class.
-# Base = BaseTpl()
 BaseTpl = st.BaseTpl
 Base = st.Base
 
+
 print(Base)
-print(BaseTpl(int, float))
-print(BaseTpl(float, int))
+print(BaseTpl[int, float])
+print(BaseTpl[float, int])
 assert is_tpl_cls(Base)
 assert is_tpl_of(Base, BaseTpl)
 
@@ -31,75 +24,83 @@ class ChildDirect(Base):
     def __init__(self, t, u):
         Base.__init__(self, t, u)
     def pure(self, t):
-        print("py direct: pure")
+        print("py direct: pure [{}]".format(type(self).__name__))
         return 1.
     def optional(self, t):
-        print("py direct: optional")
+        print("py direct: optional [{}]".format(type(self).__name__))
         return 2.
 
 # Should only define these classes once.
-def _def_Child(T=int, U=float):
-    Base = BaseTpl(T, U)
+def _ChildTpl_factory(T, U):
+    Base = BaseTpl[T, U]
+
     class Child(Base):
-        def __init__(self, t, u, other=None):
-            # Add the same converter per instance.
-            if other is not None:
-                Base.__init__(self, other, _convert_Child())
+        def __init__(self, *args, **kwargs):
+            # Handle copy constructor overload:
+            if "copy_other" in kwargs:
+                copy_other = kwargs["copy_other"]
+                Base.__init__(self, copy_other)
             else:
-                Base.__init__(self, t, u, _convert_Child())
+                self._init(*args, **kwargs)
 
-        def pure(self, t):
+        def _init(self, t, u):
+            Base.__init__(self, t, u, _Child_converter())
+
+        def pure(self, value):
             print("py: pure [{}]".format(type(self).__name__))
-            return U(t)
+            return U(2 * value)
 
-        def optional(self, t):
+        def optional(self, value):
             print("py: optional [{}]".format(type(self).__name__))
-            return U(2 * t)
+            return U(3 * value)
 
         def do_to(self, Tc, Uc):
             # Scalar conversion.
-            ChildTc = ChildTpl(Tc, Uc)
-            out = ChildTc(Tc(self.t()), Uc(self.u()))
-            print("py.do_to:")
-            out.dispatch(Tc())
-            print("  {} - {}".format(out.t(), out.u()))
+            out = ChildTpl[Tc, Uc](copy_other=self)
             return out
+
     return Child
 
-def _convert_Child():
-    converter = st.BaseConverter()
-    def add_conversion(params_to, params_from):
-        cls_from = ChildTpl(*params_from)
-        cls_to = ChildTpl(*params_to)
-        def func(obj_from):
-            print("py.1: Sanity check")
-            assert isinstance(obj_from, cls_from)
-            print("py.2: Call method")
-            obj_to = obj_from.do_to(*params_to)
-            assert isinstance(obj_to, cls_to)
-            print("py.3: Return")
-            return obj_to
-        converter.Add(params_to, params_from, func)
-    add_conversion((int, float), (float, int))
-    add_conversion((float, int), (int, float))
-    return converter
 
 ChildTpl = ChildTemplate(
     name = 'Child',
     parent = BaseTpl)
+ChildTpl.add_classes_with_factory(_ChildTpl_factory)
 
-ChildTpl.add_instantiations_with_func(_def_Child)
+
+def _Child_converter():
+    converter = st.BaseConverter()
+    def add_conversion(param_to, param_from):
+        param_to = ChildTpl.param_canonical(param_to)
+        param_from = ChildTpl.param_canonical(param_from)
+        cls_from = ChildTpl.get_class(param_from)
+        cls_to = ChildTpl.get_class(param_to)
+        def func(obj_from):
+            print("py.1: Sanity check")
+            assert isinstance(obj_from, cls_from)
+            print("py.2: Call method")
+            obj_to = obj_from.do_to(*param_to)
+            assert isinstance(obj_to, cls_to)
+            print("py.3: Return")
+            return obj_to
+        converter.Add(param_to, param_from, func)
+    add_conversion((int, float), (float, int))
+    add_conversion((float, int), (int, float))
+    return converter
+
 
 # Default instantiation.
-Child = ChildTpl()
+print("WooH")
+Child = ChildTpl[[]]
+print("WooHHH")
 
 print(Child)
-print(ChildTpl(int, float))
-print(ChildTpl(float, int))
+print(ChildTpl[int, float])
+print(ChildTpl[float, int])
 
 # Check type identity persistence.
-print(Child == ChildTpl())
-print(ChildTpl(int, float) == ChildTpl(float, int))
+print(Child == ChildTpl[[]])
+print(ChildTpl[int, float] == ChildTpl[float, int])
 
 assert is_tpl_cls(Child)
 assert is_tpl_of(Child, ChildTpl)
@@ -107,7 +108,7 @@ assert is_tpl_of(Child, ChildTpl)
 # Check default instantiation.
 assert issubclass(Child, Base)
 # Check other instantiation.
-assert issubclass(ChildTpl(float, int), BaseTpl(float, int))
+assert issubclass(ChildTpl[float, int], BaseTpl[float, int])
 
 cd = ChildDirect(2, 5.5)
 print(type(cd))
@@ -135,13 +136,18 @@ st.call_method(c)
 st.call_method(cc)
 
 print("---")
-func = lambda: ChildTpl(float, int)(6.5, 3)
+def factory():
+    out = ChildTpl[float, int](6.5, 3)
+    print(out)
+    return out
 print("Check")
-owne = st.take_ownership(func)
+owne = st.take_ownership(factory)
+print("dispatch")
 owne.dispatch(3.5)
 print("Good")
 
 print("---")
+c.dispatch(3)
 cc_c = st.do_convert(c)
 print("Try dispatch")
 cc_c.dispatch(2.5)

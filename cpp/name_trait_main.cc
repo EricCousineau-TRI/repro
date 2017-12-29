@@ -26,7 +26,8 @@ int main() {
     << PRINT(name_trait<decltype("Hello"[0])>::name())
     << PRINT(name_trait<int[]>::name())
     << PRINT(name_trait<std::decay_t<const char&>>::name())
-    << PRINT(name_trait<std::decay_t<const char*&>>::name());
+    << PRINT(name_trait<std::decay_t<const char*&>>::name())
+    << PRINT(nice_type_name<std::iostream>());
     // << PRINT(name_trait<std::decay_t<std::remove_reference<const char*&>>>::name());
   return 0;
 }
