@@ -3,7 +3,7 @@ from __future__ import print_function, absolute_import
 
 # import unittest
 from pymodule.tpl import scalar_type as st
-from pymodule.tpl.py_tpl import Template, ChildTemplate, is_tpl_cls, is_tpl_of
+from pymodule.tpl.py_tpl import Template, is_tpl_cls, is_tpl_of
 
 import sys
 sys.stderr = sys.stdout
@@ -31,7 +31,8 @@ class ChildDirect(Base):
         return 2.
 
 # Should only define these classes once.
-def _ChildTpl_factory(T, U):
+def _ChildTpl_factory(param):
+    T, U = param
     Base = BaseTpl[T, U]
 
     class Child(Base):
@@ -62,7 +63,7 @@ def _ChildTpl_factory(T, U):
     return Child
 
 
-ChildTpl = ChildTemplate(
+ChildTpl = Template(
     name = 'Child',
     parent = BaseTpl)
 ChildTpl.add_classes_with_factory(_ChildTpl_factory)

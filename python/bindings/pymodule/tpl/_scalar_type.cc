@@ -204,7 +204,7 @@ PYBIND11_MODULE(_scalar_type, m) {
   py::handle py_tpl = py::module::import("pymodule.tpl.py_tpl");
   py::handle tpl_cls = py_tpl.attr("Template");
 
-  py::object tpl = tpl_cls("Base", "first_registered");
+  py::object tpl = tpl_cls("Base");
   m.attr("BaseTpl") = tpl;
   // Add instantiations and conversion mechanisms.
   tpl.attr("_add_py_converter_map") = py::dict();
