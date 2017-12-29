@@ -128,7 +128,7 @@ class PyBase : public py::wrapper<Base<T, U>> {
 
 template <typename T, typename U>
 void call_method(const Base<T, U>& base) {
-  base.dispatch(T{});
+  base.dispatch(T{10});
 }
 
 std::unique_ptr<Base<double, int>> do_convert(const Base<int, double>& value) {
