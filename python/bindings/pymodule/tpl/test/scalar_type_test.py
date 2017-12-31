@@ -76,7 +76,7 @@ def _ChildTpl_instantiation(param):
 ChildTpl = TemplateClass(
     name = 'ChildTpl',
     parent = BaseTpl)
-ChildTpl.add_classes_with_factory(_ChildTpl_instantiation)
+ChildTpl.add_instantiations(_ChildTpl_instantiation)
 
 # Default instantiation.
 Child = ChildTpl[[]]

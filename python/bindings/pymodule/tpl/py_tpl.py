@@ -23,6 +23,8 @@ class Template(object):
         return self.param_canonical(param)
 
     def param_canonical(self, param):
+        """Gets canonical parameter pack that makes it simple to mesh with
+        C++ types. """
         if not isinstance(param, tuple):
             param = tuple(param)
         return type_registry.GetPyTypesCanonical(param)
@@ -39,6 +41,10 @@ class Template(object):
         param = self._param_resolve(param)
         return self._instantiation_map[param]
 
+    def _get_instantiation_name(self, param):
+        param_str = map(type_registry.GetCppName, param)
+        return '{}[{}]'.format(self.name, ', '.join(param_str))
+
     def add_instantiation(self, param, instantiation):
         """ Adds instantiation. """
         # Ensure that we do not already have this tuple.
@@ -51,9 +57,11 @@ class Template(object):
             self._param_default = param
         return param
 
-    def _get_instantiation_name(self, param):
-        param_str = map(type_registry.GetCppName, param)
-        return '{}[{}]'.format(self.name, ', '.join(param_str))
+    def add_instantiations(
+            self, instantiation_func, param_list=None):
+        assert param_list is not None
+        for param in param_list:
+            self.add_instantiation(param, instantiation_func(param))
 
     def __str__(self):
         # TODO: Determine module? `globals()["__module__"]`?
@@ -76,19 +84,16 @@ class TemplateClass(Template):
                 raise RuntimeError("Class already has template associated with it")
         # Nominal behavior.
         param = Template.add_instantiation(self, param, cls)
-        # Update class.
+        # Update class information.
         cls._tpl = self
         cls.__name__ = self._get_instantiation_name(param)
 
-    def add_classes_with_factory(self, cls_factory, param_list=None):
+    def add_instantiations(
+            self, instantiation_func, param_list=None):
         if param_list is None:
             assert self.parent is not None
             param_list = self.parent.param_list
-        else:
-            param_list = map(self.param_canonical, param_list)
-        for param in param_list:
-            cls = cls_factory(param)
-            self.add_instantiation(param, cls)
+        Template.add_instantiations(self, instantiation_func, param_list)
 
 
 def is_tpl_cls(cls):
