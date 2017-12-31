@@ -202,9 +202,6 @@ struct RegisterConversionsImpl {
 
   void Run() {
     // Add conversion mechanisms.
-    if (!py::hasattr(tpl, "_add_py_converter_map")) {
-      tpl.attr("_add_py_converter_map") = py::dict();
-    }
     FromMetaPack::template visit_if<Check>(*this);
   }
 
@@ -234,6 +231,28 @@ struct RegisterConversionsImpl {
   }
 };
 
+template <typename Converter>
+auto RegisterConverter(py::module m, py::object tpl) {
+  // Register BaseConverter. Name does not matter.
+  py::class_<Converter> converter(m, "ConverterTmp");
+  converter
+    .def(py::init<>())
+    .def(
+      "Add",
+      [tpl](Converter* self,
+             py::tuple params_to, py::tuple params_from,
+             py::function py_converter) {
+        // @pre `params_to` and `params_from` are canonical Python types.
+        // Find conversion function using these types.
+        auto key = py::make_tuple(params_to, params_from);
+        auto add_py_converter = tpl.attr("_add_py_converter_map")[key];
+        // Add the casted converter.
+        add_py_converter(self, py_converter);
+      });
+  tpl.attr("Converter") = converter;
+  tpl.attr("_add_py_converter_map") = py::dict();
+}
+
 template <
     template <typename...> class Tpl, typename Converter,
     typename ToPack = void, typename FromMetaPack = void,
@@ -258,27 +277,9 @@ PYBIND11_MODULE(_scalar_type, m) {
   py::handle tpl_cls =
       py::module::import("pymodule.tpl.py_tpl").attr("Template");
 
-  // TODO: Make sure `tpl` is named `BaseTpl`, and templates are normally
-  // `BaseTpl[T, U]`.
-  py::object tpl = tpl_cls("Base");
+  py::object tpl = tpl_cls("BaseTpl");
   m.attr("BaseTpl") = tpl;
-
-  // Register BaseConverter...
-  py::class_<BaseConverter> base_converter(m, "BaseConverter");
-  base_converter
-    .def(py::init<>())
-    .def(
-      "Add",
-      [tpl](BaseConverter* self,
-             py::tuple params_to, py::tuple params_from,
-             py::function py_converter) {
-        // Assume we have canonical Python types.
-        // Find our conversion function using these types.
-        auto key = py::make_tuple(params_to, params_from);
-        auto add_py_converter = tpl.attr("_add_py_converter_map")[key];
-        // Now add_instantiation_func the converter.
-        add_py_converter(self, py_converter);
-      });
+  RegisterConverter<BaseConverter>(m, tpl);
 
   // Add instantiations and conversion mechanisms.
   using AllPack = type_pack<

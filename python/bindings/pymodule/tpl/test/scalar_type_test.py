@@ -30,6 +30,21 @@ class ChildDirect(Base):
         print("py direct: optional [{}]".format(type(self).__name__))
         return 2.
 
+
+def child_template_converter(ChildTpl):
+    BaseTpl = ChildTpl.parent
+    converter = BaseTpl.Converter()
+    for to_param in BaseTpl.param_list:
+        for from_param in BaseTpl.param_list:
+            if to_param == from_param:
+                continue
+            cls_to = ChildTpl.get_class(to_param)
+            def converter_func(obj_from):
+                return cls_to(copy_from=obj_from)
+            converter.Add(to_param, from_param, converter_func)
+    return converter
+
+
 # Should only define these classes once.
 def _ChildTpl_factory(param):
     T, U = param
@@ -38,14 +53,14 @@ def _ChildTpl_factory(param):
     class Child(Base):
         def __init__(self, *args, **kwargs):
             # Handle copy constructor overload:
-            if "copy_other" in kwargs:
-                copy_other = kwargs["copy_other"]
-                Base.__init__(self, copy_other)
+            if "copy_from" in kwargs:
+                copy_from = kwargs["copy_from"]
+                Base.__init__(self, copy_from)
             else:
                 self._init(*args, **kwargs)
 
         def _init(self, t, u):
-            Base.__init__(self, t, u, _Child_converter())
+            Base.__init__(self, t, u, child_template_converter(ChildTpl))
 
         def pure(self, value):
             print("py: pure [{}]".format(type(self).__name__))
@@ -57,7 +72,7 @@ def _ChildTpl_factory(param):
 
         def do_to(self, Tc, Uc):
             # Scalar conversion.
-            out = ChildTpl[Tc, Uc](copy_other=self)
+            out = ChildTpl[Tc, Uc](copy_from=self)
             return out
 
     return Child
@@ -67,28 +82,6 @@ ChildTpl = Template(
     name = 'Child',
     parent = BaseTpl)
 ChildTpl.add_classes_with_factory(_ChildTpl_factory)
-
-
-def _Child_converter():
-    converter = st.BaseConverter()
-    def add_conversion(param_to, param_from):
-        param_to = ChildTpl.param_canonical(param_to)
-        param_from = ChildTpl.param_canonical(param_from)
-        cls_from = ChildTpl.get_class(param_from)
-        cls_to = ChildTpl.get_class(param_to)
-        def func(obj_from):
-            print("py.1: Sanity check")
-            assert isinstance(obj_from, cls_from)
-            print("py.2: Call method")
-            obj_to = obj_from.do_to(*param_to)
-            assert isinstance(obj_to, cls_to)
-            print("py.3: Return")
-            return obj_to
-        converter.Add(param_to, param_from, func)
-    add_conversion((int, float), (float, int))
-    add_conversion((float, int), (int, float))
-    return converter
-
 
 # Default instantiation.
 print("WooH")

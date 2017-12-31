@@ -10,8 +10,8 @@ class Template(object):
         if isinstance(param_default, tuple) or isinstance(param_default, list):
             param_default = self.param_canonical(param_default)
         self._param_default = param_default
-        self._param_list = []
-        self._parent = parent
+        self.param_list = []
+        self.parent = parent
         self._cls_map = {}
 
     def __getitem__(self, param):
@@ -39,7 +39,7 @@ class Template(object):
         """ Adds instantiation. """
         # Do not double-register existing instantiation.
         if is_tpl_cls(cls):
-            if self._parent and cls._tpl == self._parent:
+            if self.parent and cls._tpl == self.parent:
                 pass
             else:
                 # Do not permit any existing template.
@@ -48,7 +48,7 @@ class Template(object):
         param = self.param_canonical(param)
         assert param not in self._cls_map, "Param tuple already registered"
         # Add it.
-        self._param_list.append(param)
+        self.param_list.append(param)
         self._cls_map[param] = cls
         if self._param_default == 'first_registered':
             self._param_default = param
@@ -60,8 +60,8 @@ class Template(object):
 
     def add_classes_with_factory(self, cls_factory, param_list=None):
         if param_list is None:
-            assert self._parent is not None
-            param_list = self._parent._param_list
+            assert self.parent is not None
+            param_list = self.parent.param_list
         else:
             param_list = map(self.param_canonical, param_list)
         for param in param_list:
