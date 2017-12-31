@@ -287,3 +287,8 @@ cc_binary(
     name = "alias_test",
     srcs = ["alias_test.cc"],
 )
+
+cc_binary(
+    name = "tpl_pack_visitor_ext",
+    srcs = ["tpl_pack_visitor_ext.cc"],
+)
