@@ -105,6 +105,7 @@ class _TemplateMethodBound(object):
     def __getitem__(self, param):
         # TODO: Figure out actual binding.
         unbound = self._tpl[param]
+        obj = self._obj
         def bound(*args, **kwargs):
-            unbound(obj, *args, **kwargs)
+            return unbound(obj, *args, **kwargs)
         return bound

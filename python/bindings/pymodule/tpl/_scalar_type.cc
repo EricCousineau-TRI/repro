@@ -288,7 +288,7 @@ struct RegisterTemplateMethodImpl {
     auto type_tup = Pack::template bind<get_py_types>::run();
     std::cerr << "Pack: " << nice_type_name<Pack>() << std::endl;
     tpl.attr("add_instantiation")(
-        type_tup, instantiation_func(Pack{}));
+        type_tup, py::cpp_function(instantiation_func(Pack{})));
   }
 };
 
@@ -321,6 +321,7 @@ py::object RegisterTemplateMethod(
   RegisterTemplateMethodImpl<PyClass, MetaPack, InstantiationFunc>
       impl{py_cls, tpl, instantiation_func};
   impl.Run();
+  return tpl;
 }
 
 
@@ -369,15 +370,15 @@ PYBIND11_MODULE(_scalar_type, m) {
     m.def("call_method", static_cast<void(*)(const BaseT&)>(&call_method));
 
     // Add template methods for `DoTo`.
-    // auto do_to_instantiation = [](auto to_pack) {
-    //   using Pack = decltype(to_pack);
-    //   using To = typename Pack::template bind<Base>;
-    //   auto method = [](BaseT* self) {
-    //     return self->template DoTo<To>();
-    //   };
-    //   return method;
-    // };
-    // RegisterTemplateMethod(py_cls, "DoTo", do_to_instantiation, AllPack{});
+    auto do_to_instantiation = [](auto to_pack) {
+      using Pack = decltype(to_pack);
+      using To = typename Pack::template bind<Base>;
+      auto method = [](BaseT* self) {
+        return self->template DoTo<To>();
+      };
+      return method;
+    };
+    RegisterTemplateMethod(py_cls, "DoTo", do_to_instantiation, AllPack{});
 
     // Register conversions.
     RegisterConversions<Base, BaseConverter>(
