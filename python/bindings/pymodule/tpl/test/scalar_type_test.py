@@ -79,9 +79,7 @@ ChildTpl = TemplateClass(
 ChildTpl.add_classes_with_factory(_ChildTpl_instantiation)
 
 # Default instantiation.
-print("WooH")
 Child = ChildTpl[[]]
-print("WooHHH")
 
 print(Child)
 print(ChildTpl[int, float])
@@ -113,6 +111,12 @@ c.optional(2)
 c.dispatch(3)
 print("---")
 
+print("Template method")
+print(Child.DoTo)
+# TODO: Is a static overload possible?
+# print(Child.DoTo[float, int])
+print(c.DoTo)
+print(c.DoTo[float, int])
 cc = c.DoTo[float, int]()
 print(type(cc))
 cc.pure(1.5)

@@ -284,9 +284,7 @@ struct RegisterTemplateMethodImpl {
 
   template <typename Pack>
   void run() {
-    std::cerr << "Wooh" << std::endl;
     auto type_tup = Pack::template bind<get_py_types>::run();
-    std::cerr << "Pack: " << nice_type_name<Pack>() << std::endl;
     tpl.attr("add_instantiation")(
         type_tup, py::cpp_function(instantiation_func(Pack{})));
   }
@@ -305,7 +303,7 @@ py::object RegisterTemplateMethod(
   using Class = typename PyClass::type;
   if (tpl.is(py::none())) {
     // Add template backend.
-    tpl = TemplateMethod(name);
+    tpl = TemplateMethod(name, py_cls);
     py::setattr(py_cls, tpl_attr.c_str(), tpl);
     // Add read-only property.
     py_cls.def_property(

@@ -3,15 +3,24 @@
 # Template definitions.
 from pymodule.tpl.cpp_tpl_types import type_registry
 
-_PARAM_DEFAULT = 'first_registered'
+_PARAM_DEFAULT = [[]]
+_PARAM_DEFAULT_DEFAULT = 'first_registered'
 
 class Template(object):
-    def __init__(self, param_default=_PARAM_DEFAULT):
+    def __init__(self, name, param_default=_PARAM_DEFAULT_DEFAULT):
+        self.name = name
         if isinstance(param_default, tuple) or isinstance(param_default, list):
             param_default = self.param_canonical(param_default)
         self._param_default = param_default
         self.param_list = []
         self._instantiation_map = {}
+
+    def _param_resolve(self, param):
+        # Resolve from default argument to canonical parameters.
+        if len(param) == 1 and param[0] == _PARAM_DEFAULT[0]:
+            assert self._param_default is not None
+            param = self._param_default
+        return self.param_canonical(param)
 
     def param_canonical(self, param):
         if not isinstance(param, tuple):
@@ -21,17 +30,13 @@ class Template(object):
     def __getitem__(self, param):
         """ Gets concrete class associate with the given arguments.
         If called with [[]], then returns the default instantiation. """
-        if isinstance(param, tuple):
-            return self.get_instantiation(param)
-        else:
-            # Scalar type.
-            return self.get_instantiation((param,))
+        if not isinstance(param, tuple) or isinstance(param, list):
+            # Handle scalar case.
+            param = (param,)
+        return self.get_instantiation(param)
 
-    def get_instantiation(self, param=[[]]):
-        if len(param) == 1 and param[0] == []:
-            assert self._param_default is not None
-            param = self._param_default
-        param = self.param_canonical(param)
+    def get_instantiation(self, param=_PARAM_DEFAULT):
+        param = self._param_resolve(param)
         return self._instantiation_map[param]
 
     def add_instantiation(self, param, instantiation):
@@ -42,15 +47,22 @@ class Template(object):
         # Add it.
         self.param_list.append(param)
         self._instantiation_map[param] = instantiation
-        if self._param_default == _PARAM_DEFAULT:
+        if self._param_default == _PARAM_DEFAULT_DEFAULT:
             self._param_default = param
         return param
 
+    def _get_instantiation_name(self, param):
+        param_str = map(type_registry.GetCppName, param)
+        return '{}[{}]'.format(self.name, ', '.join(param_str))
+
+    def __str__(self):
+        # TODO: Determine module? `globals()["__module__"]`?
+        return "<Template {}>".format(self.name)
+
 
 class TemplateClass(Template):
-    def __init__(self, name, parent=None, param_default=_PARAM_DEFAULT):
-        Template.__init__(self, param_default=param_default)
-        self.name = name
+    def __init__(self, name, parent=None, param_default=_PARAM_DEFAULT_DEFAULT):
+        Template.__init__(self, name, param_default=param_default)
         self.parent = parent
 
     def add_instantiation(self, param, cls):
@@ -66,9 +78,7 @@ class TemplateClass(Template):
         param = Template.add_instantiation(self, param, cls)
         # Update class.
         cls._tpl = self
-        param_str = map(type_registry.GetCppName, param)
-        tpl_name = '{}[{}]'.format(self.name, ', '.join(param_str))
-        cls.__name__ = tpl_name
+        cls.__name__ = self._get_instantiation_name(param)
 
     def add_classes_with_factory(self, cls_factory, param_list=None):
         if param_list is None:
@@ -90,15 +100,32 @@ def is_tpl_of(cls, tpl):
 
 
 class TemplateMethod(Template):
-    def __init__(self, name, param_default=_PARAM_DEFAULT):
-        Template.__init__(self, param_default=param_default)
+    def __init__(self, name, cls=None, param_default=_PARAM_DEFAULT_DEFAULT):
+        Template.__init__(self, name, param_default=param_default)
+        self._cls = cls
 
     def bind(self, obj):
         return _TemplateMethodBound(self, obj)
 
+    def __str__(self):
+        if self._cls is None:
+            return '<unbound TemplateMethod {}.{}>'.format(
+                self._cls.__name__, self.name)
+        else:
+            return '<TemplateMethod {}>'.format(self.name)
+
+    def _bound_name(self, obj, param=None):
+        assert self._cls is not None
+        name = self.name
+        if param is not None:
+            param = self._param_resolve(param)
+            name = self._get_instantiation_name(param)
+        return '{}.{} of {}'.format(
+            self._cls.__name__, name, obj)
 
 class _TemplateMethodBound(object):
     def __init__(self, tpl, obj):
+        assert tpl._cls is not None
         self._tpl = tpl
         self._obj = obj
 
@@ -108,4 +135,11 @@ class _TemplateMethodBound(object):
         obj = self._obj
         def bound(*args, **kwargs):
             return unbound(obj, *args, **kwargs)
+        # TODO: This may be quite slow. Switching to actual binding should work
+        # better.
+        bound.__name__ = self._tpl._bound_name(self._obj, param)
         return bound
+
+    def __str__(self):
+        return '<bound TemplateMethod {}>'.format(
+            self._tpl._bound_name(self._obj))
