@@ -159,11 +159,11 @@ struct get_py_types {
 
 template <
     template <typename...> class Tpl,
-    typename MetaPack, typename AddTpl>
+    typename MetaPack, typename AddInstantiationFunc>
 struct RegisterInstantiationsImpl {
   py::module m;
   py::object tpl;
-  const AddTpl& register;
+  const AddInstantiationFunc& add_instantiation_func;
 
   void exec() {
     MetaPack::template visit(*this);
@@ -172,7 +172,7 @@ struct RegisterInstantiationsImpl {
   template <typename Pack>
   void run() {
     // Register instantiation in `pybind`, using lambda `auto`-friendly syntax.
-    auto py_cls = register(Pack{});
+    auto py_cls = add_instantiation_func(Pack{});
     // Register template class `py_tpl`.
     auto type_tup = typename Pack::template bind<get_py_types>::run();
     tpl.attr("add_class")(type_tup, py_cls);
@@ -181,10 +181,12 @@ struct RegisterInstantiationsImpl {
 
 template <
     template <typename...> class Tpl,
-    typename MetaPack, typename AddTpl>
+    typename MetaPack, typename AddInstantiationFunc>
 void RegisterInstantiations(
-    py::module m, py::object tpl, const AddTpl& register, MetaPack packs = {}) {
-  RegisterInstantiations<Tpl, MetaPack, AddTpl> impl{m, tpl, register};
+    py::module m, py::object tpl,
+    const AddInstantiationFunc& add_instantiation_func,
+    MetaPack packs = {}) {
+  RegisterInstantiations<Tpl, MetaPack, AddInstantiationFunc> impl{m, tpl, add_instantiation_func};
   impl.exec();
 }
 
@@ -267,12 +269,14 @@ PYBIND11_MODULE(_scalar_type, m) {
         // Find our conversion function using these types.
         auto key = py::make_tuple(params_to, params_from);
         auto add_py_converter = tpl.attr("_add_py_converter_map")[key];
-        // Now register the converter.
+        // Now add_instantiation_func the converter.
         add_py_converter(self, py_converter);
       });
 
   py::handle tpl_cls = py_tpl.attr("Template");
 
+  // TODO: Make sure `tpl` is named `BaseTpl`, and templates are normally
+  // `BaseTpl[T, U]`.
   py::object tpl = tpl_cls("Base");
   m.attr("BaseTpl") = tpl;
 
@@ -282,11 +286,11 @@ PYBIND11_MODULE(_scalar_type, m) {
       type_pack<double, int>
       >;
 
-  auto base_py = [m, tpl](auto param_pack) {
+  auto base_instantiation = [m, tpl](auto param_pack) {
     // Extract parameters.
     using Pack = decltype(param_pack);
-    using T = typename Pack::template get_type<0>;
-    using U = typename Pack::template get_type<1>;
+    using T = typename Pack::type<0>;
+    using U = typename Pack::type<1>;
     // Typedef classes.
     typedef Base<T, U> BaseT;
     typedef PyBase<T, U> PyBaseT;
@@ -301,7 +305,7 @@ PYBIND11_MODULE(_scalar_type, m) {
       .def("u", &BaseT::u)
       .def("pure", &BaseT::pure)
       .def("optional", &BaseT::optional)
-      .defbase_py("dispatch", &BaseT::dispatch);
+      .def("dispatch", &BaseT::dispatch);
 
     // Can't get `overload_cast` to infer `Return` type.
     // Have to explicitly cast... :(
@@ -314,7 +318,7 @@ PYBIND11_MODULE(_scalar_type, m) {
   };
 
   RegisterInstantiations<Base>(
-      m, base_py, tpl, AllPack{});
+      m, base_instantiation, tpl, AllPack{});
 
   // Default instantiation.
   m.attr("Base") = tpl.attr("get_class")();
