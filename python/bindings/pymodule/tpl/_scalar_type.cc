@@ -165,7 +165,7 @@ struct RegisterInstantiationsImpl {
   py::object tpl;
   const AddInstantiationFunc& add_instantiation_func;
 
-  void exec() {
+  void Run() {
     MetaPack::template visit(*this);
   }
 
@@ -186,8 +186,9 @@ void RegisterInstantiations(
     py::module m, py::object tpl,
     const AddInstantiationFunc& add_instantiation_func,
     MetaPack packs = {}) {
-  RegisterInstantiations<Tpl, MetaPack, AddInstantiationFunc> impl{m, tpl, add_instantiation_func};
-  impl.exec();
+  RegisterInstantiationsImpl<Tpl, MetaPack, AddInstantiationFunc> impl{
+      m, tpl, add_instantiation_func};
+  impl.Run();
 }
 
 template <
@@ -199,7 +200,7 @@ struct RegisterConversionsImpl {
   PyClass& py_cls;
   py::object tpl;
 
-  void exec() {
+  void Run() {
     // Add conversion mechanisms.
     if (!py::hasattr(tpl, "_add_py_converter_map")) {
       tpl.attr("_add_py_converter_map") = py::dict();
@@ -245,7 +246,7 @@ void RegisterConversions(
     ToPack to_pack = {}, FromMetaPack from_packs = {}) {
   RegisterConversionImpl<Tpl, Converter, Check, PyClass, ToPack, FromMetaPack>
       impl{py_cls, tpl};
-  impl.exec();
+  impl.Run();
 }
 
 // TODO: Figure out how to handle literals...
