@@ -160,35 +160,20 @@ struct get_py_types {
 template <
     template <typename...> class Tpl,
     typename MetaPack, typename AddInstantiationFunc>
-struct RegisterInstantiationsImpl {
-  py::module m;
-  py::object tpl;
-  const AddInstantiationFunc& add_instantiation_func;
-
-  void Run() {
-    MetaPack::template visit(*this);
-  }
-
-  template <typename Pack>
-  void run() {
-    // Register instantiation in `pybind`, using lambda `auto`-friendly syntax.
-    auto py_cls = add_instantiation_func(Pack{});
-    // Register template class `py_tpl`.
-    auto type_tup = Pack::template bind<get_py_types>::run();
-    tpl.attr("add_instantiation")(type_tup, py_cls);
-  }
-};
-
-template <
-    template <typename...> class Tpl,
-    typename MetaPack, typename AddInstantiationFunc>
 void RegisterInstantiations(
     py::module m, py::object tpl,
     const AddInstantiationFunc& add_instantiation_func,
     MetaPack packs = {}) {
-  RegisterInstantiationsImpl<Tpl, MetaPack, AddInstantiationFunc> impl{
-      m, tpl, add_instantiation_func};
-  impl.Run();
+  MetaPack::template visit_lambda(
+      [&](auto tag) {
+        // Register instantiation in `pybind`, using lambda `auto`-friendly
+        // syntax.
+        using Pack = typename decltype(tag)::type;
+        auto py_cls = add_instantiation_func(Pack{});
+        // Register template class `py_tpl`.
+        auto type_tup = Pack::template bind<get_py_types>::run();
+        tpl.attr("add_instantiation")(type_tup, py_cls);
+      });
 }
 
 template <
@@ -311,7 +296,8 @@ py::object RegisterTemplateMethod(
         [tpl](Class* self) {
           return tpl.attr("bind")(self);
         },
-        [](Class* self, py::handle) -> std::nullptr_t {
+        // TODO: Fix this once pybind is upgraded.
+        [](Class* self, py::handle) {
           throw std::runtime_error("Read-only property");
         });
   }

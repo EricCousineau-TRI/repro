@@ -48,18 +48,37 @@ struct types_visit_impl {
 template <typename Check, typename ... Ts, typename Visitor>
 inline void types_visit_if(Visitor&& visitor) {
   // Minor goal: Avoid needing index sequences (reduce number of types?).
-  int dummy[] = {(
+  using Dummy = bool[];
+  (void)Dummy{(
       types_visit_impl<Visitor>::
           template runner<Ts, Check::template check<Ts>::value>::
               run(std::forward<Visitor>(visitor)),
-      0)...};
-  (void)dummy;
+      true)...};
 }
 
 template <typename ... Ts, typename Visitor>
 inline void types_visit(Visitor&& visitor) {
   types_visit_if<always_true, Ts...>(std::forward<Visitor>(visitor));
 }
+
+template <typename T>
+struct type_tag {
+  using type = T;
+};
+
+template <typename Lambda>
+struct types_visit_lambda_impl {
+  template <typename T, bool execute>
+  struct runner {
+    inline static void run(Lambda&& visitor) {
+      visitor(type_tag<T>{});
+    }
+  };
+  template <typename T>
+  struct runner<T, false> {
+    inline static void run(Lambda&&) {}
+  };
+};
 
 template <typename ... Ts>
 struct type_pack {
@@ -77,6 +96,23 @@ struct type_pack {
   template <typename Check, typename Visitor>
   inline static void visit_if(Visitor&& visitor) {
     types_visit_if<Check, Ts...>(std::forward<Visitor>(visitor));
+  }
+
+  template <typename Lambda>
+  inline static void visit_lambda(Lambda&& visitor) {
+    using Dummy = bool[];
+    (void)Dummy{(
+      visitor(type_tag<Ts>{}), true)...};
+  }
+
+  template <typename Check, typename Lambda>
+  inline static void visit_lambda_if(Lambda&& visitor, Check check = {}) {
+    using Dummy = bool[];
+    (void)Dummy{(
+        types_visit_lambda_impl<Lambda>::
+            template runner<Ts, Check::template check<Ts>::value>::
+                run(std::forward<Lambda>(visitor)),
+        true)...};
   }
 };
 
