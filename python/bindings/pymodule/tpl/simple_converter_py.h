@@ -59,5 +59,5 @@ void RegisterConversions(
     // Add Python conversion.
     py_class.def(py::init<const From&>());
   };
-  FromParamList::template visit_lambda_if<Check, no_tag>(add_conversion);
+  FromParamList::template visit_if<Check, no_tag>(add_conversion);
 }

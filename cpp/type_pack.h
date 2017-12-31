@@ -73,7 +73,7 @@ struct type_pack {
 
   template <typename Check, template <typename> class Wrap = type_tag,
             typename Visitor = void>
-  inline static void visit_lambda_if(Visitor&& visitor, Check check = {}) {
+  inline static void visit_if(Visitor&& visitor, Check check = {}) {
     (void)dummy_list{(
         types_visit_wrap_impl<Wrap, Visitor>::
             template runner<Ts, Check::template check<Ts>::value>::
