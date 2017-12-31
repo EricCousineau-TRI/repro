@@ -292,3 +292,9 @@ cc_binary(
     name = "tpl_pack_visitor_ext",
     srcs = ["tpl_pack_visitor_ext.cc"],
 )
+
+cc_binary(
+    name = "void_check",
+    srcs = ["void_check.cc"],
+)
+

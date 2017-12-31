@@ -47,6 +47,7 @@ struct types_visit_impl {
   };
 };
 
+// TODO(eric.cousineau): See if there is a way to return result? (if useful)
 template <typename Check, typename ... Ts, typename Visitor>
 inline void types_visit_if(Visitor&& visitor) {
   // Minor goal: Avoid needing index sequences (reduce number of types?).

@@ -158,62 +158,56 @@ struct get_py_types {
 
 
 template <
-    template <typename...> class Tpl>
-struct RegisterInstantiations {
-  template <typename MetaPack, typename AddTpl>
-  void run(
-      py::module m, py::object tpl, const AddTpl& register,
-      MetaPack packs = {}) {
-    MetaPack::template visit<RegisterInstantiations>(m, tpl, register);
+    template <typename...> class Tpl,
+    typename MetaPack, typename AddTpl>
+struct RegisterInstantiationsImpl {
+  py::module m;
+  py::object tpl;
+  const AddTpl& register;
+
+  void exec() {
+    MetaPack::template visit(*this);
   }
 
- private:
-  template <typename Pack, typename AddTpl>
-  void visit(
-      py::module m, py::object tpl, const AddTpl& register) {
+  template <typename Pack>
+  void run() {
     // Register instantiation in `pybind`, using lambda `auto`-friendly syntax.
     auto py_cls = register(Pack{});
     // Register template class `py_tpl`.
     auto type_tup = typename Pack::template bind<get_py_types>::run();
     tpl.attr("add_class")(type_tup, py_cls);
   }
-
-  template <typename ... Ts>
-  friend class type_pack<Ts...>;
 };
 
+template <
+    template <typename...> class Tpl,
+    typename MetaPack, typename AddTpl>
+void RegisterInstantiations(
+    py::module m, py::object tpl, const AddTpl& register, MetaPack packs = {}) {
+  RegisterInstantiations<Tpl, MetaPack, AddTpl> impl{m, tpl, register};
+  impl.exec();
+}
 
 template <
-    template <typename...> class Tpl, typename Converter>
-struct RegisterConversions {
-  template <
-      typename ToPack,
-      typename FromMetaPack>
-  static void run(
-      auto& py_cls, py::object tpl,
-      ToPack to_pack = {}, FromMetaPack from_packs = {}) {
+    template <typename...> class Tpl, typename Converter,
+    // Inferred:
+    typename Check, typename PyClass,
+    typename ToPack, typename FromMetaPack>
+struct RegisterConversionsImpl {
+  PyClass& py_cls;
+  py::object tpl;
+
+  void exec() {
     // Add conversion mechanisms.
     if (!py::hasattr(tpl, "_add_py_converter_map")) {
       tpl.attr("_add_py_converter_map") = py::dict();
     }
-    FromMetaPack::template visit_if<
-        RegisterConversions, is_different_from<ToPack>>(py_cls, tpl, to_pack);
+    FromMetaPack::template visit_if<Check>(*this);
   }
 
- private:
-  template <typename ToPack>
-  struct is_different_from {
-    template <typename FromPack>
-    using check = std::logical_not<std::is_same<ToPack, FromPack>::value>;
-  };
-
-  template <
-      typename FromPack,  // iterator
-      typename ToPack
-      >
-  static void visit(auto& py_cls, py::object tpl, ToPack to_pack) {
-    // For each conversion available:
-    // Register base conversion(s).
+  template <typename FromPack>
+  void run() {
+    // Register base conversion.
     using To = typename ToPack::template bind<Tpl>;
     auto to_tup = typename ToPack::template bind<get_py_types>::run();
     using ToPtr = std::unique_ptr<To>;
@@ -235,10 +229,24 @@ struct RegisterConversions {
       .def(py::init<const From&>());
     // End: Scalar conversion.
   }
-
-  template <typename ... Ts>
-  friend class type_pack<Ts...>;
 };
+
+template <
+    template <typename...> class Tpl, typename Converter,
+    typename Check = is_different_from<ToPack>,
+    // Use `void` here since these will be inferred, but allow the check to
+    // have a default value.
+    typename PyClass = void,
+    typename ToPack = void, typename FromMetaPack = void>
+void RegisterConversions(
+    PyClass& py_cls, py::object tpl,
+    ToPack to_pack = {}, FromMetaPack from_packs = {}) {
+  RegisterConversionImpl<Tpl, Converter, Check, PyClass, ToPack, FromMetaPack>
+      impl{py_cls, tpl};
+  impl.exec();
+}
+
+// TODO: Figure out how to handle literals...
 
 
 PYBIND11_MODULE(_scalar_type, m) {
@@ -269,7 +277,7 @@ PYBIND11_MODULE(_scalar_type, m) {
   m.attr("BaseTpl") = tpl;
 
   // Add instantiations and conversion mechanisms.
-  using AllParam = type_pack<
+  using AllPack = type_pack<
       type_pack<int, double>,
       type_pack<double, int>
       >;
@@ -300,13 +308,13 @@ PYBIND11_MODULE(_scalar_type, m) {
     m.def("call_method", static_cast<void(*)(const BaseT&)>(&call_method));
 
     // Register conversions.
-    RegisterConversions<Base, BaseConverter>::run(
-        py_cls, tpl, param_pack, AllParam{});
+    RegisterConversions<Base, BaseConverter>(
+        py_cls, tpl, param_pack, AllPack{});
     return py_cls;
   };
 
-  RegisterInstantiations<Base>::run(
-      m, base_py, tpl, AllParam{});
+  RegisterInstantiations<Base>(
+      m, base_py, tpl, AllPack{});
 
   // Default instantiation.
   m.attr("Base") = tpl.attr("get_class")();
