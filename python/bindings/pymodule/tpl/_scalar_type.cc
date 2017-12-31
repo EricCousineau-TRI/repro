@@ -150,77 +150,27 @@ std::unique_ptr<Base<double, int>> take_ownership(py::function factory) {
 }
 
 template <typename ... Args>
-struct get_py_types {
-  inline static py::tuple run() {
-    return TypeRegistry::GetPyInstance().GetPyTypes<Args...>();
-  }
-};
-
-
-template <
-    template <typename...> class Tpl,
-    typename MetaPack, typename AddInstantiationFunc>
-void RegisterInstantiations(
-    py::module m, py::object tpl,
-    const AddInstantiationFunc& add_instantiation_func,
-    MetaPack packs = {}) {
-  MetaPack::template visit_lambda(
-      [&](auto tag) {
-        // Register instantiation in `pybind`, using lambda `auto`-friendly
-        // syntax.
-        using Pack = typename decltype(tag)::type;
-        auto py_cls = add_instantiation_func(Pack{});
-        // Register template class `py_tpl`.
-        auto type_tup = Pack::template bind<get_py_types>::run();
-        tpl.attr("add_instantiation")(type_tup, py_cls);
-      });
+inline py::tuple get_py_types(type_pack<Args...> = {}) {
+  return TypeRegistry::GetPyInstance().GetPyTypes<Args...>();
 }
 
-template <
-    template <typename...> class Tpl, typename Converter,
-    // Inferred:
-    typename Check, typename PyClass,
-    typename ToPack, typename FromMetaPack>
-struct RegisterConversionsImpl {
-  PyClass& py_cls;
-  py::object tpl;
-
-  void Run() {
-    // Add conversion mechanisms.
-    // TODO(eric.cousineau): Use lambda!
-    FromMetaPack::template visit_if<Check>(*this);
-  }
-
-  template <typename FromPack>
-  void run() {
-    // Register base conversion.
-    using To = typename ToPack::template bind<Tpl>;
-    auto to_tup = ToPack::template bind<get_py_types>::run();
-    using ToPtr = std::unique_ptr<To>;
-    using From = typename FromPack::template bind<Tpl>;
-    auto from_tup = FromPack::template bind<get_py_types>::run();
-    // Add Python converter function, but bind using Base C++ overloads via
-    // pybind.
-    auto add_py_converter = [](Converter* converter, py::function py_func) {
-      // Add type information.
-      using ConversionFunc = std::function<ToPtr(const From&)>;
-      auto cpp_func = py::cast<ConversionFunc>(py_func);
-      // Add using overload.
-      converter->Add(cpp_func);
-    };
-    // Register function dispatch.
-    auto key = py::make_tuple(to_tup, from_tup);
-    tpl.attr("_add_py_converter_map")[key] = py::cpp_function(add_py_converter);
-    // Add Python conversion.
-    py_cls
-      .def(py::init<const From&>());
-    // End: Scalar conversion.
-  }
-};
+template <typename MetaPack, typename InstantiationFunc>
+void RegisterInstantiations(
+    py::object tpl, const InstantiationFunc& instantiation_func,
+    MetaPack packs = {}) {
+  MetaPack::template visit_lambda(unwrap_tag(
+      [&](auto pack) {
+        // Register instantiation in `pybind`, using lambda
+        // `auto`-friendly syntax., indexing by canonical Python types.
+        tpl.attr("add_instantiation")(
+            get_py_types(pack),
+            instantiation_func(pack));
+      }));
+}
 
 template <typename Converter>
 auto RegisterConverter(py::module m, py::object tpl) {
-  // Register BaseConverter. Name does not matter.
+  // Register converter. Name does not matter.
   py::class_<Converter> converter(m, "ConverterTmp");
   converter
     .def(py::init<>())
@@ -231,8 +181,8 @@ auto RegisterConverter(py::module m, py::object tpl) {
              py::function py_converter) {
         // @pre `params_to` and `params_from` are canonical Python types.
         // Find conversion function using these types.
-        auto key = py::make_tuple(params_to, params_from);
-        auto add_py_converter = tpl.attr("_add_py_converter_map")[key];
+        py::tuple key = py::make_tuple(params_to, params_from);
+        py::object add_py_converter = tpl.attr("_add_py_converter_map")[key];
         // Add the casted converter.
         add_py_converter(self, py_converter);
       });
@@ -242,56 +192,58 @@ auto RegisterConverter(py::module m, py::object tpl) {
 
 template <
     template <typename...> class Tpl, typename Converter,
+    template <typename> class Ptr = std::unique_ptr,
     typename ToPack = void, typename FromMetaPack = void,
     typename Check = is_different_from<ToPack>,
     // Use `void` here since these will be inferred, but allow the check to
     // have a default value.
     typename PyClass = void>
 void RegisterConversions(
-    PyClass& py_cls, py::object tpl,
+    PyClass& py_class, py::object tpl,
     ToPack to_pack = {}, FromMetaPack from_packs = {}) {
-  RegisterConversionsImpl<Tpl, Converter, Check, PyClass, ToPack, FromMetaPack>
-      impl{py_cls, tpl};
-  impl.Run();
+  using To = typename ToPack::template bind<Tpl>;
+  py::tuple to_tup = get_py_types(ToPack{});
+  FromMetaPack::template visit_lambda_if<Check>(unwrap_tag(
+      [&](auto from_pack) {
+        // Register base conversion.
+        using FromPack = typename decltype(from_pack)::type;
+        using From = typename FromPack::template bind<Tpl>;
+        auto from_param = get_py_types(FromPack{});
+        // Add Python converter function, but bind using Base C++ overloads via
+        // pybind.
+        auto add_py_converter = [](Converter* converter, py::function py_func) {
+          // Wrap with C++ type information.
+          using ConversionFunc = std::function<Ptr<To> (const From&)>;
+          auto cpp_func = py::cast<ConversionFunc>(py_func);
+          // Add using overload.
+          converter->Add(cpp_func);
+        };
+        // Register function dispatch.
+        py::tuple key = py::make_tuple(to_tup, from_param);
+        tpl.attr("_add_py_converter_map")[key] =
+            py::cpp_function(add_py_converter);
+        // Add Python conversion.
+        py_class.def(py::init<const From&>());
+      }));
 }
 
 template <
     typename PyClass, typename MetaPack,
     typename InstantiationFunc>
-struct RegisterTemplateMethodImpl {
-  PyClass& py_cls;
-  py::object tpl;
-  const InstantiationFunc& instantiation_func;
-
-  void Run() {
-    MetaPack::template visit(*this);
-  }
-
-  template <typename Pack>
-  void run() {
-    auto type_tup = Pack::template bind<get_py_types>::run();
-    tpl.attr("add_instantiation")(
-        type_tup, py::cpp_function(instantiation_func(Pack{})));
-  }
-};
-
-template <
-    typename PyClass, typename MetaPack,
-    typename InstantiationFunc>
 py::object RegisterTemplateMethod(
-    PyClass& py_cls, const std::string& name,
-    const InstantiationFunc& instantiation_func, MetaPack = {}) {
+    PyClass& py_class, const std::string& name,
+    const InstantiationFunc& instantiation_func, MetaPack packs = {}) {
   py::handle TemplateMethod =
       py::module::import("pymodule.tpl.py_tpl").attr("TemplateMethod");
   std::string tpl_attr = "_tpl_" + name;
-  py::object tpl = py::getattr(py_cls, tpl_attr.c_str(), py::none());
+  py::object tpl = py::getattr(py_class, tpl_attr.c_str(), py::none());
   using Class = typename PyClass::type;
   if (tpl.is(py::none())) {
     // Add template backend.
-    tpl = TemplateMethod(name, py_cls);
-    py::setattr(py_cls, tpl_attr.c_str(), tpl);
+    tpl = TemplateMethod(name, py_class);
+    py::setattr(py_class, tpl_attr.c_str(), tpl);
     // Add read-only property.
-    py_cls.def_property(
+    py_class.def_property(
         name.c_str(),
         [tpl](Class* self) {
           return tpl.attr("bind")(self);
@@ -301,10 +253,7 @@ py::object RegisterTemplateMethod(
           throw std::runtime_error("Read-only property");
         });
   }
-
-  RegisterTemplateMethodImpl<PyClass, MetaPack, InstantiationFunc>
-      impl{py_cls, tpl, instantiation_func};
-  impl.Run();
+  RegisterInstantiations(tpl, unwrap_tag(instantiation_func), packs);
   return tpl;
 }
 
@@ -325,8 +274,7 @@ PYBIND11_MODULE(_scalar_type, m) {
   // Add instantiations and conversion mechanisms.
   using AllPack = type_pack<
       type_pack<int, double>,
-      type_pack<double, int>
-      >;
+      type_pack<double, int>>;
 
   auto base_instantiation = [&m, tpl](auto param_pack) {
     // Extract parameters.
@@ -339,8 +287,8 @@ PYBIND11_MODULE(_scalar_type, m) {
     // Define class.
     string name = nice_type_name<BaseT>();
     // N.B. This  name will be overwritten by `tpl.add_class(...)`.
-    py::class_<BaseT, PyBaseT> py_cls(m, name.c_str());
-    py_cls
+    py::class_<BaseT, PyBaseT> py_class(m, name.c_str());
+    py_class
       .def(py::init<T, U, std::unique_ptr<BaseConverter>>(),
            py::arg("t"), py::arg("u"), py::arg("converter") = nullptr)
       .def("t", &BaseT::t)
@@ -355,23 +303,18 @@ PYBIND11_MODULE(_scalar_type, m) {
 
     // Add template methods for `DoTo`.
     auto do_to_instantiation = [](auto to_pack) {
-      using Pack = decltype(to_pack);
-      using To = typename Pack::template bind<Base>;
-      auto method = [](BaseT* self) {
-        return self->template DoTo<To>();
-      };
-      return method;
+      using To = typename decltype(to_pack)::template bind<Base>;
+      return [](BaseT* self) { return self->template DoTo<To>(); };
     };
-    RegisterTemplateMethod(py_cls, "DoTo", do_to_instantiation, AllPack{});
+    RegisterTemplateMethod(py_class, "DoTo", do_to_instantiation, AllPack{});
 
     // Register conversions.
     RegisterConversions<Base, BaseConverter>(
-        py_cls, tpl, param_pack, AllPack{});
-    return py_cls;
+        py_class, tpl, param_pack, AllPack{});
+    return py_class;
   };
 
-  RegisterInstantiations<Base>(
-      m, tpl, base_instantiation, AllPack{});
+  RegisterInstantiations(tpl, base_instantiation, AllPack{});
 
   // Default instantiation.
   m.attr("Base") = tpl.attr("get_instantiation")();

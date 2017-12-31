@@ -80,6 +80,15 @@ struct types_visit_lambda_impl {
   };
 };
 
+// When a type_pack is wrapped in a type_tag.
+template <typename Func>
+auto unwrap_tag(Func&& func) {
+  return [&](auto tag) {
+    using InnerTag = typename decltype(tag)::type;
+    return func(InnerTag{});
+  };
+}
+
 template <typename ... Ts>
 struct type_pack {
   template <template <typename...> class Tpl>

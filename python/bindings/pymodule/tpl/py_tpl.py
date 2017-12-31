@@ -77,11 +77,10 @@ class TemplateClass(Template):
         """ Adds instantiation. """
         # Do not double-register existing instantiation.
         if is_tpl_cls(cls):
-            if self.parent and cls._tpl == self.parent:
-                pass
-            else:
+            if self.parent != cls._tpl:
                 # Do not permit any existing template.
-                raise RuntimeError("Class already has template associated with it")
+                raise RuntimeError(
+                    "Class already has template associated with it")
         # Nominal behavior.
         param = Template.add_instantiation(self, param, cls)
         # Update class information.
@@ -127,6 +126,7 @@ class TemplateMethod(Template):
             name = self._get_instantiation_name(param)
         return '{}.{} of {}'.format(
             self._cls.__name__, name, obj)
+
 
 class _TemplateMethodBound(object):
     def __init__(self, tpl, obj):
