@@ -38,7 +38,7 @@ py::object RegisterTemplateMethod(
     PyClass& py_class, const std::string& name,
     const InstantiationFunc& instantiation_func, ParamList param_list = {}) {
   py::handle TemplateMethod =
-      py::module::import("pymodule.tpl.py_tpl").attr("TemplateMethod");
+      py::module::import("pymodule.tpl.cpp_tpl").attr("TemplateMethod");
   std::string tpl_attr = "_tpl_" + name;
   py::object tpl = py::getattr(py_class, tpl_attr.c_str(), py::none());
   using Class = typename PyClass::type;

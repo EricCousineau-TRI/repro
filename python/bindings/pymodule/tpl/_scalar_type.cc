@@ -155,7 +155,7 @@ PYBIND11_MODULE(_scalar_type, m) {
   m.doc() = "Simple check on scalar / template types";
 
   py::handle TemplateClass =
-      py::module::import("pymodule.tpl.py_tpl").attr("TemplateClass");
+      py::module::import("pymodule.tpl.cpp_tpl").attr("TemplateClass");
 
   py::object tpl = TemplateClass("BaseTpl");
   m.attr("BaseTpl") = tpl;

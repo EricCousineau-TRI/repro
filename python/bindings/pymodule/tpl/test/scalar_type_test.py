@@ -3,7 +3,7 @@ from __future__ import print_function, absolute_import
 
 # import unittest
 from pymodule.tpl import scalar_type as st
-from pymodule.tpl.py_tpl import TemplateClass, is_tpl_cls, is_tpl_of
+from pymodule.tpl.cpp_tpl import TemplateClass, is_tpl_cls, is_tpl_of
 
 import sys
 sys.stderr = sys.stdout
