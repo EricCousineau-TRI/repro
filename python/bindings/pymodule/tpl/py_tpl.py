@@ -97,7 +97,7 @@ class TemplateClass(Template):
 
 
 def is_tpl_cls(cls):
-    return hasattr(cls, '_tpl') and isinstance(cls._tpl, Template)
+    return hasattr(cls, '_tpl') and isinstance(cls._tpl, TemplateClass)
 
 
 def is_tpl_of(cls, tpl):
