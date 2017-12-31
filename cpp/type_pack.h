@@ -82,7 +82,7 @@ struct types_visit_lambda_impl {
 
 // For when `visit_lambda` is used with a Pack (and doesn't need a tag).
 template <typename T>
-using no_wrap = T;
+using no_tag = T;
 
 template <typename ... Ts>
 struct type_pack {
