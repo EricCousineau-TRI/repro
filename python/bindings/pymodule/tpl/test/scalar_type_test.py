@@ -3,7 +3,7 @@ from __future__ import print_function, absolute_import
 
 # import unittest
 from pymodule.tpl import scalar_type as st
-from pymodule.tpl.py_tpl import Template, is_tpl_cls, is_tpl_of
+from pymodule.tpl.py_tpl import TemplateClass, is_tpl_cls, is_tpl_of
 
 import sys
 sys.stderr = sys.stdout
@@ -38,7 +38,7 @@ def child_template_converter(ChildTpl):
         for from_param in BaseTpl.param_list:
             if to_param == from_param:
                 continue
-            cls_to = ChildTpl.get_class(to_param)
+            cls_to = ChildTpl.get_instantiation(to_param)
             def converter_func(obj_from):
                 return cls_to(copy_from=obj_from)
             converter.Add(to_param, from_param, converter_func)
@@ -70,14 +70,10 @@ def _ChildTpl_instantiation(param):
             print("py: optional [{}]".format(type(self).__name__))
             return U(3 * value)
 
-        def DoTo(self, param):
-            # Scalar conversion.
-            return ChildTpl.get_class(param)(copy_from=self)
-
     return Child
 
 
-ChildTpl = Template(
+ChildTpl = TemplateClass(
     name = 'ChildTpl',
     parent = BaseTpl)
 ChildTpl.add_classes_with_factory(_ChildTpl_instantiation)
@@ -117,7 +113,7 @@ c.optional(2)
 c.dispatch(3)
 print("---")
 
-cc = c.DoTo([float, int])
+cc = c.DoTo[float, int]()
 print(type(cc))
 cc.pure(1.5)
 cc.optional(1.5)

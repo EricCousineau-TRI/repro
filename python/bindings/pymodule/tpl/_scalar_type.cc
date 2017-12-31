@@ -175,7 +175,7 @@ struct RegisterInstantiationsImpl {
     auto py_cls = add_instantiation_func(Pack{});
     // Register template class `py_tpl`.
     auto type_tup = Pack::template bind<get_py_types>::run();
-    tpl.attr("add_class")(type_tup, py_cls);
+    tpl.attr("add_instantiation")(type_tup, py_cls);
   }
 };
 
@@ -202,6 +202,7 @@ struct RegisterConversionsImpl {
 
   void Run() {
     // Add conversion mechanisms.
+    // TODO(eric.cousineau): Use lambda!
     FromMetaPack::template visit_if<Check>(*this);
   }
 
@@ -269,16 +270,70 @@ void RegisterConversions(
   impl.Run();
 }
 
+template <
+    typename PyClass, typename MetaPack,
+    typename InstantiationFunc>
+struct RegisterTemplateMethodImpl {
+  PyClass& py_cls;
+  py::object tpl;
+  const InstantiationFunc& instantiation_func;
+
+  void Run() {
+    MetaPack::template visit(*this);
+  }
+
+  template <typename Pack>
+  void run() {
+    std::cerr << "Wooh" << std::endl;
+    auto type_tup = Pack::template bind<get_py_types>::run();
+    std::cerr << "Pack: " << nice_type_name<Pack>() << std::endl;
+    tpl.attr("add_instantiation")(
+        type_tup, instantiation_func(Pack{}));
+  }
+};
+
+template <
+    typename PyClass, typename MetaPack,
+    typename InstantiationFunc>
+py::object RegisterTemplateMethod(
+    PyClass& py_cls, const std::string& name,
+    const InstantiationFunc& instantiation_func, MetaPack = {}) {
+  py::handle TemplateMethod =
+      py::module::import("pymodule.tpl.py_tpl").attr("TemplateMethod");
+  std::string tpl_attr = "_tpl_" + name;
+  py::object tpl = py::getattr(py_cls, tpl_attr.c_str(), py::none());
+  using Class = typename PyClass::type;
+  if (tpl.is(py::none())) {
+    // Add template backend.
+    tpl = TemplateMethod(name);
+    py::setattr(py_cls, tpl_attr.c_str(), tpl);
+    // Add read-only property.
+    py_cls.def_property(
+        name.c_str(),
+        [tpl](Class* self) {
+          return tpl.attr("bind")(self);
+        },
+        [](Class* self, py::handle) -> std::nullptr_t {
+          throw std::runtime_error("Read-only property");
+        });
+  }
+
+  RegisterTemplateMethodImpl<PyClass, MetaPack, InstantiationFunc>
+      impl{py_cls, tpl, instantiation_func};
+  impl.Run();
+}
+
+
 // TODO: Figure out how to handle literals...
 
 
 PYBIND11_MODULE(_scalar_type, m) {
   m.doc() = "Simple check on scalar / template types";
 
-  py::handle tpl_cls =
-      py::module::import("pymodule.tpl.py_tpl").attr("Template");
+  py::handle TemplateClass =
+      py::module::import("pymodule.tpl.py_tpl").attr("TemplateClass");
 
-  py::object tpl = tpl_cls("BaseTpl");
+  py::object tpl = TemplateClass("BaseTpl");
   m.attr("BaseTpl") = tpl;
   RegisterConverter<BaseConverter>(m, tpl);
 
@@ -294,8 +349,8 @@ PYBIND11_MODULE(_scalar_type, m) {
     using T = typename Pack::template type<0>;
     using U = typename Pack::template type<1>;
     // Typedef classes.
-    typedef Base<T, U> BaseT;
-    typedef PyBase<T, U> PyBaseT;
+    using BaseT = Base<T, U>;
+    using PyBaseT = PyBase<T, U>;
     // Define class.
     string name = nice_type_name<BaseT>();
     // N.B. This  name will be overwritten by `tpl.add_class(...)`.
@@ -313,7 +368,16 @@ PYBIND11_MODULE(_scalar_type, m) {
     // Have to explicitly cast... :(
     m.def("call_method", static_cast<void(*)(const BaseT&)>(&call_method));
 
-    // TODO: Add template binding for `DoTo`.
+    // Add template methods for `DoTo`.
+    // auto do_to_instantiation = [](auto to_pack) {
+    //   using Pack = decltype(to_pack);
+    //   using To = typename Pack::template bind<Base>;
+    //   auto method = [](BaseT* self) {
+    //     return self->template DoTo<To>();
+    //   };
+    //   return method;
+    // };
+    // RegisterTemplateMethod(py_cls, "DoTo", do_to_instantiation, AllPack{});
 
     // Register conversions.
     RegisterConversions<Base, BaseConverter>(
@@ -325,7 +389,7 @@ PYBIND11_MODULE(_scalar_type, m) {
       m, tpl, base_instantiation, AllPack{});
 
   // Default instantiation.
-  m.attr("Base") = tpl.attr("get_class")();
+  m.attr("Base") = tpl.attr("get_instantiation")();
 
   m.def("do_convert", &do_convert);
   m.def("take_ownership", &take_ownership);
