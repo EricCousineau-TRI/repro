@@ -1,3 +1,5 @@
+#pragma once
+
 #include <utility>
 
 template <size_t N, size_t K, typename T, typename ... Ts>
@@ -30,12 +32,17 @@ struct is_different_from {
   using check = negation<std::is_same<T, U>>;
 };
 
-template <typename Visitor>
-struct types_visit_impl {
+template <typename T>
+struct type_tag {
+  using type = T;
+};
+
+template <template <typename> class Wrap, typename Visitor>
+struct types_visit_wrap_impl {
   template <typename T, bool execute>
   struct runner {
     inline static void run(Visitor&& visitor) {
-      visitor.template run<T>();
+      visitor(Wrap<T>{});
     }
   };
   template <typename T>
@@ -44,43 +51,9 @@ struct types_visit_impl {
   };
 };
 
-// TODO(eric.cousineau): See if there is a way to return result? (if useful)
-template <typename Check, typename ... Ts, typename Visitor>
-inline void types_visit_if(Visitor&& visitor) {
-  // Minor goal: Avoid needing index sequences (reduce number of types?).
-  using Dummy = bool[];
-  (void)Dummy{(
-      types_visit_impl<Visitor>::
-          template runner<Ts, Check::template check<Ts>::value>::
-              run(std::forward<Visitor>(visitor)),
-      true)...};
-}
+using dummy_list = bool[];
 
-template <typename ... Ts, typename Visitor>
-inline void types_visit(Visitor&& visitor) {
-  types_visit_if<always_true, Ts...>(std::forward<Visitor>(visitor));
-}
-
-template <typename T>
-struct type_tag {
-  using type = T;
-};
-
-template <template <typename> class Wrap, typename Lambda>
-struct types_visit_lambda_impl {
-  template <typename T, bool execute>
-  struct runner {
-    inline static void run(Lambda&& visitor) {
-      visitor(Wrap<T>{});
-    }
-  };
-  template <typename T>
-  struct runner<T, false> {
-    inline static void run(Lambda&&) {}
-  };
-};
-
-// For when `visit_lambda` is used with a Pack (and doesn't need a tag).
+// For when `visit` is used with a Pack (and doesn't need a tag).
 template <typename T>
 using no_tag = T;
 
@@ -92,31 +65,19 @@ struct type_pack {
   template <size_t N>
   using type = typename type_at<N, Ts...>::type;
 
-  template <typename Visitor>
+  template <template <typename> class Wrap = type_tag, typename Visitor = void>
   inline static void visit(Visitor&& visitor) {
-    types_visit<Ts...>(std::forward<Visitor>(visitor));
-  }
-
-  template <typename Check, typename Visitor>
-  inline static void visit_if(Visitor&& visitor) {
-    types_visit_if<Check, Ts...>(std::forward<Visitor>(visitor));
-  }
-
-  template <template <typename> class Wrap = type_tag, typename Lambda = void>
-  inline static void visit_lambda(Lambda&& visitor) {
-    using Dummy = bool[];
-    (void)Dummy{(
+    (void)dummy_list{(
       visitor(Wrap<Ts>{}), true)...};
   }
 
   template <typename Check, template <typename> class Wrap = type_tag,
-            typename Lambda = void>
-  inline static void visit_lambda_if(Lambda&& visitor, Check check = {}) {
-    using Dummy = bool[];
-    (void)Dummy{(
-        types_visit_lambda_impl<Wrap, Lambda>::
+            typename Visitor = void>
+  inline static void visit_lambda_if(Visitor&& visitor, Check check = {}) {
+    (void)dummy_list{(
+        types_visit_wrap_impl<Wrap, Visitor>::
             template runner<Ts, Check::template check<Ts>::value>::
-                run(std::forward<Lambda>(visitor)),
+                run(std::forward<Visitor>(visitor)),
         true)...};
   }
 };
@@ -143,6 +104,39 @@ struct type_pack_extract_impl<Tpl<Ts...>> {
 template <typename T>
 using type_pack_extract = typename type_pack_extract_impl<T>::type;
 
+// Unused.
 template <typename T, template <typename...> class Tpl>
 using type_pack_extract_constrained =
     typename type_pack_extract_impl<T>::template type_constrained<Tpl>;
+
+
+// Unused.
+template <typename Visitor>
+struct types_visit_impl {
+  template <typename T, bool execute>
+  struct runner {
+    inline static void run(Visitor&& visitor) {
+      visitor.template run<T>();
+    }
+  };
+  template <typename T>
+  struct runner<T, false> {
+    inline static void run(Visitor&&) {}
+  };
+};
+
+// TODO(eric.cousineau): See if there is a way to return result? (if useful)
+template <typename Check, typename ... Ts, typename Visitor>
+inline void types_visit_if(Visitor&& visitor) {
+  // Minor goal: Avoid needing index sequences (reduce number of types?).
+  (void)dummy_list{(
+      types_visit_impl<Visitor>::
+          template runner<Ts, Check::template check<Ts>::value>::
+              run(std::forward<Visitor>(visitor)),
+      true)...};
+}
+
+template <typename ... Ts, typename Visitor>
+inline void types_visit(Visitor&& visitor) {
+  types_visit_if<always_true, Ts...>(std::forward<Visitor>(visitor));
+}

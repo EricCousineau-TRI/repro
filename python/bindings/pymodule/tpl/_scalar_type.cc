@@ -16,7 +16,8 @@
 
 #include "cpp/name_trait.h"
 #include "cpp/simple_converter.h"
-#include "python/bindings/pymodule/tpl/cpp_tpl_types.h"
+#include "python/bindings/pymodule/tpl/cpp_tpl.h"
+#include "python/bindings/pymodule/tpl/simple_converter_py.h"
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -148,120 +149,6 @@ std::unique_ptr<Base<double, int>> take_ownership(py::function factory) {
   cout << "cpp convert" << endl;
   return py::cast<std::unique_ptr<Base<double, int>>>(std::move(out_py));
 }
-
-template <typename ... Args>
-inline py::tuple get_py_types(type_pack<Args...> = {}) {
-  return TypeRegistry::GetPyInstance().GetPyTypes<Args...>();
-}
-
-template <typename ParamList, typename InstantiationFunc>
-void RegisterInstantiations(
-    py::object tpl, const InstantiationFunc& instantiation_func,
-    ParamList = {}) {
-  auto add_instantiation = [&](auto param) {
-    // Register instantiation in `pybind`, using lambda
-    // `auto`-friendly syntax., indexing by canonical Python types.
-    tpl.attr("add_instantiation")(
-        get_py_types(param),
-        instantiation_func(param));
-  };
-  ParamList::template visit_lambda<no_tag>(add_instantiation);
-}
-
-template <
-    typename ParamList, typename PyClass,
-    typename InstantiationFunc>
-py::object RegisterTemplateMethod(
-    PyClass& py_class, const std::string& name,
-    const InstantiationFunc& instantiation_func, ParamList param_list = {}) {
-  py::handle TemplateMethod =
-      py::module::import("pymodule.tpl.py_tpl").attr("TemplateMethod");
-  std::string tpl_attr = "_tpl_" + name;
-  py::object tpl = py::getattr(py_class, tpl_attr.c_str(), py::none());
-  using Class = typename PyClass::type;
-  if (tpl.is(py::none())) {
-    // Add template backend.
-    tpl = TemplateMethod(name, py_class);
-    py::setattr(py_class, tpl_attr.c_str(), tpl);
-    // Add read-only property.
-    py_class.def_property(
-        name.c_str(),
-        [tpl](Class* self) {
-          return tpl.attr("bind")(self);
-        },
-        // TODO: Fix this once pybind is upgraded.
-        [](Class* self, py::handle) {
-          throw std::runtime_error("Read-only");
-        });
-  }
-  // Ensure that pybind is aware that it's a function.
-  auto cpp_instantiation_func = [instantiation_func](auto param) {
-    return py::cpp_function(instantiation_func(param));
-  };
-  RegisterInstantiations(tpl, cpp_instantiation_func, param_list);
-  return tpl;
-}
-
-template <typename Converter>
-auto RegisterConverter(py::module m, py::object tpl) {
-  // Register converter. Name does not matter.
-  py::class_<Converter> converter(m, "ConverterTmp");
-  converter
-    .def(py::init<>())
-    .def(
-      "Add",
-      [tpl](Converter* self,
-             py::tuple to_param_py, py::tuple from_param_py,
-             py::function py_converter) {
-        // @pre `to_param_py` and `from_param_py` are canonical Python types.
-        // Find conversion function using these types.
-        py::tuple key = py::make_tuple(to_param_py, from_param_py);
-        py::object add_py_converter = tpl.attr("_add_py_converter_map")[key];
-        // Add the casted converter.
-        add_py_converter(self, py_converter);
-      });
-  tpl.attr("Converter") = converter;
-  tpl.attr("_add_py_converter_map") = py::dict();
-}
-
-template <
-    template <typename...> class Tpl, typename Converter,
-    template <typename...> class Ptr = std::unique_ptr,
-    typename ToParam = void, typename FromParamList = void,
-    typename Check = is_different_from<ToParam>,
-    // Use `void` here since these will be inferred, but allow the check to
-    // have a default value.
-    typename PyClass = void>
-void RegisterConversions(
-    PyClass& py_class, py::object tpl,
-    ToParam to_param = {}, FromParamList from_param_list = {}) {
-  using To = typename ToParam::template bind<Tpl>;
-  py::tuple to_param_py = get_py_types(to_param);
-  auto add_conversion = [&](auto from_param) {
-    // Register base conversion.
-    using FromParam = decltype(from_param);
-    using From = typename FromParam::template bind<Tpl>;
-    py::tuple from_param_py = get_py_types(from_param);
-    // Add Python converter function, but bind using Base C++ overloads via
-    // pybind.
-    auto add_py_converter = [](Converter* converter, py::function py_func) {
-      // Wrap with C++ type information.
-      using ConversionFunc = std::function<Ptr<To> (const From&)>;
-      auto cpp_func = py::cast<ConversionFunc>(py_func);
-      // Add using overload.
-      converter->Add(cpp_func);
-    };
-    // Register function dispatch.
-    py::tuple key = py::make_tuple(to_param_py, from_param_py);
-    tpl.attr("_add_py_converter_map")[key] =
-        py::cpp_function(add_py_converter);
-    // Add Python conversion.
-    py_class.def(py::init<const From&>());
-  };
-  FromParamList::template visit_lambda_if<Check, no_tag>(add_conversion);
-}
-
-// TODO: Figure out how to handle literals...
 
 
 PYBIND11_MODULE(_scalar_type, m) {
