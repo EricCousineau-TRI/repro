@@ -46,7 +46,7 @@ def child_template_converter(ChildTpl):
 
 
 # Should only define these classes once.
-def _ChildTpl_factory(param):
+def _ChildTpl_instantiation(param):
     T, U = param
     Base = BaseTpl[T, U]
 
@@ -70,18 +70,17 @@ def _ChildTpl_factory(param):
             print("py: optional [{}]".format(type(self).__name__))
             return U(3 * value)
 
-        def do_to(self, Tc, Uc):
+        def DoTo(self, param):
             # Scalar conversion.
-            out = ChildTpl[Tc, Uc](copy_from=self)
-            return out
+            return ChildTpl.get_class(param)(copy_from=self)
 
     return Child
 
 
 ChildTpl = Template(
-    name = 'Child',
+    name = 'ChildTpl',
     parent = BaseTpl)
-ChildTpl.add_classes_with_factory(_ChildTpl_factory)
+ChildTpl.add_classes_with_factory(_ChildTpl_instantiation)
 
 # Default instantiation.
 print("WooH")
@@ -118,7 +117,7 @@ c.optional(2)
 c.dispatch(3)
 print("---")
 
-cc = c.do_to(float, int)
+cc = c.DoTo([float, int])
 print(type(cc))
 cc.pure(1.5)
 cc.optional(1.5)

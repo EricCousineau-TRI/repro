@@ -90,7 +90,7 @@ class Base {
 
   // TODO: Use `typeid()` and dynamic dispatching?
   static string py_name() {
-    return "Base[" + name_trait<T>::name() +
+    return "BaseTpl[" + name_trait<T>::name() +
       ", " + name_trait<U>::name() + "]";
   }
 
@@ -213,7 +213,8 @@ struct RegisterConversionsImpl {
     using ToPtr = std::unique_ptr<To>;
     using From = typename FromPack::template bind<Tpl>;
     auto from_tup = FromPack::template bind<get_py_types>::run();
-    // Add Python converter function, but bind using Base C++ overloads via pybind.
+    // Add Python converter function, but bind using Base C++ overloads via
+    // pybind.
     auto add_py_converter = [](Converter* converter, py::function py_func) {
       // Add type information.
       using ConversionFunc = std::function<ToPtr(const From&)>;
@@ -311,6 +312,8 @@ PYBIND11_MODULE(_scalar_type, m) {
     // Can't get `overload_cast` to infer `Return` type.
     // Have to explicitly cast... :(
     m.def("call_method", static_cast<void(*)(const BaseT&)>(&call_method));
+
+    // TODO: Add template binding for `DoTo`.
 
     // Register conversions.
     RegisterConversions<Base, BaseConverter>(

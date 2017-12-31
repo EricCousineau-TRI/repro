@@ -33,6 +33,8 @@ class Template(object):
         return cls
 
     def param_canonical(self, param):
+        if not isinstance(param, tuple):
+            param = tuple(param)
         return type_registry.GetPyTypesCanonical(param)
 
     def add_class(self, param, cls):
