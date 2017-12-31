@@ -192,7 +192,7 @@ auto RegisterConverter(py::module m, py::object tpl) {
 
 template <
     template <typename...> class Tpl, typename Converter,
-    template <typename> class Ptr = std::unique_ptr,
+    template <typename...> class Ptr = std::unique_ptr,
     typename ToPack = void, typename FromMetaPack = void,
     typename Check = is_different_from<ToPack>,
     // Use `void` here since these will be inferred, but allow the check to
@@ -206,7 +206,7 @@ void RegisterConversions(
   FromMetaPack::template visit_lambda_if<Check, no_wrap>(
       [&](auto from_pack) {
         // Register base conversion.
-        using FromPack = typename decltype(from_pack)::type;
+        using FromPack = decltype(from_pack);
         using From = typename FromPack::template bind<Tpl>;
         auto from_param = get_py_types(FromPack{});
         // Add Python converter function, but bind using Base C++ overloads via
@@ -253,7 +253,11 @@ py::object RegisterTemplateMethod(
           throw std::runtime_error("Read-only property");
         });
   }
-  RegisterInstantiations(tpl, instantiation_func, packs);
+  // Ensure that pybind is aware that it's a function.
+  auto cpp_instantiation_func = [instantiation_func](auto pack) {
+    return py::cpp_function(instantiation_func(pack));
+  };
+  RegisterInstantiations(tpl, cpp_instantiation_func, packs);
   return tpl;
 }
 
