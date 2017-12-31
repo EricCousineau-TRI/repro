@@ -158,14 +158,14 @@ template <typename MetaPack, typename InstantiationFunc>
 void RegisterInstantiations(
     py::object tpl, const InstantiationFunc& instantiation_func,
     MetaPack packs = {}) {
-  MetaPack::template visit_lambda(unwrap_tag(
+  MetaPack::template visit_lambda<no_wrap>(
       [&](auto pack) {
         // Register instantiation in `pybind`, using lambda
         // `auto`-friendly syntax., indexing by canonical Python types.
         tpl.attr("add_instantiation")(
             get_py_types(pack),
             instantiation_func(pack));
-      }));
+      });
 }
 
 template <typename Converter>
@@ -203,7 +203,7 @@ void RegisterConversions(
     ToPack to_pack = {}, FromMetaPack from_packs = {}) {
   using To = typename ToPack::template bind<Tpl>;
   py::tuple to_tup = get_py_types(ToPack{});
-  FromMetaPack::template visit_lambda_if<Check>(unwrap_tag(
+  FromMetaPack::template visit_lambda_if<Check, no_wrap>(
       [&](auto from_pack) {
         // Register base conversion.
         using FromPack = typename decltype(from_pack)::type;
@@ -224,7 +224,7 @@ void RegisterConversions(
             py::cpp_function(add_py_converter);
         // Add Python conversion.
         py_class.def(py::init<const From&>());
-      }));
+      });
 }
 
 template <
@@ -253,7 +253,7 @@ py::object RegisterTemplateMethod(
           throw std::runtime_error("Read-only property");
         });
   }
-  RegisterInstantiations(tpl, unwrap_tag(instantiation_func), packs);
+  RegisterInstantiations(tpl, instantiation_func, packs);
   return tpl;
 }
 

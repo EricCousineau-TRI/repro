@@ -66,12 +66,12 @@ struct type_tag {
   using type = T;
 };
 
-template <typename Lambda>
+template <template <typename> class Wrap, typename Lambda>
 struct types_visit_lambda_impl {
   template <typename T, bool execute>
   struct runner {
     inline static void run(Lambda&& visitor) {
-      visitor(type_tag<T>{});
+      visitor(Wrap<T>{});
     }
   };
   template <typename T>
@@ -80,14 +80,9 @@ struct types_visit_lambda_impl {
   };
 };
 
-// When a type_pack is wrapped in a type_tag.
-template <typename Func>
-auto unwrap_tag(Func&& func) {
-  return [&](auto tag) {
-    using InnerTag = typename decltype(tag)::type;
-    return func(InnerTag{});
-  };
-}
+// For when `visit_lambda` is used with a Pack (and doesn't need a tag).
+template <typename T>
+using no_wrap = T;
 
 template <typename ... Ts>
 struct type_pack {
@@ -107,18 +102,19 @@ struct type_pack {
     types_visit_if<Check, Ts...>(std::forward<Visitor>(visitor));
   }
 
-  template <typename Lambda>
+  template <template <typename> class Wrap = type_tag, typename Lambda = void>
   inline static void visit_lambda(Lambda&& visitor) {
     using Dummy = bool[];
     (void)Dummy{(
-      visitor(type_tag<Ts>{}), true)...};
+      visitor(Wrap<Ts>{}), true)...};
   }
 
-  template <typename Check, typename Lambda>
+  template <typename Check, template <typename> class Wrap = type_tag,
+            typename Lambda = void>
   inline static void visit_lambda_if(Lambda&& visitor, Check check = {}) {
     using Dummy = bool[];
     (void)Dummy{(
-        types_visit_lambda_impl<Lambda>::
+        types_visit_lambda_impl<Wrap, Lambda>::
             template runner<Ts, Check::template check<Ts>::value>::
                 run(std::forward<Lambda>(visitor)),
         true)...};
