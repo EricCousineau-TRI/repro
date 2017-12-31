@@ -151,7 +151,7 @@ std::unique_ptr<Base<double, int>> take_ownership(py::function factory) {
 
 template <typename ... Args>
 struct get_py_types {
-  auto run() {
+  inline static py::tuple run() {
     return TypeRegistry::GetPyInstance().GetPyTypes<Args...>();
   }
 };
@@ -174,7 +174,7 @@ struct RegisterInstantiationsImpl {
     // Register instantiation in `pybind`, using lambda `auto`-friendly syntax.
     auto py_cls = add_instantiation_func(Pack{});
     // Register template class `py_tpl`.
-    auto type_tup = typename Pack::template bind<get_py_types>::run();
+    auto type_tup = Pack::template bind<get_py_types>::run();
     tpl.attr("add_class")(type_tup, py_cls);
   }
 };
@@ -212,10 +212,10 @@ struct RegisterConversionsImpl {
   void run() {
     // Register base conversion.
     using To = typename ToPack::template bind<Tpl>;
-    auto to_tup = typename ToPack::template bind<get_py_types>::run();
+    auto to_tup = ToPack::template bind<get_py_types>::run();
     using ToPtr = std::unique_ptr<To>;
     using From = typename FromPack::template bind<Tpl>;
-    auto from_tup = typename FromPack::template bind<get_py_types>::run();
+    auto from_tup = FromPack::template bind<get_py_types>::run();
     // Add Python converter function, but bind using Base C++ overloads via pybind.
     auto add_py_converter = [](Converter* converter, py::function py_func) {
       // Add type information.
@@ -236,15 +236,15 @@ struct RegisterConversionsImpl {
 
 template <
     template <typename...> class Tpl, typename Converter,
+    typename ToPack = void, typename FromMetaPack = void,
     typename Check = is_different_from<ToPack>,
     // Use `void` here since these will be inferred, but allow the check to
     // have a default value.
-    typename PyClass = void,
-    typename ToPack = void, typename FromMetaPack = void>
+    typename PyClass = void>
 void RegisterConversions(
     PyClass& py_cls, py::object tpl,
     ToPack to_pack = {}, FromMetaPack from_packs = {}) {
-  RegisterConversionImpl<Tpl, Converter, Check, PyClass, ToPack, FromMetaPack>
+  RegisterConversionsImpl<Tpl, Converter, Check, PyClass, ToPack, FromMetaPack>
       impl{py_cls, tpl};
   impl.Run();
 }
@@ -255,7 +255,13 @@ void RegisterConversions(
 PYBIND11_MODULE(_scalar_type, m) {
   m.doc() = "Simple check on scalar / template types";
 
-  py::handle py_tpl = py::module::import("pymodule.tpl.py_tpl");
+  py::handle tpl_cls =
+      py::module::import("pymodule.tpl.py_tpl").attr("Template");
+
+  // TODO: Make sure `tpl` is named `BaseTpl`, and templates are normally
+  // `BaseTpl[T, U]`.
+  py::object tpl = tpl_cls("Base");
+  m.attr("BaseTpl") = tpl;
 
   // Register BaseConverter...
   py::class_<BaseConverter> base_converter(m, "BaseConverter");
@@ -274,24 +280,17 @@ PYBIND11_MODULE(_scalar_type, m) {
         add_py_converter(self, py_converter);
       });
 
-  py::handle tpl_cls = py_tpl.attr("Template");
-
-  // TODO: Make sure `tpl` is named `BaseTpl`, and templates are normally
-  // `BaseTpl[T, U]`.
-  py::object tpl = tpl_cls("Base");
-  m.attr("BaseTpl") = tpl;
-
   // Add instantiations and conversion mechanisms.
   using AllPack = type_pack<
       type_pack<int, double>,
       type_pack<double, int>
       >;
 
-  auto base_instantiation = [m, tpl](auto param_pack) {
+  auto base_instantiation = [&m, tpl](auto param_pack) {
     // Extract parameters.
     using Pack = decltype(param_pack);
-    using T = typename Pack::type<0>;
-    using U = typename Pack::type<1>;
+    using T = typename Pack::template type<0>;
+    using U = typename Pack::template type<1>;
     // Typedef classes.
     typedef Base<T, U> BaseT;
     typedef PyBase<T, U> PyBaseT;
@@ -319,7 +318,7 @@ PYBIND11_MODULE(_scalar_type, m) {
   };
 
   RegisterInstantiations<Base>(
-      m, base_instantiation, tpl, AllPack{});
+      m, tpl, base_instantiation, AllPack{});
 
   // Default instantiation.
   m.attr("Base") = tpl.attr("get_class")();

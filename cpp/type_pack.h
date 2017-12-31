@@ -25,7 +25,7 @@ template <typename T>
 using negation = std::integral_constant<bool, !T::value>;
 
 template <typename T>
-struct is_different_than {
+struct is_different_from {
   template <typename U>
   using check = negation<std::is_same<T, U>>;
 };
@@ -40,7 +40,7 @@ struct types_visit_impl {
   };
   template <typename T>
   struct runner<T, false> {
-    inline static void run(...) {}
+    inline static void run(Visitor&&) {}
   };
 };
 

@@ -20,7 +20,7 @@ int main() {
   using Pack = type_pack<double, int>;
   Pack::visit(visitor_test{1, 2.0});
 
-  Pack::visit_if<is_different_than<int>>(visitor_test{5, 15.});
+  Pack::visit_if<is_different_from<int>>(visitor_test{5, 15.});
 
   cout << typeid(Pack::type<0>).name() << endl;
   cout << typeid(Pack::type<1>).name() << endl;
