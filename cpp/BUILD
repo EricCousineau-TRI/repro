@@ -257,6 +257,7 @@ cc_binary(
 cc_library(
     name = "simple_converter",
     srcs = ["simple_converter.h"],
+    deps = [":type_pack"],
 )
 
 cc_binary(
@@ -287,3 +288,20 @@ cc_binary(
     name = "alias_test",
     srcs = ["alias_test.cc"],
 )
+
+cc_library(
+    name = "type_pack",
+    hdrs = ["type_pack.h"],
+)
+
+cc_binary(
+    name = "tpl_pack_visitor_ext",
+    srcs = ["tpl_pack_visitor_ext.cc"],
+    deps = [":type_pack"],
+)
+
+cc_binary(
+    name = "void_check",
+    srcs = ["void_check.cc"],
+)
+

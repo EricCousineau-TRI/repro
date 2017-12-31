@@ -3,6 +3,8 @@
 
 using namespace std;
 
+// OLD: Use `type_pack.h` instead!
+
 // https://stackoverflow.com/a/38617219/7829525
 #define TYPE_SUPPORTS(ClassName, Expr)                         \
   template<typename U>                                         \

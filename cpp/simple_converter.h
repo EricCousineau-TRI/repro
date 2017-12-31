@@ -12,6 +12,8 @@
 #include <utility>
 #include <vector>
 
+#include "cpp/type_pack.h"
+
 namespace drake {
 
 /** Combines a given hash value @p seed and a hash of parameter @p v. */
@@ -57,54 +59,12 @@ inline size_t hash_combine(size_t seed, const T& v) {
 
 namespace simple_converter {
 
-// - BEGIN: Added
 template <typename ... Ts>
-struct type_pack {
-  // // Make tuple of equal size.
-  // typedef std::tuple<
-  //     std::conditional<std::is_same<Ts, Ts>::value, std::type_index>...>::value
-  //     type_index_tuple;
-
-  static auto make_type_index_tuple() {
-    return std::make_tuple(std::type_index(typeid(Ts))...);
-  }
-
-  typedef decltype(make_type_index_tuple()) type_index_tuple;
-
-  static size_t hash() {
-    return drake::hash_value<type_index_tuple>()(make_type_index_tuple());
-  }
-
-  template <template <typename...> class Tpl>
-  using type = Tpl<Ts...>;
-};
-
-template <typename T>
-struct type_pack_inner_impl {
-  static_assert(!std::is_same<T, T>::value, "Wrong template");
-};
-
-template <template <typename ... Ts> class Tpl, typename ... Ts>
-struct type_pack_inner_impl<Tpl<Ts...>> {
-  using type = type_pack<Ts...>;
-
-  template <template <typename...> class TplIn>
-  using type_constrained =
-      typename std::conditional<
-          std::is_same<TplIn<Ts...>, Tpl<Ts...>>::value, 
-            type,
-            std::false_type
-      >::type;
-};
-
-template <typename T>
-using type_pack_inner = typename type_pack_inner_impl<T>::type;
-
-template <typename T, template <typename...> class Tpl>
-using type_pack_inner_constrained =
-    typename type_pack_inner_impl<T>::template type_constrained<Tpl>;
-
-// - END: Added
+size_t type_pack_hash(type_pack<Ts...> pack = {}) {
+  auto type_index_tuple = std::make_tuple(std::type_index(typeid(Ts))...);
+  return drake::hash_value<decltype(type_index_tuple)>()(
+      type_index_tuple);
+}
 
 template <template <typename...> class Tpl>
 class SimpleConverterAttorney;
@@ -125,7 +85,7 @@ class SimpleConverter {
 
   /// Get type_pack from a type.
   template <typename Type>
-  using get_pack = type_pack_inner_constrained<Type, Tpl>;
+  using get_pack = type_pack_extract_constrained<Type, Tpl>;
 
   template <typename To, typename From>
   using Converter = std::function<std::unique_ptr<To> (const From&)>;
@@ -137,7 +97,7 @@ class SimpleConverter {
 
   template <typename T>
   inline static size_t hash() {
-    return get_pack<T>::hash();
+    return type_pack_hash<get_pack<T>>();
   }
 
   template <typename To, typename From>
@@ -178,8 +138,6 @@ class SimpleConverter {
     assert(conversions_.find(key) == conversions_.end());
     conversions_[key] = erased;
   }
-
-  friend class SimpleConverterAttorney<Tpl>;
 };
 
 }  // namespace simple_converter

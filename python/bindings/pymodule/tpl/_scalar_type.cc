@@ -16,7 +16,8 @@
 
 #include "cpp/name_trait.h"
 #include "cpp/simple_converter.h"
-#include "python/bindings/pymodule/tpl/cpp_tpl_types.h"
+#include "python/bindings/pymodule/tpl/cpp_tpl.h"
+#include "python/bindings/pymodule/tpl/simple_converter_py.h"
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -90,7 +91,7 @@ class Base {
 
   // TODO: Use `typeid()` and dynamic dispatching?
   static string py_name() {
-    return "Base[" + name_trait<T>::name() +
+    return "BaseTpl[" + name_trait<T>::name() +
       ", " + name_trait<U>::name() + "]";
   }
 
@@ -149,85 +150,64 @@ std::unique_ptr<Base<double, int>> take_ownership(py::function factory) {
   return py::cast<std::unique_ptr<Base<double, int>>>(std::move(out_py));
 }
 
-template <typename T, typename U>
-void BaseTplInstantiation(py::module m, py::object tpl) {
-  typedef Base<T, U> Cls;
-  typedef PyBase<T, U> PyCls;
-  // This name will be overwritten.
-  string name = nice_type_name<Cls>();
-  py::class_<Cls, PyCls> base(m, name.c_str());
-  base
-    .def(py::init<T, U, std::unique_ptr<BaseConverter>>(),
-         py::arg("t"), py::arg("u"), py::arg("converter") = nullptr)
-    .def("t", &Cls::t)
-    .def("u", &Cls::u)
-    .def("pure", &Cls::pure)
-    .def("optional", &Cls::optional)
-    .def("dispatch", &Cls::dispatch);
-
-  const TypeRegistry& type_registry = TypeRegistry::GetPyInstance();
-
-  // Register template class.
-  auto type_tup = type_registry.GetPyTypes<T, U>();
-  tpl.attr("add_class")(type_tup, base);
-
-  // Can't get `overload_cast` to infer `Return` type.
-  // Have to explicitly cast... :(
-  m.def("call_method", static_cast<void(*)(const Cls&)>(&call_method));
-
-  // For each conversion available:
-  // Register base conversion(s).
-  using To = Cls;
-  using ToPtr = std::unique_ptr<To>;
-  using From = Base<U, T>;
-  auto from_tup = type_registry.GetPyTypes<U, T>();
-  // Add Python converter function, but bind using Cls++ overloads via pybind.
-  auto add_py_converter = [](BaseConverter* converter, py::function py_func) {
-    // Add type information.
-    using Func = std::function<ToPtr(const From&)>;
-    auto cpp_func = py::cast<Func>(py_func);
-    // Add using overload.
-    converter->Add(cpp_func);
-  };
-  // Register function dispatch.
-  auto key = py::make_tuple(type_tup, from_tup);
-  tpl.attr("_add_py_converter_map")[key] = py::cpp_function(add_py_converter);
-  // Add Python conversion.
-  base
-    .def(py::init<const From&>());
-  // End: Scalar conversion.
-}
 
 PYBIND11_MODULE(_scalar_type, m) {
   m.doc() = "Simple check on scalar / template types";
 
-  py::handle py_tpl = py::module::import("pymodule.tpl.py_tpl");
-  py::handle tpl_cls = py_tpl.attr("Template");
+  py::handle TemplateClass =
+      py::module::import("pymodule.tpl.cpp_tpl").attr("TemplateClass");
 
-  py::object tpl = tpl_cls("Base");
+  py::object tpl = TemplateClass("BaseTpl");
   m.attr("BaseTpl") = tpl;
+  RegisterConverter<BaseConverter>(m, tpl);
+
   // Add instantiations and conversion mechanisms.
-  tpl.attr("_add_py_converter_map") = py::dict();
-  BaseTplInstantiation<int, double>(m, tpl);
-  BaseTplInstantiation<double, int>(m, tpl);
+  using ParamList = type_pack<
+      type_pack<int, double>,
+      type_pack<double, int>>;
+
+  auto base_instantiation = [&m, tpl](auto param) {
+    // Extract parameters.
+    using Param = decltype(param);
+    using T = typename Param::template type<0>;
+    using U = typename Param::template type<1>;
+    // Typedef classes.
+    using BaseT = Base<T, U>;
+    using PyBaseT = PyBase<T, U>;
+    // Define class.
+    string name = nice_type_name<BaseT>();
+    // N.B. This  name will be overwritten by `tpl.add_class(...)`.
+    py::class_<BaseT, PyBaseT> py_class(m, name.c_str());
+    py_class
+      .def(py::init<T, U, std::unique_ptr<BaseConverter>>(),
+           py::arg("t"), py::arg("u"), py::arg("converter") = nullptr)
+      .def("t", &BaseT::t)
+      .def("u", &BaseT::u)
+      .def("pure", &BaseT::pure)
+      .def("optional", &BaseT::optional)
+      .def("dispatch", &BaseT::dispatch);
+
+    // Can't get `overload_cast` to infer `Return` type.
+    // Have to explicitly cast... :(
+    m.def("call_method", static_cast<void(*)(const BaseT&)>(&call_method));
+
+    // Add template methods for `DoTo`.
+    auto do_to_instantiation = [](auto to_param) {
+      using To = typename decltype(to_param)::template bind<Base>;
+      return [](BaseT* self) { return self->template DoTo<To>(); };
+    };
+    RegisterTemplateMethod(py_class, "DoTo", do_to_instantiation, ParamList{});
+
+    // Register conversions.
+    RegisterConversions<Base, BaseConverter>(
+        py_class, tpl, param, ParamList{});
+    return py_class;
+  };
+
+  RegisterInstantiations(tpl, base_instantiation, ParamList{});
+
   // Default instantiation.
-  m.attr("Base") = tpl.attr("get_class")();
-  // Register BaseConverter...
-  py::class_<BaseConverter> base_converter(m, "BaseConverter");
-  base_converter
-    .def(py::init<>())
-    .def(
-      "Add",
-      [tpl](BaseConverter* self,
-             py::tuple params_to, py::tuple params_from,
-             py::function py_converter) {
-        // Assume we have canonical Python types.
-        // Find our conversion function using these types.
-        auto key = py::make_tuple(params_to, params_from);
-        auto add_py_converter = tpl.attr("_add_py_converter_map")[key];
-        // Now register the converter.
-        add_py_converter(self, py_converter);
-      });
+  m.attr("Base") = tpl.attr("get_instantiation")();
 
   m.def("do_convert", &do_convert);
   m.def("take_ownership", &take_ownership);

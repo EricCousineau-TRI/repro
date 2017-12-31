@@ -3,6 +3,8 @@
 // Purpose: Base what avenues might be possible for creating instances in Python
 // to then be owned in C++.
 
+// TODO: Figure out how to handle literals...
+
 #include <string>
 #include <map>
 
