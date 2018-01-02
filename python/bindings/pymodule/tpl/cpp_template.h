@@ -25,15 +25,10 @@ py::object InitOrGetTemplate(
   // descriptor.
   // @note Overloads won't be allowed with templates. If it is needed,
   // see `py::sibling(...)`.
-  py::object tpl = py::getattr(scope, name.c_str(), py::none());
-  if (tpl.is(py::none())) {
-    py::handle cpp_template = py::module::import("pymodule.tpl.cpp_template");
-    tpl = cpp_template.attr(template_type.c_str())(
-        name, *create_extra,
-        py::arg("module_name")=cpp_template.attr("_get_module_from_stack")());
-    py::setattr(scope, name.c_str(), tpl);
-  }
-  return tpl;
+  py::handle m = py::module::import("pymodule.tpl.cpp_template");
+  return m.attr("init_or_get")(
+      scope, name, m.attr(template_type.c_str()), *create_extra,
+      py::arg("module_name")=m.attr("_get_module_name_from_stack")());
 }
 
 template <typename ... Ts>

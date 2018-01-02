@@ -81,14 +81,14 @@ ChildTpl = TemplateClass(
     parent = BaseTpl)
 ChildTpl.add_instantiations(_ChildTpl_instantiation)
 # Default instantiation.
-Child = ChildTpl[[]]
+Child = ChildTpl.get_instantiation()
 
 print(Child)
 print(ChildTpl[int, float])
 print(ChildTpl[float, int])
 
 # Check type identity persistence.
-print(Child == ChildTpl[[]])
+print(Child == ChildTpl.get_instantiation())
 print(ChildTpl[int, float] == ChildTpl[float, int])
 
 assert is_tpl_cls(Child)

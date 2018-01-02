@@ -7,14 +7,10 @@ PYBIND11_MODULE(_cpp_types, m) {
   type_registry_cls
     .def(py::init<>())
     .def("GetPyTypeCanonical", &TypeRegistry::GetPyTypeCanonical)
-    .def("GetPyTypesCanonical", &TypeRegistry::GetPyTypesCanonical)
     .def("GetName", [](const TypeRegistry *self, py::handle arg1) {
       return self->GetName(arg1);
-    })
-    // .def("GetName", py::overload_cast<py::handle>(&TypeRegistry::GetName))
-    .def("GetNames", [](const TypeRegistry *self, py::tuple arg1) {
-      return self->GetNames(arg1);
     });
+    // .def("GetName", py::overload_cast<py::handle>(&TypeRegistry::GetName))
   // Create instance.
-  m.attr("type_registry") = type_registry_cls();
+  m.attr("_type_registry") = type_registry_cls();
 }

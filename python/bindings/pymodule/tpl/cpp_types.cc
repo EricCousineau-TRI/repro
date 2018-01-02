@@ -18,7 +18,7 @@ TypeRegistry::TypeRegistry() {
 
 const TypeRegistry& TypeRegistry::GetPyInstance() {
   auto tr_module = py::module::import(kModule);
-  py::object type_registry_py = tr_module.attr("type_registry");
+  py::object type_registry_py = tr_module.attr("_type_registry");
   const TypeRegistry* type_registry =
       py::cast<const TypeRegistry*>(type_registry_py);
   return *type_registry;

@@ -1,12 +1,10 @@
-from pymodule.tpl.cpp_types import type_registry
-
-tr = type_registry
+from pymodule.tpl.cpp_types import type_name, type_canonical
 
 class TestClass(object):
     pass
 
-print(tr.GetPyTypeCanonical(int))
-print(tr.GetName(float))
-print(tr.GetName(str))
-print(tr.GetPyTypeCanonical(TestClass))
-print(tr.GetName(TestClass))
+print(type_canonical(int))
+print(type_name(float))
+print(type_name(str))
+print(type_canonical(TestClass))
+print(type_name(TestClass))

@@ -3,12 +3,7 @@ from __future__ import absolute_import, print_function
 # Define these first, as they are used in `cpp_types.cc`.
 
 import ctypes
-import inspect
 import numpy as np
-
-def _get_module_from_stack(frame=2):
-    print("\n".join(map(str, inspect.stack())))
-    return inspect.getmodule(inspect.stack()[frame][0]).__name__
 
 
 def _get_type_name(t):
@@ -38,4 +33,18 @@ class _StrictMap(object):
 
 
 # Load and import type registry.
-from ._cpp_types import type_registry
+from ._cpp_types import _type_registry
+
+def type_canonical(t):
+    return _type_registry.GetPyTypeCanonical(t)
+
+def type_name(t):
+    return _type_registry.GetName(t)
+
+def types_canonical(param):
+    """Gets canonical parameter pack that makes it simple to mesh with
+    C++ types. """
+    return tuple(map(type_canonical, param))
+
+def type_names(param):
+    return tuple(map(type_name, param))
