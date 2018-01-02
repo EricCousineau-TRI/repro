@@ -135,6 +135,11 @@ void print_base_name() {
   std::cout << "print_base_name: " << Base<T, U>::py_name() << std::endl;
 }
 
+template <int N>
+void literal_template() {
+  std::cout << "literal_template: " << N << std::endl;
+}
+
 std::unique_ptr<Base<double, int>> do_convert(const Base<int, double>& value) {
   cout << "Attempt conversion" << endl;
   std::unique_ptr<Base<double, int>> out(value.DoTo<Base<double, int>>());
@@ -223,6 +228,20 @@ PYBIND11_MODULE(_scalar_type, m) {
   };
   RegisterTemplateFunction(
       m, "print_base_name", print_base_name_instantiation, ParamList{});
+
+  // Literals.
+  {
+    using ParamList = type_pack<
+        type_pack<std::integral_constant<int, 1>>,
+        type_pack<std::integral_constant<int, 2>>>;
+    auto inst = [](auto param) {
+      using Param = decltype(param);
+      constexpr auto N = Param::template type<0>::value;
+      return &literal_template<N>;
+    };
+    RegisterTemplateFunction(
+      m, "literal_template", inst, ParamList{});
+  }
 }
 
 }  // namespace scalar_type

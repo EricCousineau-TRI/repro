@@ -40,7 +40,9 @@ py::handle TypeRegistry::DoGetPyType(const std::type_info& tinfo) const {
     // Get from pybind11-registered types.
     // WARNING: Internal API :(
     auto* info = py::detail::get_type_info(tinfo);
-    assert(info != nullptr);
+    if (!info) {
+      throw std::runtime_error("Unknown type!");
+    }
     return py::handle(reinterpret_cast<PyObject*>(info->type));
   }
 }
@@ -76,33 +78,60 @@ py::tuple TypeRegistry::GetNames(py::tuple py_types) const {
   return out;
 }
 
-template <typename T>
 void TypeRegistry::Register(
-    py::tuple py_types, const std::string& name_override) {
+      size_t cpp_key, py::tuple py_types, const std::string& name) {
   py::handle py_canonical = py_types[0];
-  size_t cpp_key = std::type_index(typeid(T)).hash_code();
   cpp_to_py_[cpp_key] = py_canonical;
   for (auto py_type : py_types) {
     py_to_py_canonical_[py_type] = py_canonical;
   }
-  if (!name_override.empty()) {
-    py_name_[py_canonical] = name_override;
-  } else {
-    py_name_[py_canonical] =
-        py::cast<std::string>(eval("_get_type_name")(py_canonical));
-  }
+  py_name_[py_canonical] = name;
 }
+
+template <typename T>
+void TypeRegistry::RegisterType(
+    py::tuple py_types, const std::string& name_override) {
+  size_t cpp_key = std::type_index(typeid(T)).hash_code();
+  std::string name = name_override;
+  if (name.empty()) {
+    name = py::cast<std::string>(eval("_get_type_name")(py_types[0]));
+  }
+  Register(cpp_key, py_types, name);
+}
+
+using dummy_list = int[];
+
+struct TypeRegistry::Helper {
+  TypeRegistry* self{};
+
+  template <typename T, T... Values>
+  void RegisterSequence(std::integer_sequence<T, Values...>) {
+    (void) dummy_list{(
+        self->Register(
+            std::type_index(
+                typeid(std::integral_constant<T, Values>)).hash_code(),
+            py::make_tuple(
+                py::eval(std::to_string(Values))),
+            std::to_string(Values)
+          )
+        , 0)...};
+  }
+};
 
 void TypeRegistry::RegisterCommon() {
   // Make mappings for C++ RTTI to Python types.
   // Unfortunately, this is hard to obtain from `pybind11`.
-  Register<bool>(eval("bool,"));
-  Register<std::string>(eval("str,"));
-  Register<double>(eval("float, np.double, ctypes.c_double"));
-  Register<float>(eval("np.float32, ctypes.c_float"));
-  Register<int>(eval("int, np.int32, ctypes.c_int32"));
-  Register<uint32_t>(eval("np.uint32, ctypes.c_uint32"));
-  Register<int64_t>(eval("np.int64, ctypes.c_int64"));
+  RegisterType<bool>(eval("bool,"));
+  RegisterType<std::string>(eval("str,"));
+  RegisterType<double>(eval("float, np.double, ctypes.c_double"));
+  RegisterType<float>(eval("np.float32, ctypes.c_float"));
+  RegisterType<int>(eval("int, np.int32, ctypes.c_int32"));
+  RegisterType<uint32_t>(eval("np.uint32, ctypes.c_uint32"));
+  RegisterType<int64_t>(eval("np.int64, ctypes.c_int64"));
+
+  Helper h{this};
+  h.RegisterSequence(std::integer_sequence<bool, 0, 1>{});
+  h.RegisterSequence(std::make_integer_sequence<int, 100>{});
 }
 
 py::object TypeRegistry::eval(const std::string& expr) const {

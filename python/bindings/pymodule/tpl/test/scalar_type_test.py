@@ -155,3 +155,8 @@ cc_c = st.do_convert(c)
 print("Try dispatch")
 cc_c.dispatch(2.5)
 print("Good to go")
+
+
+print(st.literal_template)
+print(st.literal_template.param_list)
+st.literal_template[1]()

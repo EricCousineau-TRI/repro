@@ -305,3 +305,9 @@ cc_binary(
     srcs = ["void_check.cc"],
 )
 
+cc_binary(
+    name = "tpl_literal",
+    srcs = ["tpl_literal.cc"],
+    deps = [":name_trait"],
+)
+

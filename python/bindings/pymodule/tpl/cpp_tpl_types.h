@@ -49,8 +49,11 @@ class TypeRegistry {
  private:
   py::handle DoGetPyType(const std::type_info& tinfo) const;
 
+  void Register(
+      size_t cpp_key, py::tuple py_types, const std::string& name);
+
   template <typename T>
-  void Register(py::tuple py_types,
+  void RegisterType(py::tuple py_types,
                 const std::string& name_override = {});
 
   void RegisterCommon();
@@ -63,4 +66,7 @@ class TypeRegistry {
   std::map<size_t, py::handle> cpp_to_py_;
   py::dict py_to_py_canonical_;
   py::dict py_name_;
+
+  struct Helper;
+  friend struct Helper;
 };
