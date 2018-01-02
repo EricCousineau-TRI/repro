@@ -133,6 +133,11 @@ void call_method(const Base<T, U>& base) {
   base.dispatch(T{10});
 }
 
+template <typename T, typename U>
+void print_base_name() {
+  std::cout << "print_base_name: " << Base<T, U>::py_name() << std::endl;
+}
+
 std::unique_ptr<Base<double, int>> do_convert(const Base<int, double>& value) {
   cout << "Attempt conversion" << endl;
   std::unique_ptr<Base<double, int>> out(value.DoTo<Base<double, int>>());
@@ -141,7 +146,6 @@ std::unique_ptr<Base<double, int>> do_convert(const Base<int, double>& value) {
   cout << "Got it" << endl;
   return out;
 }
-
 
 // How can this work?
 std::unique_ptr<Base<double, int>> take_ownership(py::function factory) {
@@ -197,7 +201,8 @@ PYBIND11_MODULE(_scalar_type, m) {
       using To = typename decltype(to_param)::template bind<Base>;
       return [](BaseT* self) { return self->template DoTo<To>(); };
     };
-    RegisterTemplateMethod(py_class, "DoTo", do_to_instantiation, ParamList{});
+    RegisterTemplateFunction(
+        py_class, "DoTo", do_to_instantiation, ParamList{});
 
     // Register conversions.
     RegisterConversions<Base, BaseConverter>(
@@ -212,6 +217,15 @@ PYBIND11_MODULE(_scalar_type, m) {
 
   m.def("do_convert", &do_convert);
   m.def("take_ownership", &take_ownership);
+
+  auto print_base_name_instantiation = [](auto param) {
+    using Param = decltype(param);
+    using T = typename Param::template type<0>;
+    using U = typename Param::template type<1>;
+    return &print_base_name<T, U>;
+  };
+  RegisterTemplateFunction(
+      m, "print_base_name", print_base_name_instantiation, ParamList{});
 }
 
 }  // namespace scalar_type

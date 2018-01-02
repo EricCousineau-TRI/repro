@@ -31,30 +31,27 @@ void RegisterInstantiations(
   ParamList::template visit<no_tag>(add_instantiation);
 }
 
-template <
-    typename ParamList, typename PyClass,
-    typename InstantiationFunc>
-py::object RegisterTemplateMethod(
-    PyClass& py_class, const std::string& name,
+template <typename ParamList, typename InstantiationFunc>
+py::object RegisterTemplateFunction(
+    py::handle scope, const std::string& name,
     const InstantiationFunc& instantiation_func, ParamList param_list = {}) {
   py::handle TemplateFunction =
       py::module::import("pymodule.tpl.cpp_tpl").attr("TemplateFunction");
   // Add property / descriptor if it does not already exist.
-  py::object tpl = py::getattr(py_class, name.c_str(), py::none());
+  py::object tpl = py::getattr(scope, name.c_str(), py::none());
   if (tpl.is(py::none())) {
-    tpl = TemplateFunction(name, py_class);
-    py::setattr(py_class, name.c_str(), tpl);
+    tpl = TemplateFunction(name, scope);
+    py::setattr(scope, name.c_str(), tpl);
   }
   // Ensure that pybind is aware that it's a function.
-  py::object py_type(py_class);  // Keep capture type simple.
   auto cpp_instantiation_func =
-      [instantiation_func, py_type, tpl](auto param) {
+      [instantiation_func, scope, tpl](auto param) {
     std::string instantiation_name =
         py::cast<std::string>(
             tpl.attr("_get_instantiation_name")(get_py_types(param)));
     return py::cpp_function(
-        instantiation_func(param), py::name(instantiation_name.c_str()),
-        py::is_method(py_type));
+        instantiation_func(param), py::name(instantiation_name.c_str())); //,
+        // py::is_method(scope));
   };
   RegisterInstantiations(tpl, cpp_instantiation_func, param_list);
   return tpl;

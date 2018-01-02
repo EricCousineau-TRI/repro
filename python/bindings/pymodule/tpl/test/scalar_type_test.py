@@ -20,6 +20,14 @@ print(BaseTpl[float, int])
 assert is_tpl_cls(Base)
 assert is_tpl_of(Base, BaseTpl)
 
+print("---")
+print("Names")
+print(st.print_base_name)
+st.print_base_name[int, float]()
+st.print_base_name[float, int]()
+
+print("---")
+
 # Test direct inheritance.
 class ChildDirect(Base):
     def __init__(self, t, u):

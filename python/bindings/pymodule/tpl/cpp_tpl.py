@@ -114,9 +114,11 @@ def is_tpl_of(cls, tpl):
 
 
 class TemplateFunction(Template):
-    def __init__(self, name, cls=None, **kwargs):
+    def __init__(self, name, scope=None, **kwargs):
         Template.__init__(self, name, **kwargs)
-        self._cls = cls
+        self._cls = None
+        if scope and isinstance(scope, type):
+            self._cls = scope
 
     def __str__(self):
         if self._cls is not None:
@@ -125,7 +127,10 @@ class TemplateFunction(Template):
             return Template.__str__(self)
 
     def _full_name(self):
-        return '{}.{}.{}'.format(self._module_name, self._cls.__name__, self.name)
+        prefix = self._module_name + "."
+        if self._cls:
+            prefix += self._cls.__name__ + "."
+        return '{}{}'.format(prefix, self.name)
 
     def __get__(self, obj, objtype):
         # Descriptor accessor.
