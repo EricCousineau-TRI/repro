@@ -41,21 +41,40 @@ struct type_pack {
   using type = typename type_at<N, Ts...>::type;
 };
 
-// For when `visit` is used with a Pack (and doesn't need a tag).
-template <typename T>
-using use_type = T;
 
 template <typename T>
 struct type_tag {
   using type = T;
 };
 
-template <template <typename> class Tag, typename Visitor>
+template <template <typename> class Tag = type_tag>
+struct visit_with_tag {
+  template <typename T, typename Visitor>
+  inline static void run(Visitor&& visitor) {
+    visitor(Tag<T>{});
+  }
+};
+
+struct visit_with_default {
+  template <typename T, typename Visitor>
+  inline static void run(Visitor&& visitor) {
+    visitor(T{});
+  }
+};
+
+struct visit_with_call {
+  template <typename T, typename Visitor>
+  inline static void run(Visitor&& visitor) {
+    visitor.template operator()<T>();
+  }
+};
+
+template <typename VisitWith, typename Visitor>
 struct types_visit_impl {
   template <typename T, bool execute>
   struct runner {
     inline static void run(Visitor&& visitor) {
-      visitor(Tag<T>{});
+      VisitWith::template run<T>(std::forward<Visitor>(visitor));
     }
   };
   template <typename T>
@@ -66,14 +85,14 @@ struct types_visit_impl {
 
 using dummy_list = bool[];
 
-template <template <typename> class Tag = use_type,
+template <class VisitWith = visit_with_default,
           typename Check = check_always_true,
           typename Visitor = void,
           typename ... Ts>
 inline static void type_pack_visit(
     Visitor&& visitor, type_pack<Ts...> pack = {}, Check check = {}) {
   (void)dummy_list{(
-      types_visit_impl<Tag, Visitor>::
+      types_visit_impl<VisitWith, Visitor>::
           template runner<Ts, Check::template check<Ts>::value>::
               run(std::forward<Visitor>(visitor)),
       true)...};

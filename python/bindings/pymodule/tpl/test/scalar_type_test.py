@@ -21,12 +21,6 @@ assert is_tpl_cls(Base)
 assert is_tpl_of(Base, BaseTpl)
 
 print("---")
-print("Names")
-print(st.print_base_name)
-st.print_base_name[int, float]()
-st.print_base_name[float, int]()
-
-print("---")
 
 # Test direct inheritance.
 class ChildDirect(Base):
@@ -156,6 +150,11 @@ print("Try dispatch")
 cc_c.dispatch(2.5)
 print("Good to go")
 
+print("---")
+print("Names")
+print(st.template_type)
+st.template_type[int]()
+st.template_type[float]()
 
 print(st.template_bool)
 print(st.template_bool.param_list)
@@ -166,4 +165,5 @@ st.template_bool[1]()
 
 print(st.template_int)
 print(st.template_int.param_list)
-st.template_int[1]()
+for i in [0, 1, 2, 5]:
+    st.template_int[i]()
