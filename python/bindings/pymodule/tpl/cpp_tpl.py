@@ -17,6 +17,8 @@ class Template(object):
             param_default = self.param_canonical(param_default)
         self._param_default = param_default
         self.param_list = []
+        # @note Consider using `StrictMap` if literals must exactly match.
+        # (e.g. `0` and `False` should resolve to different instantiations).
         self._instantiation_map = {}
         if module_name is None:
             module_name = inspect.getmodule(inspect.stack()[1][0]).__name__
@@ -37,14 +39,14 @@ class Template(object):
         return type_registry.GetPyTypesCanonical(param)
 
     def __getitem__(self, param):
-        """ Gets concrete class associate with the given arguments.
-        If called with [[]], then returns the default instantiation. """
+        """Gets concrete class associate with the given arguments. """
         if not isinstance(param, tuple) or isinstance(param, list):
             # Handle scalar case.
             param = (param,)
         return self.get_instantiation(param)
 
     def get_instantiation(self, param=PARAM_DEFAULT, throw_error=True):
+        """Gets the instantiation for the given parameters. """
         param = self._param_resolve(param)
         if throw_error:
             return self._instantiation_map[param]

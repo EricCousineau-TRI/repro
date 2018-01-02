@@ -6,45 +6,18 @@
 #include "cpp/name_trait.h"
 
 
+const char kModule[] = "pymodule.tpl.cpp_tpl_types";
+
 TypeRegistry::TypeRegistry() {
   // Import modules into `locals_`.
-  globals_ = py::globals();
-  exec(R"""(
-import numpy as np; import ctypes
-
-def get_type_name(t):
-  # Gets scoped type name as a string.
-  prefix = t.__module__ + "."
-  if prefix == "__builtin__.":
-    prefix = ""
-  return prefix + t.__name__
-
-
-class StrictMap(object):
-  def __init__(self):
-    self._values = dict()
-
-  def _strict_key(self, key):
-    # Ensures types are strictly scoped to the values.
-    return (type(key), key)
-
-  def add(self, key, value):
-    skey = self._strict_key(key)
-    assert skey not in self._values, "Already added: {}".format(skey)
-    self._values[skey] = value
-
-  def get(self, key, default):
-    skey = self._strict_key(key)
-    return self._values.get(skey, default)
-)""");
-
-  py_to_py_canonical_ = eval("StrictMap")();
+  globals_ = py::module::import(kModule).attr("__dict__");
+  py_to_py_canonical_ = eval("_StrictMap")();
 
   RegisterCommon();
 }
 
 const TypeRegistry& TypeRegistry::GetPyInstance() {
-  auto tr_module = py::module::import("pymodule.tpl.cpp_tpl_types");
+  auto tr_module = py::module::import(kModule);
   py::object type_registry_py = tr_module.attr("type_registry");
   const TypeRegistry* type_registry =
       py::cast<const TypeRegistry*>(type_registry_py);
@@ -85,8 +58,9 @@ py::tuple TypeRegistry::GetPyTypesCanonical(py::tuple py_types) const {
 py::str TypeRegistry::GetName(py::handle py_type) const {
   py::handle py_type_fin = GetPyTypeCanonical(py_type);
   py::object out = py_name_.attr("get")(py_type_fin);
+  // Assume this is a Python type.
   if (out.is(py::none())) {
-    out = eval("get_type_name")(py_type_fin);
+    out = eval("_get_type_name")(py_type_fin);
   }
   return out;
 }
@@ -123,7 +97,7 @@ void TypeRegistry::RegisterType(
     py::tuple py_types, const std::string& name_override) {
   std::string name = name_override;
   if (name.empty()) {
-    name = py::cast<std::string>(eval("get_type_name")(py_types[0]));
+    name = py::cast<std::string>(eval("_get_type_name")(py_types[0]));
   }
   Register({hash_of<T>()}, py_types, name);
 }

@@ -162,106 +162,101 @@ std::unique_ptr<Base<double, int>> take_ownership(py::function factory) {
   return py::cast<std::unique_ptr<Base<double, int>>>(std::move(out_py));
 }
 
+template <typename ... Ts>
+using single_type_pack_list =
+    type_pack<type_pack<Ts>...>;
 
 template <typename T, T ... Values>
 using single_type_pack_sequence =
-    type_pack<type_pack<std::integral_constant<T, Values>>...>;
+    single_type_pack_list<std::integral_constant<T, Values>...>;
 
 
 PYBIND11_MODULE(_scalar_type, m) {
   m.doc() = "Simple check on scalar / template types";
-
-  py::handle TemplateClass =
-      py::module::import("pymodule.tpl.cpp_tpl").attr("TemplateClass");
-
-  py::object tpl = TemplateClass("BaseTpl");
-  m.attr("BaseTpl") = tpl;
-  RegisterConverter<BaseConverter>(m, tpl);
 
   // Add instantiations and conversion mechanisms.
   using ParamList = type_pack<
       type_pack<int, double>,
       type_pack<double, int>>;
 
-  auto base_instantiation = [&m, tpl](auto param) {
-    // Extract parameters.
-    using Param = decltype(param);
-    using T = typename Param::template type<0>;
-    using U = typename Param::template type<1>;
-    // Typedef classes.
-    using BaseT = Base<T, U>;
-    using PyBaseT = PyBase<T, U>;
-    // Define class.
-    string name = nice_type_name<BaseT>();
-    // N.B. This  name will be overwritten by `tpl.add_class(...)`.
-    py::class_<BaseT, PyBaseT> py_class(m, name.c_str());
-    py_class
-      .def(py::init<T, U, std::unique_ptr<BaseConverter>>(),
-           py::arg("t"), py::arg("u"), py::arg("converter") = nullptr)
-      .def("t", &BaseT::t)
-      .def("u", &BaseT::u)
-      .def("pure", &BaseT::pure)
-      .def("optional", &BaseT::optional)
-      .def("dispatch", &BaseT::dispatch);
+  py::object tpl = InitOrGetTemplate(m, "BaseTpl", "TemplateClass");
+  RegisterConverter<BaseConverter>(m, tpl);
 
-    // Can't get `overload_cast` to infer `Return` type.
-    // Have to explicitly cast... :(
-    m.def("call_method", static_cast<void(*)(const BaseT&)>(&call_method));
+  {
+    auto inst = [&m, tpl](auto param) {
+      // Extract parameters.
+      using Param = decltype(param);
+      using T = typename Param::template type<0>;
+      using U = typename Param::template type<1>;
+      // Typedef classes.
+      using BaseT = Base<T, U>;
+      using PyBaseT = PyBase<T, U>;
+      // Define class.
+      string name = nice_type_name<BaseT>();
+      // N.B. This  name will be overwritten by `tpl.add_class(...)`.
+      py::class_<BaseT, PyBaseT> py_class(m, name.c_str());
+      py_class
+        .def(py::init<T, U, std::unique_ptr<BaseConverter>>(),
+             py::arg("t"), py::arg("u"), py::arg("converter") = nullptr)
+        .def("t", &BaseT::t)
+        .def("u", &BaseT::u)
+        .def("pure", &BaseT::pure)
+        .def("optional", &BaseT::optional)
+        .def("dispatch", &BaseT::dispatch);
+      AddInstantiation(tpl, py_class, param);
 
-    // Add template methods for `DoTo`.
-    auto do_to_instantiation = [](auto to_param) {
-      using To = typename decltype(to_param)::template bind<Base>;
-      return [](BaseT* self) { return self->template DoTo<To>(); };
+      // Can't get `overload_cast` to infer `Return` type.
+      // Have to explicitly cast... :(
+      m.def("call_method", static_cast<void(*)(const BaseT&)>(&call_method));
+
+      // Add template methods for `DoTo`.
+      {   
+        auto inst = [&](auto to_param) {
+          using To = typename decltype(to_param)::template bind<Base>;
+          AddTemplateMethod(py_class, "DoTo", &BaseT::template DoTo<To>);
+        };
+        IterTemplate(inst, ParamList{});
+      }
+
+      // Register conversions.
+      RegisterConversions<Base, BaseConverter>(
+          py_class, tpl, param, ParamList{});
     };
-    RegisterTemplateMethod(
-        py_class, "DoTo", do_to_instantiation, ParamList{});
-
-    // Register conversions.
-    RegisterConversions<Base, BaseConverter>(
-        py_class, tpl, param, ParamList{});
-    return py_class;
-  };
-
-  RegisterInstantiations(tpl, base_instantiation, ParamList{});
-
-  // Default instantiation.
-  m.attr("Base") = tpl.attr("get_instantiation")();
+    IterTemplate(inst, ParamList{});
+    // Default instantiation.
+    m.attr("Base") = tpl.attr("get_instantiation")();
+  }
 
   m.def("do_convert", &do_convert);
   m.def("take_ownership", &take_ownership);
 
-  auto print_base_name_instantiation = [](auto param) {
-    using Param = decltype(param);
-    using T = typename Param::template type<0>;
-    using U = typename Param::template type<1>;
-    return &print_base_name<T, U>;
-  };
-  RegisterTemplateFunction(
-      m, "print_base_name", print_base_name_instantiation, ParamList{});
 
-  // Literals.
-  {
-    using ParamList = type_pack<
-        type_pack<std::false_type>,
-        type_pack<std::true_type>>;
-    auto inst = [](auto param) {
-      using Param = decltype(param);
-      constexpr auto Value = Param::template type<0>::value;
-      return &template_bool<Value>;
-    };
-    RegisterTemplateFunction(
-      m, "template_bool", inst, ParamList{});
-  }
-  {
-    using ParamList = single_type_pack_sequence<int, 0, 1, 2, 5>;
-    auto inst = [](auto param) {
-      using Param = decltype(param);
-      constexpr auto N = Param::template type<0>::value;
-      return &template_int<N>;
-    };
-    RegisterTemplateFunction(
-      m, "template_int", inst, ParamList{});
-  }
+  // // AddTemplateFunction<int, double>(
+  // //     m, "print_base_name", &print_base_name<int, double>);
+
+  // // Literals.
+  // {
+  //   using ParamList = single_type_pack_list<
+  //       std::false_type,
+  //       std::true_type>;
+  //   auto inst = [](auto param) {
+  //     using Param = decltype(param);
+  //     constexpr auto Value = Param::template type<0>::value;
+  //     return &template_bool<Value>;
+  //   };
+  //   AddTemplateFunctions(
+  //     m, "template_bool", inst, ParamList{});
+  // }
+  // {
+  //   using ParamList = single_type_pack_sequence<int, 0, 1, 2, 5>;
+  //   auto inst = [](auto param) {
+  //     using Param = decltype(param);
+  //     constexpr auto N = Param::template type<0>::value;
+  //     return &template_int<N>;
+  //   };
+  //   AddTemplateFunctions(
+  //     m, "template_int", inst, ParamList{});
+  // }
 }
 
 }  // namespace scalar_type
