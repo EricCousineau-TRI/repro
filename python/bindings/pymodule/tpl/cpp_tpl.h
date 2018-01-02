@@ -95,13 +95,11 @@ py::object AddTemplateMethod(
       tpl, std::forward<Func>(func), param, py::is_method(scope));
 }
 
-
 template <
     typename Check = always_true, typename ParamList = void,
     typename InstantiationFunc = void>
 void IterTemplate(
-    const InstantiationFunc& instantiation_func, ParamList = {}) {
-  ParamList::template visit_if<Check, no_tag>([&](auto param) {
-    instantiation_func(param);
-  });
+    const InstantiationFunc& instantiation_func, ParamList param_list = {}) {
+  auto iter = [&](auto param) { instantiation_func(param); };
+  type_pack_visit<use_type, Check>(iter, param_list);
 }
