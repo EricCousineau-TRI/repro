@@ -16,11 +16,10 @@
 
 namespace simple_converter {
 
-template <template <typename...> class Tpl>
-class SimpleConverterAttorney;
-
 // Simple (less robust) version of Drake's SystemScalarConverter
-template <template <typename...> class Tpl>
+template <
+    template <typename...> class Tpl,
+    template <typename...> class Ptr = std::unique_ptr>
 class SimpleConverter {
  public:
   typedef std::function<void*(const void*)> ErasedConverter;
@@ -30,7 +29,7 @@ class SimpleConverter {
   SimpleConverter() = default;
 
   template <typename To, typename From>
-  using Converter = std::function<std::unique_ptr<To> (const From&)>;
+  using Converter = std::function<Ptr<To> (const From&)>;
 
   template <typename To, typename From>
   inline static Key get_key() {
@@ -50,13 +49,13 @@ class SimpleConverter {
   template <typename To, typename From>
   void AddCopyConverter() {
     Converter<To, From> converter = [](const From& from) {
-      return std::unique_ptr<To>(new To(from));
+      return Ptr<To>(new To(from));
     };
     Add(converter);
   }
 
   template <typename To, typename From>
-  std::unique_ptr<To> Convert(const From& from) {
+  Ptr<To> Convert(const From& from) {
     Key key = get_key<To, From>();
     // Should not attempt idempotent conversion.
     assert(key.first != key.second);
@@ -65,7 +64,7 @@ class SimpleConverter {
     ErasedConverter erased = iter->second;
     To* out = static_cast<To*>(erased(&from));
     assert(out != nullptr);
-    return std::unique_ptr<To>(out);
+    return Ptr<To>(out);
   }
 
  private:
