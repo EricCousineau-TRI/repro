@@ -157,6 +157,13 @@ cc_c.dispatch(2.5)
 print("Good to go")
 
 
-print(st.literal_template)
-print(st.literal_template.param_list)
-st.literal_template[1]()
+print(st.template_bool)
+print(st.template_bool.param_list)
+st.template_bool[False]()
+st.template_bool[True]()
+st.template_bool[0]()
+st.template_bool[1]()
+
+print(st.template_int)
+print(st.template_int.param_list)
+st.template_int[1]()

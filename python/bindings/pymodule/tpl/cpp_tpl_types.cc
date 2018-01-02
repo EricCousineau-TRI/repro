@@ -140,7 +140,7 @@ class TypeRegistry::LiteralHelper {
     RegisterSequence(MakeSequence<int, -i_max, -1>());
     RegisterSequence(
         MakeSequence<int, 0, i_max>(),
-        {MakeSequence<uint, 0, i_max>().Cast<int>()});
+        {MakeSequence<uint, 0, i_max, int>()});
   }
 
  private:
@@ -148,32 +148,21 @@ class TypeRegistry::LiteralHelper {
   struct Sequence {
     std::vector<size_t> keys;
     std::vector<T> values;
-
-    template <typename U>
-    Sequence<U> Cast() const {
-      Sequence<U> out;
-      out.keys = keys;
-      out.values.resize(values.size());
-      for (int i = 0; i < values.size(); ++i) {
-        out.values[i] = static_cast<U>(values[i]);
-      }
-      return out;
-    }
   };
 
-  template <typename T, T... Values>
-  Sequence<T> Render(std::integer_sequence<T, Values...>) {
-    return Sequence<T>{
+  template <typename T, typename Cast = T, T... Values>
+  Sequence<Cast> Render(std::integer_sequence<T, Values...>) {
+    return Sequence<Cast>{
       {hash_of<std::integral_constant<T, Values>>()...},
       {Values...}};
   }
 
-  template <typename T, T Start, T End>
-  Sequence<T> MakeSequence() {
+  template <typename T, T Start, T End, typename Cast = T>
+  Sequence<Cast> MakeSequence() {
     constexpr T Count = End - Start + 1;
     auto seq = transform(
         constant_add<T, Start>{}, std::make_integer_sequence<T, Count>{});
-    return Render(seq);
+    return Render<T, Cast>(seq);
   }
 
   template <typename T>

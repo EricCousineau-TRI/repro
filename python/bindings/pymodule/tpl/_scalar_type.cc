@@ -135,9 +135,14 @@ void print_base_name() {
   std::cout << "print_base_name: " << Base<T, U>::py_name() << std::endl;
 }
 
+template <bool Value>
+void template_bool() {
+  std::cout << "template_bool: " << Value << std::endl;
+}
+
 template <int N>
-void literal_template() {
-  std::cout << "literal_template: " << N << std::endl;
+void template_int() {
+  std::cout << "template_int: " << N << std::endl;
 }
 
 std::unique_ptr<Base<double, int>> do_convert(const Base<int, double>& value) {
@@ -156,6 +161,11 @@ std::unique_ptr<Base<double, int>> take_ownership(py::function factory) {
   cout << "cpp convert" << endl;
   return py::cast<std::unique_ptr<Base<double, int>>>(std::move(out_py));
 }
+
+
+template <typename T, T ... Values>
+using single_type_pack_sequence =
+    type_pack<type_pack<std::integral_constant<T, Values>>...>;
 
 
 PYBIND11_MODULE(_scalar_type, m) {
@@ -232,15 +242,25 @@ PYBIND11_MODULE(_scalar_type, m) {
   // Literals.
   {
     using ParamList = type_pack<
-        type_pack<std::integral_constant<int, 1>>,
-        type_pack<std::integral_constant<int, 2>>>;
+        type_pack<std::false_type>,
+        type_pack<std::true_type>>;
+    auto inst = [](auto param) {
+      using Param = decltype(param);
+      constexpr auto Value = Param::template type<0>::value;
+      return &template_bool<Value>;
+    };
+    RegisterTemplateFunction(
+      m, "template_bool", inst, ParamList{});
+  }
+  {
+    using ParamList = single_type_pack_sequence<int, 0, 1, 2, 5>;
     auto inst = [](auto param) {
       using Param = decltype(param);
       constexpr auto N = Param::template type<0>::value;
-      return &literal_template<N>;
+      return &template_int<N>;
     };
     RegisterTemplateFunction(
-      m, "literal_template", inst, ParamList{});
+      m, "template_int", inst, ParamList{});
   }
 }
 
