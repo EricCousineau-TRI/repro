@@ -128,53 +128,65 @@ void TypeRegistry::RegisterType(
   Register({hash_of<T>()}, py_types, name);
 }
 
-struct TypeRegistry::Helper {
-  TypeRegistry* type_registry{};
+class TypeRegistry::LiteralHelper {
+ public:
+  LiteralHelper(TypeRegistry* type_registry)
+    : type_registry_(type_registry) {}
 
-  using dummy_list = int[];
-
-  template <typename T>
-  void RegisterValue(
-      const std::vector<size_t>& cpp_key,
-      T value) {
-    py::object py_value = py::cast(value);
-    type_registry->Register(
-        cpp_key,
-        py::make_tuple(py_value),
-        py::str(py_value).cast<std::string>());
+  void RegisterLiterals() {
+    RegisterSequence(Render(std::integer_sequence<bool, false, true>{}));
+    // Register `int` (and `uint` as an alias for positive values).
+    constexpr int i_max = 100;
+    RegisterSequence(MakeSequence<int, -i_max, -1>());
+    RegisterSequence(
+        MakeSequence<int, 0, i_max>(),
+        {MakeSequence<uint, 0, i_max>().keys});
   }
+
+ private:
+  template <typename T>
+  struct Sequence {
+    std::vector<size_t> keys;
+    std::vector<T> values;
+  };
 
   template <typename T, T... Values>
-  void RegisterSequence(std::integer_sequence<T, Values...>) {
-    (void) dummy_list{(
-        RegisterValue(
-            {hash_of<std::integral_constant<T, Values>>()},
-            Values),
-        0)...};
+  Sequence<T> Render(std::integer_sequence<T, Values...>) {
+    return Sequence<T>{
+      {hash_of<std::integral_constant<T, Values>>()...},
+      {Values...}};
   }
 
-  template <typename T, T... Values, typename U, U... UValues>
-  void RegisterSequenceWithAlias(
-      std::integer_sequence<T, Values...>,
-      std::integer_sequence<U, UValues...>) {
-    (void) dummy_list{(
-        assert(Values == T{UValues}),
-        RegisterValue(
-            {
-              hash_of<std::integral_constant<T, Values>>(),
-              hash_of<std::integral_constant<U, UValues>>()
-            },
-            Values),
-        0)...};
+  template <typename T, T Start, T End>
+  Sequence<T> MakeSequence() {
+    constexpr T Count = End - Start + 1;
+    auto seq = transform(
+        constant_add<T, Start>{}, std::make_integer_sequence<T, Count>{});
+    return Render(seq);
   }
+
+  template <typename T>
+  void RegisterSequence(
+      const Sequence<T>& seq,
+      std::vector<std::vector<size_t>> alias_keys_set = {}) {
+    for (int i = 0; i < seq.keys.size(); ++i) {
+      // Get alias types.
+      std::vector<size_t> cpp_keys{seq.keys[i]};
+      for (const auto& alias_keys : alias_keys_set) {
+        cpp_keys.push_back(alias_keys[i]);
+      }
+      // Register.
+      T value = seq.values[i];
+      py::object py_value = py::cast(value);
+      type_registry_->Register(
+          cpp_keys,
+          py::make_tuple(py_value),
+          py::str(py_value).cast<std::string>());
+    }
+  }
+
+  TypeRegistry* type_registry_;
 };
-
-template <typename T, T Start, T End>
-auto make_seq() {
-  constexpr T Count = End - Start + 1;
-  return transform(
-      constant_add<T, Start>{}, std::make_integer_sequence<T, Count>{});
-}
 
 void TypeRegistry::RegisterCommon() {
   // Make mappings for C++ RTTI to Python types.
@@ -186,14 +198,8 @@ void TypeRegistry::RegisterCommon() {
   RegisterType<int>(eval("int, np.int32, ctypes.c_int32"));
   RegisterType<uint32_t>(eval("np.uint32, ctypes.c_uint32"));
   RegisterType<int64_t>(eval("np.int64, ctypes.c_int64"));
-
-  Helper h{this};
-  h.RegisterSequence(std::integer_sequence<bool, false, true>{});
-  constexpr int i_max = 100;
-  h.RegisterSequence(make_seq<int, -i_max, -1>());
-  h.RegisterSequenceWithAlias(
-      make_seq<int, 0, i_max>(),
-      make_seq<size_t, 0, i_max>());
+  // Register a subset of literals.
+  LiteralHelper(this).RegisterLiterals();
 }
 
 py::object TypeRegistry::eval(const std::string& expr) const {

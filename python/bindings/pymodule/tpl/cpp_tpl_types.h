@@ -68,6 +68,6 @@ class TypeRegistry {
   py::object py_to_py_canonical_;
   py::dict py_name_;
 
-  struct Helper;
-  friend struct Helper;
+  class LiteralHelper;
+  friend class LiteralHelper;
 };
