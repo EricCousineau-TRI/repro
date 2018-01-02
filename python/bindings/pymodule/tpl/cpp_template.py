@@ -100,7 +100,7 @@ class TemplateClass(Template):
     def add_instantiation(self, param, cls):
         """ Adds instantiation. """
         # Do not double-register existing instantiation.
-        if is_tpl_cls(cls):
+        if is_instantiation(cls):
             if self.parent != cls._tpl:
                 # Do not permit any existing template.
                 raise RuntimeError(
@@ -121,12 +121,16 @@ class TemplateClass(Template):
         Template.add_instantiations(self, instantiation_func, param_list)
 
 
-def is_tpl_cls(cls):
-    return hasattr(cls, '_tpl') and isinstance(cls._tpl, TemplateClass)
+def is_instantiation(obj):
+    # Dunno how to register `_tpl` in methods...
+    if isinstance(obj, type):
+        return hasattr(obj, '_tpl') and isinstance(obj._tpl, Template)
+    else:
+        return False
 
 
-def is_tpl_of(cls, tpl):
-    return is_tpl_cls(cls) and cls._tpl == tpl
+def is_instantiation_of(obj, tpl):
+    return obj in tpl._instantiation_map.values()
 
 
 class TemplateFunction(Template):

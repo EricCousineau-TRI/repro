@@ -3,7 +3,7 @@ from __future__ import print_function, absolute_import
 
 # import unittest
 from pymodule.tpl import scalar_type as st
-from pymodule.tpl.cpp_template import TemplateClass, is_tpl_cls, is_tpl_of
+from pymodule.tpl.cpp_template import TemplateClass, is_instantiation, is_instantiation_of
 
 import sys
 sys.stderr = sys.stdout
@@ -17,8 +17,8 @@ print(Base)
 print(BaseTpl)
 print(BaseTpl[int, float])
 print(BaseTpl[float, int])
-assert is_tpl_cls(Base)
-assert is_tpl_of(Base, BaseTpl)
+assert is_instantiation(Base)
+assert is_instantiation_of(Base, BaseTpl)
 
 print("---")
 
@@ -88,11 +88,12 @@ print(ChildTpl[int, float])
 print(ChildTpl[float, int])
 
 # Check type identity persistence.
-print(Child == ChildTpl.get_instantiation())
-print(ChildTpl[int, float] == ChildTpl[float, int])
+assert Child == ChildTpl.get_instantiation()
+assert ChildTpl[int, float] == ChildTpl[int, float]
+assert ChildTpl[int, float] != ChildTpl[float, int]
 
-assert is_tpl_cls(Child)
-assert is_tpl_of(Child, ChildTpl)
+assert is_instantiation(Child)
+assert is_instantiation_of(Child, ChildTpl)
 
 # Check default instantiation.
 assert issubclass(Child, Base)
