@@ -201,7 +201,7 @@ PYBIND11_MODULE(_scalar_type, m) {
       using To = typename decltype(to_param)::template bind<Base>;
       return [](BaseT* self) { return self->template DoTo<To>(); };
     };
-    RegisterTemplateFunction(
+    RegisterTemplateMethod(
         py_class, "DoTo", do_to_instantiation, ParamList{});
 
     // Register conversions.

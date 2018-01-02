@@ -94,7 +94,9 @@ class TemplateClass(Template):
         # Nominal behavior.
         param = Template.add_instantiation(self, param, cls)
         # Update class information.
+        # Add metadata to instantiation.
         cls._tpl = self
+        cls._tpl_param = param
         cls.__name__ = self._get_instantiation_name(param)
 
     def add_instantiations(
