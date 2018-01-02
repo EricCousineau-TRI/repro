@@ -114,13 +114,19 @@ struct TypeRegistry::Helper {
 
   using dummy_list = int[];
 
+  void RegisterValue(
+      const std::vector<size_t>& cpp_key,
+      const std::string& value) {
+    std::cout << "register: " << value << std::endl;
+    self->Register(
+        cpp_key, py::make_tuple(py::eval(value)), value);
+  }
+
   template <typename T, T... Values>
   void RegisterSequence(std::integer_sequence<T, Values...>) {
     (void) dummy_list{(
-        self->Register(
+        RegisterValue(
             {hash_of<std::integral_constant<T, Values>>()},
-            py::make_tuple(
-                py::eval(std::to_string(Values))),
             std::to_string(Values)),
         0)...};
   }
@@ -131,13 +137,11 @@ struct TypeRegistry::Helper {
       std::integer_sequence<U, UValues...>) {
     (void) dummy_list{(
         assert(Values == T{UValues}),
-        self->Register(
+        RegisterValue(
             {
               hash_of<std::integral_constant<T, Values>>(),
               hash_of<std::integral_constant<U, UValues>>()
             },
-            py::make_tuple(
-                py::eval(std::to_string(Values))),
             std::to_string(Values)),
         0)...};
   }
@@ -164,7 +168,7 @@ void TypeRegistry::RegisterCommon() {
   RegisterType<int64_t>(eval("np.int64, ctypes.c_int64"));
 
   Helper h{this};
-  h.RegisterSequence(std::integer_sequence<bool, 0, 1>{});
+  h.RegisterSequence(std::integer_sequence<bool, false, true>{});
   constexpr int i_max = 100;
   h.RegisterSequence(make_seq<int, -i_max, -1>());
   h.RegisterSequenceWithAlias(
