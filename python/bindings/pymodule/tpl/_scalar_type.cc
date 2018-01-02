@@ -89,11 +89,8 @@ class Base {
     return pv + ov;
   }
 
-  // TODO: Use `typeid()` and dynamic dispatching?
   static string py_name() {
-    const auto& type_registry = TypeRegistry::GetPyInstance();
-    return "BaseTpl[" + type_registry.GetName<T>() +
-      ", " + type_registry.GetName<U>() + "]";
+    return TypeRegistry::GetPyInstance().GetName<Base>();
   }
 
   template <typename To>
