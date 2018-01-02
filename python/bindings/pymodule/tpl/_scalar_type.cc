@@ -180,8 +180,6 @@ PYBIND11_MODULE(_scalar_type, m) {
       type_pack<double, int>>;
 
   py::object tpl = InitOrGetTemplate(m, "BaseTpl", "TemplateClass");
-  AddConverter<BaseConverter>(m, tpl);
-
   {
     auto inst = [&m, tpl](auto param) {
       // Extract parameters.

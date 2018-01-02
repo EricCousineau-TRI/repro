@@ -4,9 +4,9 @@
 #include "python/bindings/pymodule/tpl/cpp_tpl.h"
 
 template <typename Converter>
-auto AddConverter(py::module m, py::object scope) {
+void InitConverter(py::object scope) {
   // Register converter. Name does not matter.
-  py::class_<Converter> converter(m, "ConverterTmp");
+  py::class_<Converter> converter(scope, "ConverterTmp");
   converter
     .def(py::init<>())
     .def(
@@ -34,6 +34,12 @@ template <
 void AddConversion(
     PyClass& py_class, py::object scope,
     ToParam to_param = {}, FromParam from_param = {}) {
+  if (!py::hasattr(scope, "Converter")) {
+    InitConverter<Converter>(scope);
+  }
+  // Bind constructor conversion.
+  py_class.def(py::init<const From&>());
+  // Ensure derived Python types can add conversions.
   py::tuple to_param_py = get_py_types(to_param);
   py::tuple from_param_py = get_py_types(from_param);
   // Add Python converter function, but bind using Base C++ overloads via
@@ -49,6 +55,4 @@ void AddConversion(
   py::tuple key = py::make_tuple(to_param_py, from_param_py);
   scope.attr("_add_py_converter_map")[key] =
       py::cpp_function(add_py_converter);
-  // Add Python conversion.
-  py_class.def(py::init<const From&>());
 }
