@@ -140,7 +140,7 @@ class TypeRegistry::LiteralHelper {
     RegisterSequence(MakeSequence<int, -i_max, -1>());
     RegisterSequence(
         MakeSequence<int, 0, i_max>(),
-        {MakeSequence<uint, 0, i_max>().keys});
+        {MakeSequence<uint, 0, i_max>().Cast<int>()});
   }
 
  private:
@@ -148,6 +148,17 @@ class TypeRegistry::LiteralHelper {
   struct Sequence {
     std::vector<size_t> keys;
     std::vector<T> values;
+
+    template <typename U>
+    Sequence<U> Cast() const {
+      Sequence<U> out;
+      out.keys = keys;
+      out.values.resize(values.size());
+      for (int i = 0; i < values.size(); ++i) {
+        out.values[i] = static_cast<U>(values[i]);
+      }
+      return out;
+    }
   };
 
   template <typename T, T... Values>
@@ -168,12 +179,13 @@ class TypeRegistry::LiteralHelper {
   template <typename T>
   void RegisterSequence(
       const Sequence<T>& seq,
-      std::vector<std::vector<size_t>> alias_keys_set = {}) {
+      std::vector<Sequence<T>> alias_set = {}) {
     for (int i = 0; i < seq.keys.size(); ++i) {
       // Get alias types.
       std::vector<size_t> cpp_keys{seq.keys[i]};
-      for (const auto& alias_keys : alias_keys_set) {
-        cpp_keys.push_back(alias_keys[i]);
+      for (const auto& alias : alias_set) {
+        assert(seq.values[i] == alias.values[i]);
+        cpp_keys.push_back(alias.keys[i]);
       }
       // Register.
       T value = seq.values[i];
