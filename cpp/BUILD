@@ -311,3 +311,7 @@ cc_binary(
     deps = [":name_trait"],
 )
 
+cc_binary(
+    name = "alias_dup_test",
+    srcs = ["alias_dup_test.cc"],
+)
