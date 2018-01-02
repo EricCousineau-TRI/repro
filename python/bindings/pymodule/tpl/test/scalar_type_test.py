@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 from __future__ import print_function, absolute_import
 
-# import unittest
-from pymodule.tpl import scalar_type as m
 from pymodule.tpl.cpp_template import TemplateClass, is_class_instantiation, is_instantiation_of
+
+from pymodule.tpl.test import _scalar_type_test as m
 
 # Default class.
 BaseTpl = m.BaseTpl

@@ -141,7 +141,7 @@ std::unique_ptr<Base<double, int>> take_ownership(py::function factory) {
   return py::cast<std::unique_ptr<Base<double, int>>>(std::move(out_py));
 }
 
-PYBIND11_MODULE(_scalar_type, m) {
+PYBIND11_MODULE(_scalar_type_test, m) {
   m.doc() = "Simple check on scalar / template types";
 
   // Add instantiations and conversion mechanisms.

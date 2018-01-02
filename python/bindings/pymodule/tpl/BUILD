@@ -11,21 +11,6 @@ py_library(
     srcs = ["cpp_template.py"],
 )
 
-pybind11_module(
-    name = "scalar_type",
-    package_dir = "../..",
-    py_deps = [
-        ":cpp_template",
-        ":cpp_types",
-    ],
-    deps = [
-        "//cpp:name_trait",
-        "//cpp:simple_converter",
-        ":cpp_template_cc",
-        ":simple_converter_py",
-    ],
-)
-
 # # How to get this to work???
 # pybind11_binary(
 #     name = "scalar_type_embed_test",
@@ -41,12 +26,6 @@ py_library(
         ":scalar_type",
     ],
     visibility = ["//visibility:public"],
-)
-
-py_test_simple(
-    name = "scalar_type_test",
-    size = "small",
-    deps = [":scalar_type"],
 )
 
 pybind11_module(
@@ -69,7 +48,7 @@ py_test_simple(
 )
 
 cc_library(
-    name = "cpp_tpl_types_cc",
+    name = "cpp_template_types_cc",
     srcs = [
         "cpp_types.h",
         "cpp_types.cc",
@@ -85,7 +64,7 @@ pybind11_module(
     name = "cpp_types",
     package_dir = "../..",
     deps = [
-        ":cpp_tpl_types_cc",
+        ":cpp_template_types_cc",
     ],
 )
 
@@ -101,7 +80,7 @@ cc_library(
         "cpp_template.h",
     ],
     deps = [
-        ":cpp_tpl_types_cc",
+        ":cpp_template_types_cc",
         "//cpp:type_pack",
     ],
 )
@@ -140,4 +119,28 @@ py_test_simple(
     deps = [
         ":cpp_template_test_lib",
     ],
+)
+
+pybind_library(
+    name = "scalar_type_test_lib",
+    py_deps = [
+        ":cpp_template",
+        ":cpp_types",
+    ],
+    cc_so_name = "test/_scalar_type_test",
+    cc_srcs = [
+        "test/_scalar_type_test.cc",
+    ],
+    cc_deps = [
+        ":cpp_template_cc",
+        ":simple_converter_py",
+        "//cpp:name_trait",
+        "//cpp:simple_converter",
+    ],
+)
+
+py_test_simple(
+    name = "scalar_type_test",
+    size = "small",
+    deps = [":scalar_type_test_lib"],
 )
