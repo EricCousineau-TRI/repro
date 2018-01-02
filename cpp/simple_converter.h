@@ -40,7 +40,7 @@ class SimpleConverter {
   void Add(const Converter<To, From>& converter) {
     ErasedConverter erased = [converter](const void* from_raw) {
       const From* from = static_cast<const From*>(from_raw);
-      return converter(*from).release();
+      return new Ptr<To>(converter(*from));
     };
     Key key = get_key<To, From>();
     AddErased(key, erased);
@@ -62,9 +62,11 @@ class SimpleConverter {
     auto iter = conversions_.find(key);
     assert(iter != conversions_.end());
     ErasedConverter erased = iter->second;
-    To* out = static_cast<To*>(erased(&from));
-    assert(out != nullptr);
-    return Ptr<To>(out);
+    Ptr<To>* tmp = static_cast<Ptr<To>*>(erased(&from));
+    assert(tmp != nullptr);
+    Ptr<To> out(std::move(*tmp));
+    delete tmp;
+    return out;
   }
 
  private:
