@@ -4,7 +4,7 @@
 #include "python/bindings/pymodule/tpl/cpp_tpl.h"
 
 template <typename Converter>
-auto RegisterConverter(py::module m, py::object scope) {
+auto AddConverter(py::module m, py::object scope) {
   // Register converter. Name does not matter.
   py::class_<Converter> converter(m, "ConverterTmp");
   converter
@@ -26,38 +26,29 @@ auto RegisterConverter(py::module m, py::object scope) {
 }
 
 template <
-    template <typename...> class Tpl, typename Converter,
+    typename Converter, typename To, typename From,
     template <typename...> class Ptr = std::unique_ptr,
-    typename ToParam = void, typename FromParamList = void,
-    typename Check = is_different_from<ToParam>,
-    // Use `void` here since these will be inferred, but allow the check to
-    // have a default value.
-    typename PyClass = void>
-void RegisterConversions(
+    typename PyClass = void,
+    typename ToParam = type_pack_extract<To>,
+    typename FromParam = type_pack_extract<From>>
+void AddConversion(
     PyClass& py_class, py::object scope,
-    ToParam to_param = {}, FromParamList from_param_list = {}) {
-  using To = typename ToParam::template bind<Tpl>;
+    ToParam to_param = {}, FromParam from_param = {}) {
   py::tuple to_param_py = get_py_types(to_param);
-  auto add_conversion = [&](auto from_param) {
-    // Register base conversion.
-    using FromParam = decltype(from_param);
-    using From = typename FromParam::template bind<Tpl>;
-    py::tuple from_param_py = get_py_types(from_param);
-    // Add Python converter function, but bind using Base C++ overloads via
-    // pybind.
-    auto add_py_converter = [](Converter* converter, py::function py_func) {
-      // Wrap with C++ type information.
-      using ConversionFunc = std::function<Ptr<To> (const From&)>;
-      auto cpp_func = py::cast<ConversionFunc>(py_func);
-      // Add using overload.
-      converter->Add(cpp_func);
-    };
-    // Register function dispatch.
-    py::tuple key = py::make_tuple(to_param_py, from_param_py);
-    scope.attr("_add_py_converter_map")[key] =
-        py::cpp_function(add_py_converter);
-    // Add Python conversion.
-    py_class.def(py::init<const From&>());
+  py::tuple from_param_py = get_py_types(from_param);
+  // Add Python converter function, but bind using Base C++ overloads via
+  // pybind.
+  auto add_py_converter = [](Converter* converter, py::function py_func) {
+    // Wrap with C++ type information.
+    using ConversionFunc = std::function<Ptr<To> (const From&)>;
+    auto cpp_func = py::cast<ConversionFunc>(py_func);
+    // Add using overload.
+    converter->Add(cpp_func);
   };
-  FromParamList::template visit_if<Check, no_tag>(add_conversion);
+  // Register function dispatch.
+  py::tuple key = py::make_tuple(to_param_py, from_param_py);
+  scope.attr("_add_py_converter_map")[key] =
+      py::cpp_function(add_py_converter);
+  // Add Python conversion.
+  py_class.def(py::init<const From&>());
 }

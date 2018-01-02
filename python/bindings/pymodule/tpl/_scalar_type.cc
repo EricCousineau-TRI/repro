@@ -180,7 +180,7 @@ PYBIND11_MODULE(_scalar_type, m) {
       type_pack<double, int>>;
 
   py::object tpl = InitOrGetTemplate(m, "BaseTpl", "TemplateClass");
-  RegisterConverter<BaseConverter>(m, tpl);
+  AddConverter<BaseConverter>(m, tpl);
 
   {
     auto inst = [&m, tpl](auto param) {
@@ -209,21 +209,16 @@ PYBIND11_MODULE(_scalar_type, m) {
       // Have to explicitly cast... :(
       m.def("call_method", static_cast<void(*)(const BaseT&)>(&call_method));
 
-      // Add template methods for `DoTo`.
+      // Add template methods for `DoTo` and conversion.
       {
-        auto inst = [&](auto to_param) {
-          using To = typename decltype(to_param)::template bind<Base>;
-          // WARNING: If you forget `param`, then it'll assume an empty set...
-          // :(
+        auto inner = [&](auto inner_param) {
+          using BaseInner = typename decltype(inner_param)::template bind<Base>;
           AddTemplateMethod(
-              py_class, "DoTo", &BaseT::template DoTo<To>, to_param);
+              py_class, "DoTo", &BaseT::template DoTo<BaseInner>, inner_param);
+          AddConversion<BaseConverter, BaseT, BaseInner>(py_class, tpl);
         };
-        IterTemplate(inst, ParamList{});
+        IterTemplate<is_different_from<Param>>(inner, ParamList{});
       }
-
-      // Register conversions.
-      RegisterConversions<Base, BaseConverter>(
-          py_class, tpl, param, ParamList{});
     };
     IterTemplate(inst, ParamList{});
     // Default instantiation.

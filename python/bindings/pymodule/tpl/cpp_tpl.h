@@ -39,10 +39,6 @@ template <typename ... Ts>
 void AddInstantiation(
     py::object tpl, py::object obj,
     type_pack<Ts...> param = {}) {
-  // Register instantiation in `pybind`, using lambda
-  // `auto`-friendly syntax., indexing by canonical Python types.
-  py::print("Yar: ", get_py_types(param));
-  py::print(nice_type_name<type_pack<Ts...>>());
   tpl.attr("add_instantiation")(get_py_types(param), obj);
 }
 
@@ -59,6 +55,9 @@ py::object AddTemplateFunctionImpl(
   AddInstantiation(tpl, py_func, param);
   return tpl;
 }
+
+// WARNING: If you forget `param`, then it'll assume an empty set, and create a
+// runtime error :(
 
 template <typename ... Ts, typename Func>
 py::object AddTemplateFunction(
@@ -80,10 +79,12 @@ py::object AddTemplateMethod(
 }
 
 
-template <typename ParamList, typename InstantiationFunc>
+template <
+    typename Check = always_true, typename ParamList = void,
+    typename InstantiationFunc = void>
 void IterTemplate(
     const InstantiationFunc& instantiation_func, ParamList = {}) {
-  ParamList::template visit<no_tag>([&](auto param) {
+  ParamList::template visit_if<Check, no_tag>([&](auto param) {
     instantiation_func(param);
   });
 }
