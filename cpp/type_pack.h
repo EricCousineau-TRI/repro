@@ -18,7 +18,7 @@ struct type_at {
   using type = typename type_at_impl<N, 0, Ts...>::type;
 };
 
-struct always_true {
+struct check_always_true {
   template <typename T>
   using check = std::true_type;
 };
@@ -27,7 +27,7 @@ template <typename T>
 using negation = std::integral_constant<bool, !T::value>;
 
 template <typename T>
-struct is_different_from {
+struct check_different_from {
   template <typename U>
   using check = negation<std::is_same<T, U>>;
 };
@@ -67,7 +67,7 @@ struct types_visit_impl {
 using dummy_list = bool[];
 
 template <template <typename> class Tag = use_type,
-          typename Check = void,
+          typename Check = check_always_true,
           typename Visitor = void,
           typename ... Ts>
 inline static void type_pack_visit(

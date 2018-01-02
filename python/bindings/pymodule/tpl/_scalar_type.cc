@@ -214,10 +214,10 @@ PYBIND11_MODULE(_scalar_type, m) {
           AddConversion<BaseConverter, BaseT, BaseInner>(py_class, tpl);
         };
         // Use `is_different_than` to avoid implicitly-deleted copy constructor.
-        IterTemplate<is_different_from<Param>>(inner, ParamList{});
+        type_pack_visit(inner, ParamList{}, check_different_from<Param>{});
       }
     };
-    IterTemplate(inst, ParamList{});
+    type_pack_visit(inst, ParamList{});
   }
 
   m.def("do_convert", &do_convert);
@@ -238,7 +238,7 @@ PYBIND11_MODULE(_scalar_type, m) {
           m, "template_bool", &template_bool<Value>, param);
     };
     using ParamList = single_type_pack_sequence<bool, false, true>;
-    IterTemplate(inst, ParamList{});
+    type_pack_visit(inst, ParamList{});
   }
   {
     auto inst = [&m](auto param) {
@@ -248,7 +248,7 @@ PYBIND11_MODULE(_scalar_type, m) {
           m, "template_int", &template_int<N>, param);
     };
     using ParamList = single_type_pack_sequence<int, 0, 1, 2, 5>;
-    IterTemplate(inst, ParamList{});
+    type_pack_visit(inst, ParamList{});
   }
 }
 
