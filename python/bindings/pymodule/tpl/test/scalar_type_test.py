@@ -31,7 +31,7 @@ def child_template_converter(ChildTpl):
                 continue
             cls_to = ChildTpl.get_instantiation(to_param)
             def converter_func(obj_from):
-                return cls_to(copy_from=obj_from)
+                return cls_to(obj_from)
             converter.Add(to_param, from_param, converter_func)
     return converter
 
@@ -43,10 +43,9 @@ def _ChildTpl_instantiation(param):
 
     class Child(Base):
         def __init__(self, *args, **kwargs):
-            # Handle copy constructor overload:
-            if "copy_from" in kwargs:
-                copy_from = kwargs["copy_from"]
-                Base.__init__(self, copy_from)
+            if args and is_instantiation_of(type(args[0]), ChildTpl):
+                # Handle copy constructor overload.
+                Base.__init__(self, *args, **kwargs)
             else:
                 self._init(*args, **kwargs)
 
