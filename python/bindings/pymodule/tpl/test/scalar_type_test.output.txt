@@ -1,0 +1,131 @@
+Names
+<TemplateFunction pymodule.tpl._scalar_type.template_type>
+template_type: int
+template_type: double
+<TemplateFunction pymodule.tpl._scalar_type.template_bool>
+[(False,), (True,)]
+template_bool: 0
+template_bool: 1
+template_bool: 0
+template_bool: 1
+<TemplateFunction pymodule.tpl._scalar_type.template_int>
+[(0,), (1,), (2,), (5,)]
+template_int: 0
+template_int: 1
+template_int: 2
+template_int: 5
+---
+<class 'pymodule.tpl._scalar_type.BaseTpl[int, float]'>
+<TemplateClass pymodule.tpl._scalar_type.BaseTpl>
+<class 'pymodule.tpl._scalar_type.BaseTpl[int, float]'>
+<class 'pymodule.tpl._scalar_type.BaseTpl[float, int]'>
+---
+<class '__main__.ChildTpl[int, float]'>
+<class '__main__.ChildTpl[int, float]'>
+<class '__main__.ChildTpl[float, int]'>
+<class '__main__.ChildDirect'>
+py direct: pure [ChildDirect]
+py direct: optional [ChildDirect]
+cpp.dispatch [pymodule.tpl._scalar_type.BaseTpl[int, float]]:
+value = 3
+ .t = 2
+ .u = 5.5
+  py direct: pure [ChildDirect]
+  = 1
+  py direct: optional [ChildDirect]
+  = 2
+---
+<class '__main__.ChildTpl[int, float]'>
+py: pure [ChildTpl[int, float]]
+py: optional [ChildTpl[int, float]]
+cpp.dispatch [pymodule.tpl._scalar_type.BaseTpl[int, float]]:
+value = 3
+ .t = 2
+ .u = 5.5
+  py: pure [ChildTpl[int, float]]
+  = 6
+  py: optional [ChildTpl[int, float]]
+  = 9
+---
+Template method
+<unbound TemplateMethod BaseTpl[int, float].DoTo>
+<unbound method BaseTpl[int, float].DoTo[float, int]>
+<bound TemplateMethod BaseTpl[int, float].DoTo of <__main__.ChildTpl[int, float] object at 0x7fa74693c4c8>>
+<bound method BaseTpl[int, float].DoTo[float, int] of <__main__.ChildTpl[int, float] object at 0x7fa74693c4c8>>
+<class '__main__.ChildTpl[float, int]'>
+py: pure [ChildTpl[float, int]]
+py: optional [ChildTpl[float, int]]
+cpp.dispatch [pymodule.tpl._scalar_type.BaseTpl[float, int]]:
+value = 1.5
+ .t = 2
+ .u = 5
+  py: pure [ChildTpl[float, int]]
+  = 3
+  py: optional [ChildTpl[float, int]]
+  = 4
+---
+cpp.dispatch [pymodule.tpl._scalar_type.BaseTpl[int, float]]:
+value = 10
+ .t = 2
+ .u = 5.5
+  py direct: pure [ChildDirect]
+  = 1
+  py direct: optional [ChildDirect]
+  = 2
+cpp.dispatch [pymodule.tpl._scalar_type.BaseTpl[int, float]]:
+value = 10
+ .t = 2
+ .u = 5.5
+  py: pure [ChildTpl[int, float]]
+  = 20
+  py: optional [ChildTpl[int, float]]
+  = 30
+cpp.dispatch [pymodule.tpl._scalar_type.BaseTpl[float, int]]:
+value = 10
+ .t = 2
+ .u = 5
+  py: pure [ChildTpl[float, int]]
+  = 20
+  py: optional [ChildTpl[float, int]]
+  = 30
+---
+Check
+cpp call
+<__main__.ChildTpl[float, int] object at 0x7fa74693c598>
+cpp convert
+dispatch
+cpp.dispatch [pymodule.tpl._scalar_type.BaseTpl[float, int]]:
+value = 3.5
+ .t = 6.5
+ .u = 3
+  py: pure [ChildTpl[float, int]]
+  = 7
+  py: optional [ChildTpl[float, int]]
+  = 10
+Good
+---
+cpp.dispatch [pymodule.tpl._scalar_type.BaseTpl[int, float]]:
+value = 3
+ .t = 2
+ .u = 5.5
+  py: pure [ChildTpl[int, float]]
+  = 6
+  py: optional [ChildTpl[int, float]]
+  = 9
+Attempt conversion
+Got it
+Try dispatch
+cpp.dispatch [pymodule.tpl._scalar_type.BaseTpl[float, int]]:
+value = 2.5
+ .t = 2
+ .u = 5
+  py: pure [ChildTpl[float, int]]
+  = 5
+  py: optional [ChildTpl[float, int]]
+  = 7
+Good to go
+Base::~Base
+Base::~Base
+Base::~Base
+Base::~Base
+Base::~Base

@@ -8,11 +8,30 @@ from pymodule.tpl.cpp_template import TemplateClass, is_instantiation, is_instan
 import sys
 sys.stderr = sys.stdout
 
+print("Names")
+print(st.template_type)
+st.template_type[int]()
+st.template_type[float]()
+func = st.template_type[int]
+assert is_instantiation_of(st.template_type[int], st.template_type)
+
+print(st.template_bool)
+print(st.template_bool.param_list)
+st.template_bool[False]()
+st.template_bool[True]()
+st.template_bool[0]()
+st.template_bool[1]()
+
+print(st.template_int)
+print(st.template_int.param_list)
+for i in [0, 1, 2, 5]:
+    st.template_int[i]()
+
 # # Default class.
 BaseTpl = st.BaseTpl
 Base = st.Base
 
-
+print("---")
 print(Base)
 print(BaseTpl)
 print(BaseTpl[int, float])
@@ -21,7 +40,6 @@ assert is_instantiation(Base)
 assert is_instantiation_of(Base, BaseTpl)
 
 print("---")
-
 # Test direct inheritance.
 class ChildDirect(Base):
     def __init__(self, t, u):
@@ -149,21 +167,3 @@ cc_c = st.do_convert(c)
 print("Try dispatch")
 cc_c.dispatch(2.5)
 print("Good to go")
-
-print("---")
-print("Names")
-print(st.template_type)
-st.template_type[int]()
-st.template_type[float]()
-
-print(st.template_bool)
-print(st.template_bool.param_list)
-st.template_bool[False]()
-st.template_bool[True]()
-st.template_bool[0]()
-st.template_bool[1]()
-
-print(st.template_int)
-print(st.template_int.param_list)
-for i in [0, 1, 2, 5]:
-    st.template_int[i]()
