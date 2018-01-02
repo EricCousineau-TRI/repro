@@ -114,46 +114,40 @@ def is_tpl_of(cls, tpl):
 
 
 class TemplateFunction(Template):
-    def __init__(self, name, scope=None, **kwargs):
-        Template.__init__(self, name, **kwargs)
-        self._cls = None
-        if scope and isinstance(scope, type):
-            self._cls = scope
+    pass
+
+
+class TemplateMethod(TemplateFunction):
+    def __init__(self, name, cls, **kwargs):
+        TemplateFunction.__init__(self, name, **kwargs)
+        self._cls = cls
 
     def __str__(self):
-        if self._cls is not None:
-            return '<unbound TemplateFunction {}>'.format(self._full_name())
-        else:
-            return Template.__str__(self)
+        return '<unbound TemplateMethod {}>'.format(self._full_name())
 
     def _full_name(self):
-        prefix = self._module_name + "."
-        if self._cls:
-            prefix += self._cls.__name__ + "."
-        return '{}{}'.format(prefix, self.name)
+        return '{}.{}.{}'.format(self._module_name, self._cls.__name__, self.name)
+
+    class _Bound(object):
+        def __init__(self, tpl, obj):
+            self._tpl = tpl
+            self._obj = obj
+
+        def __getitem__(self, param):
+            unbound = self._tpl[param]
+            bound = types.MethodType(unbound, self._obj, self._tpl._cls)
+            return bound
+
+        def __str__(self):
+            return '<bound TemplateMethod {} of {}>'.format(
+                self._tpl._full_name(), self._obj)
 
     def __get__(self, obj, objtype):
         # Descriptor accessor.
         if obj is None:
             return self
         else:
-            return _TemplateFunctionBound(self, obj)
+            return TemplateMethod._Bound(self, obj)
 
     def __set__(self, obj, value):
         raise RuntimeError("Read-only property")
-
-
-class _TemplateFunctionBound(object):
-    def __init__(self, tpl, obj):
-        assert tpl._cls is not None
-        self._tpl = tpl
-        self._obj = obj
-
-    def __getitem__(self, param):
-        unbound = self._tpl[param]
-        bound = types.MethodType(unbound, self._obj, self._tpl._cls)
-        return bound
-
-    def __str__(self):
-        return '<bound TemplateFunction {} of {}>'.format(
-            self._tpl._full_name(), self._obj)
