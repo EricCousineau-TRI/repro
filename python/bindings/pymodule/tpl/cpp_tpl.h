@@ -41,6 +41,8 @@ void AddInstantiation(
     type_pack<Ts...> param = {}) {
   // Register instantiation in `pybind`, using lambda
   // `auto`-friendly syntax., indexing by canonical Python types.
+  py::print("Yar: ", get_py_types(param));
+  py::print(nice_type_name<type_pack<Ts...>>());
   tpl.attr("add_instantiation")(get_py_types(param), obj);
 }
 

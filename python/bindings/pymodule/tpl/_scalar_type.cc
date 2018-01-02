@@ -210,10 +210,13 @@ PYBIND11_MODULE(_scalar_type, m) {
       m.def("call_method", static_cast<void(*)(const BaseT&)>(&call_method));
 
       // Add template methods for `DoTo`.
-      {   
+      {
         auto inst = [&](auto to_param) {
           using To = typename decltype(to_param)::template bind<Base>;
-          AddTemplateMethod(py_class, "DoTo", &BaseT::template DoTo<To>);
+          // WARNING: If you forget `param`, then it'll assume an empty set...
+          // :(
+          AddTemplateMethod(
+              py_class, "DoTo", &BaseT::template DoTo<To>, to_param);
         };
         IterTemplate(inst, ParamList{});
       }
@@ -230,33 +233,33 @@ PYBIND11_MODULE(_scalar_type, m) {
   m.def("do_convert", &do_convert);
   m.def("take_ownership", &take_ownership);
 
-
-  // // AddTemplateFunction<int, double>(
-  // //     m, "print_base_name", &print_base_name<int, double>);
-
-  // // Literals.
-  // {
-  //   using ParamList = single_type_pack_list<
-  //       std::false_type,
-  //       std::true_type>;
-  //   auto inst = [](auto param) {
-  //     using Param = decltype(param);
-  //     constexpr auto Value = Param::template type<0>::value;
-  //     return &template_bool<Value>;
-  //   };
-  //   AddTemplateFunctions(
-  //     m, "template_bool", inst, ParamList{});
-  // }
-  // {
-  //   using ParamList = single_type_pack_sequence<int, 0, 1, 2, 5>;
-  //   auto inst = [](auto param) {
-  //     using Param = decltype(param);
-  //     constexpr auto N = Param::template type<0>::value;
-  //     return &template_int<N>;
-  //   };
-  //   AddTemplateFunctions(
-  //     m, "template_int", inst, ParamList{});
-  // }
+  // Literals.
+  // - Manual.
+  AddTemplateFunction<int, double>(
+      m, "print_base_name", &print_base_name<int, double>);
+  AddTemplateFunction<double, int>(
+      m, "print_base_name", &print_base_name<double, int>);
+  {
+    // - Looping.
+    auto inst = [&m](auto param) {
+      using Param = decltype(param);
+      constexpr auto Value = Param::template type<0>::value;
+      AddTemplateFunction(
+          m, "template_bool", &template_bool<Value>, param);
+    };
+    using ParamList = single_type_pack_sequence<bool, false, true>;
+    IterTemplate(inst, ParamList{});
+  }
+  {
+    auto inst = [&m](auto param) {
+      using Param = decltype(param);
+      constexpr auto N = Param::template type<0>::value;
+      AddTemplateFunction(
+          m, "template_int", &template_int<N>, param);
+    };
+    using ParamList = single_type_pack_sequence<int, 0, 1, 2, 5>;
+    IterTemplate(inst, ParamList{});
+  }
 }
 
 }  // namespace scalar_type

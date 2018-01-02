@@ -61,6 +61,8 @@ class Template(object):
         """ Adds instantiation. """
         # Ensure that we do not already have this tuple.
         param = self.param_canonical(param)
+        print(param)
+        print(instantiation)
         assert param not in self._instantiation_map, "Instantiation already registered"
         # Add it.
         self.param_list.append(param)
