@@ -44,9 +44,12 @@ class Template(object):
             param = (param,)
         return self.get_instantiation(param)
 
-    def get_instantiation(self, param=PARAM_DEFAULT):
+    def get_instantiation(self, param=PARAM_DEFAULT, throw_error=True):
         param = self._param_resolve(param)
-        return self._instantiation_map[param]
+        if throw_error:
+            return self._instantiation_map[param]
+        else:
+            return self._instantiation_map.get(param)
 
     def _get_instantiation_name(self, param):
         param_str = map(type_registry.GetName, param)

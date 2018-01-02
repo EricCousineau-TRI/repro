@@ -40,6 +40,10 @@ py::object RegisterTemplateFunctionImpl(
     const InstantiationFunc& instantiation_func, ParamList param_list,
     CppFunctionExtra... cpp_function_extra) {
   // Add property / descriptor if it does not already exist.
+  // This works for adding to classes since `TemplateMethod` acts as a
+  // descriptor.
+  // @note Overloads won't be allowed with templates. If it is needed,
+  // see `py::sibling(...)`.
   py::object tpl = py::getattr(scope, name.c_str(), py::none());
   if (tpl.is(py::none())) {
     py::handle cpp_tpl = py::module::import("pymodule.tpl.cpp_tpl");
