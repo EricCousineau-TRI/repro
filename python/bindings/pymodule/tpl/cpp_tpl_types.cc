@@ -80,6 +80,8 @@ py::tuple TypeRegistry::GetNames(py::tuple py_types) const {
 
 void TypeRegistry::Register(
       size_t cpp_key, py::tuple py_types, const std::string& name) {
+  // TODO: Ensure no duplicate `py_types` or `cpp_types`?
+  // Make a `unique_dict` that throws if overlap occurs?
   py::handle py_canonical = py_types[0];
   cpp_to_py_[cpp_key] = py_canonical;
   for (auto py_type : py_types) {
@@ -99,13 +101,12 @@ void TypeRegistry::RegisterType(
   Register(cpp_key, py_types, name);
 }
 
-using dummy_list = int[];
-
 struct TypeRegistry::Helper {
   TypeRegistry* self{};
 
   template <typename T, T... Values>
   void RegisterSequence(std::integer_sequence<T, Values...>) {
+    using dummy_list = int[];
     (void) dummy_list{(
         self->Register(
             std::type_index(
@@ -116,6 +117,18 @@ struct TypeRegistry::Helper {
           )
         , 0)...};
   }
+};
+
+
+template <typename TForm, typename T, T... Values>
+auto transform(TForm = {}, std::integer_sequence<T, Values...> = {}) {
+  return std::integer_sequence<T, TForm::template type<Values>::value...>{};
+}
+
+template <int Add>
+struct int_add {
+  template <int Value>
+  using type = std::integral_constant<int, Value + Add>;
 };
 
 void TypeRegistry::RegisterCommon() {
@@ -131,7 +144,9 @@ void TypeRegistry::RegisterCommon() {
 
   Helper h{this};
   h.RegisterSequence(std::integer_sequence<bool, 0, 1>{});
-  h.RegisterSequence(std::make_integer_sequence<int, 100>{});
+  h.RegisterSequence(
+      transform(
+          int_add<-100>{}, std::make_integer_sequence<int, 200>{}));
 }
 
 py::object TypeRegistry::eval(const std::string& expr) const {
