@@ -13,7 +13,10 @@ import numpy as np; import ctypes
 
 def _get_type_name(t):
   # Gets scoped type name as a string.
-  return t.__module__ + "." + t.__name__
+  prefix = t.__module__ + "."
+  if prefix == "__builtin__.":
+    prefix = ""
+  return prefix + t.__name__
 )""");
 
   RegisterCommon();
@@ -56,7 +59,7 @@ py::tuple TypeRegistry::GetPyTypesCanonical(py::tuple py_types) const {
   return out;
 }
 
-py::str TypeRegistry::GetCppName(py::handle py_type) const {
+py::str TypeRegistry::GetName(py::handle py_type) const {
   py::handle py_type_fin = GetPyTypeCanonical(py_type);
   py::object out = py_name_.attr("get")(py_type_fin);
   if (out.is(py::none())) {
@@ -65,38 +68,41 @@ py::str TypeRegistry::GetCppName(py::handle py_type) const {
   return out;
 }
 
-py::tuple TypeRegistry::GetCppNames(py::tuple py_types) const {
+py::tuple TypeRegistry::GetNames(py::tuple py_types) const {
   py::tuple out(py_types.size());
   for (int i = 0; i < py_types.size(); ++i) {
-    out[i] = GetCppName(py_types[i]);
+    out[i] = GetName(py_types[i]);
   }
   return out;
 }
 
 template <typename T>
 void TypeRegistry::Register(
-    const std::string& py_values,
-    const std::string& cpp_name) {
-  size_t cpp_key = std::type_index(typeid(T)).hash_code();
-  py::tuple py_types = eval(py_values);
+    py::tuple py_types, const std::string& name_override) {
   py::handle py_canonical = py_types[0];
+  size_t cpp_key = std::type_index(typeid(T)).hash_code();
   cpp_to_py_[cpp_key] = py_canonical;
-  for (auto t : py_types) {
-    py_to_py_canonical_[t] = py_canonical;
+  for (auto py_type : py_types) {
+    py_to_py_canonical_[py_type] = py_canonical;
   }
-  py_name_[py_canonical] = cpp_name.empty() ? nice_type_name<T>() : cpp_name;
+  if (!name_override.empty()) {
+    py_name_[py_canonical] = name_override;
+  } else {
+    py_name_[py_canonical] =
+        py::cast<std::string>(eval("_get_type_name")(py_canonical));
+  }
 }
 
 void TypeRegistry::RegisterCommon() {
   // Make mappings for C++ RTTI to Python types.
   // Unfortunately, this is hard to obtain from `pybind11`.
-  Register<bool>("bool,");
-  Register<std::string>("str,", "std::string");
-  Register<double>("float, np.double, ctypes.c_double");
-  Register<float>("np.float32, ctypes.c_float");
-  Register<int>("int, np.int32, ctypes.c_int32");
-  Register<uint32_t>("np.uint32, ctypes.c_uint32", "uint32_t");
-  Register<int64_t>("np.int64, ctypes.c_int64", "int64_t");
+  Register<bool>(eval("bool,"));
+  Register<std::string>(eval("str,"));
+  Register<double>(eval("float, np.double, ctypes.c_double"));
+  Register<float>(eval("np.float32, ctypes.c_float"));
+  Register<int>(eval("int, np.int32, ctypes.c_int32"));
+  Register<uint32_t>(eval("np.uint32, ctypes.c_uint32"));
+  Register<int64_t>(eval("np.int64, ctypes.c_int64"));
 }
 
 py::object TypeRegistry::eval(const std::string& expr) const {

@@ -91,8 +91,9 @@ class Base {
 
   // TODO: Use `typeid()` and dynamic dispatching?
   static string py_name() {
-    return "BaseTpl[" + name_trait<T>::name() +
-      ", " + name_trait<U>::name() + "]";
+    const auto& type_registry = TypeRegistry::GetPyInstance();
+    return "BaseTpl[" + type_registry.GetName<T>() +
+      ", " + type_registry.GetName<U>() + "]";
   }
 
   template <typename To>

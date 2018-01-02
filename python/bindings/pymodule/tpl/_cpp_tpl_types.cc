@@ -8,8 +8,13 @@ PYBIND11_MODULE(_cpp_tpl_types, m) {
     .def(py::init<>())
     .def("GetPyTypeCanonical", &TypeRegistry::GetPyTypeCanonical)
     .def("GetPyTypesCanonical", &TypeRegistry::GetPyTypesCanonical)
-    .def("GetCppName", &TypeRegistry::GetCppName)
-    .def("GetCppNames", &TypeRegistry::GetCppNames);
+    .def("GetName", [](const TypeRegistry *self, py::handle arg1) {
+      return self->GetName(arg1);
+    })
+    // .def("GetName", py::overload_cast<py::handle>(&TypeRegistry::GetName))
+    .def("GetNames", [](const TypeRegistry *self, py::tuple arg1) {
+      return self->GetNames(arg1);
+    });
   // Create instance.
   m.attr("type_registry") = type_registry_cls();
 }

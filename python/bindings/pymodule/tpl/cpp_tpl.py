@@ -42,7 +42,7 @@ class Template(object):
         return self._instantiation_map[param]
 
     def _get_instantiation_name(self, param):
-        param_str = map(type_registry.GetCppName, param)
+        param_str = map(type_registry.GetName, param)
         return '{}[{}]'.format(self.name, ', '.join(param_str))
 
     def add_instantiation(self, param, instantiation):

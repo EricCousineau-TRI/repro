@@ -6,7 +6,7 @@ class TestClass(object):
     pass
 
 print(tr.GetPyTypeCanonical(int))
-print(tr.GetCppName(float))
-print(tr.GetCppName(str))
+print(tr.GetName(float))
+print(tr.GetName(str))
 print(tr.GetPyTypeCanonical(TestClass))
-print(tr.GetCppName(TestClass))
+print(tr.GetName(TestClass))

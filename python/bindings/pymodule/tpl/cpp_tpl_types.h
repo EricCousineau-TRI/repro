@@ -32,16 +32,26 @@ class TypeRegistry {
 
   py::tuple GetPyTypesCanonical(py::tuple py_types) const;
 
-  py::str GetCppName(py::handle py_type) const;
+  py::str GetName(py::handle py_type) const;
 
-  py::tuple GetCppNames(py::tuple py_types) const;
+  py::tuple GetNames(py::tuple py_types) const;
+
+  template <typename T>
+  std::string GetName() const {
+    return py::cast<std::string>(GetName(GetPyType<T>()));
+  }
+
+  template <typename ... Ts>
+  std::vector<std::string> GetNames() const {
+    return {GetName<Ts>()...};
+  }
 
  private:
   py::handle DoGetPyType(const std::type_info& tinfo) const;
 
   template <typename T>
-  void Register(const std::string& py_values,
-                const std::string& cpp_name = "");
+  void Register(py::tuple py_types,
+                const std::string& name_override = {});
 
   void RegisterCommon();
 
