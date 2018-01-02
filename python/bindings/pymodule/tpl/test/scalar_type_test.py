@@ -14,6 +14,7 @@ Base = st.Base
 
 
 print(Base)
+print(BaseTpl)
 print(BaseTpl[int, float])
 print(BaseTpl[float, int])
 assert is_tpl_cls(Base)

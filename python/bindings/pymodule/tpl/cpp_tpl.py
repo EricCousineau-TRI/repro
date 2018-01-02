@@ -1,34 +1,38 @@
 #!/usr/bin/env python
 
+import inspect
 import types
 
 # Template definitions.
 from pymodule.tpl.cpp_tpl_types import type_registry
 
-_PARAM_DEFAULT = [[]]
+PARAM_DEFAULT = ([],)
 _PARAM_DEFAULT_DEFAULT = 'first_registered'
 
 class Template(object):
-    def __init__(self, name, param_default=_PARAM_DEFAULT_DEFAULT):
+    def __init__(self, name, param_default=_PARAM_DEFAULT_DEFAULT, module_name=None):
         self.name = name
         if isinstance(param_default, tuple) or isinstance(param_default, list):
             param_default = self.param_canonical(param_default)
         self._param_default = param_default
         self.param_list = []
         self._instantiation_map = {}
+        if module_name is None:
+            module_name = inspect.getmodule(inspect.stack()[1][0]).__name__
+        self._module_name = module_name
 
     def _param_resolve(self, param):
         # Resolve from default argument to canonical parameters.
-        if len(param) == 1 and param[0] == _PARAM_DEFAULT[0]:
-            assert self._param_default is not None
+        if not isinstance(param, tuple):
+            param = tuple(param)
+        if param == PARAM_DEFAULT:
+            self._param_default is not None
             param = self._param_default
         return self.param_canonical(param)
 
     def param_canonical(self, param):
         """Gets canonical parameter pack that makes it simple to mesh with
         C++ types. """
-        if not isinstance(param, tuple):
-            param = tuple(param)
         return type_registry.GetPyTypesCanonical(param)
 
     def __getitem__(self, param):
@@ -39,7 +43,7 @@ class Template(object):
             param = (param,)
         return self.get_instantiation(param)
 
-    def get_instantiation(self, param=_PARAM_DEFAULT):
+    def get_instantiation(self, param=PARAM_DEFAULT):
         param = self._param_resolve(param)
         return self._instantiation_map[param]
 
@@ -65,14 +69,17 @@ class Template(object):
         for param in param_list:
             self.add_instantiation(param, instantiation_func(param))
 
+    def _full_name(self):
+        return "{}.{}".format(self._module_name, self.name)
+
     def __str__(self):
-        # TODO: Determine module? `globals()["__module__"]`?
-        return "<Template {}>".format(self.name)
+        cls_name = type(self).__name__
+        return "<{} {}>".format(cls_name, self._full_name())
 
 
 class TemplateClass(Template):
-    def __init__(self, name, parent=None, param_default=_PARAM_DEFAULT_DEFAULT):
-        Template.__init__(self, name, param_default=param_default)
+    def __init__(self, name, parent=None, **kwargs):
+        Template.__init__(self, name, **kwargs)
         self.parent = parent
 
     def add_instantiation(self, param, cls):
@@ -106,22 +113,21 @@ def is_tpl_of(cls, tpl):
 
 
 class TemplateMethod(Template):
-    def __init__(self, name, cls=None, param_default=_PARAM_DEFAULT_DEFAULT):
-        Template.__init__(self, name, param_default=param_default)
+    def __init__(self, name, cls=None, **kwargs):
+        Template.__init__(self, name, **kwargs)
         self._cls = cls
 
     def bind(self, obj):
         return _TemplateMethodBound(self, obj)
 
     def __str__(self):
-        if self._cls is None:
-            return '<unbound TemplateMethod {}.{}>'.format(
-                self._cls.__name__, self.name)
+        if self._cls is not None:
+            return '<unbound TemplateMethod {}>'.format(self._full_name())
         else:
-            return '<TemplateMethod {}>'.format(self.name)
+            return Template.__str__(self)
 
-    def _bound_name(self, obj):
-        return '{}.{} of {}'.format(self._cls.__name__, self.name, obj)
+    def _full_name(self):
+        return '{}.{}.{}'.format(self._module_name, self._cls.__name__, self.name)
 
 
 class _TemplateMethodBound(object):
@@ -136,5 +142,5 @@ class _TemplateMethodBound(object):
         return bound
 
     def __str__(self):
-        return '<bound TemplateMethod {}>'.format(
-            self._tpl._bound_name(self._obj))
+        return '<bound TemplateMethod {} of {}>'.format(
+            self._tpl._full_name(), self._obj)
