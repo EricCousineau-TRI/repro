@@ -6,7 +6,7 @@
 
 #include "cpp/name_trait.h"
 #include "cpp/type_pack.h"
-#include "python/bindings/pymodule/tpl/cpp_tpl_types.h"
+#include "python/bindings/pymodule/tpl/cpp_types.h"
 
 // TODO: Figure out how to handle literals...
 
@@ -27,8 +27,10 @@ py::object InitOrGetTemplate(
   // see `py::sibling(...)`.
   py::object tpl = py::getattr(scope, name.c_str(), py::none());
   if (tpl.is(py::none())) {
-    py::handle cpp_tpl = py::module::import("pymodule.tpl.cpp_tpl");
-    tpl = cpp_tpl.attr(template_type.c_str())(name, *create_extra);
+    py::handle cpp_template = py::module::import("pymodule.tpl.cpp_template");
+    tpl = cpp_template.attr(template_type.c_str())(
+        name, *create_extra,
+        py::arg("module_name")=cpp_template.attr("_get_module_from_stack")());
     py::setattr(scope, name.c_str(), tpl);
   }
   return tpl;

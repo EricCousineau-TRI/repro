@@ -16,7 +16,7 @@
 
 #include "cpp/name_trait.h"
 #include "cpp/simple_converter.h"
-#include "python/bindings/pymodule/tpl/cpp_tpl.h"
+#include "python/bindings/pymodule/tpl/cpp_template.h"
 #include "python/bindings/pymodule/tpl/simple_converter_py.h"
 
 namespace py = pybind11;

@@ -7,16 +7,16 @@ load("//tools:pybind11.bzl", "pybind11_module") #, "pybind11_binary")
 package(default_visibility = ["//visibility:public"])
 
 py_library(
-    name = "cpp_tpl",
-    srcs = ["cpp_tpl.py"],
+    name = "cpp_template",
+    srcs = ["cpp_template.py"],
 )
 
 pybind11_module(
     name = "scalar_type",
     package_dir = "../..",
     py_deps = [
-        ":cpp_tpl",
-        ":cpp_tpl_types",
+        ":cpp_template",
+        ":cpp_types",
     ],
     deps = [
         "//cpp:name_trait",
@@ -71,8 +71,8 @@ py_test_simple(
 cc_library(
     name = "cpp_tpl_types_cc",
     srcs = [
-        "cpp_tpl_types.h",
-        "cpp_tpl_types.cc",
+        "cpp_types.h",
+        "cpp_types.cc",
     ],
     deps = [
         "//cpp:type_pack",
@@ -82,7 +82,7 @@ cc_library(
 )
 
 pybind11_module(
-    name = "cpp_tpl_types",
+    name = "cpp_types",
     package_dir = "../..",
     deps = [
         ":cpp_tpl_types_cc",
@@ -92,13 +92,13 @@ pybind11_module(
 py_test_simple(
     name = "cpp_tpl_types_test",
     size = "small",
-    deps = [":cpp_tpl_types"],
+    deps = [":cpp_types"],
 )
 
 cc_library(
     name = "cpp_tpl_cc",
     hdrs = [
-        "cpp_tpl.h",
+        "cpp_template.h",
     ],
     deps = [
         ":cpp_tpl_types_cc",

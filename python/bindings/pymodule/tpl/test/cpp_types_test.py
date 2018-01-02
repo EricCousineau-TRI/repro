@@ -1,4 +1,4 @@
-from pymodule.tpl.cpp_tpl_types import type_registry
+from pymodule.tpl.cpp_types import type_registry
 
 tr = type_registry
 

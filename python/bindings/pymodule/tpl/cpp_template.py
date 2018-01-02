@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
-import inspect
 import types
 
 # Template definitions.
-from pymodule.tpl.cpp_tpl_types import type_registry
+from pymodule.tpl.cpp_types import type_registry, _get_module_from_stack
 
 PARAM_DEFAULT = ([],)
 _PARAM_DEFAULT_DEFAULT = 'first_registered'
@@ -21,7 +20,7 @@ class Template(object):
         # (e.g. `0` and `False` should resolve to different instantiations).
         self._instantiation_map = {}
         if module_name is None:
-            module_name = inspect.getmodule(inspect.stack()[1][0]).__name__
+            module_name = _get_module_from_stack()
         self._module_name = module_name
 
     def _param_resolve(self, param):

@@ -1,9 +1,14 @@
 from __future__ import absolute_import, print_function
 
-# Define these first, as they are used in `cpp_tpl_types.cc`.
+# Define these first, as they are used in `cpp_types.cc`.
 
 import ctypes
+import inspect
 import numpy as np
+
+def _get_module_from_stack(frame=2):
+    print("\n".join(map(str, inspect.stack())))
+    return inspect.getmodule(inspect.stack()[frame][0]).__name__
 
 
 def _get_type_name(t):
@@ -33,4 +38,4 @@ class _StrictMap(object):
 
 
 # Load and import type registry.
-from ._cpp_tpl_types import type_registry
+from ._cpp_types import type_registry

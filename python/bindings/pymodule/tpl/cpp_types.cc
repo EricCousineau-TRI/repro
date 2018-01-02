@@ -1,4 +1,4 @@
-#include "python/bindings/pymodule/tpl/cpp_tpl_types.h"
+#include "python/bindings/pymodule/tpl/cpp_types.h"
 
 #include <pybind11/eval.h>
 
@@ -6,7 +6,7 @@
 #include "cpp/name_trait.h"
 
 
-const char kModule[] = "pymodule.tpl.cpp_tpl_types";
+const char kModule[] = "pymodule.tpl.cpp_types";
 
 TypeRegistry::TypeRegistry() {
   // Import modules into `locals_`.
