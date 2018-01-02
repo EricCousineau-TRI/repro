@@ -113,9 +113,10 @@ c.dispatch(3)
 print("---")
 
 print("Template method")
+# Unbound
 print(Child.DoTo)
-# TODO: Is a static overload possible?
-# print(Child.DoTo[float, int])
+print(Child.DoTo[float, int])
+# Bound
 print(c.DoTo)
 print(c.DoTo[float, int])
 cc = c.DoTo[float, int]()

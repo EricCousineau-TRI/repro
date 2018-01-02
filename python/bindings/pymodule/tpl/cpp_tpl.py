@@ -9,6 +9,7 @@ from pymodule.tpl.cpp_tpl_types import type_registry
 PARAM_DEFAULT = ([],)
 _PARAM_DEFAULT_DEFAULT = 'first_registered'
 
+
 class Template(object):
     def __init__(self, name, param_default=_PARAM_DEFAULT_DEFAULT, module_name=None):
         self.name = name
@@ -112,25 +113,32 @@ def is_tpl_of(cls, tpl):
     return is_tpl_cls(cls) and cls._tpl == tpl
 
 
-class TemplateMethod(Template):
+class TemplateFunction(Template):
     def __init__(self, name, cls=None, **kwargs):
         Template.__init__(self, name, **kwargs)
         self._cls = cls
 
-    def bind(self, obj):
-        return _TemplateMethodBound(self, obj)
-
     def __str__(self):
         if self._cls is not None:
-            return '<unbound TemplateMethod {}>'.format(self._full_name())
+            return '<unbound TemplateFunction {}>'.format(self._full_name())
         else:
             return Template.__str__(self)
 
     def _full_name(self):
         return '{}.{}.{}'.format(self._module_name, self._cls.__name__, self.name)
 
+    def __get__(self, obj, objtype):
+        # Descriptor accessor.
+        if obj is None:
+            return self
+        else:
+            return _TemplateFunctionBound(self, obj)
 
-class _TemplateMethodBound(object):
+    def __set__(self, obj, value):
+        raise RuntimeError("Read-only property")
+
+
+class _TemplateFunctionBound(object):
     def __init__(self, tpl, obj):
         assert tpl._cls is not None
         self._tpl = tpl
@@ -142,5 +150,5 @@ class _TemplateMethodBound(object):
         return bound
 
     def __str__(self):
-        return '<bound TemplateMethod {} of {}>'.format(
+        return '<bound TemplateFunction {} of {}>'.format(
             self._tpl._full_name(), self._obj)
