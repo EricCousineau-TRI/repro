@@ -12,13 +12,33 @@ TypeRegistry::TypeRegistry() {
   exec(R"""(
 import numpy as np; import ctypes
 
-def _get_type_name(t):
+def get_type_name(t):
   # Gets scoped type name as a string.
   prefix = t.__module__ + "."
   if prefix == "__builtin__.":
     prefix = ""
   return prefix + t.__name__
+
+
+class StrictMap(object):
+  def __init__(self):
+    self._values = dict()
+
+  def _strict_key(self, key):
+    # Ensures types are strictly scoped to the values.
+    return (type(key), key)
+
+  def add(self, key, value):
+    skey = self._strict_key(key)
+    assert skey not in self._values, "Already added: {}".format(skey)
+    self._values[skey] = value
+
+  def get(self, key, default):
+    skey = self._strict_key(key)
+    return self._values.get(skey, default)
 )""");
+
+  py_to_py_canonical_ = eval("StrictMap")();
 
   RegisterCommon();
 }
@@ -66,7 +86,7 @@ py::str TypeRegistry::GetName(py::handle py_type) const {
   py::handle py_type_fin = GetPyTypeCanonical(py_type);
   py::object out = py_name_.attr("get")(py_type_fin);
   if (out.is(py::none())) {
-    out = eval("_get_type_name")(py_type_fin);
+    out = eval("get_type_name")(py_type_fin);
   }
   return out;
 }
@@ -88,8 +108,7 @@ void TypeRegistry::Register(
     cpp_to_py_[cpp_key] = py_canonical;
   }
   for (auto py_type : py_types) {
-    assert(py_to_py_canonical_.attr("get")(py_type).is_none());
-    py_to_py_canonical_[py_type] = py_canonical;
+    py_to_py_canonical_.attr("add")(py_type, py_canonical);
   }
   py_name_[py_canonical] = name;
 }
@@ -104,22 +123,25 @@ void TypeRegistry::RegisterType(
     py::tuple py_types, const std::string& name_override) {
   std::string name = name_override;
   if (name.empty()) {
-    name = py::cast<std::string>(eval("_get_type_name")(py_types[0]));
+    name = py::cast<std::string>(eval("get_type_name")(py_types[0]));
   }
   Register({hash_of<T>()}, py_types, name);
 }
 
 struct TypeRegistry::Helper {
-  TypeRegistry* self{};
+  TypeRegistry* type_registry{};
 
   using dummy_list = int[];
 
+  template <typename T>
   void RegisterValue(
       const std::vector<size_t>& cpp_key,
-      const std::string& value) {
-    std::cout << "register: " << value << std::endl;
-    self->Register(
-        cpp_key, py::make_tuple(py::eval(value)), value);
+      T value) {
+    py::object py_value = py::cast(value);
+    type_registry->Register(
+        cpp_key,
+        py::make_tuple(py_value),
+        py::str(py_value).cast<std::string>());
   }
 
   template <typename T, T... Values>
@@ -127,7 +149,7 @@ struct TypeRegistry::Helper {
     (void) dummy_list{(
         RegisterValue(
             {hash_of<std::integral_constant<T, Values>>()},
-            std::to_string(Values)),
+            Values),
         0)...};
   }
 
@@ -142,18 +164,16 @@ struct TypeRegistry::Helper {
               hash_of<std::integral_constant<T, Values>>(),
               hash_of<std::integral_constant<U, UValues>>()
             },
-            std::to_string(Values)),
+            Values),
         0)...};
   }
 };
 
-template <typename T, T Value>
-using seq = std::make_integer_sequence<T, Value>;
-
 template <typename T, T Start, T End>
 auto make_seq() {
-  constexpr T N = End - Start + 1;
-  return transform(constant_add<T, Start>{}, seq<T, N>{});
+  constexpr T Count = End - Start + 1;
+  return transform(
+      constant_add<T, Start>{}, std::make_integer_sequence<T, Count>{});
 }
 
 void TypeRegistry::RegisterCommon() {

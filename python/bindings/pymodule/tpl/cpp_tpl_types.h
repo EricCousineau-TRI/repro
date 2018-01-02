@@ -65,7 +65,7 @@ class TypeRegistry {
   py::object globals_;
   py::object locals_;
   std::map<size_t, py::handle> cpp_to_py_;
-  py::dict py_to_py_canonical_;
+  py::object py_to_py_canonical_;
   py::dict py_name_;
 
   struct Helper;
