@@ -15,8 +15,12 @@ def _get_module_name_from_stack(frame=2):
 
 def init_or_get(scope, name, template_cls, *args, **kwargs):
     tpl = getattr(scope, name, None)
+    if isinstance(scope, type):
+        module_name = scope.__module__
+    else:
+        module_name = scope.__name__
     if tpl is None:
-        tpl = template_cls(name, *args, **kwargs)
+        tpl = template_cls(name, *args, module_name=module_name, **kwargs)
         setattr(scope, name, tpl)
     return tpl
 
@@ -138,7 +142,7 @@ class TemplateMethod(TemplateFunction):
         return '<unbound TemplateMethod {}>'.format(self._full_name())
 
     def _full_name(self):
-        return '{}.{}.{}'.format(self._module_name, self._cls.__name__, self.name)
+        return '{}.{}'.format(self._cls.__name__, self.name)
 
     def __get__(self, obj, objtype):
         # Descriptor accessor.

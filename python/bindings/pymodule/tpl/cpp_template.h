@@ -27,8 +27,7 @@ py::object InitOrGetTemplate(
   // see `py::sibling(...)`.
   py::handle m = py::module::import("pymodule.tpl.cpp_template");
   return m.attr("init_or_get")(
-      scope, name, m.attr(template_type.c_str()), *create_extra,
-      py::arg("module_name")=m.attr("_get_module_name_from_stack")());
+      scope, name, m.attr(template_type.c_str()), *create_extra);
 }
 
 template <typename ... Ts>
