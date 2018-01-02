@@ -50,7 +50,8 @@ class TypeRegistry {
   py::handle DoGetPyType(const std::type_info& tinfo) const;
 
   void Register(
-      size_t cpp_key, py::tuple py_types, const std::string& name);
+      const std::vector<size_t>& cpp_keys,
+      py::tuple py_types, const std::string& name);
 
   template <typename T>
   void RegisterType(py::tuple py_types,

@@ -2,6 +2,7 @@
 
 #include <pybind11/eval.h>
 
+#include "cpp/type_pack.h"
 #include "cpp/name_trait.h"
 
 
@@ -79,57 +80,77 @@ py::tuple TypeRegistry::GetNames(py::tuple py_types) const {
 }
 
 void TypeRegistry::Register(
-      size_t cpp_key, py::tuple py_types, const std::string& name) {
-  // TODO: Ensure no duplicate `py_types` or `cpp_types`?
-  // Make a `unique_dict` that throws if overlap occurs?
+      const std::vector<size_t>& cpp_keys,
+      py::tuple py_types, const std::string& name) {
   py::handle py_canonical = py_types[0];
-  cpp_to_py_[cpp_key] = py_canonical;
+  for (size_t cpp_key : cpp_keys) {
+    assert(cpp_to_py_.find(cpp_key) == cpp_to_py_.end());
+    cpp_to_py_[cpp_key] = py_canonical;
+  }
   for (auto py_type : py_types) {
+    assert(py_to_py_canonical_.attr("get")(py_type).is_none());
     py_to_py_canonical_[py_type] = py_canonical;
   }
   py_name_[py_canonical] = name;
 }
 
 template <typename T>
+constexpr size_t hash_of() {
+  return std::type_index(typeid(T)).hash_code();
+}
+
+template <typename T>
 void TypeRegistry::RegisterType(
     py::tuple py_types, const std::string& name_override) {
-  size_t cpp_key = std::type_index(typeid(T)).hash_code();
   std::string name = name_override;
   if (name.empty()) {
     name = py::cast<std::string>(eval("_get_type_name")(py_types[0]));
   }
-  Register(cpp_key, py_types, name);
+  Register({hash_of<T>()}, py_types, name);
 }
 
 struct TypeRegistry::Helper {
   TypeRegistry* self{};
 
+  using dummy_list = int[];
+
   template <typename T, T... Values>
   void RegisterSequence(std::integer_sequence<T, Values...>) {
-    using dummy_list = int[];
     (void) dummy_list{(
         self->Register(
-            std::type_index(
-                typeid(std::integral_constant<T, Values>)).hash_code(),
+            {hash_of<std::integral_constant<T, Values>>()},
             py::make_tuple(
                 py::eval(std::to_string(Values))),
-            std::to_string(Values)
-          )
-        , 0)...};
+            std::to_string(Values)),
+        0)...};
+  }
+
+  template <typename T, T... Values, typename U, U... UValues>
+  void RegisterSequenceWithAlias(
+      std::integer_sequence<T, Values...>,
+      std::integer_sequence<U, UValues...>) {
+    (void) dummy_list{(
+        assert(Values == T{UValues}),
+        self->Register(
+            {
+              hash_of<std::integral_constant<T, Values>>(),
+              hash_of<std::integral_constant<U, UValues>>()
+            },
+            py::make_tuple(
+                py::eval(std::to_string(Values))),
+            std::to_string(Values)),
+        0)...};
   }
 };
 
+template <typename T, T Value>
+using seq = std::make_integer_sequence<T, Value>;
 
-template <typename TForm, typename T, T... Values>
-auto transform(TForm = {}, std::integer_sequence<T, Values...> = {}) {
-  return std::integer_sequence<T, TForm::template type<Values>::value...>{};
+template <typename T, T Start, T End>
+auto make_seq() {
+  constexpr T N = End - Start + 1;
+  return transform(constant_add<T, Start>{}, seq<T, N>{});
 }
-
-template <int Add>
-struct int_add {
-  template <int Value>
-  using type = std::integral_constant<int, Value + Add>;
-};
 
 void TypeRegistry::RegisterCommon() {
   // Make mappings for C++ RTTI to Python types.
@@ -144,9 +165,11 @@ void TypeRegistry::RegisterCommon() {
 
   Helper h{this};
   h.RegisterSequence(std::integer_sequence<bool, 0, 1>{});
-  h.RegisterSequence(
-      transform(
-          int_add<-100>{}, std::make_integer_sequence<int, 200>{}));
+  constexpr int i_max = 100;
+  h.RegisterSequence(make_seq<int, -i_max, -1>());
+  h.RegisterSequenceWithAlias(
+      make_seq<int, 0, i_max>(),
+      make_seq<size_t, 0, i_max>());
 }
 
 py::object TypeRegistry::eval(const std::string& expr) const {

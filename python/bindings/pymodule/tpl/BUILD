@@ -75,6 +75,7 @@ cc_library(
         "cpp_tpl_types.cc",
     ],
     deps = [
+        "//cpp:type_pack",
         "//cpp:name_trait",
         "//python/pybind11:include",
     ],

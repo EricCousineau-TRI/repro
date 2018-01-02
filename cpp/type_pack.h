@@ -104,6 +104,24 @@ struct type_pack_extract_impl<Tpl<Ts...>> {
 template <typename T>
 using type_pack_extract = typename type_pack_extract_impl<T>::type;
 
+// Literal stuff.
+template <typename TForm, typename T, T... Values>
+auto transform(TForm = {}, std::integer_sequence<T, Values...> = {}) {
+  return std::integer_sequence<T, TForm::template type<Values>::value...>{};
+}
+
+template <typename T, T x>
+struct constant_add {
+  template <T y>
+  using type = std::integral_constant<T, x + y>;
+};
+
+template <typename T, T x>
+struct constant_mult {
+  template <T y>
+  using type = std::integral_constant<T, x * y>;
+};
+
 // Unused.
 template <typename T, template <typename...> class Tpl>
 using type_pack_extract_constrained =
