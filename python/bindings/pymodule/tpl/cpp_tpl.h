@@ -58,8 +58,15 @@ py::object RegisterTemplateMethod(
         });
   }
   // Ensure that pybind is aware that it's a function.
-  auto cpp_instantiation_func = [instantiation_func](auto param) {
-    return py::cpp_function(instantiation_func(param));
+  py::object py_type(py_class);  // Keep capture type simple.
+  auto cpp_instantiation_func =
+      [instantiation_func, py_type, tpl](auto param) {
+    std::string instantiation_name =
+        py::cast<std::string>(
+            tpl.attr("_get_instantiation_name")(get_py_types(param)));
+    return py::cpp_function(
+        instantiation_func(param), py::name(instantiation_name.c_str()),
+        py::is_method(py_type));
   };
   RegisterInstantiations(tpl, cpp_instantiation_func, param_list);
   return tpl;

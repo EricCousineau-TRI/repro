@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import types
+
 # Template definitions.
 from pymodule.tpl.cpp_tpl_types import type_registry
 
@@ -118,14 +120,8 @@ class TemplateMethod(Template):
         else:
             return '<TemplateMethod {}>'.format(self.name)
 
-    def _bound_name(self, obj, param=None):
-        assert self._cls is not None
-        name = self.name
-        if param is not None:
-            param = self._param_resolve(param)
-            name = self._get_instantiation_name(param)
-        return '{}.{} of {}'.format(
-            self._cls.__name__, name, obj)
+    def _bound_name(self, obj):
+        return '{}.{} of {}'.format(self._cls.__name__, self.name, obj)
 
 
 class _TemplateMethodBound(object):
@@ -135,14 +131,8 @@ class _TemplateMethodBound(object):
         self._obj = obj
 
     def __getitem__(self, param):
-        # TODO: Figure out actual binding.
         unbound = self._tpl[param]
-        obj = self._obj
-        def bound(*args, **kwargs):
-            return unbound(obj, *args, **kwargs)
-        # TODO: This may be quite slow. Switching to actual binding should work
-        # better.
-        bound.__name__ = self._tpl._bound_name(self._obj, param)
+        bound = types.MethodType(unbound, self._obj, self._tpl._cls)
         return bound
 
     def __str__(self):
