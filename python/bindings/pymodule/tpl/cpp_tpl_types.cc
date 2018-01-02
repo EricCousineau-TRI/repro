@@ -88,18 +88,13 @@ void TypeRegistry::Register(
 }
 
 template <typename T>
-constexpr size_t hash_of() {
-  return std::type_index(typeid(T)).hash_code();
-}
-
-template <typename T>
 void TypeRegistry::RegisterType(
     py::tuple py_types, const std::string& name_override) {
   std::string name = name_override;
   if (name.empty()) {
     name = py::cast<std::string>(eval("_get_type_name")(py_types[0]));
   }
-  Register({hash_of<T>()}, py_types, name);
+  Register({type_hash<T>()}, py_types, name);
 }
 
 class TypeRegistry::LiteralHelper {
@@ -127,7 +122,7 @@ class TypeRegistry::LiteralHelper {
   template <typename T, typename Cast = T, T... Values>
   Sequence<Cast> Render(std::integer_sequence<T, Values...>) {
     return Sequence<Cast>{
-      {hash_of<std::integral_constant<T, Values>>()...},
+      {type_hash<std::integral_constant<T, Values>>()...},
       {Values...}};
   }
 

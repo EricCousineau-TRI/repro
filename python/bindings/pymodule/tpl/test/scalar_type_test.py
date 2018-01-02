@@ -80,7 +80,6 @@ ChildTpl = TemplateClass(
     name = 'ChildTpl',
     parent = BaseTpl)
 ChildTpl.add_instantiations(_ChildTpl_instantiation)
-
 # Default instantiation.
 Child = ChildTpl[[]]
 

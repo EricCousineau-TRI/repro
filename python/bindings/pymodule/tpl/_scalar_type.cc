@@ -193,20 +193,18 @@ PYBIND11_MODULE(_scalar_type, m) {
       AddTemplateFunction<Tag>(
           m, "template_int", &template_int<Value>);
     };
-    using ParamList = type_pack_literals_raw<int, 1, 2, 5>;
-    type_pack_visit(inst, ParamList{});
+    type_visit(inst, type_pack_literals_raw<int, 1, 2, 5>{});
   }
 
   {
     // Looping, Type packs.
     auto inst = [&m](auto param) {
-      constexpr bool Value = decltype(param)::template type<0>::value;
+      constexpr bool Value = decltype(param)::template type_at<0>::value;
       // N.B. Use of `param` argument, no template specification.
       AddTemplateFunction(
           m, "template_bool", &template_bool<Value>, param);
     };
-    using ParamList = type_pack_literals<bool, false, true>;
-    type_pack_visit(inst, ParamList{});
+    type_visit(inst, type_pack_literals<bool, false, true>{});
   }
 
   // Add instantiations and conversion mechanisms.
@@ -218,8 +216,8 @@ PYBIND11_MODULE(_scalar_type, m) {
     auto inst = [&m](auto param) {
       // Extract parameters.
       using Param = decltype(param);
-      using T = typename Param::template type<0>;
-      using U = typename Param::template type<1>;
+      using T = typename Param::template type_at<0>;
+      using U = typename Param::template type_at<1>;
       // Typedef classes.
       using BaseT = Base<T, U>;
       using PyBaseT = PyBase<T, U>;
@@ -244,17 +242,17 @@ PYBIND11_MODULE(_scalar_type, m) {
       // Add template methods for `DoTo` and conversion.
       {
         auto inner = [&](auto inner_param) {
-          using BaseInner = typename decltype(inner_param)::template bind<Base>;
+          using BaseInner = decltype(type_bind<Base>(inner_param));
           AddTemplateMethod(
               py_class, "DoTo", &BaseT::template DoTo<BaseInner>, inner_param);
           AddConversion<BaseConverter, BaseT, BaseInner>(py_class, tpl);
         };
         // Use `check_different_from` to avoid implicitly-deleted copy
         // constructor.
-        type_pack_visit(inner, ParamList{}, check_different_from<Param>{});
+        type_visit(inner, ParamList{}, check_different_from<Param>{});
       }
     };
-    type_pack_visit(inst, ParamList{});
+    type_visit(inst, ParamList{});
   }
 
   m.def("do_convert", &do_convert);
