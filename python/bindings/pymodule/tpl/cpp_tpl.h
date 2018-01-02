@@ -42,6 +42,23 @@ void AddInstantiation(
   tpl.attr("add_instantiation")(get_py_types(param), obj);
 }
 
+template <typename PyClass, typename ... Ts>
+py::object AddTemplateClass(
+    py::handle scope, const std::string& name,
+    PyClass& py_class,
+    const std::string& default_inst_name = "",
+    type_pack<Ts...> param = {},
+    py::handle parent = py::none()) {
+  py::object tpl = InitOrGetTemplate(
+      scope, name, "TemplateClass", py::make_tuple(parent));
+  AddInstantiation(tpl, py_class, param);
+  if (!default_inst_name.empty() &&
+      !py::hasattr(scope, default_inst_name.c_str())) {
+    scope.attr(default_inst_name.c_str()) = py_class;
+  }
+  return tpl;
+}
+
 template <typename Func, typename ... Extra, typename ... Ts>
 py::object AddTemplateFunctionImpl(
     py::object tpl, Func&& func, type_pack<Ts...> param, Extra... extra) {

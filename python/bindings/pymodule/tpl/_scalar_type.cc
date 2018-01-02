@@ -178,10 +178,8 @@ PYBIND11_MODULE(_scalar_type, m) {
   using ParamList = type_pack<
       type_pack<int, double>,
       type_pack<double, int>>;
-
-  py::object tpl = InitOrGetTemplate(m, "BaseTpl", "TemplateClass");
   {
-    auto inst = [&m, tpl](auto param) {
+    auto inst = [&m](auto param) {
       // Extract parameters.
       using Param = decltype(param);
       using T = typename Param::template type<0>;
@@ -191,7 +189,7 @@ PYBIND11_MODULE(_scalar_type, m) {
       using PyBaseT = PyBase<T, U>;
       // Define class.
       string name = nice_type_name<BaseT>();
-      // N.B. This  name will be overwritten by `tpl.add_class(...)`.
+      // N.B. This name will be overwritten by `AddTemplateClass`.
       py::class_<BaseT, PyBaseT> py_class(m, name.c_str());
       py_class
         .def(py::init<T, U, std::unique_ptr<BaseConverter>>(),
@@ -201,7 +199,7 @@ PYBIND11_MODULE(_scalar_type, m) {
         .def("pure", &BaseT::pure)
         .def("optional", &BaseT::optional)
         .def("dispatch", &BaseT::dispatch);
-      AddInstantiation(tpl, py_class, param);
+      py::object tpl = AddTemplateClass(m, "BaseTpl", py_class, "Base", param);
 
       // Can't get `overload_cast` to infer `Return` type.
       // Have to explicitly cast... :(
@@ -215,12 +213,11 @@ PYBIND11_MODULE(_scalar_type, m) {
               py_class, "DoTo", &BaseT::template DoTo<BaseInner>, inner_param);
           AddConversion<BaseConverter, BaseT, BaseInner>(py_class, tpl);
         };
+        // Use `is_different_than` to avoid implicitly-deleted copy constructor.
         IterTemplate<is_different_from<Param>>(inner, ParamList{});
       }
     };
     IterTemplate(inst, ParamList{});
-    // Default instantiation.
-    m.attr("Base") = tpl.attr("get_instantiation")();
   }
 
   m.def("do_convert", &do_convert);
