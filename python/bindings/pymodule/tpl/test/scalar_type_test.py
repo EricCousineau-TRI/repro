@@ -8,13 +8,38 @@ from pymodule.tpl.cpp_template import TemplateClass, is_instantiation, is_instan
 import sys
 sys.stderr = sys.stdout
 
-print("Names")
+print("Types")
 print(st.template_type)
 st.template_type[int]()
 st.template_type[float]()
 func = st.template_type[int]
 assert is_instantiation_of(st.template_type[int], st.template_type)
 
+st.template_list[int]()
+st.template_list[int, float, st.SimpleType]()
+
+print("---")
+print("Class")
+print(st.SimpleTemplate)
+print(st.SimpleTemplate[int])
+print(st.SimpleTemplate[int, float, st.SimpleType])
+assert is_instantiation(st.SimpleTemplate[int])
+assert is_instantiation_of(st.SimpleTemplate[int, float, st.SimpleType], st.SimpleTemplate)
+
+cls = st.SimpleTemplate[int, float, st.SimpleType]
+s = cls()
+print(s.size())
+s.check[float]()
+
+# Unbound
+print(cls.check)
+print(cls.check[float])
+# Bound
+print(s.check)
+print(s.check[float])
+
+print("---")
+print("Literals")
 print(st.template_bool)
 print(st.template_bool.param_list)
 st.template_bool[False]()
@@ -30,14 +55,6 @@ for i in [0, 1, 2, 5]:
 # # Default class.
 BaseTpl = st.BaseTpl
 Base = st.Base
-
-print("---")
-print(Base)
-print(BaseTpl)
-print(BaseTpl[int, float])
-print(BaseTpl[float, int])
-assert is_instantiation(Base)
-assert is_instantiation_of(Base, BaseTpl)
 
 print("---")
 # Test direct inheritance.
@@ -131,14 +148,6 @@ c.pure(1)
 c.optional(2)
 c.dispatch(3)
 print("---")
-
-print("Template method")
-# Unbound
-print(Child.DoTo)
-print(Child.DoTo[float, int])
-# Bound
-print(c.DoTo)
-print(c.DoTo[float, int])
 cc = c.DoTo[float, int]()
 print(type(cc))
 cc.pure(1.5)

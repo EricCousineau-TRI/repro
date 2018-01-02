@@ -20,6 +20,8 @@ struct type_at {
 
 template <typename ... Ts>
 struct type_pack {
+  static constexpr int size = sizeof...(Ts);
+
   template <template <typename...> class Tpl>
   using bind = Tpl<Ts...>;
 
@@ -80,7 +82,7 @@ struct check_different_from {
   using check = negation<std::is_same<T, U>>;
 };
 
-using dummy_list = bool[];
+using DummyList = bool[];
 
 template <class VisitWith = visit_with_default,
           typename Check = check_always_true,
@@ -88,7 +90,7 @@ template <class VisitWith = visit_with_default,
           typename ... Ts>
 inline static void type_visit(
     Visitor&& visitor, type_pack<Ts...> pack = {}, Check check = {}) {
-  (void)dummy_list{(
+  (void)DummyList{(
       type_visit_impl<VisitWith, Visitor>::
           template runner<Ts, Check::template check<Ts>::value>::
               run(std::forward<Visitor>(visitor)),

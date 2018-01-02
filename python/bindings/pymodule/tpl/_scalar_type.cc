@@ -27,15 +27,53 @@ using namespace simple_converter;
 
 namespace scalar_type {
 
-template <typename T = float, typename U = int16_t>
-class Base;
+struct SimpleType {};
 
+template <typename T>
+void template_type() {
+  std::cout << "template_type: " << nice_type_name<T>() << std::endl;
 }
 
-using scalar_type::Base;
-NAME_TRAIT_TPL(Base)
+template <typename... Ts>
+void template_list() {
+  std::cout << "template_list: " << std::endl;
+  for (std::string name : {nice_type_name<Ts>()...}) {
+    std::cout << "- " << name << std::endl;
+  }
+}
 
-namespace scalar_type {
+template <typename... Ts>
+class SimpleTemplate {
+ public:
+  int size() const {
+    return type_pack<Ts...>::size;
+  }
+
+  template <typename U>
+  void check() const {
+    using Check = check_different_from<U>;
+    std::cout << "check: ";
+    for (bool value : {Check::template check<Ts>::value...}) {
+      std::cout << value << " ";
+    }
+    std::cout << std::endl;
+  }
+};
+
+template <bool Value>
+void template_bool() {
+  std::cout << "template_bool: " << Value << std::endl;
+}
+
+template <int Value>
+void template_int() {
+  std::cout << "template_int: " << Value << std::endl;
+}
+
+
+// Scalar type conversion.
+template <typename T, typename U>
+class Base;
 
 typedef SimpleConverter<Base> BaseConverter;
 
@@ -130,21 +168,6 @@ void call_method(const Base<T, U>& base) {
   base.dispatch(T{10});
 }
 
-template <typename T>
-void template_type() {
-  std::cout << "template_type: " << nice_type_name<T>() << std::endl;
-}
-
-template <bool Value>
-void template_bool() {
-  std::cout << "template_bool: " << Value << std::endl;
-}
-
-template <int Value>
-void template_int() {
-  std::cout << "template_int: " << Value << std::endl;
-}
-
 std::unique_ptr<Base<double, int>> do_convert(const Base<int, double>& value) {
   cout << "Attempt conversion" << endl;
   std::unique_ptr<Base<double, int>> out(value.DoTo<Base<double, int>>());
@@ -173,12 +196,44 @@ using type_pack_literals_raw =
 PYBIND11_MODULE(_scalar_type, m) {
   m.doc() = "Simple check on scalar / template types";
 
+  py::class_<SimpleType>(m, "SimpleType");
+
   // Types - Manual.
   AddTemplateFunction<int>(
       m, "template_type", &template_type<int>);
   AddTemplateFunction<double>(
       m, "template_type", &template_type<double>);
+  AddTemplateFunction<SimpleType>(
+      m, "template_type", &template_type<SimpleType>);
 
+  // - Lists
+  AddTemplateFunction<int>(
+      m, "template_list", &template_list<int>);
+  AddTemplateFunction<int, double>(
+      m, "template_list", &template_list<int, double>);
+  AddTemplateFunction<int, double, SimpleType>(
+      m, "template_list", &template_list<int, double, SimpleType>);
+
+  // - Class w/ looping.
+  {
+    auto inst = [&m](auto param) {
+      using Param = decltype(param);
+      using SimpleTemplateT = typename Param::template bind<SimpleTemplate>;
+      // N.B. This name will be overwritten by `AddTemplateClass`.
+      py::class_<SimpleTemplateT> py_class(
+          m, (std::string("_") + typeid(SimpleTemplateT).name()).c_str());
+      py_class
+        .def(py::init<>())
+        .def("size", &SimpleTemplateT::size);
+      AddTemplateMethod<double>(
+          py_class, "check", &SimpleTemplateT::template check<double>);
+      AddTemplateClass(m, "SimpleTemplate", py_class, "", param);
+    };
+    using ParamList = type_pack<
+        type_pack<int>,
+        type_pack<int, double, SimpleType>>;
+    type_visit(inst, ParamList{});
+  }
   // Literals.
   {
     // Manual - must wrap with `integral_constant`, since that is what is
@@ -222,9 +277,8 @@ PYBIND11_MODULE(_scalar_type, m) {
       using BaseT = Base<T, U>;
       using PyBaseT = PyBase<T, U>;
       // Define class.
-      string name = nice_type_name<BaseT>();
-      // N.B. This name will be overwritten by `AddTemplateClass`.
-      py::class_<BaseT, PyBaseT> py_class(m, name.c_str());
+      py::class_<BaseT, PyBaseT> py_class(
+          m, (std::string("_") + typeid(BaseT).name()).c_str());
       py_class
         .def(py::init<T, U, std::unique_ptr<BaseConverter>>(),
              py::arg("t"), py::arg("u"), py::arg("converter") = nullptr)

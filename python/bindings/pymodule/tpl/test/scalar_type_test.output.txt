@@ -1,7 +1,26 @@
-Names
+Types
 <TemplateFunction pymodule.tpl._scalar_type.template_type>
 template_type: int
 template_type: double
+template_list: 
+- int
+template_list: 
+- int
+- double
+- scalar_type::SimpleType
+---
+Class
+<TemplateClass pymodule.tpl._scalar_type.SimpleTemplate>
+<class 'pymodule.tpl._scalar_type.SimpleTemplate[int]'>
+<class 'pymodule.tpl._scalar_type.SimpleTemplate[int, float, pymodule.tpl._scalar_type.SimpleType]'>
+3
+check: 1 0 1 
+<unbound TemplateMethod SimpleTemplate[int, float, pymodule.tpl._scalar_type.SimpleType].check>
+<unbound method SimpleTemplate[int, float, pymodule.tpl._scalar_type.SimpleType].check[float]>
+<bound TemplateMethod SimpleTemplate[int, float, pymodule.tpl._scalar_type.SimpleType].check of <pymodule.tpl._scalar_type.SimpleTemplate[int, float, pymodule.tpl._scalar_type.SimpleType] object at 0x7fdc8a09ec30>>
+<bound method SimpleTemplate[int, float, pymodule.tpl._scalar_type.SimpleType].check[float] of <pymodule.tpl._scalar_type.SimpleTemplate[int, float, pymodule.tpl._scalar_type.SimpleType] object at 0x7fdc8a09ec30>>
+---
+Literals
 <TemplateFunction pymodule.tpl._scalar_type.template_bool>
 [(False,), (True,)]
 template_bool: 0
@@ -14,11 +33,6 @@ template_int: 0
 template_int: 1
 template_int: 2
 template_int: 5
----
-<class 'pymodule.tpl._scalar_type.BaseTpl[int, float]'>
-<TemplateClass pymodule.tpl._scalar_type.BaseTpl>
-<class 'pymodule.tpl._scalar_type.BaseTpl[int, float]'>
-<class 'pymodule.tpl._scalar_type.BaseTpl[float, int]'>
 ---
 <class '__main__.ChildTpl[int, float]'>
 <class '__main__.ChildTpl[int, float]'>
@@ -47,11 +61,6 @@ value = 3
   py: optional [ChildTpl[int, float]]
   = 9
 ---
-Template method
-<unbound TemplateMethod BaseTpl[int, float].DoTo>
-<unbound method BaseTpl[int, float].DoTo[float, int]>
-<bound TemplateMethod BaseTpl[int, float].DoTo of <__main__.ChildTpl[int, float] object at 0x7fa74693c4c8>>
-<bound method BaseTpl[int, float].DoTo[float, int] of <__main__.ChildTpl[int, float] object at 0x7fa74693c4c8>>
 <class '__main__.ChildTpl[float, int]'>
 py: pure [ChildTpl[float, int]]
 py: optional [ChildTpl[float, int]]
@@ -91,7 +100,7 @@ value = 10
 ---
 Check
 cpp call
-<__main__.ChildTpl[float, int] object at 0x7fa74693c598>
+<__main__.ChildTpl[float, int] object at 0x7fdc89e22600>
 cpp convert
 dispatch
 cpp.dispatch [pymodule.tpl._scalar_type.BaseTpl[float, int]]:
