@@ -1,0 +1,36 @@
+Types
+<TemplateFunction pymodule.tpl.test._cpp_template_test.template_type>
+template_type: int
+template_type: double
+template_list: 
+- int
+template_list: 
+- int
+- double
+- cpp_template_test::SimpleType
+---
+Class
+<class 'pymodule.tpl.test._cpp_template_test.SimpleTemplateTpl[int]'>
+<TemplateClass pymodule.tpl.test._cpp_template_test.SimpleTemplateTpl>
+<class 'pymodule.tpl.test._cpp_template_test.SimpleTemplateTpl[int]'>
+<class 'pymodule.tpl.test._cpp_template_test.SimpleTemplateTpl[int, float, pymodule.tpl.test._cpp_template_test.SimpleType]'>
+3
+check: 1 0 1 
+<unbound TemplateMethod SimpleTemplateTpl[int, float, pymodule.tpl.test._cpp_template_test.SimpleType].check>
+<unbound method SimpleTemplateTpl[int, float, pymodule.tpl.test._cpp_template_test.SimpleType].check[float]>
+<bound TemplateMethod SimpleTemplateTpl[int, float, pymodule.tpl.test._cpp_template_test.SimpleType].check of <pymodule.tpl.test._cpp_template_test.SimpleTemplateTpl[int, float, pymodule.tpl.test._cpp_template_test.SimpleType] object at 0x7f85e28da3f0>>
+<bound method SimpleTemplateTpl[int, float, pymodule.tpl.test._cpp_template_test.SimpleType].check[float] of <pymodule.tpl.test._cpp_template_test.SimpleTemplateTpl[int, float, pymodule.tpl.test._cpp_template_test.SimpleType] object at 0x7f85e28da3f0>>
+---
+Literals
+<TemplateFunction pymodule.tpl.test._cpp_template_test.template_bool>
+[(False,), (True,)]
+template_bool: 0
+template_bool: 1
+template_bool: 0
+template_bool: 1
+<TemplateFunction pymodule.tpl.test._cpp_template_test.template_int>
+[(0,), (1,), (2,), (5,)]
+template_int: 0
+template_int: 1
+template_int: 2
+template_int: 5

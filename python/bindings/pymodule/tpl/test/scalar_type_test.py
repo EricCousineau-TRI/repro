@@ -2,59 +2,12 @@
 from __future__ import print_function, absolute_import
 
 # import unittest
-from pymodule.tpl import scalar_type as st
-from pymodule.tpl.cpp_template import TemplateClass, is_instantiation, is_instantiation_of
+from pymodule.tpl import scalar_type as m
+from pymodule.tpl.cpp_template import TemplateClass, is_class_instantiation, is_instantiation_of
 
-import sys
-sys.stderr = sys.stdout
-
-print("Types")
-print(st.template_type)
-st.template_type[int]()
-st.template_type[float]()
-func = st.template_type[int]
-assert is_instantiation_of(st.template_type[int], st.template_type)
-
-st.template_list[int]()
-st.template_list[int, float, st.SimpleType]()
-
-print("---")
-print("Class")
-print(st.SimpleTemplate)
-print(st.SimpleTemplate[int])
-print(st.SimpleTemplate[int, float, st.SimpleType])
-assert is_instantiation(st.SimpleTemplate[int])
-assert is_instantiation_of(st.SimpleTemplate[int, float, st.SimpleType], st.SimpleTemplate)
-
-cls = st.SimpleTemplate[int, float, st.SimpleType]
-s = cls()
-print(s.size())
-s.check[float]()
-
-# Unbound
-print(cls.check)
-print(cls.check[float])
-# Bound
-print(s.check)
-print(s.check[float])
-
-print("---")
-print("Literals")
-print(st.template_bool)
-print(st.template_bool.param_list)
-st.template_bool[False]()
-st.template_bool[True]()
-st.template_bool[0]()
-st.template_bool[1]()
-
-print(st.template_int)
-print(st.template_int.param_list)
-for i in [0, 1, 2, 5]:
-    st.template_int[i]()
-
-# # Default class.
-BaseTpl = st.BaseTpl
-Base = st.Base
+# Default class.
+BaseTpl = m.BaseTpl
+Base = m.Base
 
 print("---")
 # Test direct inheritance.
@@ -127,9 +80,6 @@ assert Child == ChildTpl.get_instantiation()
 assert ChildTpl[int, float] == ChildTpl[int, float]
 assert ChildTpl[int, float] != ChildTpl[float, int]
 
-assert is_instantiation(Child)
-assert is_instantiation_of(Child, ChildTpl)
-
 # Check default instantiation.
 assert issubclass(Child, Base)
 # Check other instantiation.
@@ -155,9 +105,9 @@ cc.optional(1.5)
 cc.dispatch(1.5)
 
 print("---")
-st.call_method(cd)
-st.call_method(c)
-st.call_method(cc)
+m.call_method(cd)
+m.call_method(c)
+m.call_method(cc)
 
 print("---")
 def factory():
@@ -165,14 +115,14 @@ def factory():
     print(out)
     return out
 print("Check")
-owne = st.take_ownership(factory)
+owne = m.take_ownership(factory)
 print("dispatch")
 owne.dispatch(3.5)
 print("Good")
 
 print("---")
 c.dispatch(3)
-cc_c = st.do_convert(c)
+cc_c = m.do_convert(c)
 print("Try dispatch")
 cc_c.dispatch(2.5)
 print("Good to go")

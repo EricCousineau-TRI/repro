@@ -1,38 +1,3 @@
-Types
-<TemplateFunction pymodule.tpl._scalar_type.template_type>
-template_type: int
-template_type: double
-template_list: 
-- int
-template_list: 
-- int
-- double
-- scalar_type::SimpleType
----
-Class
-<TemplateClass pymodule.tpl._scalar_type.SimpleTemplate>
-<class 'pymodule.tpl._scalar_type.SimpleTemplate[int]'>
-<class 'pymodule.tpl._scalar_type.SimpleTemplate[int, float, pymodule.tpl._scalar_type.SimpleType]'>
-3
-check: 1 0 1 
-<unbound TemplateMethod SimpleTemplate[int, float, pymodule.tpl._scalar_type.SimpleType].check>
-<unbound method SimpleTemplate[int, float, pymodule.tpl._scalar_type.SimpleType].check[float]>
-<bound TemplateMethod SimpleTemplate[int, float, pymodule.tpl._scalar_type.SimpleType].check of <pymodule.tpl._scalar_type.SimpleTemplate[int, float, pymodule.tpl._scalar_type.SimpleType] object at 0x7fdc8a09ec30>>
-<bound method SimpleTemplate[int, float, pymodule.tpl._scalar_type.SimpleType].check[float] of <pymodule.tpl._scalar_type.SimpleTemplate[int, float, pymodule.tpl._scalar_type.SimpleType] object at 0x7fdc8a09ec30>>
----
-Literals
-<TemplateFunction pymodule.tpl._scalar_type.template_bool>
-[(False,), (True,)]
-template_bool: 0
-template_bool: 1
-template_bool: 0
-template_bool: 1
-<TemplateFunction pymodule.tpl._scalar_type.template_int>
-[(0,), (1,), (2,), (5,)]
-template_int: 0
-template_int: 1
-template_int: 2
-template_int: 5
 ---
 <class '__main__.ChildTpl[int, float]'>
 <class '__main__.ChildTpl[int, float]'>
@@ -100,7 +65,7 @@ value = 10
 ---
 Check
 cpp call
-<__main__.ChildTpl[float, int] object at 0x7fdc89e22600>
+<__main__.ChildTpl[float, int] object at 0x7f35acc78598>
 cpp convert
 dispatch
 cpp.dispatch [pymodule.tpl._scalar_type.BaseTpl[float, int]]:

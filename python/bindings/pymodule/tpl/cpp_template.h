@@ -54,6 +54,11 @@ py::object AddTemplateClass(
   return tpl;
 }
 
+template <typename T>
+std::string TemplateClassName() {
+  return std::string("_TmpTemplate_") + typeid(T).name();
+}
+
 template <typename Func, typename ... Extra, typename ... Ts>
 py::object AddTemplateFunctionImpl(
     py::object tpl, Func&& func, type_pack<Ts...> param, Extra... extra) {

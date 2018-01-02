@@ -2,7 +2,7 @@
 # This file contains rules for Bazel; see drake/doc/bazel.rst.
 
 load("//tools:python.bzl", "py_test_simple")
-load("//tools:pybind11.bzl", "pybind11_module") #, "pybind11_binary")
+load("//tools:pybind11.bzl", "pybind11_module", "pybind_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -21,7 +21,7 @@ pybind11_module(
     deps = [
         "//cpp:name_trait",
         "//cpp:simple_converter",
-        ":cpp_tpl_cc",
+        ":cpp_template_cc",
         ":simple_converter_py",
     ],
 )
@@ -96,7 +96,7 @@ py_test_simple(
 )
 
 cc_library(
-    name = "cpp_tpl_cc",
+    name = "cpp_template_cc",
     hdrs = [
         "cpp_template.h",
     ],
@@ -112,7 +112,32 @@ cc_library(
         "simple_converter_py.h",
     ],
     deps = [
-        ":cpp_tpl_cc",
+        ":cpp_template_cc",
         "//cpp:simple_converter",
+    ],
+)
+
+
+pybind_library(
+    name = "cpp_template_test_lib",
+    py_deps = [
+        ":cpp_template",
+        ":cpp_types",
+    ],
+    cc_so_name = "test/_cpp_template_test",
+    cc_srcs = [
+        "test/_cpp_template_test.cc",
+    ],
+    cc_deps = [
+        "//cpp:name_trait",
+        ":cpp_template_cc",
+    ],
+)
+
+py_test_simple(
+    name = "cpp_template_test",
+    size = "small",
+    deps = [
+        ":cpp_template_test_lib",
     ],
 )
