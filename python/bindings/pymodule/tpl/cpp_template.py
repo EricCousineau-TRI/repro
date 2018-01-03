@@ -15,11 +15,11 @@ def _get_module_name_from_stack(frame=2):
 
 def init_or_get(scope, name, template_cls, *args, **kwargs):
     tpl = getattr(scope, name, None)
-    if isinstance(scope, type):
-        module_name = scope.__module__
-    else:
-        module_name = scope.__name__
     if tpl is None:
+        if isinstance(scope, type):
+            module_name = scope.__module__
+        else:
+            module_name = scope.__name__
         tpl = template_cls(name, *args, module_name=module_name, **kwargs)
         setattr(scope, name, tpl)
     return tpl
@@ -92,45 +92,27 @@ class Template(object):
         return "<{} {}>".format(cls_name, self._full_name())
 
 
-class TemplateClass(Template):
-    def __init__(self, name, parent=None, **kwargs):
-        Template.__init__(self, name, **kwargs)
-        self.parent = parent
+def is_instantiation_of(obj, tpl):
+    # TODO: Return parameters for a given instantiation?
+    return obj in tpl._instantiation_map.values()
 
+
+class TemplateClass(Template):
     def add_instantiation(self, param, cls):
         """ Adds instantiation. """
-        # Do not double-register existing instantiation.
-        if is_class_instantiation(cls):
-            if self.parent != cls._tpl:
-                # Do not permit any existing template.
-                raise RuntimeError(
-                    "Class already has template associated with it")
-        # Nominal behavior.
         param = Template.add_instantiation(self, param, cls)
         # Update class information.
-        # Add metadata to instantiation.
-        cls._tpl = self
-        cls._tpl_param = param
+        cls._is_tpl = True
         cls.__name__ = self._get_instantiation_name(param)
-
-    def add_instantiations(
-            self, instantiation_func, param_list=None):
-        if param_list is None:
-            assert self.parent is not None
-            param_list = self.parent.param_list
-        Template.add_instantiations(self, instantiation_func, param_list)
+        return param
 
 
 def is_class_instantiation(obj):
-    # Dunno how to register `_tpl` in methods...
+    # Dunno how to register `_is_tpl` in methods...
     if isinstance(obj, type):
-        return hasattr(obj, '_tpl') and isinstance(obj._tpl, Template)
+        return hasattr(obj, '_is_tpl')
     else:
         return False
-
-
-def is_instantiation_of(obj, tpl):
-    return obj in tpl._instantiation_map.values()
 
 
 class TemplateFunction(Template):

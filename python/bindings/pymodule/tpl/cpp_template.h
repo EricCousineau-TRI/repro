@@ -27,7 +27,7 @@ inline std::string get_py_name(type_pack<T> = {}) {
   return TypeRegistry::GetPyInstance().GetName<T>();
 }
 
-template <typename Ts...>
+template <typename ... Ts>
 inline std::vector<std::string> get_py_names(type_pack<Ts...> = {}) {
   return TypeRegistry::GetPyInstance().GetNames<Ts...>();
 }
@@ -57,10 +57,8 @@ py::object AddTemplateClass(
     py::handle scope, const std::string& name,
     PyClass& py_class,
     const std::string& default_inst_name = "",
-    type_pack<Ts...> param = {},
-    py::handle parent = py::none()) {
-  py::object tpl = InitOrGetTemplate(
-      scope, name, "TemplateClass", py::make_tuple(parent));
+    type_pack<Ts...> param = {}) {
+  py::object tpl = InitOrGetTemplate(scope, name, "TemplateClass");
   AddInstantiation(tpl, py_class, param);
   if (!default_inst_name.empty() &&
       !py::hasattr(scope, default_inst_name.c_str())) {
