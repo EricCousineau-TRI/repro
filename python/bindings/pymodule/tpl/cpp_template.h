@@ -12,9 +12,24 @@
 
 namespace py = pybind11;
 
+template <typename T>
+inline py::tuple get_py_type(type_pack<T> = {}) {
+  return TypeRegistry::GetPyInstance().GetPyType<T>();
+}
+
 template <typename ... Ts>
 inline py::tuple get_py_types(type_pack<Ts...> = {}) {
   return TypeRegistry::GetPyInstance().GetPyTypes<Ts...>();
+}
+
+template <typename T>
+inline std::string get_py_name(type_pack<T> = {}) {
+  return TypeRegistry::GetPyInstance().GetName<T>();
+}
+
+template <typename Ts...>
+inline std::vector<std::string> get_py_names(type_pack<Ts...> = {}) {
+  return TypeRegistry::GetPyInstance().GetNames<Ts...>();
 }
 
 py::object InitOrGetTemplate(
