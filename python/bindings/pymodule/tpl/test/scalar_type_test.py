@@ -22,11 +22,10 @@ class ChildDirect(Base):
         return 2.
 
 
-def child_template_converter(ChildTpl):
-    BaseTpl = ChildTpl.parent
+def child_template_converter(ChildTpl, BaseTpl, param_list=BaseTpl.param_list):
     converter = BaseTpl.Converter()
-    for to_param in BaseTpl.param_list:
-        for from_param in BaseTpl.param_list:
+    for to_param in param_list:
+        for from_param in param_list:
             if to_param == from_param:
                 continue
             cls_to = ChildTpl.get_instantiation(to_param)
@@ -50,7 +49,8 @@ def _ChildTpl_instantiation(param):
                 self._init(*args, **kwargs)
 
         def _init(self, t, u):
-            Base.__init__(self, t, u, child_template_converter(ChildTpl))
+            Base.__init__(
+                self, t, u, child_template_converter(ChildTpl, BaseTpl))
 
         def pure(self, value):
             print("py: pure [{}]".format(type(self).__name__))
@@ -63,10 +63,8 @@ def _ChildTpl_instantiation(param):
     return Child
 
 
-ChildTpl = TemplateClass(
-    name = 'ChildTpl',
-    parent = BaseTpl)
-ChildTpl.add_instantiations(_ChildTpl_instantiation)
+ChildTpl = TemplateClass('ChildTpl')
+ChildTpl.add_instantiations(_ChildTpl_instantiation, BaseTpl.param_list)
 # Default instantiation.
 Child = ChildTpl.get_instantiation()
 

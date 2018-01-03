@@ -84,7 +84,7 @@ class Base {
   }
 
   static string py_name() {
-    return TypeRegistry::GetPyInstance().GetName<Base>();
+    return get_py_name<Base>();
   }
 
   template <typename To>
