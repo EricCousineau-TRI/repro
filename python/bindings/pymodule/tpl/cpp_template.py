@@ -46,6 +46,10 @@ class Template(object):
             param = self._param_default
         elif not isinstance(param, tuple):
             param = tuple(param)
+        # TODO(eric.cousineau): If an instantiation for `object` exists, then
+        # allow this to catch any single-parameter *type* instantiations.
+        # This allows a C++ template to explicitly allow for a Python type, and
+        # for this template to permit any object type to make it through.
         return types_canonical(param)
 
     def __getitem__(self, param):
