@@ -3,26 +3,53 @@
 #include <iostream>
 #include <type_traits>
 
-#include "cpp/name_trait.h"
-
 using namespace std;
 
 struct Value {};
 
 template <typename T>
-struct greedy_overloads {
+struct greedy_struct {
   static void run(const T&) {
-    cout << "const T&: " << nice_type_name<T>() << endl;
+    cout << "const T& (struct)" << endl;
   }
   static void run(T&&) {
-    cout << "T&&: " << nice_type_name<T>() << endl;
+    cout << "T&& (struct)" << endl;
   }
 };
+
+// Per Toby's answer.
+template <typename T>
+void greedy_sfinae(T&&,
+    std::enable_if_t<!std::is_rvalue_reference<T&&>::value, void*> = {}) {
+  cout << "non-T&& (sfinae)" << endl;
+}
+
+template <typename T>
+void greedy_sfinae(T&&,
+    std::enable_if_t<std::is_rvalue_reference<T&&>::value, void*> = {}) {
+  cout << "T&& (sfinae)" << endl;
+}
+
+// Bad.
+template <typename T>
+void greedy_sfinae_bad(T&&,
+    std::enable_if_t<!std::is_rvalue_reference<T>::value, void*> = {}) {
+  cout << "non-T&& (sfinae bad)" << endl;
+}
+
+template <typename T>
+void greedy_sfinae_bad(T&&,
+    std::enable_if_t<std::is_rvalue_reference<T>::value, void*> = {}) {
+  cout << "T&& (sfinae bad)" << endl;
+}
 
 template <typename TF>
 void greedy(TF&& value) {
   using T = std::decay_t<TF>;
-  greedy_overloads<T>::run(std::forward<TF>(value));
+  greedy_struct<T>::run(std::forward<TF>(value));
+  greedy_sfinae(std::forward<TF>(value));
+  greedy_sfinae_bad(std::forward<TF>(value));
+  cout << "---" << endl;
 }
 
 int main() {
