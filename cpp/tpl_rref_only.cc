@@ -8,13 +8,15 @@ using namespace std;
 struct Value {};
 
 template <typename T>
+using rvalue = T&&;
+
+template <typename T>
 void greedy(const T&) {
   cout << "const T&" << endl;
 }
 
-template <typename T, typename =
-    std::enable_if_t<std::is_rvalue_reference<T>::value>>
-void greedy(T&&) {
+template <typename T>
+void greedy(rvalue<T>) {
   cout << "T&&" << endl;
 }
 
@@ -33,10 +35,10 @@ int main() {
 /*
 Output:
 
+T&&
 const T&
-const T&
-const T&
-const T&
+T&&
+T&&
 
-Notes: Why the last two???
+Notes: Still too greedy?
 */
