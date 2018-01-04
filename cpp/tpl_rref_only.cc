@@ -67,10 +67,22 @@ int main() {
 /*
 Output:
 
-const T&: Value
-const T&: Value
-T&&: Value
-T&&: Value
+const T& (struct)
+non-T&& (sfinae)
+non-T&& (sfinae bad)
+---
+const T& (struct)
+non-T&& (sfinae)
+non-T&& (sfinae bad)
+---
+T&& (struct)
+T&& (sfinae)
+non-T&& (sfinae bad)
+---
+T&& (struct)
+T&& (sfinae)
+non-T&& (sfinae bad)
+---
 
 Notes: Works as expected, but ugly...
 */
