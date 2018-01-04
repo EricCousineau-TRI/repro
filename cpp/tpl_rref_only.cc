@@ -9,31 +9,18 @@ using namespace std;
 
 struct Value {};
 
-// template <typename T>
-// using direct = T; //std::conditional_t<std::is_same<T, T>::value, T, void>;
-
-// template <typename T>
-// using rvalue = std::add_rvalue_reference_t<T>; //direct<T>&&;
-
-// template <typename T>
-// using is_const_lvalue_reference =
-//     std::integral_constant<bool,
-//         std::is_const<T>::value && std::is_lvalue_reference<T>::value>;
-
-template <typename T>
-struct greedy_impl {
-  static void run(const T&) {
-    cout << "const T&: " << nice_type_name<T>() << endl;
-  }
-  static void run(T&&) {
-    cout << "T&&: " << nice_type_name<T>() << endl;
-  }
-};
-
 template <typename TF>
 void greedy(TF&& value) {
   using T = std::decay_t<TF>;
-  greedy_impl<T>::run(std::forward<TF>(value));
+  struct overload {
+    static void run(const T&) {
+      cout << "const T&: " << nice_type_name<T>() << endl;
+    }
+    static void run(T&&) {
+      cout << "T&&: " << nice_type_name<T>() << endl;
+    }
+  };
+  overload::run(std::forward<TF>(value));
 }
 
 int main() {
