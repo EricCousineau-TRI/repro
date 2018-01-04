@@ -2,8 +2,9 @@ cc_library(
     name = "include",
     srcs = glob([
         "include/**/*.h",
+        "tests/*.h",
     ]),
-    includes = ["include"],
+    includes = ["include", "tests"],
     deps = [
         "@eigen",
         # "@numpy//:numpy",
@@ -16,8 +17,9 @@ cc_library(
     name = "include3",
     srcs = glob([
         "include/**/*.h",
+        "tests/*.h",
     ]),
-    includes = ["include"],
+    includes = ["include", "tests"],
     deps = [
         "@eigen",
         "@python3//:python",
@@ -74,5 +76,20 @@ cc_binary(
 cc_binary(
     name = "test_unique_ptr_stuff",
     srcs = ["custom_tests/test_unique_ptr_stuff.cc"],
+    deps = [":include"],
+)
+
+#exports_files(["custom_tests/test_unique_ptr_keep_alive.py"])
+
+cc_binary(
+    name = "test_unique_ptr_keep_alive",
+    srcs = [
+         "custom_tests/test_unique_ptr_keep_alive.cc",
+         "tests/pybind11_tests.cpp",
+    ],
+    data = [
+        "custom_tests/test_unique_ptr_keep_alive.py",
+    ],
+    args = ["$(location custom_tests/test_unique_ptr_keep_alive.py)"],
     deps = [":include"],
 )
