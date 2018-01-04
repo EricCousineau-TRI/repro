@@ -20,7 +20,7 @@ struct greedy_struct {
 // Per Toby's answer.
 template <typename T>
 void greedy_sfinae(const T&) {
-  cout << "const T&& (sfinae)" << endl;
+  cout << "const T& (sfinae)" << endl;
 }
 
 template <
@@ -33,7 +33,7 @@ void greedy_sfinae(T&&) {
 // Bad.
 template <typename T>
 void greedy_sfinae_bad(const T&) {
-  cout << "const T&& (sfinae bad)" << endl;
+  cout << "const T& (sfinae bad)" << endl;
 }
 
 template <
@@ -68,21 +68,19 @@ int main() {
 Output:
 
 const T& (struct)
-non-T&& (sfinae)
-non-T&& (sfinae bad)
+const T& (sfinae)
+const T& (sfinae bad)
 ---
 const T& (struct)
-non-T&& (sfinae)
-non-T&& (sfinae bad)
+const T& (sfinae)
+const T& (sfinae bad)
 ---
 T&& (struct)
 T&& (sfinae)
-non-T&& (sfinae bad)
+const T& (sfinae bad)
 ---
 T&& (struct)
 T&& (sfinae)
-non-T&& (sfinae bad)
+const T& (sfinae bad)
 ---
-
-Notes: Works as expected, but ugly...
 */
