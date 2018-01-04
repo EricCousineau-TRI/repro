@@ -9,18 +9,20 @@ using namespace std;
 
 struct Value {};
 
+template <typename T>
+struct greedy_overloads {
+  static void run(const T&) {
+    cout << "const T&: " << nice_type_name<T>() << endl;
+  }
+  static void run(T&&) {
+    cout << "T&&: " << nice_type_name<T>() << endl;
+  }
+};
+
 template <typename TF>
 void greedy(TF&& value) {
   using T = std::decay_t<TF>;
-  struct overload {
-    static void run(const T&) {
-      cout << "const T&: " << nice_type_name<T>() << endl;
-    }
-    static void run(T&&) {
-      cout << "T&&: " << nice_type_name<T>() << endl;
-    }
-  };
-  overload::run(std::forward<TF>(value));
+  greedy_overloads<T>::run(std::forward<TF>(value));
 }
 
 int main() {
