@@ -3,6 +3,8 @@
 #include <iostream>
 #include <type_traits>
 
+#include "cpp/name_trait.h"
+
 using namespace std;
 
 struct Value {};
@@ -14,13 +16,18 @@ template <typename T>
 using rvalue = std::add_rvalue_reference_t<T>; //direct<T>&&;
 
 template <typename T>
-void greedy(const T&) {
-  cout << "const T&" << endl;
+using is_const_lvalue_reference =
+    std::integral_constant<bool,
+        std::is_const<T>::value && std::is_lvalue_reference<T>::value>;
+
+template <typename T>
+void greedy(T&&, std::enable_if_t<!std::is_rvalue_reference<T>::value, void*> = {}) {
+  cout << "T&& for !rvalue: " << nice_type_name<T>() << endl;
 }
 
 template <typename T>
-void greedy(direct<T&&>) {
-  cout << "T&&" << endl;
+void greedy(T&&, std::enable_if_t<std::is_rvalue_reference<T>::value, int*> = {}) {
+  cout << "T&& for rvalue: " << nice_type_name<T>() << endl;
 }
 
 int main() {

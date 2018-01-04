@@ -164,6 +164,7 @@ cc_binary(
 cc_binary(
     name = "tpl_rref_only",
     srcs = ["tpl_rref_only.cc"],
+    deps = [":name_trait"],
 )
 
 cc_binary(

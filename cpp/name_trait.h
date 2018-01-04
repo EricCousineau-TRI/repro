@@ -23,17 +23,25 @@ template <typename T>
 std::string nice_type_name() {
   // From drake::NiceTypeName
   const char* typeid_name = typeid(T).name();
+  std::string out;
 #if defined(__GNUG__)
   int status = -100;  // just in case it doesn't get set
   char* ret = abi::__cxa_demangle(typeid_name, NULL, NULL, &status);
   const char* const demangled_name = (status == 0) ? ret : typeid_name;
   std::string demangled_string(demangled_name);
   if (ret) std::free(ret);
-  return demangled_string;
+  out = demangled_string;
 #else
   // On other platforms, we hope the typeid name is not mangled.
-  return typeid_name;
+  out = typeid_name;
 #endif
+  if (std::is_const<T>::value)
+    out = "const "  + out;
+  if (std::is_lvalue_reference<T>::value)
+    out = out + "&";
+  if (std::is_rvalue_reference<T>::value)
+    out = out + "&&";
+  return out;
 }
 
 // Need to specify extra argument to permit partial specializaiton matching
