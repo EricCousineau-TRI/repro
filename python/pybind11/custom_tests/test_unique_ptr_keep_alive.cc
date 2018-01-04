@@ -140,7 +140,13 @@ int main(int argc, char* argv[]) {
     globals["m"] = m;
     globals["ConstructorStats"] = m.attr("ConstructorStats");
 
-    py::str file = py::cast(argv[1]);
+    py::str file;
+    if (argc < 2) {
+        file = "python/pybind11/custom_tests/test_unique_ptr_keep_alive.py";
+    } else {
+        file = argv[1];
+    }
+    py::print(file);
     py::eval_file(file);
 
     cout << "[ Done ]" << endl;

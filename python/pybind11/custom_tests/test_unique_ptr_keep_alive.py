@@ -1,3 +1,4 @@
+import sys
 import weakref
 import gc
 
@@ -10,6 +11,7 @@ for i, keep_cls in enumerate([m.ContainerKeepAlive, m.ContainerExposeOwnership])
     print("create")
     c_keep = keep_cls(obj)
     c_keep_wref = weakref.ref(c_keep)
+    print("refcount: {}".format(sys.getrefcount(c_keep)))
     assert obj_stats.alive() == 1
     assert c_keep_stats.alive() == 1
     print("del")
