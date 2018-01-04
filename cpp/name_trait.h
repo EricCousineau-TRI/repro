@@ -35,7 +35,7 @@ std::string nice_type_name() {
   // On other platforms, we hope the typeid name is not mangled.
   out = typeid_name;
 #endif
-  if (std::is_const<T>::value)
+  if (std::is_const<typename std::remove_reference<T>::type>::value)
     out = "const "  + out;
   if (std::is_lvalue_reference<T>::value)
     out = out + "&";

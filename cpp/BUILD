@@ -316,3 +316,9 @@ cc_binary(
     name = "alias_dup_test",
     srcs = ["alias_dup_test.cc"],
 )
+
+cc_binary(
+    name = "tpl_perfect_fwd",
+    srcs = ["tpl_perfect_fwd.cc"],
+    deps = [":name_trait"],
+)
