@@ -21,6 +21,7 @@ using namespace py::literals;
 using namespace std;
 
 // Returns Python handle to owner.
+// CANNOT be used in constructors!!!
 template <typename NurseT, typename OwnerT>
 py::object expose_ownership(
     const unique_ptr<NurseT>& nurse_ptr, const OwnerT* owner,
@@ -33,6 +34,8 @@ py::object expose_ownership(
             // Expose owner to Python, registering it if needed.
             // This assumes that the lifetime of the owner is appropriately managed!
             if (!owner_py) {
+                // TODO(eric.cousineau): Is there a way to ensure that this is not being called in
+                // a constructor?
                 owner_py = py::cast(owner);
             }
             py::print("Adding: ", nurse_py, owner_py);
@@ -75,34 +78,32 @@ public:
     using Ptr = std::unique_ptr<T>;
     Container(Ptr ptr)
         : ptr_(std::move(ptr)) {
-        if (keep_alive_type == KeepAliveType::ExposeOwnership) {
-            expose_ownership(ptr_, this);
-        }
         print_created(this);
     }
     ~Container() {
         if (keep_alive_type == KeepAliveType::ExposeOwnership) {
             release_ownership(std::move(ptr_));
         }
-        cout << "destroy container\n";
         print_destroyed(this);
+    }
+    void expose_ownership() {
+        if (keep_alive_type != KeepAliveType::ExposeOwnership) {
+            throw std::runtime_error("Invalid");
+        }
+        expose_ownership(ptr_, this);
     }
     T* get() const { return ptr_.get(); }
     Ptr release() { return std::move(ptr_); }
 
     static void def(py::module &m, const std::string& name) {
         py::class_<Container> cls(m, name.c_str());
-        auto init = [](Ptr ptr) {
-            return new Container(std::move(ptr));
-        };
         if (keep_alive_type == KeepAliveType::KeepAlive) {
-            cls.def(py::init(init), py::keep_alive<2, 1>());
-        } else if (keep_alive_type == KeepAliveType ::ExposeOwnership) {
-            cls.def("__init__", [](Container* self, Ptr ptr) {
-                new (self) Container(std::move(ptr));
-            });
+            cls.def(py::init<Ptr>(), py::keep_alive<2, 1>());
         } else {
-            cls.def(py::init(init));
+            cls.def(py::init<Ptr>());
+        }
+        if (keep_alive_type == KeepAliveType::ExposeOwnership) {
+            cls.def("expose_ownership", &Container::expose_ownership);
         }
         cls.def("get", &Container::get);
         cls.def("release", &Container::release);
