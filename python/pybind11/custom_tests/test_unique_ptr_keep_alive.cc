@@ -33,31 +33,15 @@ py::object expose_ownership(
             py::print("Has existing value");
             // Expose owner to Python, registering it if needed.
             // This assumes that the lifetime of the owner is appropriately managed!
-//            if (!is_ctor) {
-                // We can assume that casting will return the appropriate Python instance.
-                if (!owner_py) {
-                    // TODO(eric.cousineau): Is there a way to ensure that this is not being called in
-                    // a constructor?
-                    owner_py = py::cast(owner);
-                }
-                py::print("Adding: ", nurse_py, owner_py);
-                py::print("owner: ", reinterpret_cast<const void*>(owner));
-                py::print("- refcount: ", owner_py, owner_py.ref_count());
-                py::detail::add_patient(nurse_py.ptr(), owner_py.ptr());
-                py::print("- refcount: ", owner_py, owner_py.ref_count());
-                owner_py.inc_ref();
-                py::print("- refcount: ", owner_py, owner_py.ref_count());
-                return owner_py;
-//            } else {
-//                // Queue the value to be consumed later.
-//                py::print("WARNING: CONSTRUCTOR");
-////                py::detail::add_patient_queued(
-////                    nurse_py.ptr(), owner, typeid(OwnerT));
-//            }
+            if (!owner_py) {
+                // TODO(eric.cousineau): Is there a way to ensure that this is not being called in
+                // a constructor?
+                owner_py = py::cast(owner);
+            }
+            py::print("Adding: ", nurse_py, owner_py);
+            py::detail::add_patient(nurse_py.ptr(), owner_py.ptr());
+            return owner_py;
         }
-        // TODO(eric.cousineau): This is NOT good if we want to always allow the nurse to keep the object alive.
-        // (e.g. if it's created within the container, and only a reference is passed).
-        // Could just delegate this to the user, have them use `keep_alive<0, 1>`.
     }
     py::print("No ownership");
     // Return empty object.
