@@ -21,29 +21,25 @@ using namespace py::literals;
 using namespace std;
 
 // Returns Python handle to owner.
-// CANNOT be used in constructors!!!
 template <typename NurseT, typename OwnerT>
 py::object expose_ownership(
-    const unique_ptr<NurseT>& nurse_ptr, const OwnerT* owner, bool is_ctor = true,
-    py::object owner_py = {}) {
+    const unique_ptr<NurseT>& nurse_ptr, const OwnerT* owner, py::object owner_py = {}) {
     if (nurse_ptr) {
-        py::print("Has value");
         py::handle nurse_py = py::detail::cast_existing(nurse_ptr.get());
         if (nurse_py) {
-            py::print("Has existing value");
             // Expose owner to Python, registering it if needed.
             // This assumes that the lifetime of the owner is appropriately managed!
             if (!owner_py) {
-                // TODO(eric.cousineau): Is there a way to ensure that this is not being called in
-                // a constructor?
+                // TODO: Is there some way to get a persistent py::object when casting
+                // at construction?
+                // Presently, there's a hack (see `py::detail::initimpl::instance_creation`)
+                // which will detect a duplicate instance record, and transfer nurses.
                 owner_py = py::cast(owner);
             }
-            py::print("Adding: ", nurse_py, owner_py);
             py::detail::add_patient(nurse_py.ptr(), owner_py.ptr());
             return owner_py;
         }
     }
-    py::print("No ownership");
     // Return empty object.
     return py::object();
 }
@@ -71,7 +67,7 @@ public:
     Container(Ptr ptr)
         : ptr_(std::move(ptr)) {
         if (keep_alive_type == KeepAliveType::ExposeOwnership) {
-            expose_ownership(ptr_, this, true);
+            expose_ownership(ptr_, this);
         }
         print_created(this);
     }
