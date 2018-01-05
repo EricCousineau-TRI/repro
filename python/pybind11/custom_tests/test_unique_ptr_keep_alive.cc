@@ -92,10 +92,17 @@ public:
 
     static void def(py::module &m, const std::string& name) {
         py::class_<Container> cls(m, name.c_str());
+        auto init = [](Ptr ptr) {
+            return new Container(std::move(ptr));
+        };
         if (keep_alive_type == KeepAliveType::KeepAlive) {
-            cls.def(py::init<Ptr>(), py::keep_alive<2, 1>());
+            cls.def(py::init(init), py::keep_alive<2, 1>());
+        } else if (keep_alive_type == KeepAliveType ::ExposeOwnership) {
+            cls.def("__init__", [](Container* self, Ptr ptr) {
+                new (self) Container(std::move(ptr));
+            });
         } else {
-            cls.def(py::init<Ptr>());
+            cls.def(py::init(init));
         }
         cls.def("get", &Container::get);
         cls.def("release", &Container::release);
