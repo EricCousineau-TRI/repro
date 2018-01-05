@@ -4,17 +4,19 @@ import weakref
 
 obj_stats = ConstructorStats.get(m.UniquePtrHeld)
 
-# Now try with keep-alive containers.
 for i, keep_cls in enumerate([m.ContainerKeepAlive, m.ContainerExposeOwnership]):
     c_keep_stats = ConstructorStats.get(keep_cls)
     obj = m.UniquePtrHeld(i + 1)
     print("create")
     c_keep = keep_cls(obj)
+    print(c_keep)
+    print("refcount: {}".format(sys.getrefcount(c_keep)))
     c_keep_wref = weakref.ref(c_keep)
     print("refcount: {}".format(sys.getrefcount(c_keep)))
     assert obj_stats.alive() == 1
     assert c_keep_stats.alive() == 1
     print("del")
+    print("refcount: {}".format(sys.getrefcount(c_keep)))
     del c_keep
     # print("gc")
     # gc.collect()

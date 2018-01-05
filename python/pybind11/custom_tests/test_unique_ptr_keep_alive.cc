@@ -36,7 +36,12 @@ py::object expose_ownership(
                 owner_py = py::cast(owner);
             }
             py::print("Adding: ", nurse_py, owner_py);
+            py::print("owner: ", reinterpret_cast<const void*>(owner));
+            py::print("- refcount: ", owner_py, owner_py.ref_count());
             py::detail::add_patient(nurse_py.ptr(), owner_py.ptr());
+            py::print("- refcount: ", owner_py, owner_py.ref_count());
+            owner_py.inc_ref();
+            py::print("- refcount: ", owner_py, owner_py.ref_count());
             return owner_py;
         }
         // TODO(eric.cousineau): This is NOT good if we want to always allow the nurse to keep the object alive.
