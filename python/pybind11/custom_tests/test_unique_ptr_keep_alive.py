@@ -1,6 +1,6 @@
 import sys
 import weakref
-import gc
+# import gc
 
 obj_stats = ConstructorStats.get(m.UniquePtrHeld)
 
@@ -16,8 +16,8 @@ for i, keep_cls in enumerate([m.ContainerKeepAlive, m.ContainerExposeOwnership])
     assert c_keep_stats.alive() == 1
     print("del")
     del c_keep
-    print("gc")
-    gc.collect()
+    # print("gc")
+    # gc.collect()
     print("check wref")
     # Everything should have stayed alive.
     assert c_keep_wref() is not None
@@ -25,8 +25,8 @@ for i, keep_cls in enumerate([m.ContainerKeepAlive, m.ContainerExposeOwnership])
     assert obj_stats.alive() == 1
     # Now release the object. This should have released the container as a patient.
     c_keep_wref().release()
-    gc.collect()
+    # gc.collect()
     assert obj_stats.alive() == 1
     assert c_keep_stats.alive() == 0
     del obj
-    gc.collect()
+    # gc.collect()
