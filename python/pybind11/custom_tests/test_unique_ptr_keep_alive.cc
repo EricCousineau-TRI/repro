@@ -24,7 +24,7 @@ using namespace std;
 // CANNOT be used in constructors!!!
 template <typename NurseT, typename OwnerT>
 py::object expose_ownership(
-    const unique_ptr<NurseT>& nurse_ptr, const OwnerT* owner,
+    const unique_ptr<NurseT>& nurse_ptr, const OwnerT* owner, bool is_ctor = true,
     py::object owner_py = {}) {
     if (nurse_ptr) {
         py::print("Has value");
@@ -33,19 +33,27 @@ py::object expose_ownership(
             py::print("Has existing value");
             // Expose owner to Python, registering it if needed.
             // This assumes that the lifetime of the owner is appropriately managed!
-            if (!owner_py) {
-                // TODO(eric.cousineau): Is there a way to ensure that this is not being called in
-                // a constructor?
-                owner_py = py::cast(owner);
-            }
-            py::print("Adding: ", nurse_py, owner_py);
-            py::print("owner: ", reinterpret_cast<const void*>(owner));
-            py::print("- refcount: ", owner_py, owner_py.ref_count());
-            py::detail::add_patient(nurse_py.ptr(), owner_py.ptr());
-            py::print("- refcount: ", owner_py, owner_py.ref_count());
-            owner_py.inc_ref();
-            py::print("- refcount: ", owner_py, owner_py.ref_count());
-            return owner_py;
+//            if (!is_ctor) {
+                // We can assume that casting will return the appropriate Python instance.
+                if (!owner_py) {
+                    // TODO(eric.cousineau): Is there a way to ensure that this is not being called in
+                    // a constructor?
+                    owner_py = py::cast(owner);
+                }
+                py::print("Adding: ", nurse_py, owner_py);
+                py::print("owner: ", reinterpret_cast<const void*>(owner));
+                py::print("- refcount: ", owner_py, owner_py.ref_count());
+                py::detail::add_patient(nurse_py.ptr(), owner_py.ptr());
+                py::print("- refcount: ", owner_py, owner_py.ref_count());
+                owner_py.inc_ref();
+                py::print("- refcount: ", owner_py, owner_py.ref_count());
+                return owner_py;
+//            } else {
+//                // Queue the value to be consumed later.
+//                py::print("WARNING: CONSTRUCTOR");
+////                py::detail::add_patient_queued(
+////                    nurse_py.ptr(), owner, typeid(OwnerT));
+//            }
         }
         // TODO(eric.cousineau): This is NOT good if we want to always allow the nurse to keep the object alive.
         // (e.g. if it's created within the container, and only a reference is passed).
@@ -78,6 +86,9 @@ public:
     using Ptr = std::unique_ptr<T>;
     Container(Ptr ptr)
         : ptr_(std::move(ptr)) {
+        if (keep_alive_type == KeepAliveType::ExposeOwnership) {
+            expose_ownership(ptr_, this, true);
+        }
         print_created(this);
     }
     ~Container() {
@@ -85,12 +96,6 @@ public:
             release_ownership(std::move(ptr_));
         }
         print_destroyed(this);
-    }
-    void expose_ownership() {
-        if (keep_alive_type != KeepAliveType::ExposeOwnership) {
-            throw std::runtime_error("Invalid");
-        }
-        expose_ownership(ptr_, this);
     }
     T* get() const { return ptr_.get(); }
     Ptr release() { return std::move(ptr_); }
@@ -101,9 +106,6 @@ public:
             cls.def(py::init<Ptr>(), py::keep_alive<2, 1>());
         } else {
             cls.def(py::init<Ptr>());
-        }
-        if (keep_alive_type == KeepAliveType::ExposeOwnership) {
-            cls.def("expose_ownership", &Container::expose_ownership);
         }
         cls.def("get", &Container::get);
         cls.def("release", &Container::release);

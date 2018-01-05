@@ -2,9 +2,9 @@ import sys
 import weakref
 # import gc
 
-keep_cls_list = [m.ContainerKeepAlive]
+# keep_cls_list = [m.ContainerKeepAlive]
 # keep_cls_list = [m.ContainerKeepAlive, m.ContainerExposeOwnership]
-# keep_cls_list = [m.ContainerExposeOwnership]
+keep_cls_list = [m.ContainerExposeOwnership]
 for i, keep_cls in enumerate(keep_cls_list):
     obj = m.UniquePtrHeld(i + 1)
     print("create")
