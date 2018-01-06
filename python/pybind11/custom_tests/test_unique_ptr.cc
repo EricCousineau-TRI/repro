@@ -56,6 +56,28 @@ int main(int argc, char* argv[]) {
               obj.reset();
           });
 
+    // Guarantee API works as expected.
+    m.def("unique_ptr_pass_through_cast_from_py",
+          [](py::object obj_py) {
+              auto obj =
+                      py::cast<std::unique_ptr<UniquePtrHeld>>(std::move(obj_py));
+              return obj;
+          });
+    m.def("unique_ptr_pass_through_move_from_py",
+          [](py::object obj_py) {
+              return py::move<std::unique_ptr<UniquePtrHeld>>(std::move(obj_py));
+          });
+
+    m.def("unique_ptr_pass_through_move_to_py",
+          [](std::unique_ptr<UniquePtrHeld> obj) {
+              return py::move(std::move(obj));
+          });
+
+    m.def("unique_ptr_pass_through_cast_to_py",
+          [](std::unique_ptr<UniquePtrHeld> obj) {
+              return py::cast(std::move(obj));
+          });
+
     py::dict globals = py::globals();
     globals["m"] = m;
 
