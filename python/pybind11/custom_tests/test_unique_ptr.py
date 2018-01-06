@@ -1,3 +1,4 @@
+import trace
 import _test_unique_ptr as m
 
 obj = m.UniquePtrHeld(1)
