@@ -1,18 +1,23 @@
+import gc
+import traceback
 # import gc
 # import traceback
 import trace, sys
 
 import _test_unique_ptr as m
 
-def main():
+# def main():
+try:
     print("Hello world")
     obj = m.UniquePtrHeld(1)
     m.unique_ptr_terminal(obj)
     obj = m.UniquePtrHeld(1)
     obj_ref = m.unique_ptr_pass_through(obj)
+except:
+    traceback.print_exc()
 
-tracer = trace.Trace(trace=1)
-tracer.run('main()')
+# tracer = trace.Trace(trace=1)
+# tracer.run('main()')
 
 # try:
     # stats = m.ConstructorStats.get(m.UniquePtrHeld)
@@ -60,7 +65,6 @@ tracer.run('main()')
     #     del obj_ref
     #     pytest.gc_collect()
     #     assert stats.alive() == 0   
-
 # except:
 #     traceback.print_exc()
 
