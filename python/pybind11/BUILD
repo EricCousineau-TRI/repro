@@ -81,6 +81,21 @@ cc_binary(
 
 #exports_files(["custom_tests/test_unique_ptr_keep_alive.py"])
 
+# Debuggable things.
+
+cc_binary(
+    name = "test_unique_ptr",
+    srcs = [
+         "custom_tests/test_unique_ptr.cc",
+         "tests/pybind11_tests.cpp",
+    ],
+    data = [
+        "custom_tests/test_unique_ptr.py",
+    ],
+    args = ["$(location custom_tests/test_unique_ptr.py)"],
+    deps = [":include"],
+)
+
 cc_binary(
     name = "test_unique_ptr_keep_alive",
     srcs = [
