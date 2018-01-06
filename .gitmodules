@@ -21,8 +21,8 @@
 	url = http://github.com/pointcloudlibrary/pcl.git
 [submodule "externals/pybind11"]
 	path = externals/pybind11
-	url = http://github.com/pybind/pybind11
-	branch = feature/py_move_shared
+	url = git@github.com:EricCousineau-TRI/pybind11.git
+	branch = feature/unique_ptr_expose_ownership
 [submodule "externals/vtk"]
 	path = externals/vtk
 	url = git://vtk.org/VTK.git
