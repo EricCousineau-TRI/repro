@@ -25,8 +25,8 @@ try:
     # assert stats.alive() == 1
     # assert obj.value() == 1
     # assert obj == obj_ref
-    del obj
-    del obj_ref
+    # del obj
+    # del obj_ref
     # gc.collect()
     # assert stats.alive() == 0
 
