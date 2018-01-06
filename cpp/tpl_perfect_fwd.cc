@@ -21,6 +21,7 @@ int main() {
   EVAL(func(x_const));
   EVAL(func(x));
   EVAL(func(std::move(x)));
+  EVAL(func(std::move(x_const)));
 
   return 0;
 }
@@ -42,5 +43,10 @@ Value& = decltype(value)
 Value = T
 Value&& = T&&
 Value&& = decltype(value)
+
+>>> func(std::move(x_const));
+const Value = T
+const Value&& = T&&
+const Value&& = decltype(value)
 
 */
