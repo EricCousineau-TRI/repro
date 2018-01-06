@@ -5,12 +5,13 @@ import trace, sys
 import _test_unique_ptr as m
 
 def main():
+    print("Hello world")
     obj = m.UniquePtrHeld(1)
     m.unique_ptr_terminal(obj)
     obj = m.UniquePtrHeld(1)
     obj_ref = m.unique_ptr_pass_through(obj)
 
-tracer = trace.Trace(ignoredirs=[sys.prefix, sys.exec_prefix], trace=1)
+tracer = trace.Trace(trace=1)
 tracer.run('main()')
 
 # try:
@@ -62,3 +63,5 @@ tracer.run('main()')
 
 # except:
 #     traceback.print_exc()
+
+print("Done")
