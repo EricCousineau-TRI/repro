@@ -47,39 +47,50 @@ int main(int argc, char* argv[]) {
     struct CppCopyable {
         int value{};
     };
-    py::class_<CppCopyable>(m, "CppCopyable")
-        .def(py::init<>())
-        .def_readwrite("value", &CppCopyable::value);
+    py::class_<CppCopyable> cls(m, "CppCopyable");
+    cls.def(py::init<>());
+    cls.def_readwrite("value", &CppCopyable::value);
 
-    // Does not work as expected, because pybind will copy the instance when
-    // binding.
-    py::cpp_function func_ref(
-        [](std::function<void(CppCopyable&)> f, int value) {
-            CppCopyable obj{value};
-            f(obj);
-            return obj;
-        });
-    m.attr("callback_mutate_copyable_cpp_ref") = func_ref;
-    // Works as expected, because pybind will not copy the instance.
-    py::cpp_function func_ptr(
-        [](std::function<void(CppCopyable*)> f, int value) {
-            CppCopyable obj{value};
-            f(&obj);
-            return obj;
-        });
-    m.attr("callback_mutate_copyable_cpp_ptr") = func_ptr;
+    CppCopyable cpp_obj_orig{1};
+    py::object obj = py::cast<CppCopyable&>(cpp_obj_orig);
+//    py::object obj = cls();
+    obj.attr("value") = 20;
+    CppCopyable& cpp_obj = py::cast<CppCopyable&>(obj);
+    cpp_obj.value = 200;
+    py::print("value: ", cpp_obj_orig.value, cpp_obj.value, obj.attr("value"));
 
-    py::dict globals = py::globals();
-    globals["m"] = m;
+    // Output:
+    // value:  1 200 200
 
-    py::str file;
-    if (argc < 2) {
-        file = "python/pybind11/custom_tests/test_callback_lvalue.py";
-    } else {
-        file = argv[1];
-    }
-    py::print(file);
-    py::eval_file(file);
+//    // Does not work as expected, because pybind will copy the instance when
+//    // binding.
+//    py::cpp_function func_ref(
+//        [](std::function<void(CppCopyable&)> f, int value) {
+//            CppCopyable obj{value};
+//            f(obj);
+//            return obj;
+//        });
+//    m.attr("callback_mutate_copyable_cpp_ref") = func_ref;
+//    // Works as expected, because pybind will not copy the instance.
+//    py::cpp_function func_ptr(
+//        [](std::function<void(CppCopyable*)> f, int value) {
+//            CppCopyable obj{value};
+//            f(&obj);
+//            return obj;
+//        });
+//    m.attr("callback_mutate_copyable_cpp_ptr") = func_ptr;
+
+//    py::dict globals = py::globals();
+//    globals["m"] = m;
+//
+//    py::str file;
+//    if (argc < 2) {
+//        file = "python/pybind11/custom_tests/test_callback_lvalue.py";
+//    } else {
+//        file = argv[1];
+//    }
+//    py::print(file);
+//    py::eval_file(file);
 
     cout << "[ Done ]" << endl;
 
