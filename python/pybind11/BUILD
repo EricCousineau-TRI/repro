@@ -108,3 +108,16 @@ cc_binary(
     args = ["$(location custom_tests/test_unique_ptr_keep_alive.py)"],
     deps = [":include"],
 )
+
+cc_binary(
+    name = "test_callback_lvalue",
+    srcs = [
+         "custom_tests/test_callback_lvalue.cc",
+         "tests/pybind11_tests.cpp",
+    ],
+    data = [
+        "custom_tests/test_callback_lvalue.py",
+    ],
+    args = ["$(location custom_tests/test_callback_lvalue.py)"],
+    deps = [":include"],
+)
