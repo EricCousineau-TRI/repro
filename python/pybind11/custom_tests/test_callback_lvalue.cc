@@ -51,16 +51,30 @@ int main(int argc, char* argv[]) {
     cls.def(py::init<>());
     cls.def_readwrite("value", &CppCopyable::value);
 
-    CppCopyable cpp_obj_orig{1};
-    py::object obj = py::cast<CppCopyable&>(cpp_obj_orig);
-//    py::object obj = cls();
-    obj.attr("value") = 20;
-    CppCopyable& cpp_obj = py::cast<CppCopyable&>(obj);
-    cpp_obj.value = 200;
-    py::print("value: ", cpp_obj_orig.value, cpp_obj.value, obj.attr("value"));
+//    CppCopyable cpp_obj_orig{1};
+//    py::object obj = py::cast<CppCopyable&>(cpp_obj_orig);
+////    py::object obj = cls();
+//    obj.attr("value") = 20;
+//    CppCopyable& cpp_obj = py::cast<CppCopyable&>(obj);
+//    cpp_obj.value = 200;
+//    py::print("value: ", cpp_obj_orig.value, cpp_obj.value, obj.attr("value"));
 
     // Output:
     // value:  200 200 200
+
+    py::exec(R"""(
+def incr(obj):
+    obj.value += 1
+    )""", py::globals(), m.attr("__dict__"));
+
+    auto func = py::cast<std::function<void(CppCopyable&)>>(m.attr("incr"));
+
+    CppCopyable cpp_obj{10};
+    func(cpp_obj);
+    py::print("value: ", cpp_obj.value);
+
+    // Output: (does NOT work)
+    // value: 10
 
 //    // Does not work as expected, because pybind will copy the instance when
 //    // binding.
