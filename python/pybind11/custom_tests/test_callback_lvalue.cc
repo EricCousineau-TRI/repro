@@ -53,21 +53,21 @@ int main(int argc, char* argv[]) {
 
     // Does not work as expected, because pybind will copy the instance when
     // binding.
-    m.def(
-        "callback_mutate_copyable_cpp_ref",
+    py::cpp_function func_ref(
         [](std::function<void(CppCopyable&)> f, int value) {
             CppCopyable obj{value};
             f(obj);
             return obj;
         });
+    m.attr("callback_mutate_copyable_cpp_ref") = func_ref;
     // Works as expected, because pybind will not copy the instance.
-    m.def(
-        "callback_mutate_copyable_cpp_ptr",
+    py::cpp_function func_ptr(
         [](std::function<void(CppCopyable*)> f, int value) {
             CppCopyable obj{value};
             f(&obj);
             return obj;
         });
+    m.attr("callback_mutate_copyable_cpp_ptr") = func_ptr;
 
     py::dict globals = py::globals();
     globals["m"] = m;
