@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
     py::print("value: ", cpp_obj_orig.value, cpp_obj.value, obj.attr("value"));
 
     // Output:
-    // value:  1 200 200
+    // value:  200 200 200
 
 //    // Does not work as expected, because pybind will copy the instance when
 //    // binding.
