@@ -76,35 +76,35 @@ def incr(obj):
     // Output: (NOW works)
     // value: 11
 
-//    // Does not work as expected, because pybind will copy the instance when
-//    // binding.
-//    py::cpp_function func_ref(
-//        [](std::function<void(CppCopyable&)> f, int value) {
-//            CppCopyable obj{value};
-//            f(obj);
-//            return obj;
-//        });
-//    m.attr("callback_mutate_copyable_cpp_ref") = func_ref;
-//    // Works as expected, because pybind will not copy the instance.
-//    py::cpp_function func_ptr(
-//        [](std::function<void(CppCopyable*)> f, int value) {
-//            CppCopyable obj{value};
-//            f(&obj);
-//            return obj;
-//        });
-//    m.attr("callback_mutate_copyable_cpp_ptr") = func_ptr;
+    // Does not work as expected, because pybind will copy the instance when
+    // binding.
+    py::cpp_function func_ref(
+        [](std::function<void(CppCopyable&)> f, int value) {
+            CppCopyable obj{value};
+            f(obj);
+            return obj;
+        });
+    m.attr("callback_mutate_copyable_cpp_ref") = func_ref;
+    // Works as expected, because pybind will not copy the instance.
+    py::cpp_function func_ptr(
+        [](std::function<void(CppCopyable*)> f, int value) {
+            CppCopyable obj{value};
+            f(&obj);
+            return obj;
+        });
+    m.attr("callback_mutate_copyable_cpp_ptr") = func_ptr;
 
-//    py::dict globals = py::globals();
-//    globals["m"] = m;
-//
-//    py::str file;
-//    if (argc < 2) {
-//        file = "python/pybind11/custom_tests/test_callback_lvalue.py";
-//    } else {
-//        file = argv[1];
-//    }
-//    py::print(file);
-//    py::eval_file(file);
+    py::dict globals = py::globals();
+    globals["m"] = m;
+
+    py::str file;
+    if (argc < 2) {
+        file = "python/pybind11/custom_tests/test_callback_lvalue.py";
+    } else {
+        file = argv[1];
+    }
+    py::print(file);
+    py::eval_file(file);
 
     cout << "[ Done ]" << endl;
 
