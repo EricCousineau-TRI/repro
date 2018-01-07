@@ -73,8 +73,8 @@ def incr(obj):
     func(cpp_obj);
     py::print("value: ", cpp_obj.value);
 
-    // Output: (does NOT work)
-    // value: 10
+    // Output: (NOW works)
+    // value: 11
 
 //    // Does not work as expected, because pybind will copy the instance when
 //    // binding.
