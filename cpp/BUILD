@@ -327,3 +327,8 @@ cc_binary(
     name = "unique_ptr_tracked",
     srcs = ["unique_ptr_tracked.cc"],
 )
+
+cc_binary(
+    name = "type_erased",
+    srcs = ["type_erased.cc"],
+)
