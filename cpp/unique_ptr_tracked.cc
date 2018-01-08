@@ -57,8 +57,8 @@ class ptr_tracker {
 };
 
 template <
-  typename T, typename Tracker = ptr_tracker<T>,
-  typename D = std::default_delete<T>>
+  typename T, typename D = std::default_delete<T>,
+  typename Tracker = ptr_tracker<T>>
 class unique_ptr_tracked {
  public:
   unique_ptr_tracked() = default;
@@ -77,8 +77,8 @@ class unique_ptr_tracked {
     Tracker::on_claim(ptr_.get());
   }
 
-  template <typename U, typename E>
-  unique_ptr_tracked(unique_ptr_tracked<U, E>&& other) {
+  template <typename U, typename E, typename S>
+  unique_ptr_tracked(unique_ptr_tracked<U, E, S>&& other) {
     ptr_ = std::move(other);  // Let it invoke it's `on_release()`.
     Tracker::on_claim(ptr_.get());
   }
@@ -102,13 +102,34 @@ class unique_ptr_tracked {
     Tracker::on_release(ptr_.get());
     return ptr_.release();
   }
+  void reset(T* ptr) {
+    Tracker::on_delete(std::move(ptr_));
+    ptr_.reset(ptr);
+    Tracker::on_claim(ptr_.get());
+  }
+  template <typename U, typename E>
+  void swap(std::unique_ptr<U, E>& ptr) {
+    Tracker::on_release(ptr_.get());
+    ptr_.swap(ptr);
+    Tracker::on_claim(ptr_.get());
+  }
+  void swap(unique_ptr_tracked& other) {
+    // Both managed by the same tracker. No problem.
+    ptr_.swap(other.ptr_);
+  }
+  template <typename U, typename E, typename S>
+  void swap(unique_ptr_tracked<U, E, S>& other) {
+    // N.B. There will be an instance where both `ptr_` will be 'unclaimed'.
+    // That's better than both being claimed.
+    Tracker::on_release(ptr_.get());
+    other.swap(ptr_);
+    Tracker::on_claim(ptr_.get());
+  }
   T& operator*() const { return *ptr_; }
   T* operator->() const { return ptr_.operator->(); }
  private:
   std::unique_ptr<T, D> ptr_;
 };
-
-
 
 struct Test { int value{}; };
 
@@ -120,6 +141,10 @@ int main() {
   unique_ptr_tracked<Test> ptr_3 = std::move(ptr_2);
   ptr = std::move(ptr_3);
   ptr_2 = std::move(ptr);
+  assert(ptr_2->value == 0);
+  assert(*ptr_2 == *ptr_2.get());
+  ptr_3.reset(ptr_2.release());
+  ptr_2.swap(ptr_3);
   cout << "Done" << endl;
   return 0;
 }
