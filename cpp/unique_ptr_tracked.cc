@@ -51,8 +51,9 @@ class ptr_tracker {
     cout << "Release: " << ptr << endl;
   }
 
-  static void on_delete(std::unique_ptr<T> ptr) {
-    cout << "Delete: " << ptr.get() << endl;
+  static void on_delete(T* ptr) {
+    cout << "Delete: " << ptr << endl;
+    delete ptr;
   }
 };
 
@@ -68,7 +69,7 @@ class unique_ptr_tracked {
   }
   unique_ptr_tracked(const unique_ptr_tracked&) = delete;
   ~unique_ptr_tracked() {
-    Tracker::on_delete(std::move(ptr_));
+    Tracker::on_delete(ptr_.release());
   }
 
   template <typename U, typename E>
@@ -103,7 +104,7 @@ class unique_ptr_tracked {
     return ptr_.release();
   }
   void reset(T* ptr) {
-    Tracker::on_delete(std::move(ptr_));
+    Tracker::on_delete(ptr_.release());
     ptr_.reset(ptr);
     Tracker::on_claim(ptr_.get());
   }
