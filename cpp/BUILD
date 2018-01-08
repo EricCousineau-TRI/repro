@@ -322,3 +322,8 @@ cc_binary(
     srcs = ["tpl_perfect_fwd.cc"],
     deps = [":name_trait"],
 )
+
+cc_binary(
+    name = "unique_ptr_tracked",
+    srcs = ["unique_ptr_tracked.cc"],
+)
