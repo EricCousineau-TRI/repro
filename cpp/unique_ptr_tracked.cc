@@ -5,41 +5,6 @@
 
 using namespace std;
 
-// // Allow tracking a unique ptr.
-// // ... er... Can this track the value too?
-// // `Deleter` must be trivially destructible.
-// template <typename T>
-// class Tracker {
-//  public:
-//   Tracker() = default;
-//   template <typename Deleter>
-//   Tracker(Deleter&&) {
-//     cout << "Moved from another unique_ptr" << endl;
-//   }
-//   ~Tracker() {
-//     cout << "Tracker removed" << endl;
-//   }
-//   template <typename Deleter>
-//   Tracker& operator=(Deleter&&) {
-//     cout << "Moved from another unique_ptr" << endl;
-//     return *this;
-//   }
-//   void operator()(T* ptr) {
-//     // Only called when `ptr` is non-null.
-//     cout << "Ptr Delete: " << ptr << endl;
-//     assert(ptr);
-//     delete ptr;
-//   }
-//   template <typename Deleter>
-//   operator Deleter() {
-//     cout << "Moved to another unique_ptr" << endl;
-//     return Deleter{};
-//   }
-// };
-
-// template <typename T>
-// using unique_ptr_tracked_meh = unique_ptr<T, Tracker<T>>;
-
 template <typename T>
 class ptr_tracker {
  public:
@@ -57,6 +22,34 @@ class ptr_tracker {
   }
 };
 
+// Option A: Deleter.
+// Can't track ownership transfer, though.
+template <typename T, typename Tracker = ptr_tracker<T>>
+class delete_tracker {
+ public:
+  delete_tracker() = default;
+  // Allow interfacting with trivial deleters.
+  template <typename Deleter>
+  delete_tracker(Deleter&&) {}
+  template <typename Deleter>
+  delete_tracker& operator=(Deleter&&) {
+    return *this;
+  }
+  template <typename Deleter>
+  operator Deleter() {
+    return Deleter{};
+  }
+  // Only called when `ptr` is non-null.
+  void operator()(T* ptr) {
+    Tracker::on_delete(ptr);
+  }
+};
+
+template <typename T>
+using unique_ptr_tracked_del = unique_ptr<T, delete_tracker<T>>;
+
+
+// Option B: Wrap unique_ptr.
 template <
   typename T, typename D = std::default_delete<T>,
   typename Tracker = ptr_tracker<T>>
@@ -135,17 +128,46 @@ class unique_ptr_tracked {
 struct Test { int value{}; };
 
 int main() {
-  unique_ptr<Test> ptr = make_unique<Test>();
-  // unique_ptr_tracked_meh<Test> ptr_2 = std::move(ptr);
-  // unique_ptr_tracked_meh<Test> ptr_3 = std::move(ptr_2);
-  unique_ptr_tracked<Test> ptr_2 = std::move(ptr);
-  unique_ptr_tracked<Test> ptr_3 = std::move(ptr_2);
-  ptr = std::move(ptr_3);
-  ptr_2 = std::move(ptr);
-  assert(ptr_2->value == 0);
-  assert(*ptr_2 == *ptr_2.get());
-  ptr_3.reset(ptr_2.release());
-  ptr_2.swap(ptr_3);
-  cout << "Done" << endl;
+  {
+    cout << "unique_ptr_tracked" << endl;
+    unique_ptr<Test> ptr = make_unique<Test>();
+    unique_ptr_tracked<Test> ptr_2 = std::move(ptr);
+    unique_ptr_tracked<Test> ptr_3 = std::move(ptr_2);
+    ptr = std::move(ptr_3);
+    ptr_2 = std::move(ptr);
+    assert(ptr_2->value == 0);
+    assert(*ptr_2 == *ptr_2.get());
+    ptr_3.reset(ptr_2.release());
+    ptr_2.swap(ptr_3);
+  }
+  cout << "---" << endl;
+  {
+    cout << "unique_ptr_tracked_del" << endl;
+    unique_ptr<Test> ptr = make_unique<Test>();
+    unique_ptr_tracked_del<Test> ptr_2 = std::move(ptr);
+    ptr = std::move(ptr_2);
+    unique_ptr_tracked_del<Test> ptr_3 = std::move(ptr);
+  }
+
   return 0;
 }
+
+/*
+Output:
+
+unique_ptr_tracked
+Claim: 0x1c13c30
+Release: 0x1c13c30
+Claim: 0x1c13c30
+Release: 0x1c13c30
+Claim: 0x1c13c30
+Release: 0x1c13c30
+Delete: 0
+Claim: 0x1c13c30
+Delete: 0
+Delete: 0x1c13c30
+---
+unique_ptr_tracked_del
+Delete: 0x1c13c30
+
+*/
