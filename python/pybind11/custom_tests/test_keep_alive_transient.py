@@ -6,10 +6,13 @@ stats = m.ConstructorStats.get(m.UniquePtrHeld)
 obj = m.UniquePtrHeld(1)
 assert stats.alive() == 1
 
-c = m.Container()
+c = m.Container("Container: c")
+print(c)
 c.add(obj)
 
-d = m.Container()
+d = m.Container("Container: d")
+print(d)
+m.sentinel()
 c.transfer(d)
 
 del d

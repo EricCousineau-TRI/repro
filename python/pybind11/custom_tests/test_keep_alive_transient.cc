@@ -39,7 +39,8 @@ private:
 
 class Container {
 public:
-    Container() {}
+    Container(const string& name)
+        : name_(name) {}
 
     void add(unique_ptr<UniquePtrHeld> item) {
         items_.push_back(std::move(item));
@@ -50,7 +51,12 @@ public:
             other->add(std::move(item));
         items_.clear();
     }
+
+    string name() const {
+        return name_;
+    }
 private:
+    string name_;
     vector<unique_ptr<UniquePtrHeld>> items_;
 };
 
@@ -65,12 +71,17 @@ int main(int argc, char* argv[]) {
             .def("value", &UniquePtrHeld::value);
 
     py::class_<Container>(m, "Container")
-        .def(py::init<>())
+        .def(py::init<string>())
         .def("add", &Container::add, py::keep_alive<2, 1>())
+//        .def("__repr__", &Container::name)
         .def("transfer", &Container::transfer, py::keep_alive<2, 1>());
 
     py::dict globals = py::globals();
     globals["m"] = m;
+
+    m.def("sentinel", []() {
+       cout << "Sentinel hit" << endl;
+    });
 
     py::str file;
     if (argc < 2) {
