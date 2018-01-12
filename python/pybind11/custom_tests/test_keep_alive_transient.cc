@@ -40,7 +40,12 @@ private:
 class Container {
 public:
     Container(const string& name)
-        : name_(name) {}
+        : name_(name) {
+        print_created(this, name);
+    }
+    ~Container() {
+        print_destroyed(this);
+    }
 
     void add(unique_ptr<UniquePtrHeld> item) {
         items_.push_back(std::move(item));
@@ -74,7 +79,10 @@ int main(int argc, char* argv[]) {
         .def(py::init<string>())
         .def("add", &Container::add, py::keep_alive<2, 1>())
 //        .def("__repr__", &Container::name)
-        .def("transfer", &Container::transfer, py::keep_alive<2, 1>());
+        // Use transitive keep_alive - this container is kept alive by `items_`,
+        // but we want `items_` to keep the other container alive, so we do this
+        // by keeping *this* container alive.
+        .def("transfer", &Container::transfer, py::keep_alive<1, 2>());
 
     py::dict globals = py::globals();
     globals["m"] = m;

@@ -1,4 +1,4 @@
-# import trace
+import gc
 import _test_keep_alive_transient as m
 
 stats = m.ConstructorStats.get(m.UniquePtrHeld)
@@ -15,7 +15,9 @@ print(d)
 m.sentinel()
 c.transfer(d)
 
-del d
 del c
+gc.collect()
+del d
+gc.collect()
 assert stats.alive() == 1, "Should still be alive!"
 print(obj)
