@@ -16,6 +16,8 @@
 # First, synthesize a fake script_priv to leverage the original environment.
 setup_target_env-main() {
     target=$1
+    shift
+    args="$@"
 
     # Use //tools:py_shell as the source file, and add the target such that
     # any necessary dependencies are pulled in.
@@ -49,7 +51,7 @@ EOF
     (
         set -x
         cd ${script_dir}
-        bazel run ${ARGS:-} :py_shell -- \
+        bazel run ${args} :py_shell -- \
             bash -c "export -p > $script_priv" \
                 || { echo "Error for target: ${target}"; return 1;  }
     ) || return 1;
