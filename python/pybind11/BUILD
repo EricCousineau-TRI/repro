@@ -121,3 +121,16 @@ cc_binary(
     args = ["$(location custom_tests/test_callback_lvalue.py)"],
     deps = [":include"],
 )
+
+cc_binary(
+    name = "test_keep_alive_transient",
+    srcs = [
+         "custom_tests/test_keep_alive_transient.cc",
+         "tests/pybind11_tests.cpp",
+    ],
+    data = [
+        "custom_tests/test_keep_alive_transient.py",
+    ],
+    args = ["$(location custom_tests/test_keep_alive_transient.py)"],
+    deps = [":include"],
+)

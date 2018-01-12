@@ -22,7 +22,7 @@
 [submodule "externals/pybind11"]
 	path = externals/pybind11
 	url = git@github.com:EricCousineau-TRI/pybind11.git
-	branch = feature/unique_ptr_arg_pr1-wip
+	branch = feature/sys_debug
 [submodule "externals/vtk"]
 	path = externals/vtk
 	url = git://vtk.org/VTK.git
