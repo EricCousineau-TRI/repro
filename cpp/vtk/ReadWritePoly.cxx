@@ -25,7 +25,7 @@ int main() {
     vtkSmartPointer<vtkXMLPolyDataWriter>::New();
   writer->SetFileName(filename);
 
-  writer->SetInput(pointSource->GetOutput());
+  writer->SetInputData(pointSource->GetOutput());
   writer->Write();
 
   // Read the file.
