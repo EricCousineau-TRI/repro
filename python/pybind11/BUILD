@@ -123,14 +123,14 @@ cc_binary(
 )
 
 cc_binary(
-    name = "test_keep_alive_transient",
+    name = "test_keep_alive_transitive",
     srcs = [
-         "custom_tests/test_keep_alive_transient.cc",
+         "custom_tests/test_keep_alive_transitive.cc",
          "tests/pybind11_tests.cpp",
     ],
     data = [
-        "custom_tests/test_keep_alive_transient.py",
+        "custom_tests/test_keep_alive_transitive.py",
     ],
-    args = ["$(location custom_tests/test_keep_alive_transient.py)"],
+    args = ["$(location custom_tests/test_keep_alive_transitive.py)"],
     deps = [":include"],
 )

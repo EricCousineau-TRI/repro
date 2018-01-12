@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
 
     py::str file;
     if (argc < 2) {
-        file = "python/pybind11/custom_tests/test_keep_alive_transient.py";
+        file = "python/pybind11/custom_tests/test_keep_alive_transitive.py";
     } else {
         file = argv[1];
     }
