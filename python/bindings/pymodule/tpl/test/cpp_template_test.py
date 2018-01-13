@@ -23,6 +23,8 @@ expect_throw(lambda: tpl[str])
 tpl.add_instantiation((object,), 3)
 assert tpl[object] == 3
 assert tpl[str] == 3
+_, param = tpl.get_instantiation((str,))
+assert param == (object,)
 
 tpl.add_instantiation((int, int), 4)
 assert tpl[int, int] == 4

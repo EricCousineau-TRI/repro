@@ -44,32 +44,31 @@ class Template(object):
             assert self._param_default is not None
             param = self._param_default
         elif not isinstance(param, tuple):
-            param = tuple(param)
+            if not isinstance(param, list):
+                # Assume scalar.
+                param = (param,)
+            else:
+                param = tuple(param)
         return types_canonical(param)
 
     def __getitem__(self, param):
         """Gets concrete class associate with the given arguments. """
-        if not isinstance(param, tuple) or isinstance(param, list):
-            # Handle scalar case.
-            param = (param,)
-        return self.get_instantiation(param)
+        return self.get_instantiation(param)[0]
 
     def get_instantiation(self, param=None, throw_error=True):
         """Gets the instantiation for the given parameters. """
         param = self._param_resolve(param)
         instantiation = self._instantiation_map.get(param)
-        if instantiation is not None:
-            return instantiation
-        else:
+        if instantiation is None:
             # Try getting a generic.
             param_generic = self._match_generic(param)
             if param_generic:
-                return self._instantiation_map[param_generic]
+                param = param_generic
+                instantiation = self._instantiation_map[param_generic]
             elif throw_error:
                 raise RuntimeError("Invalid instantiation: {}".format(
                     self._get_instantiation_name(param)))
-            else:
-                return None
+        return (instantiation, param)
 
     def _get_instantiation_name(self, param):
         return '{}[{}]'.format(self.name, ', '.join(type_names(param)))
