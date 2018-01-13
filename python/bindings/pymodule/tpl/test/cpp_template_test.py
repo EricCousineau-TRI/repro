@@ -76,14 +76,8 @@ except RuntimeError as e:
 tpl.add_instantiation((int, object), 5)
 assert tpl[int, int] == 4
 assert tpl[int, str] == 5
-tpl.add_instantiation((object, int), 6)
-assert tpl[int, int] == 4
-assert tpl[int, str] == 5
-assert tpl[str, int] == 6
-
 try:
-    print("Try ambiguous")
-    tpl.add_instantiation((object, object), 7)
+    tpl.add_instantiation((object, int), 6)
     assert False
 except RuntimeError as e:
     print(e)
