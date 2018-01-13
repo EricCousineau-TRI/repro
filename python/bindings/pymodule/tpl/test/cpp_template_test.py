@@ -59,8 +59,31 @@ assert tpl[int] == 1
 assert tpl[float] == 2
 try:
     tpl[str]
+    assert False
 except RuntimeError as e:
     print(e)
 tpl.add_instantiation((object,), 3)
 assert tpl[object] == 3
 assert tpl[str] == 3
+
+tpl.add_instantiation((int, int), 4)
+assert tpl[int, int] == 4
+try:
+    tpl[int, str]
+    assert False
+except RuntimeError as e:
+    print(e)
+tpl.add_instantiation((int, object), 5)
+assert tpl[int, int] == 4
+assert tpl[int, str] == 5
+tpl.add_instantiation((object, int), 6)
+assert tpl[int, int] == 4
+assert tpl[int, str] == 5
+assert tpl[str, int] == 6
+
+try:
+    print("Try ambiguous")
+    tpl.add_instantiation((object, object), 7)
+    assert False
+except RuntimeError as e:
+    print(e)
