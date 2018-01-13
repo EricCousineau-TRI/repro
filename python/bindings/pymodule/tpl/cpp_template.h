@@ -42,15 +42,14 @@ class py_type_pack : public py::tuple {
     : py::tuple(get_py_types(param)) {}
 };
 
+// Add property / descriptor if it does not already exist.
+// This works for adding to classes since `TemplateMethod` acts as a
+// descriptor.
 py::object InitOrGetTemplate(
     py::handle scope, const std::string& name,
     const std::string& template_type, py::tuple create_extra = py::tuple()) {
-  // Add property / descriptor if it does not already exist.
-  // This works for adding to classes since `TemplateMethod` acts as a
-  // descriptor.
-  // @note Overloads won't be allowed with templates. If it is needed,
-  // see `py::sibling(...)`.
-  py::handle m = py::module::import("pymodule.tpl.cpp_template");
+  const char module_name[] = "pymodule.tpl.cpp_template";
+  py::handle m = py::module::import(module_name);
   return m.attr("init_or_get")(
       scope, name, m.attr(template_type.c_str()), *create_extra);
 }
@@ -80,27 +79,23 @@ std::string TemplateClassName() {
   return std::string("_TmpTemplate_") + typeid(T).name();
 }
 
-template <typename Func, typename ... Extra>
-py::object AddTemplateFunctionImpl(
-    py::handle tpl, Func&& func, py_type_pack param, Extra... extra) {
-  // Ensure that pybind is aware that it's a function.
-  std::string instantiation_name =
-      py::cast<std::string>(
-          tpl.attr("_get_instantiation_name")(param));
-  py::object py_func = py::cpp_function(
-        std::forward<Func>(func),
-        py::name(instantiation_name.c_str()), extra...);
-  AddInstantiation(tpl, py_func, param);
-  return py::reinterpret_borrow<py::object>(tpl);
+std::string GetInstantiationName(py::handle tpl, py_type_pack param) {
+  return py::cast<std::string>(
+    tpl.attr("_get_instantiation_name")(param));
 }
 
+// @note Overloads won't be allowed with templates. If it is needed,
+// see `py::sibling(...)`.
 template <typename Func>
 py::object AddTemplateFunction(
     py::handle scope, const std::string& name, Func&& func,
     py_type_pack param) {
   py::object tpl = InitOrGetTemplate(scope, name, "TemplateFunction");
-  return AddTemplateFunctionImpl(
-      tpl, std::forward<Func>(func), param);
+  py::object py_func = py::cpp_function(
+        std::forward<Func>(func),
+        py::name(GetInstantiationName(tpl, param).c_str()));
+  AddInstantiation(tpl, py_func, param);
+  return tpl;
 }
 
 template <typename Func>
@@ -109,6 +104,10 @@ py::object AddTemplateMethod(
     py_type_pack param) {
   py::object tpl = InitOrGetTemplate(
       scope, name, "TemplateMethod", py::make_tuple(scope));
-  return AddTemplateFunctionImpl(
-      tpl, std::forward<Func>(func), param, py::is_method(scope));
+  py::object py_func = py::cpp_function(
+        std::forward<Func>(func),
+        py::name(GetInstantiationName(tpl, param).c_str()),
+        py::is_method(scope));
+  AddInstantiation(tpl, py_func, param);
+  return tpl;
 }
