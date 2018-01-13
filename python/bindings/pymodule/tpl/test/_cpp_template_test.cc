@@ -52,13 +52,16 @@ void template_int() {
   std::cout << "template_int: " << Value << std::endl;
 }
 
+template <typename T, T Value>
+using constant = std::integral_constant<T, Value>;
+
 template <typename T, T ... Values>
 using type_pack_literals =
-    type_pack<type_pack<std::integral_constant<T, Values>>...>;
+    type_pack<type_pack<constant<T, Values>>...>;
 
 template <typename T, T ... Values>
 using type_pack_literals_raw =
-    type_pack<std::integral_constant<T, Values>...>;
+    type_pack<constant<T, Values>...>;
 
 }  // namespace cpp_template_test
 
@@ -71,20 +74,22 @@ PYBIND11_MODULE(_cpp_template_test, m) {
   py::class_<SimpleType>(m, "SimpleType");
 
   // Types - Manual.
-  AddTemplateFunction<int>(
-      m, "template_type", &template_type<int>);
-  AddTemplateFunction<double>(
-      m, "template_type", &template_type<double>);
-  AddTemplateFunction<SimpleType>(
-      m, "template_type", &template_type<SimpleType>);
+  AddTemplateFunction(
+      m, "template_type", &template_type<int>, type_pack<int>{});
+  AddTemplateFunction(
+      m, "template_type", &template_type<double>, type_pack<double>{});
+  AddTemplateFunction(
+      m, "template_type", &template_type<SimpleType>, type_pack<SimpleType>{});
 
   // - Lists
-  AddTemplateFunction<int>(
-      m, "template_list", &template_list<int>);
-  AddTemplateFunction<int, double>(
-      m, "template_list", &template_list<int, double>);
-  AddTemplateFunction<int, double, SimpleType>(
-      m, "template_list", &template_list<int, double, SimpleType>);
+  AddTemplateFunction(
+      m, "template_list", &template_list<int>, type_pack<int>{});
+  AddTemplateFunction(
+      m, "template_list", &template_list<int, double>,
+      type_pack<int, double>{});
+  AddTemplateFunction(
+      m, "template_list", &template_list<int, double, SimpleType>,
+      type_pack<int, double, SimpleType>{});
 
   // - Class w/ looping.
   {
@@ -97,10 +102,11 @@ PYBIND11_MODULE(_cpp_template_test, m) {
       py_class
         .def(py::init<>())
         .def("size", &SimpleTemplateT::size);
-      AddTemplateMethod<double>(
-          py_class, "check", &SimpleTemplateT::template check<double>);
+      AddTemplateMethod(
+          py_class, "check", &SimpleTemplateT::template check<double>,
+          type_pack<double>{});
       AddTemplateClass(
-          m, "SimpleTemplateTpl", py_class, "SimpleTemplate", param);
+          m, "SimpleTemplateTpl", py_class, param, "SimpleTemplate");
     };
     using ParamList = type_pack<
         type_pack<int>,
@@ -112,15 +118,15 @@ PYBIND11_MODULE(_cpp_template_test, m) {
   {
     // Manual - must wrap with `integral_constant`, since that is what is
     // registered.
-    AddTemplateFunction<std::integral_constant<int, 0>>(
-        m, "template_int", &template_int<0>);
+    AddTemplateFunction(
+        m, "template_int", &template_int<0>, type_pack<constant<int, 0>>{});
 
     // Looping, raw.
     auto inst = [&m](auto tag) {
       using Tag = decltype(tag);
       constexpr int Value = Tag::value;
-      AddTemplateFunction<Tag>(
-          m, "template_int", &template_int<Value>);
+      AddTemplateFunction(
+          m, "template_int", &template_int<Value>, type_pack<Tag>{});
     };
     type_visit(inst, type_pack_literals_raw<int, 1, 2, 5>{});
   }
