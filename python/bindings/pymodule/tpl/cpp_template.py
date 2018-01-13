@@ -32,8 +32,7 @@ class Template(object):
             param_default = types_canonical(param_default)
         self._param_default = param_default
         self.param_list = []
-        # @note Consider using `StrictMap` if literals must exactly match.
-        # (e.g. `0` and `False` should resolve to different instantiations).
+        self._param_generic = {}  # Mapped by number of parameters.
         self._instantiation_map = {}
         if module_name is None:
             module_name = _get_module_name_from_stack()
@@ -46,10 +45,6 @@ class Template(object):
             param = self._param_default
         elif not isinstance(param, tuple):
             param = tuple(param)
-        # TODO(eric.cousineau): If an instantiation for `object` exists, then
-        # allow this to catch any single-parameter *type* instantiations.
-        # This allows a C++ template to explicitly allow for a Python type, and
-        # for this template to permit any object type to make it through.
         return types_canonical(param)
 
     def __getitem__(self, param):
@@ -62,16 +57,26 @@ class Template(object):
     def get_instantiation(self, param=None, throw_error=True):
         """Gets the instantiation for the given parameters. """
         param = self._param_resolve(param)
-        if throw_error:
-            return self._instantiation_map[param]
+        instantiation = self._instantiation_map.get(param)
+        if instantiation is not None:
+            return instantiation
         else:
-            return self._instantiation_map.get(param)
+            # Try getting a generic.
+            param_generic = self._match_generic(param)
+            if param_generic:
+                return self._instantiation_map[param_generic]
+            elif throw_error:
+                raise RuntimeError("Invalid instantiation: {}".format(
+                    self._get_instantiation_name(param)))
+            else:
+                return None
 
     def _get_instantiation_name(self, param):
         return '{}[{}]'.format(self.name, ', '.join(type_names(param)))
 
     def add_instantiation(self, param, instantiation):
         """ Adds instantiation. """
+        assert instantiation is not None
         # Ensure that we do not already have this tuple.
         param = types_canonical(param)
         assert param not in self._instantiation_map, "Instantiation already registered"
@@ -80,6 +85,7 @@ class Template(object):
         self._instantiation_map[param] = instantiation
         if self._param_default == _PARAM_DEFAULT:
             self._param_default = param
+        self._maybe_add_generic(param)
         return param
 
     def add_instantiations(
@@ -94,6 +100,36 @@ class Template(object):
     def __str__(self):
         cls_name = type(self).__name__
         return "<{} {}>".format(cls_name, self._full_name())
+
+    def _maybe_add_generic(self, param):
+        if object not in param:
+            return
+        # Prevent ambiguous generics.
+        param_generic = self._match_generic(param)
+        if param_generic:
+            raise RuntimeError("Ambiguous generics: {} vs {}".format(
+                param, param_generic))
+        count = len(param)
+        generics = self._param_generic.get(count, [])
+        generics.append(param)
+        self._param_generic[count] = generics
+
+    def _match_generic(self, param):
+        count = len(param)
+        generics = self._param_generic.get(count)
+        if generics is None:
+            return None
+        for generic in generics:
+            good = True
+            for i in range(count):
+                if generic[i] is object:
+                    pass
+                elif param[i] != generic[i]:
+                    good = False
+                    break
+            if good:
+                return generic
+        return None
 
 
 def is_instantiation_of(obj, tpl):
