@@ -5,6 +5,53 @@ from pymodule.tpl.cpp_template import Template, TemplateClass, is_class_instanti
 
 from pymodule.tpl.test import _cpp_template_test as m
 
+print("---")
+def expect_throw(func):
+    try:
+        func()
+        assert False
+    except RuntimeError as e:
+        print(e)
+
+print("Generics")
+tpl = Template("generics_test")
+tpl.add_instantiation((int,), 1)
+tpl.add_instantiation((float,), 2)
+assert tpl[int] == 1
+assert tpl[float] == 2
+expect_throw(lambda: tpl[str])
+tpl.add_instantiation((object,), 3)
+assert tpl[object] == 3
+assert tpl[str] == 3
+
+tpl.add_instantiation((int, int), 4)
+assert tpl[int, int] == 4
+expect_throw(lambda: tpl[int, str])
+tpl.add_instantiation((int, object), 5)
+assert tpl[int, int] == 4
+assert tpl[int, str] == 5
+
+tpl.add_instantiation((object, int), 6)
+assert tpl[int, int] == 4
+assert tpl[int, str] == 5
+assert tpl[str, int] == 6
+
+tpl.add_instantiation((object, object), 7)
+assert tpl[int, int] == 4
+assert tpl[int, str] == 5
+assert tpl[str, int] == 6
+assert tpl[str, str] == 7
+
+# Try ambiguous.
+tpl.add_instantiation((object, object, object), 8)
+tpl.add_instantiation((int, int, int), 9)
+assert tpl[str, str, str] == 8
+assert tpl[int, int, int] == 9
+expect_throw(lambda: tpl.add_instantiation((object, object, int), 10))
+
+assert tpl.get_param_list(9) == [(int, int, int)]
+
+print("---")
 print("Types")
 print(m.template_type)
 m.template_type[int]()
@@ -49,35 +96,3 @@ print(m.template_int)
 print(m.template_int.param_list)
 for i in [0, 1, 2, 5]:
     m.template_int[i]()
-
-print("---")
-print("Generics")
-tpl = Template("generics_test")
-tpl.add_instantiation((int,), 1)
-tpl.add_instantiation((float,), 2)
-assert tpl[int] == 1
-assert tpl[float] == 2
-try:
-    tpl[str]
-    assert False
-except RuntimeError as e:
-    print(e)
-tpl.add_instantiation((object,), 3)
-assert tpl[object] == 3
-assert tpl[str] == 3
-
-tpl.add_instantiation((int, int), 4)
-assert tpl[int, int] == 4
-try:
-    tpl[int, str]
-    assert False
-except RuntimeError as e:
-    print(e)
-tpl.add_instantiation((int, object), 5)
-assert tpl[int, int] == 4
-assert tpl[int, str] == 5
-try:
-    tpl.add_instantiation((object, int), 6)
-    assert False
-except RuntimeError as e:
-    print(e)

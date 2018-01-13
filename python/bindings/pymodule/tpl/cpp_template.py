@@ -94,6 +94,13 @@ class Template(object):
         for param in param_list:
             self.add_instantiation(param, instantiation_func(param))
 
+    def get_param_list(self, instantiation):
+        param_list = []
+        for param, check in self._instantiation_map.iteritems():
+            if check == instantiation:
+                param_list.append(param)
+        return param_list
+
     def _full_name(self):
         return "{}.{}".format(self._module_name, self.name)
 
@@ -105,16 +112,16 @@ class Template(object):
         if object not in param:
             return
         # Prevent ambiguous generics.
-        param_generic = self._match_generic(param, check_ambiguous=True)
+        param_generic = self._match_generic(param)
         if param_generic:
-            raise RuntimeError("Ambiguous generics: {} vs {}".format(
-                param, param_generic))
+            raise RuntimeError("Ambiguous generics: {} registered, but trying to add {}".format(
+                param_generic, param))
         count = len(param)
         generics = self._param_generic.get(count, [])
         generics.append(param)
         self._param_generic[count] = generics
 
-    def _match_generic(self, param, check_ambiguous=False):
+    def _match_generic(self, param):
         count = len(param)
         generics = self._param_generic.get(count)
         if generics is None:
@@ -123,8 +130,6 @@ class Template(object):
             good = True
             for i in range(count):
                 if generic[i] is object:
-                    pass
-                elif check_ambiguous and param[i] is object:
                     pass
                 elif param[i] != generic[i]:
                     good = False
