@@ -63,6 +63,9 @@ template <typename T, T ... Values>
 using type_pack_literals_raw =
     type_pack<constant<T, Values>...>;
 
+template <typename ... Ts>
+using tp = type_pack<Ts...>;
+
 }  // namespace cpp_template_test
 
 PYBIND11_MODULE(_cpp_template_test, m) {
@@ -75,21 +78,21 @@ PYBIND11_MODULE(_cpp_template_test, m) {
 
   // Types - Manual.
   AddTemplateFunction(
-      m, "template_type", &template_type<int>, type_pack<int>{});
+      m, "template_type", &template_type<int>, tp<int>{});
   AddTemplateFunction(
-      m, "template_type", &template_type<double>, type_pack<double>{});
+      m, "template_type", &template_type<double>, tp<double>{});
   AddTemplateFunction(
-      m, "template_type", &template_type<SimpleType>, type_pack<SimpleType>{});
+      m, "template_type", &template_type<SimpleType>, tp<SimpleType>{});
 
   // - Lists
   AddTemplateFunction(
-      m, "template_list", &template_list<int>, type_pack<int>{});
+      m, "template_list", &template_list<int>, tp<int>{});
   AddTemplateFunction(
       m, "template_list", &template_list<int, double>,
-      type_pack<int, double>{});
+      tp<int, double>{});
   AddTemplateFunction(
       m, "template_list", &template_list<int, double, SimpleType>,
-      type_pack<int, double, SimpleType>{});
+      tp<int, double, SimpleType>{});
 
   // - Class w/ looping.
   {
@@ -104,13 +107,13 @@ PYBIND11_MODULE(_cpp_template_test, m) {
         .def("size", &SimpleTemplateT::size);
       AddTemplateMethod(
           py_class, "check", &SimpleTemplateT::template check<double>,
-          type_pack<double>{});
+          tp<double>{});
       AddTemplateClass(
           m, "SimpleTemplateTpl", py_class, param, "SimpleTemplate");
     };
-    using ParamList = type_pack<
-        type_pack<int>,
-        type_pack<int, double, SimpleType>>;
+    using ParamList = tp<
+        tp<int>,
+        tp<int, double, SimpleType>>;
     type_visit(inst, ParamList{});
   }
 
@@ -119,14 +122,14 @@ PYBIND11_MODULE(_cpp_template_test, m) {
     // Manual - must wrap with `integral_constant`, since that is what is
     // registered.
     AddTemplateFunction(
-        m, "template_int", &template_int<0>, type_pack<constant<int, 0>>{});
+        m, "template_int", &template_int<0>, tp<constant<int, 0>>{});
 
     // Looping, raw.
     auto inst = [&m](auto tag) {
       using Tag = decltype(tag);
       constexpr int Value = Tag::value;
       AddTemplateFunction(
-          m, "template_int", &template_int<Value>, type_pack<Tag>{});
+          m, "template_int", &template_int<Value>, tp<Tag>{});
     };
     type_visit(inst, type_pack_literals_raw<int, 1, 2, 5>{});
   }
