@@ -53,6 +53,17 @@ expect_throw(lambda: tpl.add_instantiation((object, object, int), 10))
 
 assert tpl.get_param_list(9) == [(int, int, int)]
 
+counter = 0
+def generator(param):
+    global counter
+    counter += 1
+    return counter * 100 + len(param)
+tpl.use_generator(generator)
+assert tpl[str, str, str] == 8
+assert tpl[int, int, int, int] == 104
+assert tpl[int, int, int, int] == 104
+assert tpl[int, int, int, str] == 204
+
 print("---")
 print("Types")
 print(m.template_type)

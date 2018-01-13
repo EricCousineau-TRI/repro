@@ -34,6 +34,8 @@ class Template(object):
         self.param_list = []
         self._param_generic = {}  # Mapped by number of parameters.
         self._instantiation_map = {}
+        self._generator = None
+        self._generator_cache = False
         if module_name is None:
             module_name = _get_module_name_from_stack()
         self._module_name = module_name
@@ -65,13 +67,21 @@ class Template(object):
             if param_generic:
                 param = param_generic
                 instantiation = self._instantiation_map[param_generic]
-            elif throw_error:
-                raise RuntimeError("Invalid instantiation: {}".format(
-                    self._get_instantiation_name(param)))
+            elif self._generator:
+                instantiation = self._generator(param)
+                if instantiation and self._generator_cache:
+                    self._register(param, instantiation)
+        if instantiation is None and throw_error:
+            raise RuntimeError("Invalid instantiation: {}".format(
+                self._get_instantiation_name(param)))
         return (instantiation, param)
 
     def _get_instantiation_name(self, param):
         return '{}[{}]'.format(self.name, ', '.join(type_names(param)))
+
+    def _register(self, param, instantiation):
+        self.param_list.append(param)
+        self._instantiation_map[param] = instantiation
 
     def add_instantiation(self, param, instantiation):
         """ Adds instantiation. """
@@ -80,8 +90,7 @@ class Template(object):
         param = types_canonical(param)
         assert param not in self._instantiation_map, "Instantiation already registered"
         # Add it.
-        self.param_list.append(param)
-        self._instantiation_map[param] = instantiation
+        self._register(param, instantiation)
         if self._param_default == _PARAM_DEFAULT:
             self._param_default = param
         self._maybe_add_generic(param)
@@ -92,6 +101,12 @@ class Template(object):
         assert param_list is not None
         for param in param_list:
             self.add_instantiation(param, instantiation_func(param))
+
+    def use_generator(self, instantiation_func, cache=True):
+        # Not useful, but eh.
+        assert self._generator is None
+        self._generator = instantiation_func
+        self._generator_cache = cache
 
     def get_param_list(self, instantiation):
         param_list = []
