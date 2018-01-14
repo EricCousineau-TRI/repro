@@ -1,5 +1,7 @@
 package(default_visibility = ["//visibility:public"])
 
+load(":test.bzl", "execute")
+
 filegroup(
     name = "files",
     srcs = ["a.txt"],
@@ -11,4 +13,13 @@ sh_test(
     srcs = ["echo.sh"],
     args = ["$(locations :files)"],
     data = [":files"],
+)
+
+execute(
+    name = "print_2",
+    # The location will be expanded to "pkg/data.txt", and it will reference
+    # the data.txt file in runfiles when this target is invoked as
+    # "bazel run //pkg:e".
+    command = "./echo.sh $(locations :files)",
+    data = ["echo.sh", ":files"]
 )
