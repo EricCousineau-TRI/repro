@@ -1,0 +1,28 @@
+[ print ]
+args:
+  ./a.txt
+
+runfiles:
+  ./print
+  ./echo.sh
+  ./sub/b.txt
+  ./a.txt
+
+[ print_execute ]
+args:
+  ./a.txt
+
+runfiles:
+  ./print_execute
+  ./echo.sh
+  ./a.txt
+
+[ print_recurse ]
+args:
+  ./a.txt
+  sub/b.txt
+
+runfiles:
+  ./print_recurse
+  ./echo.sh
+

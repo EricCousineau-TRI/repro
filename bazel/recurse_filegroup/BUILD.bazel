@@ -16,7 +16,7 @@ sh_test(
 )
 
 execute(
-    name = "print_2",
+    name = "print_execute",
     # The location will be expanded to "pkg/data.txt", and it will reference
     # the data.txt file in runfiles when this target is invoked as
     # "bazel run //pkg:e".
