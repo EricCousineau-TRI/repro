@@ -5,6 +5,12 @@ def _impl(ctx):
   command = ctx.attr.command
   # Expand the label in the command string to a runfiles-relative path.
   # The second arg is the list of labels that may be expanded.
+  print(ctx.attr.data)
+  print(dir(ctx.attr.data))
+  f = ctx.attr.data[1]
+  print(f)
+  print(dir(f))
+  print(f.data_runfiles.files)
   command = ctx.expand_location(command, ctx.attr.data)
   # Create the output executable file with command as its content.
   ctx.file_action(
