@@ -1,0 +1,14 @@
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "files",
+    srcs = ["a.txt"],
+    data = ["//sub:files"],
+)
+
+sh_test(
+    name = "print",
+    srcs = ["echo.sh"],
+    args = ["$(locations :files)"],
+    data = [":files"],
+)
