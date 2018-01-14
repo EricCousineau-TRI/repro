@@ -1,6 +1,6 @@
 package(default_visibility = ["//visibility:public"])
 
-load(":test.bzl", "execute")
+load(":test.bzl", "execute", "recurse_group")
 
 filegroup(
     name = "files",
@@ -22,4 +22,16 @@ execute(
     # "bazel run //pkg:e".
     command = "./echo.sh $(locations :files)",
     data = ["echo.sh", ":files"]
+)
+
+recurse_group(
+    name = "files_recurse",
+    data = [":files"],
+)
+
+sh_test(
+    name = "print_recurse",
+    srcs = ["echo.sh"],
+    args = ["$(locations :files_recurse)"],
+    data = [":files_recurse"],
 )

@@ -38,3 +38,19 @@ execute = rule(
       "data": attr.label_list(cfg="data", allow_files=True),
       },
 )
+
+def _recurse_group_impl(ctx):
+  files = depset()
+  for d in ctx.attr.data:
+    runfiles = d.data_runfiles.files
+    files += runfiles
+  return [DefaultInfo(
+    files=files,
+  )]
+
+recurse_group = rule(
+  implementation = _recurse_group_impl,
+  attrs = {
+      "data": attr.label_list(cfg = "data", allow_files = True),
+  },
+)
