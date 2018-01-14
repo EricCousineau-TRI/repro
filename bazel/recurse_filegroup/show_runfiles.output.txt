@@ -25,4 +25,6 @@ args:
 runfiles:
   ./print_recurse
   ./echo.sh
+  ./sub/b.txt
+  ./a.txt
 

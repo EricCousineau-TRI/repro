@@ -40,17 +40,23 @@ execute = rule(
 )
 
 def _recurse_group_impl(ctx):
-  files = depset()
-  for d in ctx.attr.data:
-    runfiles = d.data_runfiles.files
-    files += runfiles
-  return [DefaultInfo(
-    files=files,
-  )]
+    files = depset()
+    for d in ctx.attr.data:
+        files += d.data_runfiles.files
+    if ctx.attr.dummy and not files:
+        # Expand to avoid error of empty "$(locations ...)" expansion.
+        files = [ctx.attr.dummy]
+    return [DefaultInfo(
+        files = files,
+        data_runfiles = ctx.runfiles(
+            files = list(files),
+        ),
+    )]
 
 recurse_group = rule(
-  implementation = _recurse_group_impl,
-  attrs = {
-      "data": attr.label_list(cfg = "data", allow_files = True),
-  },
+    implementation = _recurse_group_impl,
+    attrs = {
+        "data": attr.label_list(cfg = "data", allow_files = True),
+        "dummy": attr.label(allow_single_file = True),
+    },
 )
