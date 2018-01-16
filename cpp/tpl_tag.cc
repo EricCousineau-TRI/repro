@@ -24,6 +24,11 @@ struct double_tpl {};
 template <typename T, typename ... Ts>
 struct pack_tpl {};
 
+struct nested {
+  template <typename T>
+  using type = single_tpl<T>;
+};
+
 int main() {
   {
     template_tag<single_tpl> tag{};
@@ -46,6 +51,14 @@ int main() {
   {
     template_pack_tag<pack_tpl> tag{};
     decltype(tag)::bind<int, double, char> t{};
+    (void)t;
+  }
+
+  // Try nesting.
+  {
+    // template_pack_tag<nested::type> tag{};  // Does not work???
+    template_tag<nested::type> tag{};
+    decltype(tag)::bind<int> t{};
     (void)t;
   }
 
