@@ -332,3 +332,8 @@ cc_binary(
     name = "type_erased",
     srcs = ["type_erased.cc"],
 )
+
+cc_binary(
+    name = "tpl_tag",
+    srcs = ["tpl_tag.cc"],
+)
