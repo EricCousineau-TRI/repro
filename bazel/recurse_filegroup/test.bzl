@@ -39,12 +39,11 @@ execute = rule(
     },
 )
 
-def _recurse_group_impl(ctx):
+def _recursive_filegroup_impl(ctx):
     files = depset()
     for d in ctx.attr.data:
         files += d.data_runfiles.files
     if ctx.attr.dummy and not files:
-        # Expand to avoid error of empty "$(locations ...)" expansion.
         files = [ctx.attr.dummy]
     return [DefaultInfo(
         files = files,
@@ -53,10 +52,25 @@ def _recurse_group_impl(ctx):
         ),
     )]
 
-recurse_group = rule(
-    implementation = _recurse_group_impl,
+"""
+Provides all files (including `data` dependencies) at one level such that they
+are expandable via `$(locations ...)`.
+
+@param data
+    Upstream data targets. This will consume both the `srcs` and `data`
+    portions of an existing `filegroup`.
+@param dummy
+    Use this to avoid errors from empty "$(locations ...)" expansion.
+    @ref https://github.com/bazelbuild/bazel/blob/c3bedec/src/main/java/com/google/devtools/build/lib/analysis/LocationExpander.java#L273  # noqa
+"""
+
+recursive_filegroup = rule(
     attrs = {
-        "data": attr.label_list(cfg = "data", allow_files = True),
+        "data": attr.label_list(
+            cfg = "data",
+            allow_files = True,
+        ),
         "dummy": attr.label(allow_single_file = True),
     },
+    implementation = _recursive_filegroup_impl,
 )

@@ -1,6 +1,6 @@
 package(default_visibility = ["//visibility:public"])
 
-load(":test.bzl", "execute", "recurse_group")
+load(":test.bzl", "execute", "recursive_filegroup")
 
 filegroup(
     name = "files",
@@ -24,7 +24,7 @@ execute(
     data = ["echo.sh", ":files"]
 )
 
-recurse_group(
+recursive_filegroup(
     name = "files_recurse",
     data = [":files"],
 )
