@@ -76,6 +76,11 @@ int main() {
     decltype(tag)::bind<int> t{};
     (void)t;
   }
+  // {
+  //   template_single_tag<single_tpl_alias_pack> tag{};  // Does NOT work.
+  //   decltype(tag)::bind<int> t{};
+  //   (void)t;
+  // }
 
   {
     template_tag<double_tpl> tag{};
