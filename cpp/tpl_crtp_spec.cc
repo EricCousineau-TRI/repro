@@ -12,12 +12,12 @@ struct is_base_tpl_of_impl {
   static std::false_type check(...);
 
   template <typename Derived>
-  using result = decltype(check(std::declval<Derived>()));
+  using value_type = decltype(check(std::declval<Derived>()));
 };
 
 template <template <typename> class Tpl, typename Derived>
 using is_base_tpl_of =
-    typename is_base_tpl_of_impl<Tpl>::template result<Derived>;
+    typename is_base_tpl_of_impl<Tpl>::template value_type<Derived>;
 
 template <typename Base>
 struct alias_wrapper : public Base {};
@@ -39,11 +39,9 @@ struct alias_wrapper_of_impl<void, already_wrapped> {
 };
 
 template <typename Alias>
-struct alias_wrapper_of {
-    using type = 
-        alias_wrapper_of_impl<
-            Alias, is_base_tpl_of<alias_wrapper, Alias>::value>;
-};
+using alias_wrapper_of =
+    typename alias_wrapper_of_impl<
+        Alias, is_base_tpl_of<alias_wrapper, Alias>::value>::type;
 
 struct A {};
 struct B : public A {};
@@ -59,10 +57,14 @@ int main() {
   cout
     << PRINT((is_base_tpl_of<alias_wrapper, A>::value))
     << PRINT((is_same<Aw, alias_wrapper<A>>::value))
+    << nice_type_name<A>() << " -> " << nice_type_name<Aw>() << endl
     << PRINT((is_base_tpl_of<alias_wrapper, B>::value))
     << PRINT((is_same<Bw, alias_wrapper<Bw>>::value))
+    << nice_type_name<B>() << " -> " << nice_type_name<Bw>() << endl
     << PRINT((is_base_tpl_of<alias_wrapper, C>::value))
     << PRINT((is_same<Cw, C>::value))
+    << nice_type_name<C>() << " -> " << nice_type_name<Cw>() << endl
     << PRINT((is_base_tpl_of<alias_wrapper, D>::value))
-    << PRINT((is_same<Dw, D>::value));
+    << PRINT((is_same<Dw, D>::value))
+    << nice_type_name<D>() << " -> " << nice_type_name<Dw>() << endl;
 }
