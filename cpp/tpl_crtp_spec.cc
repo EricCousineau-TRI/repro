@@ -8,11 +8,11 @@ using namespace std;
 template <template <typename> class Tpl>
 struct is_base_tpl_of_impl {
   template <typename Base>
-  static std::true_type check(const Tpl<Base>&);
-  static std::false_type check(...);
+  static std::true_type check(const Tpl<Base>*);
+  static std::false_type check(void*);
 
   template <typename Derived>
-  using value_type = decltype(check(std::declval<Derived>()));
+  using value_type = decltype(check(std::declval<Derived*>()));
 };
 
 template <template <typename> class Tpl, typename Derived>
@@ -66,5 +66,6 @@ int main() {
     << nice_type_name<C>() << " -> " << nice_type_name<Cw>() << endl
     << PRINT((is_base_tpl_of<alias_wrapper, D>::value))
     << PRINT((is_same<Dw, D>::value))
-    << nice_type_name<D>() << " -> " << nice_type_name<Dw>() << endl;
+    << nice_type_name<D>() << " -> " << nice_type_name<Dw>() << endl
+    << PRINT((is_base_tpl_of<alias_wrapper, void>::value));
 }
