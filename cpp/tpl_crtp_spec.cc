@@ -5,17 +5,17 @@
 
 using namespace std;
 
-template <template <typename> class Tpl>
+template <template <typename...> class Tpl>
 struct is_base_tpl_of_impl {
-  template <typename Base>
-  static std::true_type check(const Tpl<Base>*);
+  template <typename ... Base>
+  static std::true_type check(const Tpl<Base...>*);
   static std::false_type check(void*);
 
   template <typename Derived>
   using value_type = decltype(check(std::declval<Derived*>()));
 };
 
-template <template <typename> class Tpl, typename Derived>
+template <template <typename...> class Tpl, typename Derived>
 using is_base_tpl_of =
     typename is_base_tpl_of_impl<Tpl>::template value_type<Derived>;
 
