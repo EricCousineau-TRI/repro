@@ -337,3 +337,9 @@ cc_binary(
     name = "tpl_tag",
     srcs = ["tpl_tag.cc"],
 )
+
+cc_binary(
+    name = "tpl_crtp_spec",
+    srcs = ["tpl_crtp_spec.cc"],
+    deps = [":name_trait"],
+)
