@@ -1,9 +1,7 @@
 #include <iostream>
 #include <type_traits>
 
-// #include "cpp/name_trait.h"
-#define PRINT(x) ">>> " #x << std::endl << (x) << std::endl << std::endl
-
+#include "cpp/name_trait.h"
 
 using namespace std;
 
@@ -24,31 +22,47 @@ using is_base_tpl_of =
 template <typename Base>
 struct alias_wrapper : public Base {};
 
-// template <typename Alias, typename = void>
-// struct alias_wrapper_of {
-//     using type = alias_wrapper<Alias>;
-// };
 
-// template <>
-// struct alias_wrapper_of<void, void> {
-//     using type = void;
-// };
+template <typename Alias, bool already_wrapped = false>
+struct alias_wrapper_of_impl {
+  using type = alias_wrapper<Alias>;
+};
 
-// template <typename Alias>
-// struct alias_wrapper_of<alias_wrapper<Alias>> {
-//     using type = alias_wrapper<Alias>;
-// };
+template <typename Alias>
+struct alias_wrapper_of_impl<Alias, true> {
+  using type = Alias;
+};
 
+template <bool already_wrapped>
+struct alias_wrapper_of_impl<void, already_wrapped> {
+  using type = void;
+};
+
+template <typename Alias>
+struct alias_wrapper_of {
+    using type = 
+        alias_wrapper_of_impl<
+            Alias, is_base_tpl_of<alias_wrapper, Alias>::value>;
+};
 
 struct A {};
 struct B : public A {};
 using C = alias_wrapper<A>;
 struct D : public C {};
 
+using Aw = alias_wrapper_of<A>;
+using Bw = alias_wrapper_of<B>;
+using Cw = alias_wrapper_of<C>;
+using Dw = alias_wrapper_of<D>;
+
 int main() {
   cout
     << PRINT((is_base_tpl_of<alias_wrapper, A>::value))
+    << PRINT((is_same<Aw, alias_wrapper<A>>::value))
     << PRINT((is_base_tpl_of<alias_wrapper, B>::value))
+    << PRINT((is_same<Bw, alias_wrapper<Bw>>::value))
     << PRINT((is_base_tpl_of<alias_wrapper, C>::value))
-    << PRINT((is_base_tpl_of<alias_wrapper, D>::value));
+    << PRINT((is_same<Cw, C>::value))
+    << PRINT((is_base_tpl_of<alias_wrapper, D>::value))
+    << PRINT((is_same<Dw, D>::value));
 }
