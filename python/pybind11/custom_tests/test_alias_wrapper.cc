@@ -67,7 +67,9 @@ int main(int argc, char* argv[]) {
     class_unique_<BaseUnique, PyBaseUnique>(m, "BaseUnique")
         .def(py::init<int>())
         // Factory method.
-        .def(py::init([]() { return new PyBaseUnique(10); }))
+        .def(py::init([]() {
+            return new PyBaseUnique(10);
+        }))
         .def("value", &BaseUnique::value);
 
     py::dict globals = py::globals();
