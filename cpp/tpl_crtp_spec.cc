@@ -6,18 +6,15 @@
 using namespace std;
 
 template <template <typename...> class Tpl>
-struct is_base_tpl_of_impl {
+struct is_base_template_of_impl {
   template <typename ... Base>
   static std::true_type check(const Tpl<Base...>*);
   static std::false_type check(void*);
-
-  template <typename Derived>
-  using value_type = decltype(check(std::declval<Derived*>()));
 };
 
 template <template <typename...> class Tpl, typename Derived>
-using is_base_tpl_of =
-    typename is_base_tpl_of_impl<Tpl>::template value_type<Derived>;
+using is_base_template_of =
+    decltype(is_base_template_of_impl<Tpl>::check((Derived*){}));
 
 template <typename Base>
 struct alias_wrapper : public Base {};
@@ -41,7 +38,7 @@ struct alias_wrapper_of_impl<void, already_wrapped> {
 template <typename Alias>
 using alias_wrapper_of =
     typename alias_wrapper_of_impl<
-        Alias, is_base_tpl_of<alias_wrapper, Alias>::value>::type;
+        Alias, is_base_template_of<alias_wrapper, Alias>::value>::type;
 
 struct A {};
 struct B : public A {};
@@ -55,17 +52,17 @@ using Dw = alias_wrapper_of<D>;
 
 int main() {
   cout
-    << PRINT((is_base_tpl_of<alias_wrapper, A>::value))
+    << PRINT((is_base_template_of<alias_wrapper, A>::value))
     << PRINT((is_same<Aw, alias_wrapper<A>>::value))
     << nice_type_name<A>() << " -> " << nice_type_name<Aw>() << endl
-    << PRINT((is_base_tpl_of<alias_wrapper, B>::value))
+    << PRINT((is_base_template_of<alias_wrapper, B>::value))
     << PRINT((is_same<Bw, alias_wrapper<Bw>>::value))
     << nice_type_name<B>() << " -> " << nice_type_name<Bw>() << endl
-    << PRINT((is_base_tpl_of<alias_wrapper, C>::value))
+    << PRINT((is_base_template_of<alias_wrapper, C>::value))
     << PRINT((is_same<Cw, C>::value))
     << nice_type_name<C>() << " -> " << nice_type_name<Cw>() << endl
-    << PRINT((is_base_tpl_of<alias_wrapper, D>::value))
+    << PRINT((is_base_template_of<alias_wrapper, D>::value))
     << PRINT((is_same<Dw, D>::value))
     << nice_type_name<D>() << " -> " << nice_type_name<Dw>() << endl
-    << PRINT((is_base_tpl_of<alias_wrapper, void>::value));
+    << PRINT((is_base_template_of<alias_wrapper, void>::value));
 }
