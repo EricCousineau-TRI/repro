@@ -343,3 +343,9 @@ cc_binary(
     srcs = ["tpl_crtp_spec.cc"],
     deps = [":name_trait"],
 )
+
+cc_binary(
+    name = "wrap_function",
+    srcs = ["wrap_function.cc"],
+    deps = [":name_trait"],
+)
