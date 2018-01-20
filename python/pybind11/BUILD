@@ -134,3 +134,16 @@ cc_binary(
     args = ["$(location custom_tests/test_keep_alive_transitive.py)"],
     deps = [":include"],
 )
+
+cc_binary(
+    name = "test_alias_wrapper",
+    srcs = [
+         "custom_tests/test_alias_wrapper.cc",
+         "tests/pybind11_tests.cpp",
+    ],
+    data = [
+        "custom_tests/test_alias_wrapper.py",
+    ],
+    args = ["$(location custom_tests/test_alias_wrapper.py)"],
+    deps = [":include"],
+)
