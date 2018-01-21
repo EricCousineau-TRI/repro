@@ -261,6 +261,10 @@ int main() {
   CHECK(cout << *EnsurePtr(Func_3)(&v.value));
   CHECK(EnsurePtr(Func_4)(MoveOnlyValue{}));
   CHECK(EnsurePtr(Func_5)(&v.value));
+  auto void_ref = [](int& value) {
+    value += 10;
+  };
+  CHECK(EnsurePtr(void_ref)(&v.value));
 
   CHECK(EnsurePtr(MyClass::Func)(MoveOnlyValue{}));
   MyClass c;
@@ -276,14 +280,11 @@ int main() {
   CHECK(EnsurePtr(g_const)(&v));
 
   // Callback.
-  auto void_ref = [](int& value) {
-    value += 100;
-  };
   CHECK(EnsurePtr(Func_6)(&v.value, EnsurePtr(void_ref)));
 
   // Callback with return.
   auto get_ref = [](int& value) -> auto& {
-    value += 200;
+    value += 100;
     return value;
   };
   CHECK(cout << *EnsurePtr(Func_7)(&v.value, EnsurePtr(get_ref)));
