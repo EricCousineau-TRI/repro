@@ -204,6 +204,12 @@ struct wrap_arg_default {
 template <typename T>
 struct ensure_ptr : public detail::wrap_arg_default<T> {};
 
+// TODO(eric.cousineau): When using in pybind, ensure this doesn't actually
+// apply to types with non-trivial type casters.
+// Looks like `std::is_base<type_caster_base<T>, type_caster<T>>` is the ticket?
+
+// NOTE: Should still ensure that `std::function<>` takes precedence.
+
 template <typename T>
 struct ensure_ptr<const T*> {
   static const T* wrap(const T* arg) {
