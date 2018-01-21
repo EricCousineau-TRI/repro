@@ -124,7 +124,7 @@ struct wrap_impl {
   // General case: Callbacks.
   // Note: Not sure how to handle general lambdas...
   template <typename Func, typename Return, typename ... Args>
-  struct wrap_arg<function_info<Func, Return, Args...>&&> {
+  struct wrap_arg<function_info<Func, Return, Args...>> {
     // Cannot use `auto`, because it is unable to mix lambdas.
     using WrappedFunc = std::function<wrap_arg_t<Return> (wrap_arg_t<Args>...)>;
 
@@ -160,7 +160,7 @@ struct wrap_impl {
   // Wrap std::function<>.
   template <typename F>
   struct wrap_arg<std::function<F>>
-      : public wrap_arg<get_function_info_t<std::function<F>>&&> {};
+      : public wrap_arg<get_function_info_t<std::function<F>>> {};
 
   template <typename F>
   struct wrap_arg<const std::function<F>&>
