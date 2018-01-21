@@ -121,12 +121,23 @@ struct wrap_impl {
     }
 
     static Normal unwrap(Wrapped func_wrapped) {
+      return unwrap_impl(func_wrapped,
+          std::integral_constant<bool, enable_wrap_output<Return>>{});
+    }
+
+    static Normal unwrap_impl(Wrapped func_wrapped, std::false_type = {}) {
       return [func_wrapped](Args... args) {
         func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...);
       };
     }
-  };
 
+    static Normal unwrap_impl(Wrapped func_wrapped, std::true_type = {}) {
+      return [func_wrapped](Args... args) {
+        wrap_arg<Return>::unwrap(
+            func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...));
+      };
+    }
+  };
 };
 
 }  // namespace detail
