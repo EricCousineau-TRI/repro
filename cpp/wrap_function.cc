@@ -20,14 +20,19 @@ auto infer_function_info(Func&& func, Return (*infer)(Args...) = nullptr) {
 }
 
 template <typename Class, typename Return, typename ... Args>
-auto remove_class(Return (Class::*)(Args...)) {
+auto remove_class_from_ptr(Return (Class::*)(Args...)) {
   return (Return (*)(Args...)){};
 }
 
 template <typename Class, typename Return, typename ... Args>
-auto remove_class(Return (Class::*)(Args...) const) {
+auto remove_class_from_ptr(Return (Class::*)(Args...) const) {
   return (Return (*)(Args...)){};
 }
+
+template <typename Func>
+using enable_if_lambda_t =
+    std::enable_if_t<std::integral_constant<
+        bool, !std::is_function<std::decay_t<Func>>::value>::value>;
 
 }  // namespace detail
 
@@ -52,16 +57,11 @@ auto get_function_info(Return (Class::*method)(Args...) const) {
   return detail::infer_function_info<Return, const Class*, Args...>(func);
 }
 
-template <
-    typename Func,
-    typename = std::enable_if_t<
-        std::integral_constant<
-            bool, !std::is_function<std::decay_t<Func>>::value>::value>
-    >
+template <typename Func, typename = detail::enable_if_lambda_t<Func>>
 auto get_function_info(Func&& func) {
   return detail::infer_function_info(
       std::forward<Func>(func),
-      detail::remove_class(&std::decay_t<Func>::operator()));
+      detail::remove_class_from_ptr(&std::decay_t<Func>::operator()));
 }
 
 namespace detail {
@@ -114,24 +114,29 @@ struct ensure_ptr {
   static T wrap(T arg) { return std::forward<T>(arg); }
 };
 
-// template <typename Tc>
-// struct ensure_ptr<const Tc&> {
-//   using T = const Tc&;
-//   using type_in = T;
-//   static const Tc& unwrap(const Tc* arg) {
-//     cout << "const Tc&: " << nice_type_name<T>() << endl;
-//     return *arg;
-//   }
-//   static T wrap(T arg) {
-//     return std::forward<T>(arg);
-//   }
-// };
+template <typename T>
+struct ensure_ptr<const T&> {
+  static const T* wrap(const T& arg) {
+    cout << "<const T&> wrap: " << nice_type_name<const T&>() << endl;
+    return &arg;
+  }
+  static const T& unwrap(const T* arg) {
+    cout << "<const T&> unwrap: " << nice_type_name<const T&>() << endl;
+    return *arg;
+  }
+};
 
 // Reference case: Convert to pointer.
 template <typename T>
 struct ensure_ptr<T&> {
-  static T* wrap(T& arg) { return &arg; }
-  static T& unwrap(T* arg) { return *arg; }
+  static T* wrap(T& arg) {
+    cout << "<T&> wrap: " << nice_type_name<T&>() << endl;
+    return &arg;
+  }
+  static T& unwrap(T* arg) {
+    cout << "<T&> unwrap: " << nice_type_name<T&>() << endl;
+    return *arg;
+  }
 };
 
 template <typename Func>
