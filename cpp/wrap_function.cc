@@ -71,8 +71,11 @@ auto get_function_info(Func&& func) {
 namespace detail {
 
 // Nominal case.
-template <template <typename...> class wrap_arg>
+template <template <typename...> class wrap_arg_tpl>
 struct wrap_impl {
+  template <typename T>
+  struct wrap_arg : public wrap_arg_tpl<T> {};
+
   template <typename T>
   using wrap_arg_t = decltype(wrap_arg<T>::wrap(std::declval<T>()));
 
@@ -107,6 +110,23 @@ struct wrap_impl {
     };
     return func_wrapped;
   }
+
+  template <typename Return, typename ... Args>
+  struct wrap_arg<std::function<Return (Args...)>> {
+    using Normal = std::function<Return (Args...)>;
+    using Wrapped = std::function<Return (wrap_arg_t<Args>...)>;
+
+    static Wrapped wrap(Normal func) {
+      return wrap_impl::run(func);
+    }
+
+    static Normal unwrap(Wrapped func_wrapped) {
+      return [func_wrapped](Args... args) {
+        func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...);
+      };
+    }
+  };
+
 };
 
 }  // namespace detail
@@ -152,29 +172,6 @@ struct ensure_ptr<T&> {
   static T& unwrap(T* arg) {
     cout << "<T&> unwrap: " << nice_type_name<T&>() << endl;
     return *arg;
-  }
-};
-
-template <typename Func>
-auto EnsurePtr(Func&& func);
-
-template <typename T>
-using ensure_ptr_t =
-    typename detail::wrap_impl<ensure_ptr>::template wrap_arg_t<T>;
-
-template <typename ... Args>
-struct ensure_ptr<std::function<void (Args...)>> {
-  using Normal = std::function<void (Args...)>;
-  using Wrapped = std::function<void (ensure_ptr_t<Args>...)>;
-
-  static Wrapped wrap(Normal func) {
-    return EnsurePtr(func);
-  }
-
-  static Normal unwrap(Wrapped func_wrapped) {
-    return [func_wrapped](Args... args) {
-      func_wrapped(ensure_ptr<Args>::wrap(std::forward<Args>(args))...);
-    };
   }
 };
 
