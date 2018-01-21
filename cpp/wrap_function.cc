@@ -137,23 +137,19 @@ struct wrap_impl {
       return wrap_impl::run<Func, Return, Args...>({std::forward<Func>(func)});
     }
 
-    template <typename Wrapped>
-    static auto unwrap(Wrapped&& func_wrapped) {
-      return unwrap_impl(std::forward<Wrapped>(func_wrapped),
-          std::integral_constant<bool, enable_wrap_output<Return>>{});
-    }
-
-    template <typename Wrapped>
-    static auto unwrap_impl(
-        Wrapped&& func_wrapped, std::false_type = {}) {
+    template <typename Wrapped, typename Defer = Return>
+    static auto unwrap(
+        Wrapped&& func_wrapped,
+        std::enable_if_t<!enable_wrap_output<Defer>, void*> = {}) {
       return [func_wrapped](Args... args) {
         func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...);
       };
     }
 
-    template <typename Wrapped>
-    static auto unwrap_impl(
-        Wrapped&& func_wrapped, std::true_type = {}) {
+    template <typename Wrapped, typename Defer = Return>
+    static auto unwrap(
+        Wrapped&& func_wrapped,
+        std::enable_if_t<enable_wrap_output<Defer>, void*> = {}) {
       return [func_wrapped](Args... args) -> Return {
         return wrap_arg<Return>::unwrap(
             func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...));
