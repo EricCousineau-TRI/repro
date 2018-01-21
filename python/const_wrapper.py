@@ -40,8 +40,16 @@ class Const(ObjectProxy):
         ObjectProxy.__init__(self, wrapped)
 
     def _is_mutable(self, name):
-        wrapped = __wrapped__
+        wrapped = self.__wrapped__
         return False
+
+    @property
+    def __dict__(self):
+        wrapped = self.__wrapped__
+        return Const(wrapped.__dict__)
+
+    def const_cast(self):
+        return self.__wrapped__
 
 do_get = object.__getattribute__
 do_set = setattr #object.__setattr__
@@ -108,3 +116,12 @@ print(c_const == c_const)
 
 c.value = 100
 print(c_const.value)
+
+print(c_const.__dict__)
+print(type(c_const.__dict__))
+# c_const.__dict__['value'] = 200
+
+obj = Const([1, 2, 3])
+# obj[1] = 3
+obj.const_cast()[1] = 10
+print(obj)
