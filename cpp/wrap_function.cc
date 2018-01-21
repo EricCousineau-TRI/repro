@@ -128,6 +128,7 @@ class MyClass {
 };
 
 struct MoveOnlyFunctor {
+  MoveOnlyFunctor() {}
   MoveOnlyFunctor(const MoveOnlyFunctor&) = delete;
   MoveOnlyFunctor(MoveOnlyFunctor&&) = default;
   void operator()(MoveOnlyValue& value) { value.value += 5; }
@@ -146,6 +147,9 @@ int main() {
   MyClass c;
   CHECK(Wrap(&MyClass::Method)(&c, &v));
   CHECK(Wrap(&MyClass::Method_2)(&c, &v));
+
+  MoveOnlyFunctor f;
+  CHECK(Wrap(std::move(f))(&v));
 
   return 0;
 }
