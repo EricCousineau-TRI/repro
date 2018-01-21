@@ -6,27 +6,6 @@
 
 using namespace std;
 
-namespace detail {
-
-// Start: from pybind:
-/// Strip the class from a method type
-template <typename T> struct remove_class { };
-template <typename C, typename R, typename... A> struct remove_class<R (C::*)(A...)> { typedef R type(A...); };
-template <typename C, typename R, typename... A> struct remove_class<R (C::*)(A...) const> { typedef R type(A...); };
-// Get function signature.
-template <typename F> struct strip_function_object {
-    using type = typename remove_class<decltype(&F::operator())>::type;
-};
-template <typename F>
-using function_ptr_t =
-    typename strip_function_object<std::decay_t<F>>::type*;
-template <typename F>
-using is_lambda = std::integral_constant<
-    bool, !std::is_function<std::decay_t<F>>::value>;
-
-// End: from pybind
-}
-
 template <typename Func, typename Return, typename ... Args>
 struct function_info {
   std::decay_t<Func> func;
@@ -38,6 +17,16 @@ template <typename Return, typename ... Args, typename Func>
 auto infer_function_info(Func&& func, Return (*infer)(Args...) = nullptr) {
   (void)infer;
   return function_info<Func, Return, Args...>{std::forward<Func>(func)};
+}
+
+template <typename Class, typename Return, typename ... Args>
+auto remove_class(Return (Class::*)(Args...)) {
+  return (Return (*)(Args...)){};
+}
+
+template <typename Class, typename Return, typename ... Args>
+auto remove_class(Return (Class::*)(Args...) const) {
+  return (Return (*)(Args...)){};
 }
 
 }  // namespace detail
@@ -63,11 +52,16 @@ auto get_function_info(Return (Class::*method)(Args...) const) {
   return detail::infer_function_info<Return, const Class*, Args...>(func);
 }
 
-template <typename Func,
-    typename = std::enable_if_t<detail::is_lambda<Func>::value>>
+template <
+    typename Func,
+    typename = std::enable_if_t<
+        std::integral_constant<
+            bool, !std::is_function<std::decay_t<Func>>::value>::value>
+    >
 auto get_function_info(Func&& func) {
   return detail::infer_function_info(
-      std::forward<Func>(func), detail::function_ptr_t<Func>{});
+      std::forward<Func>(func),
+      detail::remove_class(&std::decay_t<Func>::operator()));
 }
 
 namespace detail {
