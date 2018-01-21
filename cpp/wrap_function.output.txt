@@ -18,7 +18,6 @@ v.value = 11
 v.value = 11
 
 >>> EnsurePtr(Func_5)(&v.value);
-<const T*> unwrap: int const*
 
 v.value = 11
 

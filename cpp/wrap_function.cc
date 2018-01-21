@@ -201,7 +201,7 @@ struct wrap_arg_default {
 }  // namespace detail
 
 // Base case: Pass though.
-template <typename T>
+template <typename T, typename = void>
 struct ensure_ptr : public detail::wrap_arg_default<T> {};
 
 // TODO(eric.cousineau): When using in pybind, ensure this doesn't actually
@@ -211,7 +211,7 @@ struct ensure_ptr : public detail::wrap_arg_default<T> {};
 // NOTE: Should still ensure that `std::function<>` takes precedence.
 
 template <typename T>
-struct ensure_ptr<const T*> {
+struct ensure_ptr<const T*, std::enable_if_t<!std::is_same<T, int>::value>> {
   static const T* wrap(const T* arg) {
     cout << "<const T*> wrap: " << nice_type_name<const T*>() << endl;
     return arg;
