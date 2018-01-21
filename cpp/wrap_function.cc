@@ -121,34 +121,64 @@ struct wrap_impl {
     return func_wrapped;
   }
 
+  // // General case: Callbacks.
+  // template <typename Func, typename Return, typename ... Args>
+  // struct wrap_arg<function_info<Func, Return, Args...>> {
+  //   // Cannot use `auto`, because it is unable to mix lambdas.
+  //   using WrappedFunc = std::function<wrap_arg_t<Return> (wrap_arg_t<Args>...)>;
+
+  //   static WrappedFunc wrap(function_info<Func, Return, Args...>&& info) {
+  //     return wrap_impl::run(std::move(info));
+  //   }
+
+  //   template <typename FFunc>
+  //   static WrappedFunc wrap(FFunc&& func) {
+  //     return wrap_impl::run<Func, Return, Args...>({std::forward<Func>(func)});
+  //   }
+
+  //   template <typename Wrapped, typename Defer = Return>
+  //   static auto unwrap(
+  //       Wrapped&& func_wrapped,
+  //       std::enable_if_t<!enable_wrap_output<Defer>, void*> = {}) {
+  //     return [func_wrapped](Args... args) {
+  //       func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...);
+  //     };
+  //   }
+
+  //   template <typename Wrapped, typename Defer = Return>
+  //   static auto unwrap(
+  //       Wrapped&& func_wrapped,
+  //       std::enable_if_t<enable_wrap_output<Defer>, void*> = {}) {
+  //     return [func_wrapped](Args... args) -> Return {
+  //       return wrap_arg<Return>::unwrap(
+  //           func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...));
+  //     };
+  //   }
+  // };
+
   // General case: Callbacks.
-  // Note: Not sure how to handle general lambdas...
-  template <typename Func, typename Return, typename ... Args>
-  struct wrap_arg<function_info<Func, Return, Args...>> {
+  template <typename Return, typename ... Args>
+  struct wrap_arg<std::function<Return (Args...)>> {
     // Cannot use `auto`, because it is unable to mix lambdas.
+    using Func = std::function<Return (Args...)>;
     using WrappedFunc = std::function<wrap_arg_t<Return> (wrap_arg_t<Args>...)>;
 
-    static WrappedFunc wrap(function_info<Func, Return, Args...>&& info) {
-      return wrap_impl::run(std::move(info));
+    static WrappedFunc wrap(const Func& func) {
+      return wrap_impl::run(get_function_info(func));
     }
 
-    template <typename FFunc>
-    static WrappedFunc wrap(FFunc&& func) {
-      return wrap_impl::run<Func, Return, Args...>({std::forward<Func>(func)});
-    }
-
-    template <typename Wrapped, typename Defer = Return>
-    static auto unwrap(
-        Wrapped&& func_wrapped,
+    template <typename Defer = Return>
+    static Func unwrap(
+        const WrappedFunc& func_wrapped,
         std::enable_if_t<!enable_wrap_output<Defer>, void*> = {}) {
       return [func_wrapped](Args... args) {
         func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...);
       };
     }
 
-    template <typename Wrapped, typename Defer = Return>
-    static auto unwrap(
-        Wrapped&& func_wrapped,
+    template <typename Defer = Return>
+    static Func unwrap(
+        const WrappedFunc& func_wrapped,
         std::enable_if_t<enable_wrap_output<Defer>, void*> = {}) {
       return [func_wrapped](Args... args) -> Return {
         return wrap_arg<Return>::unwrap(
@@ -156,11 +186,6 @@ struct wrap_impl {
       };
     }
   };
-
-  // Wrap std::function<>.
-  template <typename F>
-  struct wrap_arg<std::function<F>>
-      : public wrap_arg<get_function_info_t<std::function<F>>> {};
 
   template <typename F>
   struct wrap_arg<const std::function<F>&>
