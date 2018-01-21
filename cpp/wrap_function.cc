@@ -137,7 +137,15 @@ struct MoveOnlyFunctor {
 
 int main() {
   MoveOnlyValue v{10};
-  CHECK(Wrap(&Func_1)(v.value));
+  CHECK(Wrap(Func_1)(v.value));
+  CHECK(Wrap(Func_2)(&v.value));
+  CHECK(Wrap(Func_3)(&v.value));
+  CHECK(Wrap(Func_4)(MoveOnlyValue{}));
+
+  CHECK(Wrap(MyClass::Func)(MoveOnlyValue{}));
+  MyClass c;
+  CHECK(Wrap(&MyClass::Method)(&c, &v));
+  CHECK(Wrap(&MyClass::Method_2)(&c, &v));
 
   return 0;
 }
