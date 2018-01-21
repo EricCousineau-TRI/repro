@@ -17,6 +17,11 @@ v.value = 11
 
 v.value = 11
 
+>>> EnsurePtr(Func_5)(&v.value);
+<const T*> unwrap: int const*
+
+v.value = 11
+
 >>> EnsurePtr(MyClass::Func)(MoveOnlyValue{});
 
 v.value = 11
@@ -27,6 +32,7 @@ v.value = 11
 v.value = 13
 
 >>> EnsurePtr(&MyClass::Method_2)(&c_const, &v);
+<const T*> unwrap: MyClass const*
 <T&> unwrap: MoveOnlyValue&
 
 v.value = 16

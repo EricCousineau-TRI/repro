@@ -115,6 +115,18 @@ struct ensure_ptr {
 };
 
 template <typename T>
+struct ensure_ptr<const T*> {
+  static const T* wrap(const T* arg) {
+    cout << "<const T*> wrap: " << nice_type_name<const T*>() << endl;
+    return arg;
+  }
+  static const T* unwrap(const T* arg) {
+    cout << "<const T*> unwrap: " << nice_type_name<const T*>() << endl;
+    return arg;
+  }
+};
+
+template <typename T>
 struct ensure_ptr<const T&> {
   static const T* wrap(const T& arg) {
     cout << "<const T&> wrap: " << nice_type_name<const T&>() << endl;
@@ -156,6 +168,7 @@ void Func_1(int value) {}
 int* Func_2(int& value) { value += 1; return &value; }
 const int& Func_3(const int& value) { return value; }
 void Func_4(MoveOnlyValue value) {}
+void Func_5(const int* value) {}
 
 class MyClass {
  public:
@@ -185,6 +198,7 @@ int main() {
   CHECK(cout << *EnsurePtr(Func_2)(&v.value));
   CHECK(cout << *EnsurePtr(Func_3)(&v.value));
   CHECK(EnsurePtr(Func_4)(MoveOnlyValue{}));
+  CHECK(EnsurePtr(Func_5)(&v.value));
 
   CHECK(EnsurePtr(MyClass::Func)(MoveOnlyValue{}));
   MyClass c;
