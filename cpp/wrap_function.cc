@@ -112,7 +112,7 @@ struct wrap_impl {
 }  // namespace detail
 
 // Base case: Pass though.
-template <typename T, typename = void>
+template <typename T>
 struct ensure_ptr {
   static T unwrap(T arg) { return std::forward<T>(arg); }
   static T wrap(T arg) { return std::forward<T>(arg); }
@@ -162,23 +162,16 @@ template <typename T>
 using ensure_ptr_t =
     typename detail::wrap_impl<ensure_ptr>::template wrap_arg_t<T>;
 
-template <typename Func>
-struct ensure_ptr<Func, detail::enable_if_lambda_t<Func, int>> {
-  using PFunc = std::decay_t<Func>*;
-  static auto wrap(Func func) {
-    return EnsurePtr(std::forward<Func>(func));
+template <typename ... Args>
+struct ensure_ptr<std::function<void (Args...)>> {
+  using Normal = std::function<void (Args...)>;
+  using Wrapped = std::function<void (ensure_ptr_t<Args>...)>;
+
+  static Wrapped wrap(Normal func) {
+    return EnsurePtr(func);
   }
 
-  template <typename Wrapped>
-  static auto unwrap(Wrapped&& func_wrapped) {
-    return unwrap_impl(
-        std::forward<Wrapped>(func_wrapped),
-        detail::infer_function_ptr(PFunc{}));
-  }
-
-  template <typename Wrapped, typename ... Args>
-  static auto unwrap_impl(Wrapped&& func_wrapped, void (*infer)(Args...)) {
-    (void)infer;
+  static Normal unwrap(Wrapped func_wrapped) {
     return [func_wrapped](Args... args) {
       func_wrapped(ensure_ptr<Args>::wrap(std::forward<Args>(args))...);
     };
