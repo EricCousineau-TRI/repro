@@ -66,31 +66,21 @@ auto get_function_info(Func&& func) {
 
 namespace detail {
 
-template <typename T>
-struct wrap_arg {
-  using type_in = T;
-  static T unwrap(T arg) { return std::forward<T>(arg); }
-  static T wrap(T arg) { return std::forward<T>(arg); }
-};
-
-// Ensure that all reference types are passed as pointers.
-template <typename T>
-struct wrap_arg<T&> {
-  using type_in = T*;
-  static T& unwrap(type_in arg) { return *arg; }
-  static type_in wrap(T& arg) { return &arg; }
-};
-
 // Nominal case.
-template <template <typename> class wrap_arg = wrap_arg>
+template <template <typename> class wrap_arg>
 struct wrap_impl {
   template <typename T>
   using wrap_arg_in_t = typename wrap_arg<T>::type_in;
 
+  template <typename Return>
+  static constexpr bool enable_wrap_output =
+      !std::is_same<Return, void>::value;
+
   template <typename Func, typename Return, typename ... Args>
-  static auto run(function_info<Func, Return, Args...>&& info) {
+  static auto run(function_info<Func, Return, Args...>&& info,
+      std::enable_if_t<enable_wrap_output<Return>, void*> = {}) {
     auto func_wrapped =
-        [func_f = std::forward<Func>(info.first)]
+        [func_f = std::forward<Func>(info.func)]
         (wrap_arg_in_t<Args>... args) mutable {
       return wrap_arg<Return>::wrap(
           func_f(std::forward<Args>(
@@ -100,9 +90,10 @@ struct wrap_impl {
     return func_wrapped;
   }
 
-  // Return `void` case (do not wrap output).
-  template <typename Func, typename ... Args>
-  static auto run(function_info<Func, void, Args...>&& info) {
+  // Do not wrap output (or `Return` is void).
+  template <typename Func, typename Return, typename ... Args>
+  static auto run(function_info<Func, Return, Args...>&& info,
+      std::enable_if_t<!enable_wrap_output<Return>, void*> = {}) {
     auto func_wrapped =
         [func_f = std::forward<Func>(info.func)]
         (wrap_arg_in_t<Args>... args) mutable {
@@ -116,9 +107,25 @@ struct wrap_impl {
 
 }  // namespace detail
 
+// Base case: Pass though.
+template <typename T>
+struct ensure_ptr {
+  using type_in = T;
+  static T unwrap(T arg) { return std::forward<T>(arg); }
+  static T wrap(T arg) { return std::forward<T>(arg); }
+};
+
+// Reference case: Convert to pointer.
+template <typename T>
+struct ensure_ptr<T&> {
+  using type_in = T*;
+  static T& unwrap(type_in arg) { return *arg; }
+  static type_in wrap(T& arg) { return &arg; }
+};
+
 template <typename Func>
-auto Wrap(Func&& func) {
-  return detail::wrap_impl<>::run(
+auto EnsurePtr(Func&& func) {
+  return detail::wrap_impl<ensure_ptr>::run(
       get_function_info(std::forward<Func>(func)));
 }
 
@@ -130,8 +137,8 @@ struct MoveOnlyValue {
 };
 
 void Func_1(int value) {}
-void Func_2(int& value) { value += 1; }
-void Func_3(const int& value) { }
+int* Func_2(int& value) { value += 1; return &value; }
+const int& Func_3(const int& value) { return value; }
 void Func_4(MoveOnlyValue value) {}
 
 class MyClass {
@@ -154,27 +161,27 @@ struct ConstFunctor {
   void operator()(MoveOnlyValue& value) const { value.value += 5; }
 };
 
-#define CHECK(expr) EVAL(expr; cout << v.value);
+#define CHECK(expr) EVAL(expr); cout << "v.value = " << v.value << endl << endl
 
 int main() {
   MoveOnlyValue v{10};
-  CHECK(Wrap(Func_1)(v.value));
-  CHECK(Wrap(Func_2)(&v.value));
-  CHECK(Wrap(Func_3)(&v.value));
-  CHECK(Wrap(Func_4)(MoveOnlyValue{}));
+  CHECK(EnsurePtr(Func_1)(v.value));
+  CHECK(cout << *EnsurePtr(Func_2)(&v.value));
+  CHECK(cout << *EnsurePtr(Func_3)(&v.value));
+  CHECK(EnsurePtr(Func_4)(MoveOnlyValue{}));
 
-  CHECK(Wrap(MyClass::Func)(MoveOnlyValue{}));
+  CHECK(EnsurePtr(MyClass::Func)(MoveOnlyValue{}));
   MyClass c;
   const MyClass& c_const{c};
-  CHECK(Wrap(&MyClass::Method)(&c, &v));
-  CHECK(Wrap(&MyClass::Method_2)(&c_const, &v));
+  CHECK(EnsurePtr(&MyClass::Method)(&c, &v));
+  CHECK(EnsurePtr(&MyClass::Method_2)(&c_const, &v));
 
   MoveOnlyFunctor f;
-  CHECK(Wrap(std::move(f))(&v));
+  CHECK(EnsurePtr(std::move(f))(&v));
   ConstFunctor g;
-  CHECK(Wrap(g)(&v));
+  CHECK(EnsurePtr(g)(&v));
   const ConstFunctor& g_const{g};
-  CHECK(Wrap(g_const)(&v));
+  CHECK(EnsurePtr(g_const)(&v));
 
   return 0;
 }
