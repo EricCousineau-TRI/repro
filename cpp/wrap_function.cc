@@ -152,10 +152,60 @@ struct ensure_ptr<T&> {
 };
 
 template <typename Func>
+auto EnsurePtr(Func&& func);
+
+template <typename T>
+using ensure_ptr_t = typename wrap_impl<ensure_ptr>::template wrap_arg_t<T>;
+
+template <typename ... Args>
+struct ensure_ptr<std::function<void (Args...)>> {
+  using Normal = std::function<void (Args...)>;
+  using Wrapped = std::function<void (ensure_ptr_t<Args>...)>;
+
+  static Wrapped wrap(Normal func) {
+    return EnsurePtr(func);
+  }
+
+  static Normal unwrap(Wrapped func_wrapped) {
+    return [func_wrapped](Args... args) {
+      func_wrapped(ensure_ptr<Arg>::wrap(std::forward<Args>(args))...);
+    };
+  }
+};
+
+template <typename Func>
 auto EnsurePtr(Func&& func) {
   return detail::wrap_impl<ensure_ptr>::run(
       get_function_info(std::forward<Func>(func)));
 }
+
+
+// template <template <typename> class wrap_arg>
+// struct reverse_wrap {
+//   template <typename T>
+//   using wrap_arg_t = decltype(wrap_arg<T>::wrap(std::declval<T>()));
+
+//   template <typename T>
+//   struct type;
+
+//   template <typename T>
+//   struct type<wrap_arg_t<T>> {
+//     using orig = wrap_arg<T>;
+//     template <typename U>
+//     static auto wrap(U&& arg) {
+//       return orig::unwrap(std::forward<U>(arg));
+//     }
+//     template <typename U>
+//     static auto unwrap(U&& arg) {
+//       return orig::wrap(std::forward<U>(arg));
+//     }
+//   };
+// };
+// template <typename Func>
+// auto ReversePtr(Func&& func) {
+//   return detail::wrap_impl<reverse_wrap<ensure_ptr>::type>::run(
+//       get_function_info(std::forward<Func>(func)));
+// }
 
 struct MoveOnlyValue {
   MoveOnlyValue() = default;
@@ -212,6 +262,8 @@ int main() {
   CHECK(EnsurePtr(g)(&v));
   const ConstFunctor& g_const{g};
   CHECK(EnsurePtr(g_const)(&v));
+
+  // CHECK(cout << ReversePtr(Func_2)(v.value));
 
   return 0;
 }
