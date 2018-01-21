@@ -81,41 +81,45 @@ struct wrap_arg<T&> {
   static type_in wrap(T& arg) { return &arg; }
 };
 
-template <typename T>
-using wrap_arg_in_t = typename wrap_arg<T>::type_in;
-
 // Nominal case.
-template <typename Func, typename Return, typename ... Args>
-auto WrapImpl(function_info<Func, Return, Args...>&& info) {
-  auto func_wrapped =
-      [func_f = std::forward<Func>(info.first)]
-      (wrap_arg_in_t<Args>... args) mutable {
-    return wrap_arg<Return>::wrap(
-        func_f(std::forward<Args>(
-            wrap_arg<Args>::unwrap(
-                std::forward<wrap_arg_in_t<Args>>(args)))...));
-  };
-  return func_wrapped;
-}
+template <template <typename> class wrap_arg = wrap_arg>
+struct wrap_impl {
+  template <typename T>
+  using wrap_arg_in_t = typename wrap_arg<T>::type_in;
 
-// Return `void` case (do not wrap output).
-template <typename Func, typename ... Args>
-auto WrapImpl(function_info<Func, void, Args...>&& info) {
-  auto func_wrapped =
-      [func_f = std::forward<Func>(info.func)]
-      (wrap_arg_in_t<Args>... args) mutable {
-    return func_f(std::forward<Args>(
-        wrap_arg<Args>::unwrap(
-            std::forward<wrap_arg_in_t<Args>>(args)))...);
-  };
-  return func_wrapped;
-}
+  template <typename Func, typename Return, typename ... Args>
+  static auto run(function_info<Func, Return, Args...>&& info) {
+    auto func_wrapped =
+        [func_f = std::forward<Func>(info.first)]
+        (wrap_arg_in_t<Args>... args) mutable {
+      return wrap_arg<Return>::wrap(
+          func_f(std::forward<Args>(
+              wrap_arg<Args>::unwrap(
+                  std::forward<wrap_arg_in_t<Args>>(args)))...));
+    };
+    return func_wrapped;
+  }
+
+  // Return `void` case (do not wrap output).
+  template <typename Func, typename ... Args>
+  static auto run(function_info<Func, void, Args...>&& info) {
+    auto func_wrapped =
+        [func_f = std::forward<Func>(info.func)]
+        (wrap_arg_in_t<Args>... args) mutable {
+      return func_f(std::forward<Args>(
+          wrap_arg<Args>::unwrap(
+              std::forward<wrap_arg_in_t<Args>>(args)))...);
+    };
+    return func_wrapped;
+  }
+};
 
 }  // namespace detail
 
 template <typename Func>
 auto Wrap(Func&& func) {
-  return detail::WrapImpl(get_function_info(std::forward<Func>(func)));
+  return detail::wrap_impl<>::run(
+      get_function_info(std::forward<Func>(func)));
 }
 
 struct MoveOnlyValue {
