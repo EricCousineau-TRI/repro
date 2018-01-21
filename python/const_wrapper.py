@@ -28,9 +28,7 @@ wrap_attr = [
     "__dict__",
 ]
 
-wrap_functions = [
-    "__iter__",
-]
+wrap_functions = []
 
 class ConstError(RuntimeError):
     pass
@@ -43,16 +41,30 @@ class Const(ObjectProxy):
         wrapped = self.__wrapped__
         return False
 
-    @property
-    def __dict__(self):
-        wrapped = self.__wrapped__
-        return Const(wrapped.__dict__)
+    # @property
+    # def __dict__(self):
+    #     wrapped = self.__wrapped__
+    #     return Const(wrapped.__dict__)
+
+    def __iter__(self):
+        iter(self.__wrapped__)
+        return self
+
+    def next(self):
+        return to_const(next(self.__wrapped__))
 
     def const_cast(self):
         return self.__wrapped__
 
+
+
 do_get = object.__getattribute__
 do_set = setattr #object.__setattr__
+
+def to_const(obj):
+    # TODO: Check if literal type?
+    if obj is not None:
+        return Const(obj)
 
 for f in mutable_functions:
     def _new_scope(f):
@@ -63,26 +75,22 @@ for f in mutable_functions:
         do_set(Const, f, _no_access)
     _new_scope(f)
 
-# for f in wrap_attr:
-#     old_property = do_get(Const, f)
-#     print(old_property)
-#     print(type(old_property))
-#     assert old_property.fset is None
-#     assert old_property.fdel is None
-#     fget = old_property.fget
-#     def _fget_wrap(self):
-#         return Const(fget(self))
-#     new_property = property(_fget_wrap)
-#     do_set(Const, f, new_property)
+for f in wrap_attr:
+    def _new_scope(f):
+        def wrap(self):
+            wrapped = self.__wrapped__
+            return to_const(do_get(wrapped, f))
+        wrap.__name__ = f
+        do_set(Const, f, property(wrap))
 
 for f in wrap_functions:
-    func = do_get(ObjectProxy, f)
-    def _func_wrap(self, *args, **kwargs):
-        out = func(self, *args, **kwargs)
-        # TODO: Check if literal type?
-        if out is not None:
-            return Const(out)
-    do_set(Const, f, _func_wrap)
+    def _new_scope(f):
+        func = do_get(ObjectProxy, f)
+        def wrap(self, *args, **kwargs):
+            return to_const(func(self, *args, **kwargs))
+        wrap.__name__ = f
+        do_set(Const, f, wrap)
+    _new_scope(f)
 
 
 class Check(object):
@@ -104,6 +112,7 @@ class Check(object):
 
     value = property(_get_value, _set_value)
 
+print(Const.__iter__)
 
 c = Check(10)
 c_const = Const(c)
@@ -121,7 +130,10 @@ print(c_const.__dict__)
 print(type(c_const.__dict__))
 # c_const.__dict__['value'] = 200
 
-obj = Const([1, 2, 3])
+obj = Const([1, 2, [10, 10]])
 # obj[1] = 3
 obj.const_cast()[1] = 10
 print(obj)
+
+for i in obj:
+    print(i)
