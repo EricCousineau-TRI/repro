@@ -70,7 +70,7 @@ namespace detail {
 template <template <typename> class wrap_arg>
 struct wrap_impl {
   template <typename T>
-  using wrap_arg_in_t = typename wrap_arg<T>::type_in;
+  using wrap_arg_t = decltype(wrap_arg<T>::wrap(std::declval<T>()));
 
   template <typename Return>
   static constexpr bool enable_wrap_output =
@@ -81,11 +81,11 @@ struct wrap_impl {
       std::enable_if_t<enable_wrap_output<Return>, void*> = {}) {
     auto func_wrapped =
         [func_f = std::forward<Func>(info.func)]
-        (wrap_arg_in_t<Args>... args) mutable {
+        (wrap_arg_t<Args>... args_wrapped) mutable {
       return wrap_arg<Return>::wrap(
           func_f(std::forward<Args>(
               wrap_arg<Args>::unwrap(
-                  std::forward<wrap_arg_in_t<Args>>(args)))...));
+                  std::forward<wrap_arg_t<Args>>(args_wrapped)))...));
     };
     return func_wrapped;
   }
@@ -96,10 +96,10 @@ struct wrap_impl {
       std::enable_if_t<!enable_wrap_output<Return>, void*> = {}) {
     auto func_wrapped =
         [func_f = std::forward<Func>(info.func)]
-        (wrap_arg_in_t<Args>... args) mutable {
+        (wrap_arg_t<Args>... args_wrapped) mutable {
       return func_f(std::forward<Args>(
           wrap_arg<Args>::unwrap(
-              std::forward<wrap_arg_in_t<Args>>(args)))...);
+              std::forward<wrap_arg_t<Args>>(args_wrapped)))...);
     };
     return func_wrapped;
   }
@@ -110,17 +110,28 @@ struct wrap_impl {
 // Base case: Pass though.
 template <typename T>
 struct ensure_ptr {
-  using type_in = T;
   static T unwrap(T arg) { return std::forward<T>(arg); }
   static T wrap(T arg) { return std::forward<T>(arg); }
 };
 
+// template <typename Tc>
+// struct ensure_ptr<const Tc&> {
+//   using T = const Tc&;
+//   using type_in = T;
+//   static const Tc& unwrap(const Tc* arg) {
+//     cout << "const Tc&: " << nice_type_name<T>() << endl;
+//     return *arg;
+//   }
+//   static T wrap(T arg) {
+//     return std::forward<T>(arg);
+//   }
+// };
+
 // Reference case: Convert to pointer.
 template <typename T>
 struct ensure_ptr<T&> {
-  using type_in = T*;
-  static T& unwrap(type_in arg) { return *arg; }
-  static type_in wrap(T& arg) { return &arg; }
+  static T* wrap(T& arg) { return &arg; }
+  static T& unwrap(T* arg) { return *arg; }
 };
 
 template <typename Func>
