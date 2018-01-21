@@ -68,6 +68,9 @@ auto get_function_info(Func&& func) {
       std::forward<Func>(func), detail::infer_function_ptr(&func));
 }
 
+template <typename Func>
+using get_function_info_t = decltype(get_function_info(std::declval<Func>()));
+
 namespace detail {
 
 template <template <typename...> class wrap_arg, typename T>
@@ -97,7 +100,7 @@ struct wrap_impl {
       std::enable_if_t<enable_wrap_output<Return>, void*> = {}) {
     auto func_wrapped =
         [func_f = std::forward<Func>(info.func)]
-        (wrap_arg_t<Args>... args_wrapped) mutable {
+        (wrap_arg_t<Args>... args_wrapped) {
       return wrap_arg<Return>::wrap(
           func_f(wrap_arg<Args>::unwrap(
                   std::forward<wrap_arg_t<Args>>(args_wrapped))...));
@@ -111,7 +114,7 @@ struct wrap_impl {
       std::enable_if_t<!enable_wrap_output<Return>, void*> = {}) {
     auto func_wrapped =
         [func_f = std::forward<Func>(info.func)]
-        (wrap_arg_t<Args>... args_wrapped) mutable {
+        (wrap_arg_t<Args>... args_wrapped) {
       return func_f(wrap_arg<Args>::unwrap(
               std::forward<wrap_arg_t<Args>>(args_wrapped))...);
     };
@@ -120,32 +123,37 @@ struct wrap_impl {
 
   // General case: Callbacks.
   // Note: Not sure how to handle general lambdas...
-  template <typename Return, typename ... Args>
-  struct wrap_arg<std::function<Return (Args...)>> {
-    using Normal = std::function<Return (Args...)>;
-    using Wrapped = std::function<wrap_arg_t<Return> (wrap_arg_t<Args>...)>;
+  template <typename Func, typename Return, typename ... Args>
+  struct wrap_arg<function_info<Func, Return, Args...>&&> {
+    // Cannot use `auto`, because it is unable to mix lambdas.
+    using WrappedFunc = std::function<wrap_arg_t<Return> (wrap_arg_t<Args>...)>;
 
-    static Wrapped wrap(const Normal& func) {
-      return wrap_impl::run(func);
+    static WrappedFunc wrap(function_info<Func, Return, Args...>&& info) {
+      return wrap_impl::run(std::move(info));
     }
 
-    template <typename F>
-    static Normal unwrap(F&& func_wrapped) {
-      return unwrap_impl(std::forward<F>(func_wrapped),
+    template <typename FFunc>
+    static WrappedFunc wrap(FFunc&& func) {
+      return wrap_impl::run<Func, Return, Args...>({std::forward<Func>(func)});
+    }
+
+    template <typename Wrapped>
+    static auto unwrap(Wrapped&& func_wrapped) {
+      return unwrap_impl(std::forward<Wrapped>(func_wrapped),
           std::integral_constant<bool, enable_wrap_output<Return>>{});
     }
 
-    template <typename F>
-    static Normal unwrap_impl(
-        F&& func_wrapped, std::false_type = {}) {
+    template <typename Wrapped>
+    static auto unwrap_impl(
+        Wrapped&& func_wrapped, std::false_type = {}) {
       return [func_wrapped](Args... args) {
         func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...);
       };
     }
 
-    template <typename F>
-    static Normal unwrap_impl(
-        F&& func_wrapped, std::true_type = {}) {
+    template <typename Wrapped>
+    static auto unwrap_impl(
+        Wrapped&& func_wrapped, std::true_type = {}) {
       return [func_wrapped](Args... args) -> Return {
         return wrap_arg<Return>::unwrap(
             func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...));
@@ -153,7 +161,11 @@ struct wrap_impl {
     }
   };
 
-  // Wrap const-references too.
+  // Wrap std::function<>.
+  template <typename F>
+  struct wrap_arg<std::function<F>>
+      : public wrap_arg<get_function_info_t<std::function<F>>&&> {};
+
   template <typename F>
   struct wrap_arg<const std::function<F>&>
       : public wrap_arg<std::function<F>> {};
@@ -214,6 +226,7 @@ auto EnsurePtr(Func&& func) {
       get_function_info(std::forward<Func>(func)));
 }
 
+
 struct MoveOnlyValue {
   MoveOnlyValue() = default;
   MoveOnlyValue(const MoveOnlyValue&) = delete;
@@ -246,9 +259,11 @@ struct MoveOnlyFunctor {
   MoveOnlyFunctor() {}
   MoveOnlyFunctor(const MoveOnlyFunctor&) = delete;
   MoveOnlyFunctor(MoveOnlyFunctor&&) = default;
-  // NOTE: Mutable operator().
   // Cannot overload operator(), as it's ambiguous.
-  void operator()(MoveOnlyValue& value) { value.value += 4; }
+  // NOTE: Could make this mutable, but doesn't make sense to?
+  void operator()(MoveOnlyValue& value) const {
+    value.value += 4;
+  }
 };
 
 struct ConstFunctor {
