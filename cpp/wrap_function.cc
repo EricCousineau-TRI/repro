@@ -118,43 +118,55 @@ struct wrap_impl {
     return func_wrapped;
   }
 
+  // General case: Callbacks.
+  // Note: Not sure how to handle general lambdas...
   template <typename Return, typename ... Args>
   struct wrap_arg<std::function<Return (Args...)>> {
     using Normal = std::function<Return (Args...)>;
     using Wrapped = std::function<wrap_arg_t<Return> (wrap_arg_t<Args>...)>;
 
-    static Wrapped wrap(Normal func) {
+    static Wrapped wrap(const Normal& func) {
       return wrap_impl::run(func);
     }
 
-    static Normal unwrap(Wrapped func_wrapped) {
+    static Normal unwrap(const Wrapped& func_wrapped) {
       return unwrap_impl(func_wrapped,
           std::integral_constant<bool, enable_wrap_output<Return>>{});
     }
 
-    static Normal unwrap_impl(Wrapped func_wrapped, std::false_type = {}) {
+    static Normal unwrap_impl(
+        const Wrapped& func_wrapped, std::false_type = {}) {
       return [func_wrapped](Args... args) {
         func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...);
       };
     }
 
-    static Normal unwrap_impl(Wrapped func_wrapped, std::true_type = {}) {
+    static Normal unwrap_impl(
+        const Wrapped& func_wrapped, std::true_type = {}) {
       return [func_wrapped](Args... args) -> Return {
         return wrap_arg<Return>::unwrap(
             func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...));
       };
     }
   };
+
+  // Wrap const-references too.
+  template <typename F>
+  struct wrap_arg<const std::function<F>&>
+      : public wrap_arg<std::function<F>> {};
+};
+
+template <typename T>
+struct wrap_arg_default {
+  static T unwrap(T arg) { return std::forward<T>(arg); }
+  static T wrap(T arg) { return std::forward<T>(arg); }
 };
 
 }  // namespace detail
 
 // Base case: Pass though.
 template <typename T>
-struct ensure_ptr {
-  static T unwrap(T arg) { return std::forward<T>(arg); }
-  static T wrap(T arg) { return std::forward<T>(arg); }
-};
+struct ensure_ptr : public detail::wrap_arg_default<T> {};
 
 template <typename T>
 struct ensure_ptr<const T*> {
@@ -216,7 +228,7 @@ void Func_6(int& value, std::function<void (int&)> callback) {
   callback(value);
 }
 
-int& Func_7(int& value, std::function<int& (int&)> callback) {
+int& Func_7(int& value, const std::function<int& (int&)>& callback) {
   return callback(value);
 }
 
