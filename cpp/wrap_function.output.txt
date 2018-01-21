@@ -22,33 +22,55 @@ v.value = 11
 
 v.value = 11
 
+>>> EnsurePtr(void_ref)(&v.value);
+<T&> unwrap: int&
+
+v.value = 21
+
 >>> EnsurePtr(MyClass::Func)(MoveOnlyValue{});
 
-v.value = 11
+v.value = 21
 
 >>> EnsurePtr(&MyClass::Method)(&c, &v);
 <T&> unwrap: MoveOnlyValue&
 
-v.value = 13
+v.value = 23
 
 >>> EnsurePtr(&MyClass::Method_2)(&c_const, &v);
 <const T*> unwrap: MyClass const*
 <T&> unwrap: MoveOnlyValue&
 
-v.value = 16
+v.value = 26
 
 >>> EnsurePtr(std::move(f))(&v);
 <T&> unwrap: MoveOnlyValue&
 
-v.value = 20
+v.value = 30
 
 >>> EnsurePtr(g)(&v);
 <T&> unwrap: MoveOnlyValue&
 
-v.value = 25
+v.value = 35
 
 >>> EnsurePtr(g_const)(&v);
 <T&> unwrap: MoveOnlyValue&
 
-v.value = 30
+v.value = 40
+
+>>> EnsurePtr(Func_6)(&v.value, EnsurePtr(void_ref));
+<T&> unwrap: int&
+<T&> wrap: int&
+<T&> unwrap: int&
+
+v.value = 50
+
+>>> cout << *EnsurePtr(Func_7)(&v.value, EnsurePtr(get_ref));
+<T&> unwrap: int&
+<T&> wrap: int&
+<T&> unwrap: int&
+<T&> wrap: int&
+<T&> unwrap: int&
+<T&> wrap: int&
+150
+v.value = 150
 
