@@ -70,6 +70,15 @@ auto get_function_info(Func&& func) {
 
 namespace detail {
 
+template <template <typename...> class wrap_arg, typename T>
+struct get_wrap_arg_t {
+  using type = decltype(wrap_arg<T>::wrap(std::declval<T>()));
+};
+template <template <typename...> class wrap_arg>
+struct get_wrap_arg_t<wrap_arg, void> {
+  using type = void;
+};
+
 // Nominal case.
 template <template <typename...> class wrap_arg_tpl>
 struct wrap_impl {
@@ -77,7 +86,7 @@ struct wrap_impl {
   struct wrap_arg : public wrap_arg_tpl<T> {};
 
   template <typename T>
-  using wrap_arg_t = decltype(wrap_arg<T>::wrap(std::declval<T>()));
+  using wrap_arg_t = typename get_wrap_arg_t<wrap_arg, T>::type;
 
   template <typename Return>
   static constexpr bool enable_wrap_output =
@@ -90,9 +99,8 @@ struct wrap_impl {
         [func_f = std::forward<Func>(info.func)]
         (wrap_arg_t<Args>... args_wrapped) mutable {
       return wrap_arg<Return>::wrap(
-          func_f(std::forward<Args>(
-              wrap_arg<Args>::unwrap(
-                  std::forward<wrap_arg_t<Args>>(args_wrapped)))...));
+          func_f(wrap_arg<Args>::unwrap(
+                  std::forward<wrap_arg_t<Args>>(args_wrapped))...));
     };
     return func_wrapped;
   }
@@ -104,9 +112,8 @@ struct wrap_impl {
     auto func_wrapped =
         [func_f = std::forward<Func>(info.func)]
         (wrap_arg_t<Args>... args_wrapped) mutable {
-      return func_f(std::forward<Args>(
-          wrap_arg<Args>::unwrap(
-              std::forward<wrap_arg_t<Args>>(args_wrapped)))...);
+      return func_f(wrap_arg<Args>::unwrap(
+              std::forward<wrap_arg_t<Args>>(args_wrapped))...);
     };
     return func_wrapped;
   }
@@ -114,7 +121,7 @@ struct wrap_impl {
   template <typename Return, typename ... Args>
   struct wrap_arg<std::function<Return (Args...)>> {
     using Normal = std::function<Return (Args...)>;
-    using Wrapped = std::function<Return (wrap_arg_t<Args>...)>;
+    using Wrapped = std::function<wrap_arg_t<Return> (wrap_arg_t<Args>...)>;
 
     static Wrapped wrap(Normal func) {
       return wrap_impl::run(func);
@@ -132,8 +139,8 @@ struct wrap_impl {
     }
 
     static Normal unwrap_impl(Wrapped func_wrapped, std::true_type = {}) {
-      return [func_wrapped](Args... args) {
-        wrap_arg<Return>::unwrap(
+      return [func_wrapped](Args... args) -> Return {
+        return wrap_arg<Return>::unwrap(
             func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...));
       };
     }
@@ -209,6 +216,10 @@ void Func_6(int& value, std::function<void (int&)> callback) {
   callback(value);
 }
 
+int& Func_7(int& value, std::function<int& (int&)> callback) {
+  return callback(value);
+}
+
 class MyClass {
  public:
   static void Func(MoveOnlyValue&& value) {}
@@ -257,6 +268,13 @@ int main() {
     value += 100;
   };
   CHECK(EnsurePtr(Func_6)(&v.value, EnsurePtr(void_ref)));
+
+  // Callback with return.
+  auto get_ref = [](int& value) -> auto& {
+    value += 200;
+    return value;
+  };
+  CHECK(cout << *EnsurePtr(Func_7)(&v.value, EnsurePtr(get_ref)));
 
   return 0;
 }
