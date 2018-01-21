@@ -73,3 +73,17 @@ v.value = 50
 150
 v.value = 150
 
+>>> cout << *EnsurePtr(get_ref_nested)(&v.value, EnsurePtr(Func_7));
+<T&> unwrap: int&
+<T&> wrap: int&
+<T&> unwrap: int&
+<T&> wrap: int&
+<T&> unwrap: int&
+<T&> wrap: int&
+<T&> unwrap: int&
+<T&> wrap: int&
+<T&> unwrap: int&
+<T&> wrap: int&
+1250
+v.value = 1250
+

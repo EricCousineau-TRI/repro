@@ -328,11 +328,19 @@ int main() {
   CHECK(EnsurePtr(Func_6)(&v.value, EnsurePtr(void_ref)));
 
   // Callback with return.
-  auto get_ref = [](int& value) -> auto& {
+  auto get_ref = [](int& value) -> int& {
     value += 100;
     return value;
   };
   CHECK(cout << *EnsurePtr(Func_7)(&v.value, EnsurePtr(get_ref)));
+
+  // Nested callback.
+  auto get_ref_nested = [get_ref](int& value,
+      std::function<int& (int&, const std::function<int& (int&)>&)> func) -> auto& {
+    value += 1000;
+    return func(value, get_ref);
+  };
+  CHECK(cout << *EnsurePtr(get_ref_nested)(&v.value, EnsurePtr(Func_7)));
 
   return 0;
 }
