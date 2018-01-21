@@ -1,0 +1,48 @@
+>>> EnsurePtr(Func_1)(v.value);
+
+v.value = 10
+
+>>> cout << *EnsurePtr(Func_2)(&v.value);
+<T&> unwrap: int&
+11
+v.value = 11
+
+>>> cout << *EnsurePtr(Func_3)(&v.value);
+<const T&> unwrap: const int&
+<const T&> wrap: const int&
+11
+v.value = 11
+
+>>> EnsurePtr(Func_4)(MoveOnlyValue{});
+
+v.value = 11
+
+>>> EnsurePtr(MyClass::Func)(MoveOnlyValue{});
+
+v.value = 11
+
+>>> EnsurePtr(&MyClass::Method)(&c, &v);
+<T&> unwrap: MoveOnlyValue&
+
+v.value = 13
+
+>>> EnsurePtr(&MyClass::Method_2)(&c_const, &v);
+<T&> unwrap: MoveOnlyValue&
+
+v.value = 16
+
+>>> EnsurePtr(std::move(f))(&v);
+<T&> unwrap: MoveOnlyValue&
+
+v.value = 20
+
+>>> EnsurePtr(g)(&v);
+<T&> unwrap: MoveOnlyValue&
+
+v.value = 25
+
+>>> EnsurePtr(g_const)(&v);
+<T&> unwrap: MoveOnlyValue&
+
+v.value = 30
+
