@@ -34,10 +34,10 @@ auto infer_function_ptr(Func* func = nullptr) {
   return detail::remove_class_from_ptr(&Func::operator());
 }
 
-template <typename Func>
+template <typename Func, typename T = void>
 using enable_if_lambda_t =
     std::enable_if_t<std::integral_constant<
-        bool, !std::is_function<std::decay_t<Func>>::value>::value>;
+        bool, !std::is_function<std::decay_t<Func>>::value>::value, T>;
 
 }  // namespace detail
 
@@ -163,7 +163,7 @@ using ensure_ptr_t =
     typename detail::wrap_impl<ensure_ptr>::template wrap_arg_t<T>;
 
 template <typename Func>
-struct ensure_ptr<Func, detail::enable_if_lambda_t<Func>> {
+struct ensure_ptr<Func, detail::enable_if_lambda_t<Func, int>> {
   using PFunc = std::decay_t<Func>*;
   static auto wrap(Func func) {
     return EnsurePtr(std::forward<Func>(func));
@@ -251,11 +251,11 @@ int main() {
   const ConstFunctor& g_const{g};
   CHECK(EnsurePtr(g_const)(&v));
 
-  // // Callback.
-  // auto void_ref = [](int& value) {
-  //   value += 100;
-  // };
-  // CHECK(EnsurePtr(Func_6)(&v.value, EnsurePtr(void_ref)));
+  // Callback.
+  auto void_ref = [](int& value) {
+    value += 100;
+  };
+  CHECK(EnsurePtr(Func_6)(&v.value, EnsurePtr(void_ref)));
 
   return 0;
 }
