@@ -24,16 +24,53 @@ template <typename F>
 using is_lambda = std::integral_constant<
     bool, !std::is_function<std::decay_t<F>>::value>;
 
-template <typename F>
-auto get_function_ptr_t(const F&) {
-  return function_ptr_t<F>{};
+// End: from pybind
 }
 
-template <typename Return, typename ... Args>
-auto get_function_ptr_t(Return (*ptr)(Args...)) {
-  return ptr;
+template <typename Func, typename Return, typename ... Args>
+struct function_info {
+  std::decay_t<Func> func;
+};
+
+namespace detail {
+
+template <typename Return, typename ... Args, typename Func>
+auto infer_function_info(Func&& func, Return (*infer)(Args...) = nullptr) {
+  (void)infer;
+  return function_info<Func, Return, Args...>{std::forward<Func>(func)};
 }
-// End: from pybind
+
+}  // namespace detail
+
+template <typename Return, typename ... Args>
+auto get_function_info(Return (*func)(Args...)) {
+  return detail::infer_function_info<Return, Args...>(func);
+}
+
+template <typename Return, typename Class, typename ... Args>
+auto get_function_info(Return (Class::*method)(Args...)) {
+  auto func = [method](Class* self, Args... args) {
+    return (self->*method)(std::forward<Args>(args)...);
+  };
+  return detail::infer_function_info<Return, Class*, Args...>(func);
+}
+
+template <typename Return, typename Class, typename ... Args>
+auto get_function_info(Return (Class::*method)(Args...) const) {
+  auto func = [method](const Class* self, Args... args) {
+    return (self->*method)(std::forward<Args>(args)...);
+  };
+  return detail::infer_function_info<Return, const Class*, Args...>(func);
+}
+
+template <typename Func,
+    typename = std::enable_if_t<detail::is_lambda<Func>::value>>
+auto get_function_info(Func&& func) {
+  return detail::infer_function_info(
+      std::forward<Func>(func), detail::function_ptr_t<Func>{});
+}
+
+namespace detail {
 
 template <typename T>
 struct wrap_arg {
@@ -54,12 +91,10 @@ template <typename T>
 using wrap_arg_in_t = typename wrap_arg<T>::type_in;
 
 // Nominal case.
-template <typename Return, typename ... Args, typename Func,
-    typename = std::enable_if_t<!std::is_same<Return, void>::value>>
-auto wrap_impl(Func&& func, Return (*infer)(Args...)) {
-  (void)infer;
+template <typename Func, typename Return, typename ... Args>
+auto WrapImpl(function_info<Func, Return, Args...>&& info) {
   auto func_wrapped =
-      [func_f = std::forward<Func>(func)]
+      [func_f = std::forward<Func>(info.first)]
       (wrap_arg_in_t<Args>... args) mutable {
     return wrap_arg<Return>::wrap(
         func_f(std::forward<Args>(
@@ -69,12 +104,11 @@ auto wrap_impl(Func&& func, Return (*infer)(Args...)) {
   return func_wrapped;
 }
 
-// void return case.
-template <typename ... Args, typename Func>
-auto wrap_impl(Func&& func, void (*infer)(Args...)) {
-  (void)infer;
+// Return `void` case (do not wrap output).
+template <typename Func, typename ... Args>
+auto WrapImpl(function_info<Func, void, Args...>&& info) {
   auto func_wrapped =
-      [func_f = std::forward<Func>(func)]
+      [func_f = std::forward<Func>(info.func)]
       (wrap_arg_in_t<Args>... args) mutable {
     return func_f(std::forward<Args>(
         wrap_arg<Args>::unwrap(
@@ -83,46 +117,11 @@ auto wrap_impl(Func&& func, void (*infer)(Args...)) {
   return func_wrapped;
 }
 
-template <typename Func>
-auto wrap_impl(Func&& func) {
-  return wrap_impl(std::forward<Func>(func), get_function_ptr_t(func));
-}
-
 }  // namespace detail
 
-
-template <typename Return, typename ... Args>
-auto Wrap(Return (*func)(Args...)) {
-  return detail::wrap_impl(func);
-}
-
-template <typename Return, typename Class, typename ... Args>
-auto Wrap(Return (Class::*method)(Args...)) {
-  auto func = [method](Class* self, Args... args) {
-    return (self->*method)(std::forward<Args>(args)...);
-  };
-  return detail::wrap_impl(func);
-}
-
-template <typename Return, typename Class, typename ... Args>
-auto Wrap(Return (Class::*method)(Args...) const) {
-  auto func = [method](const Class* self, Args... args) {
-    return (self->*method)(std::forward<Args>(args)...);
-  };
-  return detail::wrap_impl(func);
-}
-
-template <typename Func,
-    typename = std::enable_if_t<detail::is_lambda<Func>::value>>
+template <typename Func>
 auto Wrap(Func&& func) {
-  return detail::wrap_impl(std::forward<Func>(func));
-}
-
-// Overload for handling overloads (but not distinguising between mutable and
-// const...)
-template <typename Return, typename... Args, typename Func>
-auto Wrap(Func&& func, Return (*infer)(Args...)) {
-  return detail::wrap_impl(std::forward<Func>(func), infer);
+  return detail::WrapImpl(get_function_info(std::forward<Func>(func)));
 }
 
 struct MoveOnlyValue {
