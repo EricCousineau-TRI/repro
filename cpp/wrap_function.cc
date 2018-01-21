@@ -129,20 +129,23 @@ struct wrap_impl {
       return wrap_impl::run(func);
     }
 
-    static Normal unwrap(const Wrapped& func_wrapped) {
-      return unwrap_impl(func_wrapped,
+    template <typename F>
+    static Normal unwrap(F&& func_wrapped) {
+      return unwrap_impl(std::forward<F>(func_wrapped),
           std::integral_constant<bool, enable_wrap_output<Return>>{});
     }
 
+    template <typename F>
     static Normal unwrap_impl(
-        const Wrapped& func_wrapped, std::false_type = {}) {
+        F&& func_wrapped, std::false_type = {}) {
       return [func_wrapped](Args... args) {
         func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...);
       };
     }
 
+    template <typename F>
     static Normal unwrap_impl(
-        const Wrapped& func_wrapped, std::true_type = {}) {
+        F&& func_wrapped, std::true_type = {}) {
       return [func_wrapped](Args... args) -> Return {
         return wrap_arg<Return>::unwrap(
             func_wrapped(wrap_arg<Args>::wrap(std::forward<Args>(args))...));
