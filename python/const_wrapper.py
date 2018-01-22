@@ -26,28 +26,24 @@ def _rebind_method(bound, new_self):
     return MethodType(bound.__func__, new_self, bound.im_class)
 
 class _ConstClassMeta(object):
-    def __init__(self, cls, owned=None, mutable_methods=None):
+    def __init__(self, cls, owned_properties=None, mutable_methods=None):
         self._cls = cls
-        if owned is None:
-            owned = set()
-        if mutable_methods is None:
-            mutable_methods = set()
-        self._owned = set(owned)  # set of strings
-        self.mutable_methods = set(mutable_methods)  # set of strings
+        self.owned_properties = set(owned_properties or set())  # set of strings
+        self.mutable_methods = set(mutable_methods or set())  # set of strings
         # Add any decorated mutable methods.
         methods = inspect.getmembers(cls, predicate=inspect.ismethod)
         for name, method in methods:
             if getattr(method, '_is_mutable_method', False):
-                mutable_methods.add(name)
+                self.mutable_methods.add(name)
         # Recursion / inheritance is handled by `_ConstClassMetaMap`, to handle
         # caching.
 
     def update(self, parent):
-        self._owned.update(parent._owned)
+        self.owned_properties.update(parent.owned_properties)
         self.mutable_methods.update(parent.mutable_methods)
 
     def is_owned(self, name):
-        return name in self._owned
+        return name in self.owned_properties
 
     def is_mutable(self, name):
         # Limitation: This would not handle overloads.
@@ -58,8 +54,8 @@ class _ConstClassMetaMap(object):
     def __init__(self):
         self._meta_map = {}
 
-    def emplace(self, cls, owned=None, mutable_methods=None):
-        meta = _ConstClassMeta(cls, owned, mutable_methods)
+    def emplace(self, cls, owned_properties=None, mutable_methods=None):
+        meta = _ConstClassMeta(cls, owned_properties, mutable_methods)
         return self._add(cls, meta)
 
     def _add(self, cls, meta):
@@ -148,14 +144,13 @@ class _Const(ObjectProxy):
             return out
 
 # Automatically rewrite any mutable methods for `object` to always deny access.
-for name in _const_metas.get(object).mutable:
 for name in _const_metas.get(object).mutable_methods:
-    def _new_scope(name):
-        def _no_access(self, *args, **kwargs):
+    def _capture(name):
+        def _no_mutable(self, *args, **kwargs):
             _raise_mutable_method_error(self, name)
-        _no_access.__name__ = name
-        setattr(_Const, name, _no_access)
-    _new_scope(name)
+        _no_mutable.__name__ = name
+        setattr(_Const, name, _no_mutable)
+    _capture(name)
 
 
 class ConstIter(object):
@@ -211,18 +206,18 @@ def _raise_mutable_method_error(self, name):
         ("'{}' is a mutable method that cannot be called on a " +
         "const {}.").format(name, type_ex(self)))
 
-def mutable_methods(func):
+def mutable_method(func):
     func._is_mutable_method = True
     return func
 
-def add_const_meta(cls, owned=None, mutable_methods=None):
-    _const_metas.emplace(cls, owned, mutable_methods)
+def add_const_meta(cls, owned_properties=None, mutable_methods=None):
+    _const_metas.emplace(cls, owned_properties, mutable_methods)
     return cls
 
-def const_meta(owned=None, mutable_methods=None):
-    return lambda cls: add_const_meta(cls, owned, mutable_methods)
+def const_meta(owned_properties=None, mutable_methods=None):
+    return lambda cls: add_const_meta(cls, owned_properties, mutable_methods)
 
-@const_meta(owned = ['_map'])
+@const_meta(owned_properties = ['_map'])
 class Check(object):
     def __init__(self, value):
         self._value = value
@@ -247,7 +242,7 @@ class Check(object):
         print("{}: {}".format(stuff, self._value))
         # self.set_value(10)  # Raises error.
 
-    @mutable
+    @mutable_method
     def mutate(self): pass
 
     def __setitem__(self, key, value):
@@ -255,7 +250,7 @@ class Check(object):
 
     value = property(get_value, set_value)
 
-@const_meta(owned = ['_my_value'])
+@const_meta(owned_properties = ['_my_value'])
 class SubCheck(Check):
     def __init__(self):
         Check.__init__(self, 100)
