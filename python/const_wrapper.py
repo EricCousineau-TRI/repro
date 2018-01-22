@@ -12,40 +12,28 @@ from types import MethodType
 class ConstError(RuntimeError):
     pass
 
-def _is_literal(cls):
-    if cls in [int, float, str, unicode, tuple]:
-        return True
-    else:
-        return False
-
-def _is_method_of(func, obj):
-    return inspect.ismethod(func) and func.im_self is obj
-
-def _rebind_method(bound, new_self):
-    # https://stackoverflow.com/a/14574713/7829525
-    return MethodType(bound.__func__, new_self, bound.im_class)
-
 class _ConstClassMeta(object):
     def __init__(self, cls, owned_properties=None, mutable_methods=None):
-        self._cls = cls
+        self.cls = cls
         self.owned_properties = set(owned_properties or set())  # set of strings
         self.mutable_methods = set(mutable_methods or set())  # set of strings
         # Add any decorated mutable methods.
         methods = inspect.getmembers(cls, predicate=inspect.ismethod)
         for name, method in methods:
+            # TODO(eric.cousineau): Warn if there is a mix of mutable and
+            # immutable methods with the same name.
             if getattr(method, '_is_mutable_method', False):
                 self.mutable_methods.add(name)
-        # Recursion / inheritance is handled by `_ConstClassMetaMap`, to handle
-        # caching.
-
-    def update(self, parent):
-        self.owned_properties.update(parent.owned_properties)
-        self.mutable_methods.update(parent.mutable_methods)
+        # Handle inheritance.
+        for base_cls in self.cls.__bases__:
+            base_meta = _const_metas.get(base_cls)  # Minor cyclic dependency.
+            self.owned_properties.update(base_meta.owned_properties)
+            self.mutable_methods.update(base_meta.mutable_methods)
 
     def is_owned(self, name):
         return name in self.owned_properties
 
-    def is_mutable(self, name):
+    def is_mutable_method(self, name):
         # Limitation: This would not handle overloads.
         # (e.g. `const T& get() const` and `T& get()`.
         return name in self.mutable_methods
@@ -60,9 +48,6 @@ class _ConstClassMetaMap(object):
 
     def _add(self, cls, meta):
         assert cls not in self._meta_map
-        # Recurse through bases for complete information.
-        for base in cls.__bases__:
-            meta.update(self.get(base))
         self._meta_map[cls] = meta
         return meta
 
@@ -105,21 +90,24 @@ _emplace(list, mutable_methods={
     'remove', 'sort'})
 _emplace(dict, mutable_methods={'clear', 'setdefault'})
 
+
 class _Const(ObjectProxy):
     def __init__(self, wrapped):
         ObjectProxy.__init__(self, wrapped)
 
     def __getattr__(self, name):
+        # Intercepts access to mutable methods, general methods, and owned
+        # properties.
         wrapped = object.__getattribute__(self, '__wrapped__')
         meta = _const_metas.get(type(wrapped))
         value = getattr(wrapped, name)
-        if meta.is_mutable(name):
-            # If explicitly mutable, raise an error.
-            # (For complex situations.)
+        if meta.is_mutable_method(name):
+            # If decorated as a mutable method, raise an error. Do not allow
+            # access to the bound method, because the only way this method
+            # *should* become usable is to rebind it.
             _raise_mutable_method_error(self, name)
         elif _is_method_of(value, wrapped):
-            # Propagate const-ness into method (replace `im_self`) to catch
-            # basic violations.
+            # Rebind method to const `self` recursively catch basic violations.
             return _rebind_method(value, self)
         elif meta.is_owned(name):
             # References (pointer-like things) should not be const, but
@@ -133,7 +121,9 @@ class _Const(ObjectProxy):
         return to_const(self.__wrapped__.__dict__)
 
     def __iter__(self):
-        return ConstIter(self.__wrapped__)
+        # TODO(eric.cousineau): This assumes that iterating will yield owned
+        # items. Add option to suppress this?
+        return _ConstIter(self.__wrapped__)
 
     def __str__(self):
         out = self.__wrapped__.__str__()
@@ -143,7 +133,9 @@ class _Const(ObjectProxy):
         else:
             return out
 
-# Automatically rewrite any mutable methods for `object` to always deny access.
+
+# Automatically rewrite any mutable methods for `object` to deny access upon
+# calling.
 for name in _const_metas.get(object).mutable_methods:
     def _capture(name):
         def _no_mutable(self, *args, **kwargs):
@@ -153,69 +145,94 @@ for name in _const_metas.get(object).mutable_methods:
     _capture(name)
 
 
-class ConstIter(object):
-    def __init__(self, obj):
-        self._obj = obj
+class _ConstIter(object):
+    # Provides a const-proxying iterator.
+    def __init__(self, wrapped):
+        self._wrapped = wrapped
         self.__iter__()
 
     def __iter__(self):
-        self._iter = iter(self._obj)
+        self._wrapped_iter = iter(self._wrapped)
         return self
 
     def next(self):
-        n = next(self._iter)
+        n = next(self._wrapped_iter)
         return to_const(n)
 
+def _is_literal(obj):
+    # Detects if a type is a literal / immutable type.
+    literal_types = [int, float, str, unicode, tuple, type(None)]
+    if type(obj) in literal_types:
+        return True
+    else:
+        return False
+
+def _is_method_of(func, obj):
+    # Detects if `func` is a function bound to a given instance `obj`.
+    return inspect.ismethod(func) and func.im_self is obj
+
+def _rebind_method(bound, new_self):
+    # Rebinds `bound.im_self` to `new_self`.
+    # https://stackoverflow.com/a/14574713/7829525
+    return MethodType(bound.__func__, new_self, bound.im_class)
+
 def to_const(obj):
-    if obj is not None:
-        if _is_literal(type(obj)):
-            # Literals / immutable types have no references.
-            # No need to waste a proxy.
-            return obj
-        else:
-            return _Const(obj)
+    """Converts an object to a const proxy. Does not proxy literals, as that
+    is unneeded. """
+    if _is_literal(obj):
+        return obj
+    else:
+        return _Const(obj)
 
 def to_mutable(obj, force=False):
-    # Forced conversion.
+    """Converts to a mutable (non-const proxied) object.
+    If `force` is False, will throw an error if `obj` is const. """
     if not force and is_const(obj):
         raise ConstError(
-            "Cannot cast const {} to mutable instance".format(type_ex(self)))
+            "Cannot cast const {} to mutable instance"
+            .format(type_extract(self)))
     if isinstance(obj, _Const):
         return obj.__wrapped__
-    elif isinstance(obj, ConstIter):
+    elif isinstance(obj, _ConstIter):
         return obj._iter
     else:
         return obj
 
 def is_const(obj):
-    if isinstance(obj, _Const) or isinstance(obj, ConstIter):
+    """Determines if `obj` is const-proxied. """
+    if isinstance(obj, _Const) or isinstance(obj, _ConstIter):
         return True
     else:
         return False
 
-def type_ex(obj):
+def type_extract(obj):
+    """Extracts type from an object if it's const-proxied; otherwise returns
+    direct type. """
     if isinstance(obj, _Const):
         return type(obj.__wrapped__)
-    elif isinstance(obj, ConstIter):
+    elif isinstance(obj, _ConstIter):
         return type(obj._iter)
     else:
         return type(obj)
 
-def _raise_mutable_method_error(self, name):
+def _raise_mutable_method_error(obj, name):
     raise ConstError(
         ("'{}' is a mutable method that cannot be called on a " +
-        "const {}.").format(name, type_ex(self)))
+        "const {}.").format(name, type_extract(obj)))
 
 def mutable_method(func):
+    """Decorates a function as mutable. """
     func._is_mutable_method = True
     return func
 
-def add_const_meta(cls, owned_properties=None, mutable_methods=None):
+def _add_const_meta(cls, owned_properties=None, mutable_methods=None):
+    # Adds const-proxy metadata to a class.
     _const_metas.emplace(cls, owned_properties, mutable_methods)
     return cls
 
 def const_meta(owned_properties=None, mutable_methods=None):
-    return lambda cls: add_const_meta(cls, owned_properties, mutable_methods)
+    """Decorates a class with const-proxy metadata. """
+    return lambda cls: _add_const_meta(cls, owned_properties, mutable_methods)
 
 @const_meta(owned_properties = ['_map'])
 class Check(object):
@@ -280,7 +297,7 @@ print(c_const.value)
 print(c_const)
 print(c_const.__dict__)
 print(type(c_const.__dict__))
-print(type_ex(c_const.__dict__))
+print(type_extract(c_const.__dict__))
 # c_const.__dict__['value'] = 200
 
 s = SubCheck()
@@ -307,5 +324,5 @@ print(obj)
 for i in obj:
     print(i)
     if isinstance(i, list):
-        print("woo")
+        print(is_const(i))
         # i[0] = 10  # Raises error.
