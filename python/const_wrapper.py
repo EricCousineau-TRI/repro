@@ -75,6 +75,19 @@ def const_cast(obj):
     else:
         return obj
 
+def is_const(obj):
+    if isinstance(obj, Const) or isinstance(obj, ConstIter):
+        return True
+    else:
+        return False
+
+def type_ex(obj):
+    if isinstance(obj, Const):
+        return type(obj.__wrapped__)
+    elif isinstance(obj, ConstIter):
+        return type(obj._iter)
+    else:
+        return type(obj)
 
 do_get = object.__getattribute__
 do_set = setattr #object.__setattr__
@@ -106,6 +119,9 @@ for f in wrap_functions:
         do_set(Const, f, wrap)
     _new_scope(f)
 
+def mutable(f):
+    f._is_mutable = True
+    return f
 
 class Check(object):
     def __init__(self, value):
@@ -115,6 +131,11 @@ class Check(object):
     def get_value(self):
         return self._value
 
+    @mutable
+    def _other_method(self):
+        self._value
+
+    @mutable
     def set_value(self, value):
         self._value = value
 
@@ -144,9 +165,12 @@ print(c_const.value)
 print(c_const)
 print(c_const.__dict__)
 print(type(c_const.__dict__))
+print(type_ex(c_const.__dict__))
 # c_const.__dict__['value'] = 200
 
 obj = to_const([1, 2, [10, 10]])
+print(is_const(obj))
+print(is_const([]))
 # obj[1] = 3
 const_cast(obj)[1] = 10
 print(obj)
