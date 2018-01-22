@@ -237,7 +237,7 @@ class Check(object):
 
     value = property(get_value, set_value)
 
-@const_info(owned = ['_my_vaue'])
+@const_info(owned = ['_my_value'])
 class SubCheck(Check):
     def __init__(self):
         Check.__init__(self, 100)
@@ -281,8 +281,7 @@ s_const.print_self()
 x = s_const.more()
 print(x)
 print(type(x))
-# This shouldn't be allowed???
-x[:] = []
+# x[:] = []
 
 obj = to_const([1, 2, [10, 10]])
 print(is_const(obj))
