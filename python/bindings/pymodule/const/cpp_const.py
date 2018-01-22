@@ -81,6 +81,7 @@ _emplace(object, mutable_methods={
     "__setattr__",
     "__delattr__",
     "__setitem__",
+    "__delitem__",
     "__setslice__",
     "__iadd__",
     "__isub__",
