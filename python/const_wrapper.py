@@ -1,6 +1,9 @@
 # pip install wrapt
 
+import inspect
 from wrapt import ObjectProxy
+
+from types import MethodType
 
 mutable_functions = [
     "__setattr__",
@@ -23,70 +26,100 @@ mutable_functions = [
     "__exit__",
 ]
 
-# Functions / properties whose return value should be wrapped as const.
-wrap_attr = [
-    # "__dict__",
-]
-
-wrap_functions = []
-
 class ConstError(RuntimeError):
     pass
 
-from types import MethodType
+def _is_literal(cls):
+    if cls in [int, float, str, unicode, tuple]:
+        return True
+    else:
+        return False
 
 def _is_method_of(func, obj):
-    return hasattr(func, 'im_class') and func.im_self is obj
+    return inspect.ismethod(func) and func.im_self is obj
 
 def _rebind_method(bound, new_self):
     # https://stackoverflow.com/a/14574713/7829525
     return MethodType(bound.__func__, new_self, bound.im_class)
 
+class ConstInfo(object):
+    def __init__(self, owned={}, mutable={}):
+        self.owned = owned
+        self.mutable = mutable
+        self.finished = False
+
+    def merge(self, parent):
+        self.owned.update(parent.owned)
+        self.mutable.update(parent.mutable)
+
+
+    @staticmethod
+    def from_cls(cls, owned=None, mutable=None):
+        # No inheritance, handled by `_ConstRegistry`.
+        if owned is None:
+            owned = set()
+        if mutable is None:
+            mutable = set()
+        for name, value in inspect.getmembers(cls, predicate=inspect.ismethod):
+            if getattr(value, '_is_mutable_method', False):
+                mutable.add(name)
+        return ConstInfo(set(owned), set(mutable))
+
+
 class _ConstRegistry(object):
-    def __init__(self):
-        self._owned_names = {}
+    def __init__(self, info):
+        self._info = info
 
-    def _get_names(self, cls):
+    def _get_info(self, cls):
         # Assume class has not changed if it's already registered.
-        names = self._owned_names.get(cls, None)
-        if names is not None:
-            return names
-        names = set(getattr(cls, '_owned_objects', []))
+        info = self._info.get(cls, None)
+        if info is not None:
+            assert info.finished
+            return info
+        info = getattr(cls, '_const_info', None) or ConstInfo.from_cls(cls)
         for base in cls.__bases__:
-            names.update(self._get_names(base))
-        self._owned_names[cls] = names
-        return names
+            info.merge(self._get_info(base))
+        self._info[cls] = info
+        info.finished = True
+        return info
 
-    def should_wrap(self, wrapped, name):
-        cls = type(wrapped)
-        return name in self._get_names(cls)
+    def is_owned(self, cls, name):
+        return name in self._get_info(cls).owned
 
-_const_registry = _ConstRegistry()
+    def is_mutable(self, cls, name):
+        return name in self._get_info(cls).mutable
 
+_const_registry = _ConstRegistry({
+        list: ConstInfo(
+            mutable={
+                'append', 'clear', 'insert', 'extend', 'insert', 'pop',
+                'remove', 'sort'}),
+        dict: ConstInfo(
+            mutable={'clear', 'setdefault'}),
+    })
+ 
 class Const(ObjectProxy):
     def __init__(self, wrapped):
         ObjectProxy.__init__(self, wrapped)
 
     def __getattr__(self, name):
         wrapped = object.__getattribute__(self, '__wrapped__')
+        cls = type(wrapped)
         value = getattr(wrapped, name)
-        # NOTE: If a callback or something has a reference to `self`, then
-        # this will fall apart. Oh well.
-        if _is_method_of(value, wrapped):
+        if _const_registry.is_mutable(cls, name):
             # If explicitly mutable, raise an error.
             # (For complex situations.)
-            if getattr(value, '_is_mutable_method', False):
-                _raise_error(self, name)
+            _raise_error(self, name)
+        elif _is_method_of(value, wrapped):
             # Propagate const-ness into method (replace `im_self`) to catch
             # basic violations.
             return _rebind_method(value, self)
-        else:
+        elif _const_registry.is_owned(cls, name):
             # References (pointer-like things) should not be const, but
-            # internal values should...
-            if _const_registry.should_wrap(wrapped, name):
-                return to_const(value)
-            else:
-                return value
+            # internal values should.
+            return to_const(value)
+        else:
+            return value
 
     @property
     def __dict__(self):
@@ -119,7 +152,10 @@ class ConstIter(object):
 def to_const(obj):
     # TODO: Check if literal type?
     if obj is not None:
-        return Const(obj)
+        if _is_literal(type(obj)):
+            return obj
+        else:
+            return Const(obj)
 
 def const_cast(obj):
     if isinstance(obj, Const):
@@ -157,15 +193,19 @@ for f in mutable_functions:
         do_set(Const, f, _no_access)
     _new_scope(f)
 
-def mutable(f):
-    f._is_mutable_method = True
-    return f
+def mutable(func):
+    func._is_mutable_method = True
+    return func
 
+def add_const_info(cls, owned=None, mutable=None):
+    cls._const_info = ConstInfo.from_cls(cls, owned, mutable)
+    return cls
 
+def const_info(owned=None, mutable=None):
+    return lambda cls: add_const_info(cls, owned, mutable)
 
+@const_info(owned = ['_map'])
 class Check(object):
-    _owned_objects = ['_map']
-
     def __init__(self, value):
         self._value = value
         self._map = {10: 0}
@@ -175,9 +215,6 @@ class Check(object):
 
     def print_self(self):
         print(type(self), self)
-
-    def _other_method(self):
-        self._value
 
     def set_value(self, value):
         self._value = value
@@ -200,18 +237,21 @@ class Check(object):
 
     value = property(get_value, set_value)
 
+@const_info(owned = ['_my_vaue'])
 class SubCheck(Check):
     def __init__(self):
         Check.__init__(self, 100)
+        self._my_value = []
 
     def extra(self):
         self.set_map(10, 10000)
 
-print(Const.__iter__)
+    def more(self):
+        # self._my_value.append(10)
+        return self._my_value
 
 c = Check(10)
 c_const = to_const(c)
-
 print(c_const.value)
 # c_const.value = 100
 # c_const.set_value(100)
@@ -230,26 +270,29 @@ print(type(c_const.__dict__))
 print(type_ex(c_const.__dict__))
 # c_const.__dict__['value'] = 200
 
-c.print_self()
-print(c.print_self.im_class)
-c_const.print_self()
-Check.print_self(c_const)
-
 s = SubCheck()
 s_const = to_const(s)
+
+c.print_self()
+c_const.print_self()
 s_const.print_self()
 # s_const.extra()
-s_const.mutate()
+# s_const.mutate()
+x = s_const.more()
+print(x)
+print(type(x))
+# This shouldn't be allowed???
+x[:] = []
 
-# obj = to_const([1, 2, [10, 10]])
-# print(is_const(obj))
-# print(is_const([]))
-# # obj[1] = 3
-# const_cast(obj)[1] = 10
-# print(obj)
+obj = to_const([1, 2, [10, 10]])
+print(is_const(obj))
+print(is_const([]))
+# obj[1] = 3
+const_cast(obj)[1] = 10
+print(obj)
 
-# for i in obj:
-#     print(i)
-#     if isinstance(i, list):
-#         print("woo")
-#         # i[0] = 10
+for i in obj:
+    print(i)
+    if isinstance(i, list):
+        print("woo")
+        # i[0] = 10
