@@ -25,7 +25,7 @@ mutable_functions = [
 
 # Functions / properties whose return value should be wrapped as const.
 wrap_attr = [
-    "__dict__",
+    # "__dict__",
 ]
 
 wrap_functions = []
@@ -37,34 +37,47 @@ class Const(ObjectProxy):
     def __init__(self, wrapped):
         ObjectProxy.__init__(self, wrapped)
 
-    def _is_mutable(self, name):
-        wrapped = self.__wrapped__
-        return False
+    def __iter__(self):
+        return ConstIter(self.__wrapped__)
 
-    # @property
-    # def __dict__(self):
-    #     wrapped = self.__wrapped__
-    #     return Const(wrapped.__dict__)
+    def __str__(self):
+        out = self.__wrapped__.__str__()
+        if len(out) >= 2 and len(out) < 200 and out[0] == '<' and out[-1] == '>':
+            return '<const ' + out[1:]
+        else:
+            return out
+
+    @property
+    def __dict__(self):
+        return to_const(self.__wrapped__.__dict__)
+
+class ConstIter(object):
+    def __init__(self, obj):
+        self._obj = obj
+        self.__iter__()
 
     def __iter__(self):
-        iter(self.__wrapped__)
+        self._iter = iter(self._obj)
         return self
 
     def next(self):
-        return to_const(next(self.__wrapped__))
-
-    def const_cast(self):
-        return self.__wrapped__
-
-
-
-do_get = object.__getattribute__
-do_set = setattr #object.__setattr__
+        n = next(self._iter)
+        return to_const(n)
 
 def to_const(obj):
     # TODO: Check if literal type?
     if obj is not None:
         return Const(obj)
+
+def const_cast(obj):
+    if isinstance(obj, Const):
+        return obj.__wrapped__
+    else:
+        return obj
+
+
+do_get = object.__getattribute__
+do_set = setattr #object.__setattr__
 
 for f in mutable_functions:
     def _new_scope(f):
@@ -78,6 +91,7 @@ for f in mutable_functions:
 for f in wrap_attr:
     def _new_scope(f):
         def wrap(self):
+            print("wrap: {}".format(f))
             wrapped = self.__wrapped__
             return to_const(do_get(wrapped, f))
         wrap.__name__ = f
@@ -98,10 +112,10 @@ class Check(object):
         self._value = value
         self._map = dict()
 
-    def _get_value(self):
+    def get_value(self):
         return self._value
 
-    def _set_value(self, value):
+    def set_value(self, value):
         self._value = value
 
     def do_something(self, stuff):
@@ -110,12 +124,12 @@ class Check(object):
     def __setitem__(self, key, value):
         self._map[key] = value
 
-    value = property(_get_value, _set_value)
+    value = property(get_value, set_value)
 
 print(Const.__iter__)
 
 c = Check(10)
-c_const = Const(c)
+c_const = to_const(c)
 
 print(c_const.value)
 # c_const.value = 100
@@ -126,14 +140,18 @@ print(c_const == c_const)
 c.value = 100
 print(c_const.value)
 
+print(c_const)
 print(c_const.__dict__)
 print(type(c_const.__dict__))
 # c_const.__dict__['value'] = 200
 
-obj = Const([1, 2, [10, 10]])
+obj = to_const([1, 2, [10, 10]])
 # obj[1] = 3
-obj.const_cast()[1] = 10
+const_cast(obj)[1] = 10
 print(obj)
 
 for i in obj:
     print(i)
+    if isinstance(i, list):
+        print("woo")
+        # i[0] = 10
