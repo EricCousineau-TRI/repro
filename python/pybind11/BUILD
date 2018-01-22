@@ -147,3 +147,16 @@ cc_binary(
     args = ["$(location custom_tests/test_alias_wrapper.py)"],
     deps = [":include"],
 )
+
+cc_binary(
+    name = "test_const",
+    srcs = [
+         "custom_tests/test_const.cc",
+         "tests/pybind11_tests.cpp",
+    ],
+    data = [
+        "custom_tests/test_const.py",
+    ],
+    args = ["$(location custom_tests/test_const.py)"],
+    deps = [":include"],
+)
