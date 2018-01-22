@@ -26,25 +26,25 @@ def _rebind_method(bound, new_self):
     return MethodType(bound.__func__, new_self, bound.im_class)
 
 class _ConstClassMeta(object):
-    def __init__(self, cls, owned=None, mutable=None):
+    def __init__(self, cls, owned=None, mutable_methods=None):
         self._cls = cls
         if owned is None:
             owned = set()
-        if mutable is None:
-            mutable = set()
+        if mutable_methods is None:
+            mutable_methods = set()
         self._owned = set(owned)  # set of strings
-        self.mutable = set(mutable)  # set of strings
+        self.mutable_methods = set(mutable_methods)  # set of strings
         # Add any decorated mutable methods.
         methods = inspect.getmembers(cls, predicate=inspect.ismethod)
         for name, method in methods:
             if getattr(method, '_is_mutable_method', False):
-                mutable.add(name)
+                mutable_methods.add(name)
         # Recursion / inheritance is handled by `_ConstClassMetaMap`, to handle
         # caching.
 
     def update(self, parent):
         self._owned.update(parent._owned)
-        self.mutable.update(parent.mutable)
+        self.mutable_methods.update(parent.mutable_methods)
 
     def is_owned(self, name):
         return name in self._owned
@@ -52,14 +52,14 @@ class _ConstClassMeta(object):
     def is_mutable(self, name):
         # Limitation: This would not handle overloads.
         # (e.g. `const T& get() const` and `T& get()`.
-        return name in self.mutable
+        return name in self.mutable_methods
 
 class _ConstClassMetaMap(object):
     def __init__(self):
         self._meta_map = {}
 
-    def emplace(self, cls, owned=None, mutable=None):
-        meta = _ConstClassMeta(cls, owned, mutable)
+    def emplace(self, cls, owned=None, mutable_methods=None):
+        meta = _ConstClassMeta(cls, owned, mutable_methods)
         return self._add(cls, meta)
 
     def _add(self, cls, meta):
@@ -84,7 +84,7 @@ _emplace = _const_metas.emplace
 # Register common mutators.
 # N.B. These methods actually have to be overridde in `Const`, since neither
 # `__getattr__` nor `__getattribute__` will capture them.
-_emplace(object, mutable={
+_emplace(object, mutable_methods={
     "__setattr__",
     "__delattr__",
     "__setitem__",
@@ -104,10 +104,10 @@ _emplace(object, mutable={
     "__enter__",
     "__exit__",
     })
-_emplace(list, mutable={
+_emplace(list, mutable_methods={
     'append', 'clear', 'insert', 'extend', 'insert', 'pop',
     'remove', 'sort'})
-_emplace(dict, mutable={'clear', 'setdefault'})
+_emplace(dict, mutable_methods={'clear', 'setdefault'})
 
 class _Const(ObjectProxy):
     def __init__(self, wrapped):
@@ -149,6 +149,7 @@ class _Const(ObjectProxy):
 
 # Automatically rewrite any mutable methods for `object` to always deny access.
 for name in _const_metas.get(object).mutable:
+for name in _const_metas.get(object).mutable_methods:
     def _new_scope(name):
         def _no_access(self, *args, **kwargs):
             _raise_mutable_method_error(self, name)
@@ -210,16 +211,16 @@ def _raise_mutable_method_error(self, name):
         ("'{}' is a mutable method that cannot be called on a " +
         "const {}.").format(name, type_ex(self)))
 
-def mutable(func):
+def mutable_methods(func):
     func._is_mutable_method = True
     return func
 
-def add_const_meta(cls, owned=None, mutable=None):
-    _const_metas.emplace(cls, owned, mutable)
+def add_const_meta(cls, owned=None, mutable_methods=None):
+    _const_metas.emplace(cls, owned, mutable_methods)
     return cls
 
-def const_meta(owned=None, mutable=None):
-    return lambda cls: add_const_meta(cls, owned, mutable)
+def const_meta(owned=None, mutable_methods=None):
+    return lambda cls: add_const_meta(cls, owned, mutable_methods)
 
 @const_meta(owned = ['_map'])
 class Check(object):
