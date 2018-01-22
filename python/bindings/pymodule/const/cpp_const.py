@@ -1,8 +1,8 @@
-# pip install wrapt
-
 """
 @file
 Enables a semi-transparent layer of C++ const-honoring Python proxies.
+
+Requires: `pip install wrapt`
 """
 
 import inspect
