@@ -33,6 +33,15 @@ wrap_functions = []
 class ConstError(RuntimeError):
     pass
 
+from types import MethodType
+
+def _is_method(value):
+    return hasattr(value, 'im_class') and hasattr(value, 'im_self')
+
+def _rebind_method(bound, new_self):
+    # https://stackoverflow.com/a/14574713/7829525
+    return MethodType(bound.__func__, new_self, bound.im_class)
+
 class Const(ObjectProxy):
     def __init__(self, wrapped):
         ObjectProxy.__init__(self, wrapped)
@@ -50,6 +59,23 @@ class Const(ObjectProxy):
     @property
     def __dict__(self):
         return to_const(self.__wrapped__.__dict__)
+
+    def __getattr__(self, name):
+        __wrapped__ = object.__getattribute__(self, '__wrapped__')
+        value = getattr(__wrapped__, name)
+        if _is_method(value):
+            # If explicitly mutable, raise an error.
+            # (For complex situations.)
+            if getattr(value, '_is_mutable_method', False):
+                raise ConstError('{} is a mutable method'.format(name))
+            # Propagate const-ness into method (replace `im_self`) to catch
+            # basic violations.
+            return _rebind_method(value, self)
+        else:
+            # NOTE: Is there a way to dictate ownership?
+            # References (pointer-like things) should not be const, but
+            # internal values should...
+            return value
 
 class ConstIter(object):
     def __init__(self, obj):
@@ -120,10 +146,12 @@ for f in wrap_functions:
     _new_scope(f)
 
 def mutable(f):
-    f._is_mutable = True
+    f._is_mutable_method = True
     return f
 
 class Check(object):
+    # _mutable_vars = 
+
     def __init__(self, value):
         self._value = value
         self._map = dict()
@@ -134,16 +162,18 @@ class Check(object):
     def print_self(self):
         print(type(self), self)
 
-    @mutable
     def _other_method(self):
         self._value
 
-    @mutable
     def set_value(self, value):
         self._value = value
 
     def do_something(self, stuff):
         print("{}: {}".format(stuff, self._value))
+        # self.set_value(10)  # Causes error.
+
+    def do_something_else(self):
+        self._map[10] = 100
 
     def __setitem__(self, key, value):
         self._map[key] = value
@@ -157,9 +187,10 @@ c_const = to_const(c)
 
 print(c_const.value)
 # c_const.value = 100
-c_const.set_value(100)
+# c_const.set_value(100)
 c_const.do_something("yo")
 print(c_const == c_const)
+c_const.do_something_else()
 # c_const[10] = 10
 
 c.value = 100
@@ -172,18 +203,19 @@ print(type_ex(c_const.__dict__))
 # c_const.__dict__['value'] = 200
 
 c.print_self()
+print(c.print_self.im_class)
 c_const.print_self()
 Check.print_self(c_const)
 
-obj = to_const([1, 2, [10, 10]])
-print(is_const(obj))
-print(is_const([]))
-# obj[1] = 3
-const_cast(obj)[1] = 10
-print(obj)
+# obj = to_const([1, 2, [10, 10]])
+# print(is_const(obj))
+# print(is_const([]))
+# # obj[1] = 3
+# const_cast(obj)[1] = 10
+# print(obj)
 
-for i in obj:
-    print(i)
-    if isinstance(i, list):
-        print("woo")
-        # i[0] = 10
+# for i in obj:
+#     print(i)
+#     if isinstance(i, list):
+#         print("woo")
+#         # i[0] = 10
