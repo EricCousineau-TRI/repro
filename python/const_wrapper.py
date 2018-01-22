@@ -1,30 +1,13 @@
 # pip install wrapt
 
+# Prototype for enabling a semi-transparent layer of `const`-honoring Pythonic
+# stuff.
+# N.B. There should *always* be an option for disabling this for performance
+# reasons!
+
 import inspect
 from wrapt import ObjectProxy
-
 from types import MethodType
-
-mutable_functions = [
-    "__setattr__",
-    "__delattr__",
-    "__setitem__",
-    "__setslice__",
-    "__iadd__",
-    "__isub__",
-    "__imul__",
-    "__idiv__",
-    "__itruediv__",
-    "__ifloordiv__",
-    "__imod__",
-    "__ipow__",
-    "__ilshift__",
-    "__iand__",
-    "__ixor__",
-    "__ior__",
-    "__enter__",
-    "__exit__",
-]
 
 class ConstError(RuntimeError):
     pass
@@ -50,18 +33,18 @@ class _ConstClassMeta(object):
         if mutable is None:
             mutable = set()
         self._owned = set(owned)  # set of strings
-        self._mutable = set(mutable)  # set of strings
+        self.mutable = set(mutable)  # set of strings
         # Add any decorated mutable methods.
         methods = inspect.getmembers(cls, predicate=inspect.ismethod)
         for name, method in methods:
             if getattr(method, '_is_mutable_method', False):
                 mutable.add(name)
-        # Recursion / inheritance is handled by `_ConstClasses`, to handle
+        # Recursion / inheritance is handled by `_ConstClassMetaMap`, to handle
         # caching.
 
     def update(self, parent):
         self._owned.update(parent._owned)
-        self._mutable.update(parent._mutable)
+        self.mutable.update(parent.mutable)
 
     def is_owned(self, name):
         return name in self._owned
@@ -69,50 +52,72 @@ class _ConstClassMeta(object):
     def is_mutable(self, name):
         # Limitation: This would not handle overloads.
         # (e.g. `const T& get() const` and `T& get()`.
-        return name in self._mutable
+        return name in self.mutable
 
-class _ConstClasses(object):
+class _ConstClassMetaMap(object):
     def __init__(self):
-        self._info = {}
+        self._meta_map = {}
 
     def emplace(self, cls, owned=None, mutable=None):
-        info = _ConstClassMeta(cls, owned, mutable)
-        return self._add_info(cls, info)
+        meta = _ConstClassMeta(cls, owned, mutable)
+        return self._add(cls, meta)
 
-    def _add_info(self, cls, info):
-        assert cls not in self._info
+    def _add(self, cls, meta):
+        assert cls not in self._meta_map
         # Recurse through bases for complete information.
         for base in cls.__bases__:
-            info.update(self.get_info(base))
-        self._info[cls] = info
-        return info
+            meta.update(self.get(base))
+        self._meta_map[cls] = meta
+        return meta
 
-    def get_info(self, cls):
+    def get(self, cls):
         # Assume class has not changed if it's already registered.
-        info = self._info.get(cls, None)
-        if info:
-            return info
+        meta = self._meta_map.get(cls, None)
+        if meta:
+            return meta
         else:
             # Construct default.
-            return self._add_info(cls, _ConstClassMeta(cls))
+            return self._add(cls, _ConstClassMeta(cls))
 
-_const_classes = _ConstClasses()
-_emplace = _const_classes.emplace
+_const_metas = _ConstClassMetaMap()
+_emplace = _const_metas.emplace
 # Register common mutators.
+# N.B. These methods actually have to be overridde in `Const`, since neither
+# `__getattr__` nor `__getattribute__` will capture them.
+_emplace(object, mutable={
+    "__setattr__",
+    "__delattr__",
+    "__setitem__",
+    "__setslice__",
+    "__iadd__",
+    "__isub__",
+    "__imul__",
+    "__idiv__",
+    "__itruediv__",
+    "__ifloordiv__",
+    "__imod__",
+    "__ipow__",
+    "__ilshift__",
+    "__iand__",
+    "__ixor__",
+    "__ior__",
+    "__enter__",
+    "__exit__",
+    })
 _emplace(list, mutable={
     'append', 'clear', 'insert', 'extend', 'insert', 'pop',
     'remove', 'sort'})
 _emplace(dict, mutable={'clear', 'setdefault'})
 
-class Const(ObjectProxy):
+class _Const(ObjectProxy):
     def __init__(self, wrapped):
         ObjectProxy.__init__(self, wrapped)
 
     def __getattr__(self, name):
         wrapped = object.__getattribute__(self, '__wrapped__')
-        info = _const_classes.get_info(type(wrapped))
+        meta = _const_metas.get(type(wrapped))
         value = getattr(wrapped, name)
-        if info.is_mutable(name):
+        if meta.is_mutable(name):
             # If explicitly mutable, raise an error.
             # (For complex situations.)
             _raise_mutable_method_error(self, name)
@@ -120,7 +125,7 @@ class Const(ObjectProxy):
             # Propagate const-ness into method (replace `im_self`) to catch
             # basic violations.
             return _rebind_method(value, self)
-        elif info.is_owned(name):
+        elif meta.is_owned(name):
             # References (pointer-like things) should not be const, but
             # internal values should.
             return to_const(value)
@@ -142,6 +147,16 @@ class Const(ObjectProxy):
         else:
             return out
 
+# Automatically rewrite any mutable methods for `object` to always deny access.
+for name in _const_metas.get(object).mutable:
+    def _new_scope(name):
+        def _no_access(self, *args, **kwargs):
+            _raise_mutable_method_error(self, name)
+        _no_access.__name__ = name
+        setattr(_Const, name, _no_access)
+    _new_scope(name)
+
+
 class ConstIter(object):
     def __init__(self, obj):
         self._obj = obj
@@ -162,13 +177,14 @@ def to_const(obj):
             # No need to waste a proxy.
             return obj
         else:
-            return Const(obj)
+            return _Const(obj)
 
 def to_mutable(obj, force=False):
     # Forced conversion.
     if not force and is_const(obj):
-        _raise_mutable_cast_error(obj)
-    if isinstance(obj, Const):
+        raise ConstError(
+            "Cannot cast const {} to mutable instance".format(type_ex(self)))
+    if isinstance(obj, _Const):
         return obj.__wrapped__
     elif isinstance(obj, ConstIter):
         return obj._iter
@@ -176,45 +192,30 @@ def to_mutable(obj, force=False):
         return obj
 
 def is_const(obj):
-    if isinstance(obj, Const) or isinstance(obj, ConstIter):
+    if isinstance(obj, _Const) or isinstance(obj, ConstIter):
         return True
     else:
         return False
 
 def type_ex(obj):
-    if isinstance(obj, Const):
+    if isinstance(obj, _Const):
         return type(obj.__wrapped__)
     elif isinstance(obj, ConstIter):
         return type(obj._iter)
     else:
         return type(obj)
 
-do_get = object.__getattribute__
-do_set = setattr #object.__setattr__
-
-def _raise_mutable_cast_error(self):
-    raise ConstError(
-        "Cannot cast const {} to mutable instance".format(type_ex(self)))
-
 def _raise_mutable_method_error(self, name):
     raise ConstError(
         ("'{}' is a mutable method that cannot be called on a " +
         "const {}.").format(name, type_ex(self)))
-
-for f in mutable_functions:
-    def _new_scope(f):
-        def _no_access(self, *args, **kwargs):
-            _raise_mutable_method_error(self, f)
-        _no_access.__name__ = f
-        do_set(Const, f, _no_access)
-    _new_scope(f)
 
 def mutable(func):
     func._is_mutable_method = True
     return func
 
 def add_const_info(cls, owned=None, mutable=None):
-    _const_classes.emplace(cls, owned, mutable)
+    _const_metas.emplace(cls, owned, mutable)
     return cls
 
 def const_info(owned=None, mutable=None):
