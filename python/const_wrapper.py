@@ -131,6 +131,9 @@ class Check(object):
     def get_value(self):
         return self._value
 
+    def print_self(self):
+        print(type(self), self)
+
     @mutable
     def _other_method(self):
         self._value
@@ -167,6 +170,10 @@ print(c_const.__dict__)
 print(type(c_const.__dict__))
 print(type_ex(c_const.__dict__))
 # c_const.__dict__['value'] = 200
+
+c.print_self()
+c_const.print_self()
+Check.print_self(c_const)
 
 obj = to_const([1, 2, [10, 10]])
 print(is_const(obj))
