@@ -133,6 +133,7 @@ c_const = to_const(c)
 
 print(c_const.value)
 # c_const.value = 100
+c_const.set_value(100)
 c_const.do_something("yo")
 print(c_const == c_const)
 # c_const[10] = 10
