@@ -214,14 +214,14 @@ def mutable(func):
     func._is_mutable_method = True
     return func
 
-def add_const_info(cls, owned=None, mutable=None):
+def add_const_meta(cls, owned=None, mutable=None):
     _const_metas.emplace(cls, owned, mutable)
     return cls
 
-def const_info(owned=None, mutable=None):
-    return lambda cls: add_const_info(cls, owned, mutable)
+def const_meta(owned=None, mutable=None):
+    return lambda cls: add_const_meta(cls, owned, mutable)
 
-@const_info(owned = ['_map'])
+@const_meta(owned = ['_map'])
 class Check(object):
     def __init__(self, value):
         self._value = value
@@ -254,7 +254,7 @@ class Check(object):
 
     value = property(get_value, set_value)
 
-@const_info(owned = ['_my_value'])
+@const_meta(owned = ['_my_value'])
 class SubCheck(Check):
     def __init__(self):
         Check.__init__(self, 100)
