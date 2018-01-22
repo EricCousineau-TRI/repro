@@ -172,8 +172,8 @@ class _ConstIter(object):
         return to_const(n)
 
 
-def _is_literal(obj):
-    # Detects if a type is a literal / immutable type.
+def _is_immutable(obj):
+    # Detects if a type is a immutable (literal) type.
     literal_types = [int, float, str, unicode, tuple, type(None)]
     if type(obj) in literal_types:
         return True
@@ -193,9 +193,9 @@ def _rebind_method(bound, new_self):
 
 
 def to_const(obj):
-    """Converts an object to a const proxy. Does not proxy literals, as that
-    is unneeded. """
-    if _is_literal(obj):
+    """Converts an object to a const proxy. Does not proxy immutable / literal
+    types. """
+    if _is_immutable(obj):
         return obj
     else:
         return _Const(obj)
@@ -222,6 +222,10 @@ def is_const(obj):
         return True
     else:
         return False
+
+
+def is_const_or_immutable(obj):
+    return is_const(obj) or _is_immutable(obj)
 
 
 def type_extract(obj):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import unittest
 
-from cpp_const_test import const_meta, mutable_method, to_const, to_mutable
+import cpp_const as m
 
 
 
@@ -18,95 +18,44 @@ class Basic(obect):
 
     name = property(get_name, set_name)
 
-# Annotate owned properties that may have levels of indirection involved.
-@const_meta(owned_properties = ['_map'])
-class Base(object):
-    def __init__(self, value):
-        self._value = value
-        self._map = {10: 0}
 
-    def print_self(self):
-        print(type(self), self)
+class TestCppConst(unittest.Test):
+    def ex(self):
+        return self.assertRaises(m.ConstError)
 
-    def set_value(self, value):
-        self._value = value
+    def test_list(self):
+        # List.
+        x = [1, 2, 3, [10]]
+        x_const = m.to_const(x)
+        with self.ex(): x_const[0] = 10
+        with self.ex(): x_const[:] = []
+        with self.ex(): del x_const[0]
+        with self.ex(): x_const.append(10)
+        with self.ex(): x_const.clear()
+        # Test iteration.
+        for i_const in x_const:
+            self.assertTrue(m.is_const_or_immutable(i_const))
+        # N.B. Access does not propagate...
+        self.assertTrue(isinstance(x_const[3], list))
+        x_const[3].clear()
 
-    def get_map(self, key):
-        return self._map[key]
+    def test_dict(self):
+        d = {"a": 0, "b": 1, "z": [25]}
+        d_const = to_const(d)
+        self.assertEquals(d_const["a"], 0)
+        with self.ex(): d_const["c"] = 2
+        with self.ex(): d_const.clear()
+        # N.B. Access does not propagate.
+        d_const["z"].clear()
 
-    def set_map(self, key, value):
-        self._map[key] = value
-
-    def do_something(self, stuff):
-        print("{}: {}".format(stuff, self._value))
-        # self.set_value(10)  # Raises error.
-
-    @mutable_method
-    def mutate(self): pass
-
-    def __setitem__(self, key, value):
-        self._map[key] = value
-
-    value = property(get_value, set_value)
-
-
-@const_meta(owned_properties = ['_my_value'])
-class SubCheck(Check):
-    def __init__(self):
-        Check.__init__(self, 100)
-        self._my_value = []
-
-    def extra(self):
-        self.set_map(10, 10000)
-
-    def more(self):
-        # self._my_value.append(10)  # Raises error.
-        return self._my_value
+    def test_basic(self):
+        obj = Basic("Tim")
+        obj_const = to_const(obj)
+        self.assertEquals(obj_const.get_name(), "Tim")
+        with self.ex(): obj_const.set_name("Bob")
+        with self.ex(): obj_const.name = "Bob"
+        with self.ex(): obj_const._name = "Bob"
 
 
-c = Check(10)
-c_const = to_const(c)
-print(c_const.value)
-# c_const.value = 100  # Raises error.
-# c_const.set_value(100)  # Raises error.
-c_const.do_something("yo")
-print(c_const == c_const)
-print(c_const.get_map(10))
-# print(c_const.set_map(10, 100))  # Raises error.
-# c_const[10] = 10  # Raises error.
-
-c.value = 100
-print(c_const.value)
-
-print(c_const)
-print(c_const.__dict__)
-print(type(c_const.__dict__))
-print(type_extract(c_const.__dict__))
-# c_const.__dict__['value'] = 200
-
-s = SubCheck()
-s_const = to_const(s)
-
-c.print_self()
-c_const.print_self()
-s_const.print_self()
-# s_const.extra()  # Raises error.
-# s_const.mutate()  # Raises error.
-x = s_const.more()
-print(x)
-print(type(x))
-# x[:] = []  # Raises error.
-
-obj = to_const([1, 2, [10, 10]])
-print(is_const(obj))
-print(is_const([]))
-# obj[1] = 3  # Raises error.
-# to_mutable(obj)[1] = 10  # Raises error.
-to_mutable(obj, force=True)[1] = 10
-print(obj)
-
-for i in obj:
-    print(i)
-    if isinstance(i, list):
-        print(is_const(i))
-        # i[0] = 10  # Raises error.
+if __name__ == "__main__":
+    unittest.main()
