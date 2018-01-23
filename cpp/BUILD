@@ -344,8 +344,16 @@ cc_binary(
     deps = [":name_trait"],
 )
 
-cc_binary(
+cc_library(
     name = "wrap_function",
-    srcs = ["wrap_function.cc"],
-    deps = [":name_trait"],
+    hdrs = ["wrap_function.h"],
+)
+
+cc_binary(
+    name = "wrap_function_main",
+    srcs = ["wrap_function_main.cc"],
+    deps = [
+        ":name_trait",
+        ":wrap_function",
+    ],
 )
