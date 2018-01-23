@@ -1,4 +1,4 @@
-import _cpp_const_pybind_py as m
+import test._cpp_const_pybind_test_py as m
 
 from cpp_const import to_const
 

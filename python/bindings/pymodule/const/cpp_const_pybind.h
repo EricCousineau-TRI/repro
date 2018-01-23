@@ -58,7 +58,7 @@ struct type_caster<py_const_ref<T>> : public type_caster<object> {
     // Ensure Python object is const-proxied.
     // TODO: Somehow intercept keep alive behavior here?
     object obj = to_const(src.obj);
-    return reinterpret_steal<handle>(obj);  // Uh... ???
+    return obj.release();  // Uh... ???
   }
 };
 
@@ -78,8 +78,7 @@ struct type_caster<py_mutable_ref<T>> : public type_caster<object> {
   }
 
   static handle cast(py_mutable_ref<T> src, return_value_policy, handle) {
-    object obj = src.obj;
-    return reinterpret_steal<handle>(obj);
+    return src.obj.release();  // Uh... ???
   }
 
  private:
@@ -137,7 +136,7 @@ using wrap_ref_t =
 template <typename T>
 struct wrap_ref<T, std::enable_if_t<is_ref_castable<T>::value>> {
   static wrap_ref_t<T> wrap(T arg) {
-    return py::cast(arg);
+    return {py::cast(arg)};
   }
 
   static T unwrap(wrap_ref_t<T> arg_wrapped) {

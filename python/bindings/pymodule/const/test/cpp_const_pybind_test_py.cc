@@ -30,18 +30,18 @@ void func_const(const Test* obj) {
   obj->check_const();
 }
 
-PYBIND11_MODULE(_cpp_const_pybind_py, m) {
+PYBIND11_MODULE(_cpp_const_pybind_test_py, m) {
   m.doc() = "C++ Const Test";
 
   m.def("func_mutate", WrapRef(&func_mutate));
-  // m.def("func_const", WrapRef(&func_const));
+  m.def("func_const", WrapRef(&func_const));
 
-  // py::class_<Test> test(m, "Test");
-  // test
-  //     .def(py::init<int>())
-  //     .def("check_mutate", WrapRef(&Test::check_mutate))
-  //     .def("check_const", WrapRef(&Test::check_const))
-  //     .def("as_const", WrapRef(&Test::as_const))  // Should not need any rvp.
-  //     .def_property(
-  //         "value", WrapRef(&Test::value), WrapRef(&Test::set_value));
+  py::class_<Test> test(m, "Test");
+  test
+      .def(py::init<int>())
+      .def("check_mutate", WrapRef(&Test::check_mutate))
+      .def("check_const", WrapRef(&Test::check_const))
+      .def("as_const", WrapRef(&Test::as_const))  // Should not need any rvp.
+      .def_property(
+          "value", WrapRef(&Test::value), WrapRef(&Test::set_value));
 }
