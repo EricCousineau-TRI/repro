@@ -153,8 +153,8 @@ struct wrap_impl {
 
 template <typename T>
 struct wrap_arg_default {
-  static T unwrap(T arg) { return std::forward<T>(arg); }
   static T wrap(T arg) { return std::forward<T>(arg); }
+  static T unwrap(T arg) { return std::forward<T>(arg); }
 };
 
 template <template <typename...> class wrap_arg_tpl, typename Func>
