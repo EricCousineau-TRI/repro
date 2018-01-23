@@ -16,7 +16,7 @@ from types import MethodType
 # e.g. should __getitem__ always return const-proxied values?
 
 
-class ConstError(RuntimeError):
+class ConstError(TypeError):
     pass
 
 

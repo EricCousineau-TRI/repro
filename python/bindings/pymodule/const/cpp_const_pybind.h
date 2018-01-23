@@ -116,6 +116,8 @@ using is_const_ref_or_ptr =
         is_ref_or_ptr<T>::value &&
         std::is_const<remove_ref_or_ptr_t<T>>::value>;
 
+// TODO: Add check for `unique_ptr<{T, const T}>`, `shared_ptr<{T, const T}>`.
+
 template <typename T, bool is_const = true>
 struct wrap_ref_type {
   using type = py_const_ref<T>;
