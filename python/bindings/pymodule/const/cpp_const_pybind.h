@@ -23,17 +23,17 @@ template <typename T>
 struct py_mutable_ref : public py_ref_base {};
 
 
-inline bool is_const(handle h) {
+inline bool is_const(py::handle h) {
   py::module m = py::module::import("cpp_const");
   return m.attr("is_const_or_immutable")(h).cast<bool>();
 }
 
-inline py::object to_mutable(handle h, bool force = false) {
+inline py::object to_mutable(py::handle h, bool force = false) {
   py::module m = py::module::import("cpp_const");
   return m.attr("to_mutable")(h, force);
 }
 
-inline py::object to_const(handle h) {
+inline py::object to_const(py::handle h) {
   py::module m = py::module::import("cpp_const");
   return m.attr("to_const")(h);
 }
@@ -97,17 +97,7 @@ using is_ref_castable =
         py::detail::type_caster<T>>;
 
 template <typename T, typename = void>
-struct wrap_ref<T> : public wrap_arg_default<T> {};
-
-template <typename T, bool is_const = true>
-struct wrap_ref_type {
-  using type = py_const_ref<T>;
-};
-
-template <typename T>
-struct wrap_ref_type<T, false> {
-  using type = py_mutable_ref<T>;
-};
+struct wrap_ref : public wrap_arg_default<T> {};
 
 template <typename T>
 using is_ref_or_ptr =
@@ -125,22 +115,30 @@ using is_const_ref_or_ptr =
         is_ref_or_ptr<T>::value &&
         std::is_const<remove_ref_or_ptr_t<T>>::value>;
 
+template <typename T, bool is_const = true>
+struct wrap_ref_type {
+  using type = py_const_ref<T>;
+};
+
+template <typename T>
+struct wrap_ref_type<T, false> {
+  using type = py_mutable_ref<T>;
+};
+
 template <typename T>
 using wrap_ref_t =
-    typename wrap_ref_impl<
+    typename wrap_ref_type<
         std::decay_t<T>, is_const_ref_or_ptr<T>::value>::type;
 
 // This is effectively done to augment pybind's existing specializations for
 // type_caster<U>, where U is all of {T*, T&, const T*, const T&}
 template <typename T>
 struct wrap_ref<T, std::enable_if_t<is_ref_castable<T>::value>> {
-  using ref_t = wrap_ref_t<T>;
-
-  static ref_t wrap(T arg) {
+  static wrap_ref_t<T> wrap(T arg) {
     return py::cast(arg);
   }
 
-  static T unwrap(ref_t arg) {
+  static T unwrap(wrap_ref_t<T> arg) {
     return py::cast<T>(arg);
   }
 };

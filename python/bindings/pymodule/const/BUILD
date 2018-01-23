@@ -22,20 +22,19 @@ cc_library(
     hdrs = ["cpp_const_pybind.h"],
     deps = [
         "//cpp:type_pack",
-        "//cpp:wrap_func",
+        "//cpp:wrap_function",
         "//python/pybind11:include",
     ],
 )
 
 pybind_library(
     name = "cpp_const_pybind_test_py",
-    py_srcs = ["test/cpp_const_pybind_test.py"],
     py_deps = [
         ":cpp_const",
     ],
-    cc_so_name = "test/_cpp_const_test_py",
+    cc_so_name = "test/_cpp_const_pybind_test_py",
     cc_srcs = [
-        "test/_cpp_const_test.cc",
+        "test/cpp_const_pybind_test_py.cc",
     ],
     cc_deps = [
         "//cpp:name_trait",
