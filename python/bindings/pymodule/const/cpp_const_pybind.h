@@ -47,7 +47,8 @@ namespace detail {
 template <typename T>
 struct type_caster<py_const_ref<T>> : public type_caster<object> {
   // TODO: Add information for type name to be user-friendly.
-  PYBIND11_TYPE_CASTER(py_const_ref<T>, _("py_const_ref<T>"));
+  // PYBIND11_TYPE_CASTER(py_const_ref<T>, _("py_const_ref<T>"));
+  static constexpr auto name = _("const ") + _<std::decay_t<T>>();
 
   bool load(handle src, bool convert) {
     value.obj = to_mutable(src, true);
@@ -60,6 +61,12 @@ struct type_caster<py_const_ref<T>> : public type_caster<object> {
     object obj = to_const(src.obj);
     return obj.release();  // Uh... ???
   }
+
+  template <typename T_>
+  using cast_op_type = py_const_ref<T>;
+  operator py_const_ref<T>() { return value; }
+
+  py_const_ref<T> value;
 };
 
 // If mutable, ensure that input object is not const.
@@ -142,6 +149,8 @@ struct wrap_ref<T, std::enable_if_t<is_ref_castable<T>::value>> {
   }
 
   static T unwrap(wrap_ref_t<T> arg_wrapped) {
+    // Try casting elsewhere???
+    // (such that pybind overload errors are triggered?)
     return py::cast<T>(arg_wrapped.obj);
   }
 };

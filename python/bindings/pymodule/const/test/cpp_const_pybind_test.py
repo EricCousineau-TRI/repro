@@ -24,7 +24,9 @@ class TestCppConstPybind(unittest.TestCase):
         obj.check_const()
         obj.check_mutate()
 
+        m.func_const_extra(obj_const, "hello")
         obj_const.check_const()
+        obj_const.check_mutate()
         with self.ex(): obj_const.check_mutate()
         with self.ex(): m.func_mutate(obj_const)
         with self.ex_const(): obj_const.value = 1000
