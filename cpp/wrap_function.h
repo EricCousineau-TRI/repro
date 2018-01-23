@@ -63,25 +63,25 @@ auto get_function_info(Func&& func) {
       std::forward<Func>(func), detail::infer_function_ptr(&func));
 }
 
-
-template <template <typename...> class wrap_arg, typename T>
-struct get_wrap_arg_t {
-  using type = decltype(wrap_arg<T>::wrap(std::declval<T>()));
-};
-
-template <template <typename...> class wrap_arg>
-struct get_wrap_arg_t<wrap_arg, void> {
-  using type = void;
-};
-
 // Nominal case.
 template <template <typename...> class wrap_arg_tpl>
-struct wrap_impl {
+struct wrap_function_impl {
   template <typename T>
   struct wrap_arg : public wrap_arg_tpl<T> {};
 
+  // Use `Extra` so that we can specialize within class scope.
+  template <typename T, typename Extra>
+  struct wrap_arg_t_impl {
+    using type = decltype(wrap_arg<T>::wrap(std::declval<T>()));
+  };
+
+  template <typename Extra>
+  struct wrap_arg_t_impl<void, Extra> {
+    using type = void;
+  };
+
   template <typename T>
-  using wrap_arg_t = typename get_wrap_arg_t<wrap_arg, T>::type;
+  using wrap_arg_t = typename wrap_arg_t_impl<T, void>::type;
 
   template <typename Return>
   static constexpr bool enable_wrap_output =
@@ -121,7 +121,7 @@ struct wrap_impl {
     using WrappedFunc = std::function<wrap_arg_t<Return> (wrap_arg_t<Args>...)>;
 
     static WrappedFunc wrap(const Func& func) {
-      return wrap_impl::run(get_function_info(func));
+      return wrap_function_impl::run(get_function_info(func));
     }
 
     template <typename Defer = Return>
@@ -159,6 +159,6 @@ struct wrap_arg_default {
 
 template <template <typename...> class wrap_arg_tpl, typename Func>
 auto WrapFunction(Func&& func) {
-  return detail::wrap_impl<wrap_arg_tpl>::run(
+  return detail::wrap_function_impl<wrap_arg_tpl>::run(
       detail::get_function_info(std::forward<Func>(func)));
 }
