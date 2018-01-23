@@ -13,15 +13,17 @@ namespace py = pybind11;
 // Having the proxy be a patient is fine-ish, as it should keep its proxied
 // object alive, but having the proxy as a nurse is bad.
 
-struct py_ref_base : public py::object {};
-
-// Simply distinguish types.
+// Opaquely wrap `py::object` (such that it does not confused `is_pyobject<>`)
+// so that we can distinguish situations.
 template <typename T>
-struct py_const_ref : public py_ref_base {};
+struct py_const_ref {
+  py::object obj;
+};
 
 template <typename T>
-struct py_mutable_ref : public py_ref_base {};
-
+struct py_mutable_ref {
+  py::object obj;
+};
 
 inline bool is_const(py::handle h) {
   py::module m = py::module::import("cpp_const");
@@ -48,14 +50,14 @@ struct type_caster<py_const_ref<T>> : public type_caster<object> {
   PYBIND11_TYPE_CASTER(py_const_ref<T>, _("py_const_ref<T>"));
 
   bool load(handle src, bool convert) {
-    value = to_mutable(src, true);
+    value.obj = to_mutable(src, true);
     return true;
   }
 
   static handle cast(py_const_ref<T> src, return_value_policy, handle) {
     // Ensure Python object is const-proxied.
     // TODO: Somehow intercept keep alive behavior here?
-    object obj = to_const(src);
+    object obj = to_const(src.obj);
     return reinterpret_steal<handle>(obj);  // Uh... ???
   }
 };
@@ -70,13 +72,13 @@ struct type_caster<py_mutable_ref<T>> : public type_caster<object> {
       // Do not allow loading const-proxied values.
       return false;
     } else {
-      value = to_mutable(src);
+      value.obj = to_mutable(src);
       return true;
     }
   }
 
   static handle cast(py_mutable_ref<T> src, return_value_policy, handle) {
-    object obj = src;
+    object obj = src.obj;
     return reinterpret_steal<handle>(obj);
   }
 
@@ -138,8 +140,8 @@ struct wrap_ref<T, std::enable_if_t<is_ref_castable<T>::value>> {
     return py::cast(arg);
   }
 
-  static T unwrap(wrap_ref_t<T> arg) {
-    return py::cast<T>(arg);
+  static T unwrap(wrap_ref_t<T> arg_wrapped) {
+    return py::cast<T>(arg_wrapped.obj);
   }
 };
 

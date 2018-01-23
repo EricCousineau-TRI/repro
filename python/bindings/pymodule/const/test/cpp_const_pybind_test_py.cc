@@ -33,7 +33,7 @@ void func_const(const Test* obj) {
 PYBIND11_MODULE(_cpp_const_pybind_py, m) {
   m.doc() = "C++ Const Test";
 
-  // m.def("func_mutate", WrapRef(&func_mutate));
+  m.def("func_mutate", WrapRef(&func_mutate));
   // m.def("func_const", WrapRef(&func_const));
 
   // py::class_<Test> test(m, "Test");
