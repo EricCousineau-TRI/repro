@@ -45,34 +45,9 @@ pybind_library(
 
 py_test_simple(
     name = "cpp_const_pybind_test",
-    srcs = ["test/cpp_const_pybind_test.py"],
-    main = "test/cpp_const_pybind_test.py",
+    # main = "test/cpp_const_pybind_test.py",
     size = "small",
     deps = [
-        ":cpp_const_test_py",
+        ":cpp_const_pybind_test_py",
     ],
-)
-
-pybind_library(
-    name = "scalar_type_test_lib",
-    py_deps = [
-        ":cpp_const",
-        ":cpp_types",
-    ],
-    cc_so_name = "test/_scalar_type_test",
-    cc_srcs = [
-        "test/_scalar_type_test.cc",
-    ],
-    cc_deps = [
-        ":cpp_const_pybind",
-        ":simple_converter_py",
-        "//cpp:name_trait",
-        "//cpp:simple_converter",
-    ],
-)
-
-py_test_simple(
-    name = "scalar_type_test",
-    size = "small",
-    deps = [":scalar_type_test_lib"],
 )

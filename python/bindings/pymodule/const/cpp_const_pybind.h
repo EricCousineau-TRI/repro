@@ -15,11 +15,28 @@ namespace py = pybind11;
 
 struct py_ref_base : public py::object {};
 
+// Simply distinguish types.
 template <typename T>
 struct py_const_ref : public py_ref_base {};
 
 template <typename T>
 struct py_mutable_ref : public py_ref_base {};
+
+
+inline bool is_const(handle h) {
+  py::module m = py::module::import("cpp_const");
+  return m.attr("is_const_or_immutable")(h).cast<bool>();
+}
+
+inline py::object to_mutable(handle h, bool force = false) {
+  py::module m = py::module::import("cpp_const");
+  return m.attr("to_mutable")(h, force);
+}
+
+inline py::object to_const(handle h) {
+  py::module m = py::module::import("cpp_const");
+  return m.attr("to_const")(h);
+}
 
 namespace pybind11 {
 namespace detail {
@@ -27,24 +44,44 @@ namespace detail {
 // No check needed if references is constant.
 template <typename T>
 struct type_caster<py_const_ref<T>> : public type_caster<object> {
-  // TODO: Add information for signatures to be user-friendly.
+  // TODO: Add information for type name to be user-friendly.
+  PYBIND11_TYPE_CASTER(py_const_ref<T>, _("py_const_ref<T>"));
+
   bool load(handle src, bool convert) {
-    value_ = reinterpret_borrow<object>(src);
+    value = to_mutable(src, true);
+    return true;
   }
 
-  static handle cast(py_const_ref<T> src) {
+  static handle cast(py_const_ref<T> src, return_value_policy, handle) {
+    // Ensure Python object is const-proxied.
+    // TODO: Somehow intercept keep alive behavior here?
+    object obj = to_const(src);
+    return reinterpret_steal<handle>(obj);  // Uh... ???
   }
-
-  operator py_const_ref<T>() { return value_; }
-
- private:
-  py_const_ref<T> value_;
 };
 
 // If mutable, ensure that input object is not const.
 template <typename T>
 struct type_caster<py_mutable_ref<T>> : public type_caster<object> {
-  // TODO: Add information for signatures to be user-friendly.
+  PYBIND11_TYPE_CASTER(py_mutable_ref<T>, _("py_mutable_ref<T>"));
+
+  bool load(handle src, bool convert) {
+    if (is_const(src)) {
+      // Do not allow loading const-proxied values.
+      return false;
+    } else {
+      value = to_mutable(src);
+      return true;
+    }
+  }
+
+  static handle cast(py_mutable_ref<T> src, return_value_policy, handle) {
+    object obj = src;
+    return reinterpret_steal<handle>(obj);
+  }
+
+ private:
+  py_mutable_ref<T> value_;
 };
 
 }  // namespace detail
@@ -55,18 +92,60 @@ struct type_caster<py_mutable_ref<T>> : public type_caster<object> {
 // Checks if a type can actually be tied to an existing reference.
 template <typename T>
 using is_ref_castable =
-    std::is_base<py::detail::type_caster_base<T>, py::detail::type_caster<T>>;
+    std::is_base_of<
+        py::detail::type_caster_base<T>,
+        py::detail::type_caster<T>>;
 
 template <typename T, typename = void>
 struct wrap_ref<T> : public wrap_arg_default<T> {};
 
+template <typename T, bool is_const = true>
+struct wrap_ref_type {
+  using type = py_const_ref<T>;
+};
+
 template <typename T>
-struct wrap_ref<const T&, std::enable_if_t<is_ref_castable<const T&>::value>> {
-  static py_const_ref<T> wrap(const T& arg) {
-    return py_const_ref<T>(py::cast(arg));
+struct wrap_ref_type<T, false> {
+  using type = py_mutable_ref<T>;
+};
+
+template <typename T>
+using is_ref_or_ptr =
+    std::integral_constant<bool,
+        std::is_reference<T>::value || std::is_pointer<T>::value>;
+
+template <typename T>
+using remove_ref_or_ptr_t =
+    typename std::remove_reference<
+        typename std::remove_pointer<T>::type>::type;
+
+template <typename T>
+using is_const_ref_or_ptr =
+    std::integral_constant<bool,
+        is_ref_or_ptr<T>::value &&
+        std::is_const<remove_ref_or_ptr_t<T>>::value>;
+
+template <typename T>
+using wrap_ref_t =
+    typename wrap_ref_impl<
+        std::decay_t<T>, is_const_ref_or_ptr<T>::value>::type;
+
+// This is effectively done to augment pybind's existing specializations for
+// type_caster<U>, where U is all of {T*, T&, const T*, const T&}
+template <typename T>
+struct wrap_ref<T, std::enable_if_t<is_ref_castable<T>::value>> {
+  using ref_t = wrap_ref_t<T>;
+
+  static ref_t wrap(T arg) {
+    return py::cast(arg);
   }
 
-  static const T& unwrap(py_const_ref<T> arg) {
-    return py::cast<const T&>(to_mutable(arg));
+  static T unwrap(ref_t arg) {
+    return py::cast<T>(arg);
   }
 };
+
+template <typename Func>
+auto WrapRef(Func&& func) {
+  return WrapFunction<wrap_ref>(std::forward<Func>(func));
+}
