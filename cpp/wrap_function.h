@@ -27,7 +27,7 @@ auto remove_class_from_ptr(Return (Class::*)(Args...) const) {
 }
 
 template <typename Func>
-auto infer_function_ptr(Func* func = nullptr) {
+auto infer_function_ptr() {
   return detail::remove_class_from_ptr(&Func::operator());
 }
 
@@ -60,7 +60,8 @@ auto get_function_info(Return (Class::*method)(Args...) const) {
 template <typename Func, typename = detail::enable_if_lambda_t<Func>>
 auto get_function_info(Func&& func) {
   return detail::infer_function_info(
-      std::forward<Func>(func), detail::infer_function_ptr(&func));
+      std::forward<Func>(func),
+      detail::infer_function_ptr<std::decay_t<Func>>());
 }
 
 // Nominal case.
