@@ -1,0 +1,6 @@
+workspace(name = "nest_info")
+
+local_repository(
+    name = "nest_sub",
+    path = "nest_sub",
+)
