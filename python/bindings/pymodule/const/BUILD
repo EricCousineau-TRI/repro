@@ -50,3 +50,16 @@ py_test_simple(
         ":cpp_const_pybind_test_py",
     ],
 )
+
+
+pybind_library(
+    name = "cpp_inherit_py",
+    cc_so_name = "_cpp_inherit",
+    cc_srcs = ["cpp_inherit_py.cc"],
+    py_imports = ["."],
+)
+
+py_test_simple(
+    name = "cpp_inherit_test",
+    deps = ["cpp_inherit_py"],
+)
