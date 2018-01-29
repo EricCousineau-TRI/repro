@@ -1,4 +1,8 @@
+#include <iostream>
+
 #include <pybind11/pybind11.h>
+
+using namespace std;
 
 // template <typename ... Args, typename Return, typename Class>
 // auto virtual_overload((
@@ -23,4 +27,11 @@ PYBIND11_MODULE(_cpp_inherit, m) {
 
   m.def("create_base", []() { return new Base(); });
   m.def("create_child", []() -> Base* { return new Child(); });
+
+  auto a = &Base::stuff;
+  auto b = &Child::stuff;
+
+  Child c;
+  cout << (c.*a)() << endl;
+  cout << (c.*b)() << endl;
 }
