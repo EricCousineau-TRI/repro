@@ -19,6 +19,8 @@ PYBIND11_MODULE(_cpp_inherit, m) {
   py::class_<Base>(m, "Base")
     .def("stuff", &Base::stuff);
 
+  py::class_<Child, Base>(m, "Child");
+
   m.def("create_base", []() { return new Base(); });
   m.def("create_child", []() -> Base* { return new Child(); });
 }
