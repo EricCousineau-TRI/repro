@@ -35,3 +35,15 @@ sh_test(
     args = ["$(locations :files_recurse)"],
     data = [":files_recurse"],
 )
+
+x = [1, 2, 3]
+print(x)
+x += [10]
+
+sh_test(
+    name = "test_again",
+    srcs = ["echo.sh"],
+    args = ["$(locations :files)"] + [str(i) for i in x],
+    data = [":files"],
+)
+print(x)
