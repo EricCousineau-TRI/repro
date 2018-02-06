@@ -7,16 +7,27 @@ set -eu
 
 cd $(dirname $0)
 
+bazel="bazel --bazelrc=/dev/null"
+
+strip() {
+    sed -e "s#$(${bazel} info workspace)#\${bazel_workspace}#g" \
+        -e "s#/home/.*/_bazel_${USER}#\${bazel_cache}#g" \
+        -e "s#${USER}#\${user}#g"
+}
+
 (
     set -x
-    env
+    env | strip
 
-    bazel --bazelrc=/dev/null test //:example_cc_direct //:example_cc_indirect
-    bazel --bazelrc=/dev/null run //:example_ldd
-    bazel --bazelrc=/dev/null test @example//:example_cc_direct @example//:example_cc_indirect
-    bazel --bazelrc=/dev/null run @example//:example_ldd
-) 2>&1 | \
-    sed -e "s#$(bazel --bazelrc=/dev/null info workspace)#\${bazel_workspace}#g" \
-        -e "s#/home/.*/_bazel_${USER}#\${bazel_cache}#g" \
-        -e "s#${USER}#\${user}#g" | \
-    tee repro.output.txt
+    {
+        ${bazel} test //:example_cc_direct //:example_cc_indirect
+        ${bazel} run //:example_ldd
+    } 2>&1 | strip | tee /tmp/local.txt
+    {
+        ${bazel} test @example//:example_cc_direct @example//:example_cc_indirect
+        ${bazel} run @example//:example_ldd
+    } 2>&1 | strip | tee /tmp/external.txt
+
+) 2>&1 | strip | tee repro.output.txt
+
+git diff --no-index /tmp/local.txt /tmp/external.txt > /tmp/patch.diff

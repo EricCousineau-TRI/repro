@@ -1,4 +1,13 @@
 + env
++ strip
+++ bazel --bazelrc=/dev/null info workspace
+Another command holds the client lock: 
+pid=38631
+owner=client
+cwd=${bazel_workspace}
+
+Waiting for it to complete...
++ sed -e 's#${bazel_workspace}#${bazel_workspace}#g' -e 's#${bazel_cache}#${bazel_cache}#g' -e 's#${user}#${user}#g'
 TERM=screen
 SHELL=/bin/bash
 USER=${user}
@@ -9,19 +18,25 @@ HOME=/home/${user}
 DISPLAY=:0
 OLDPWD=${bazel_workspace}
 _=/usr/bin/env
-+ bazel --bazelrc=/dev/null test //:example_cc_direct //:example_cc_indirect
++ strip
++ tee /tmp/local.txt
+++ bazel --bazelrc=/dev/null info workspace
 Another command holds the client lock: 
-pid=20124
+pid=38770
 owner=client
 cwd=${bazel_workspace}
+tty=/dev/pts/8
 
 Waiting for it to complete...
+Another command (pid=38770) is running.  Waiting for it to complete on the server...
++ sed -e 's#${bazel_workspace}#${bazel_workspace}#g' -e 's#${bazel_cache}#${bazel_cache}#g' -e 's#${user}#${user}#g'
++ bazel --bazelrc=/dev/null test //:example_cc_direct //:example_cc_indirect
 Loading: 
 Loading: 0 packages loaded
 INFO: Analysed 2 targets (1 packages loaded).
 INFO: Found 2 test targets...
-[0 / 4] [-----] BazelWorkspaceStatusAction stable-status.txt
-INFO: Elapsed time: 0.756s, Critical Path: 0.28s
+[0 / 2] [-----] BazelWorkspaceStatusAction stable-status.txt
+INFO: Elapsed time: 0.773s, Critical Path: 0.34s
 INFO: Build completed successfully, 6 total actions
 //:example_cc_direct                                                     PASSED in 0.1s
 //:example_cc_indirect                                                   PASSED in 0.1s
@@ -33,10 +48,10 @@ Loading:
 Loading: 0 packages loaded
 INFO: Analysed target //:example_ldd (0 packages loaded).
 INFO: Found 1 target...
-[1 / 3] [-----] BazelWorkspaceStatusAction stable-status.txt
+[1 / 4] [-----] BazelWorkspaceStatusAction stable-status.txt
 Target //:example_ldd up-to-date:
   bazel-bin/example_ldd
-INFO: Elapsed time: 0.268s, Critical Path: 0.00s
+INFO: Elapsed time: 0.276s, Critical Path: 0.00s
 INFO: Build completed successfully, 1 total action
 
 INFO: Running command line: bazel-bin/example_ldd
@@ -60,14 +75,26 @@ INFO: Running command line: bazel-bin/example_ldd
 + ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_ldd.runfiles/example/example_cc_direct
 + grep 'not found'
 + exit 0
++ strip
++ tee /tmp/external.txt
+++ bazel --bazelrc=/dev/null info workspace
+Another command holds the client lock: 
+pid=40210
+owner=client
+cwd=${bazel_workspace}
+tty=/dev/pts/8
+
+Waiting for it to complete...
+Another command (pid=40210) is running.  Waiting for it to complete on the server...
++ sed -e 's#${bazel_workspace}#${bazel_workspace}#g' -e 's#${bazel_cache}#${bazel_cache}#g' -e 's#${user}#${user}#g'
 + bazel --bazelrc=/dev/null test @example//:example_cc_direct @example//:example_cc_indirect
 Loading: 
 Loading: 0 packages loaded
 INFO: Analysed 2 targets (0 packages loaded).
 INFO: Found 2 test targets...
-[0 / 4] [-----] BazelWorkspaceStatusAction stable-status.txt
-INFO: Elapsed time: 0.621s, Critical Path: 0.38s
-INFO: Build completed successfully, 9 total actions
+[0 / 9] [-----] BazelWorkspaceStatusAction stable-status.txt
+INFO: Elapsed time: 0.519s, Critical Path: 0.31s
+INFO: Build completed successfully, 6 total actions
 @example//:example_cc_direct                                             PASSED in 0.1s
 @example//:example_cc_indirect                                           PASSED in 0.1s
 
@@ -81,7 +108,7 @@ INFO: Found 1 target...
 [0 / 3] [-----] BazelWorkspaceStatusAction stable-status.txt
 Target @example//:example_ldd up-to-date:
   bazel-bin/external/example/example_ldd
-INFO: Elapsed time: 0.195s, Critical Path: 0.00s
+INFO: Elapsed time: 0.223s, Critical Path: 0.00s
 INFO: Build completed successfully, 1 total action
 
 INFO: Running command line: bazel-bin/external/example/example_ldd
@@ -103,7 +130,7 @@ INFO: Running command line: bazel-bin/external/example/example_ldd
 + local name=example_cc_direct
 + ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_cc_direct
 + grep 'not found'
-+ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_ldd.runfiles/example/example_cc_direct
 + grep 'not found'
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_ldd.runfiles/example/example_cc_direct
 	libexample_lib_cc.so => not found
 + exit 0
