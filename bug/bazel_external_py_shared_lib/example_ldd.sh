@@ -11,9 +11,7 @@ check() {
     ldd ${runfiles_dir}/${name} | grep "not found"
 }
 
-check example_cc
-check libexample_lib_cc.so
-check libsecondary_direct_lib_cc.so
-check libsecondary_indirect_lib_cc.so
+check example_cc_indirect
+check example_cc_direct
 
 exit 0

@@ -11,15 +11,9 @@ cd $(dirname $0)
     set -x
     env
 
-    bazel --bazelrc=/dev/null run //:example_cc
-    bazel --bazelrc=/dev/null run @example//:example_cc
-    ldd bazel-bin/example_py.runfiles/example/example_lib_py.so | grep 'not found' || :
-
-    bazel --bazelrc=/dev/null run //:example_py
-    bazel --bazelrc=/dev/null run @example//:example_py || :
-    ldd bazel-bin/external/example/example_py.runfiles/example/example_lib_py.so | grep 'not found'
-
+    bazel --bazelrc=/dev/null test //:example_cc_direct //:example_cc_indirect
     bazel --bazelrc=/dev/null run //:example_ldd
+    bazel --bazelrc=/dev/null test @example//:example_cc_direct @example//:example_cc_indirect
     bazel --bazelrc=/dev/null run @example//:example_ldd
 ) 2>&1 | \
     sed -e "s#$(bazel --bazelrc=/dev/null info workspace)#\${bazel_workspace}#g" \

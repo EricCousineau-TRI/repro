@@ -9,82 +9,35 @@ HOME=/home/${user}
 DISPLAY=:0
 OLDPWD=${bazel_workspace}
 _=/usr/bin/env
-+ bazel --bazelrc=/dev/null run //:example_cc
++ bazel --bazelrc=/dev/null test //:example_cc_direct //:example_cc_indirect
 Another command holds the client lock: 
-pid=42634
+pid=20124
 owner=client
 cwd=${bazel_workspace}
 
 Waiting for it to complete...
 Loading: 
 Loading: 0 packages loaded
-INFO: Analysed target //:example_cc (1 packages loaded).
-INFO: Found 1 target...
-[0 / 2] [-----] BazelWorkspaceStatusAction stable-status.txt
-Target //:example_cc up-to-date:
-  bazel-bin/example_cc
-INFO: Elapsed time: 0.347s, Critical Path: 0.00s
-INFO: Build completed successfully, 1 total action
-
-INFO: Running command line: bazel-bin/example_cc
-+ bazel --bazelrc=/dev/null run @example//:example_cc
-Loading: 
-Loading: 0 packages loaded
-INFO: Analysed target @example//:example_cc (1 packages loaded).
-INFO: Found 1 target...
+INFO: Analysed 2 targets (1 packages loaded).
+INFO: Found 2 test targets...
 [0 / 4] [-----] BazelWorkspaceStatusAction stable-status.txt
-Target @example//:example_cc up-to-date:
-  bazel-bin/external/example/example_cc
-INFO: Elapsed time: 0.293s, Critical Path: 0.00s
-INFO: Build completed successfully, 1 total action
+INFO: Elapsed time: 0.756s, Critical Path: 0.28s
+INFO: Build completed successfully, 6 total actions
+//:example_cc_direct                                                     PASSED in 0.1s
+//:example_cc_indirect                                                   PASSED in 0.1s
 
-INFO: Running command line: bazel-bin/external/example/example_cc
-+ ldd bazel-bin/example_py.runfiles/example/example_lib_py.so
-+ grep 'not found'
-+ :
-+ bazel --bazelrc=/dev/null run //:example_py
-Loading: 
-Loading: 0 packages loaded
-INFO: Analysed target //:example_py (8 packages loaded).
-INFO: Found 1 target...
-[1 / 5] [-----] BazelWorkspaceStatusAction stable-status.txt
-Target //:example_py up-to-date:
-  bazel-bin/example_py
-INFO: Elapsed time: 0.505s, Critical Path: 0.00s
-INFO: Build completed successfully, 1 total action
-
-INFO: Running command line: bazel-bin/example_py
-+ bazel --bazelrc=/dev/null run @example//:example_py
-Loading: 
-Loading: 0 packages loaded
-INFO: Analysed target @example//:example_py (0 packages loaded).
-INFO: Found 1 target...
-[1 / 5] [-----] BazelWorkspaceStatusAction stable-status.txt
-Target @example//:example_py up-to-date:
-  bazel-bin/external/example/example_py
-INFO: Elapsed time: 0.215s, Critical Path: 0.00s
-INFO: Build completed successfully, 1 total action
-
-INFO: Running command line: bazel-bin/external/example/example_py
-Traceback (most recent call last):
-  File "${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_py.runfiles/example/../example/example.py", line 1, in <module>
-    from example_lib_py import func
-ImportError: libexample_lib_cc.so: cannot open shared object file: No such file or directory
-[31m[1mERROR: [0mNon-zero return code '1' from command: Process exited with status 1
-+ :
-+ ldd bazel-bin/external/example/example_py.runfiles/example/example_lib_py.so
-+ grep 'not found'
-	libexample_lib_cc.so => not found
+Executed 2 out of 2 tests: 2 tests pass.
+There were tests whose specified size is too big. Use the --test_verbose_timeout_warnings command line option to see which ones these are.
 + bazel --bazelrc=/dev/null run //:example_ldd
 Loading: 
 Loading: 0 packages loaded
 INFO: Analysed target //:example_ldd (0 packages loaded).
 INFO: Found 1 target...
-[0 / 3] [-----] BazelWorkspaceStatusAction stable-status.txt
+[1 / 3] [-----] BazelWorkspaceStatusAction stable-status.txt
 Target //:example_ldd up-to-date:
   bazel-bin/example_ldd
-INFO: Elapsed time: 0.257s, Critical Path: 0.01s
-INFO: Build completed successfully, 3 total actions
+INFO: Elapsed time: 0.268s, Critical Path: 0.00s
+INFO: Build completed successfully, 1 total action
 
 INFO: Running command line: bazel-bin/example_ldd
 +++ dirname ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_ldd
@@ -94,18 +47,32 @@ INFO: Running command line: bazel-bin/example_ldd
 + runfiles_dir=${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_ldd.runfiles/example
 + mkdir -p no_neighbor
 + cd no_neighbor
-+ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/libexample_lib_cc.so
++ check example_cc_indirect
++ local name=example_cc_indirect
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_cc_indirect
 + grep 'not found'
-+ :
-+ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_ldd.runfiles/example/libexample_lib_cc.so
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_ldd.runfiles/example/example_cc_indirect
 + grep 'not found'
-+ :
-+ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_lib_py.so
++ check example_cc_direct
++ local name=example_cc_direct
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_cc_direct
 + grep 'not found'
-+ :
-+ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_ldd.runfiles/example/example_lib_py.so
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_ldd.runfiles/example/example_cc_direct
 + grep 'not found'
-+ :
++ exit 0
++ bazel --bazelrc=/dev/null test @example//:example_cc_direct @example//:example_cc_indirect
+Loading: 
+Loading: 0 packages loaded
+INFO: Analysed 2 targets (0 packages loaded).
+INFO: Found 2 test targets...
+[0 / 4] [-----] BazelWorkspaceStatusAction stable-status.txt
+INFO: Elapsed time: 0.621s, Critical Path: 0.38s
+INFO: Build completed successfully, 9 total actions
+@example//:example_cc_direct                                             PASSED in 0.1s
+@example//:example_cc_indirect                                           PASSED in 0.1s
+
+Executed 2 out of 2 tests: 2 tests pass.
+There were tests whose specified size is too big. Use the --test_verbose_timeout_warnings command line option to see which ones these are.
 + bazel --bazelrc=/dev/null run @example//:example_ldd
 Loading: 
 Loading: 0 packages loaded
@@ -114,7 +81,7 @@ INFO: Found 1 target...
 [0 / 3] [-----] BazelWorkspaceStatusAction stable-status.txt
 Target @example//:example_ldd up-to-date:
   bazel-bin/external/example/example_ldd
-INFO: Elapsed time: 0.217s, Critical Path: 0.00s
+INFO: Elapsed time: 0.195s, Critical Path: 0.00s
 INFO: Build completed successfully, 1 total action
 
 INFO: Running command line: bazel-bin/external/example/example_ldd
@@ -125,15 +92,18 @@ INFO: Running command line: bazel-bin/external/example/example_ldd
 + runfiles_dir=${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_ldd.runfiles/example
 + mkdir -p no_neighbor
 + cd no_neighbor
-+ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/libexample_lib_cc.so
++ check example_cc_indirect
++ local name=example_cc_indirect
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_cc_indirect
 + grep 'not found'
-+ :
-+ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_ldd.runfiles/example/libexample_lib_cc.so
-+ grep 'not found'
-+ :
-+ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_lib_py.so
-+ grep 'not found'
-+ :
-+ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_ldd.runfiles/example/example_lib_py.so
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_ldd.runfiles/example/example_cc_indirect
 + grep 'not found'
 	libexample_lib_cc.so => not found
++ check example_cc_direct
++ local name=example_cc_direct
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_cc_direct
++ grep 'not found'
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_ldd.runfiles/example/example_cc_direct
++ grep 'not found'
+	libexample_lib_cc.so => not found
++ exit 0

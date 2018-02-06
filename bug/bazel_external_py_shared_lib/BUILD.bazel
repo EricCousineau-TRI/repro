@@ -7,28 +7,25 @@ cc_shared_library(
 )
 
 cc_test(
-    name = "example_cc",
+    name = "example_cc_indirect",
     srcs = ["example.cc"],
     deps = [":example_lib_cc"],
 )
 
-cc_shared_library(
-    name = "secondary_direct_lib_cc",
-    srcs = [":example_lib_cc.solib"],
-)
-
-cc_shared_library(
-    name = "secondary_indirect_lib_cc",
-    deps = [":example_lib_cc"],
+cc_test(
+    name = "example_cc_direct",
+    srcs = [
+        "example.cc",
+        "example_shared.h",
+        ":example_lib_cc.solib",
+    ],
 )
 
 sh_test(
     name = "example_ldd",
     data = [
-        ":example_cc",
-        ":example_lib_cc.solib",
-        ":secondary_direct_lib_cc.solib",
-        ":secondary_indirect_lib_cc.solib",
+        ":example_cc_indirect",
+        ":example_cc_direct",
     ],
     srcs = ["example_ldd.sh"],
 )
