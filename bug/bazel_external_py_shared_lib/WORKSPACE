@@ -1,5 +1,1 @@
 workspace(name = "example")
-
-load(":pybind.bzl", "pybind11_repository", "python_repository")
-python_repository(name = "python")
-pybind11_repository(name = "pybind11")

@@ -1,15 +1,9 @@
 load(":cc_shared.bzl", "cc_shared_library")
-load(":pybind.bzl", "pybind_library")
 
 cc_shared_library(
     name = "example_lib_cc",
     hdrs = ["example_shared.h"],
     srcs = ["example_shared.cc"],
-)
-
-cc_shared_library(
-    name = "second_lib_cc",
-    srcs = [":example_lib_cc.solib"],
 )
 
 cc_test(
@@ -18,26 +12,23 @@ cc_test(
     deps = [":example_lib_cc"],
 )
 
-pybind_library(
-    name = "example_lib_py",
-    cc_srcs = ["example_lib_py.cc"],
-    cc_deps = [":example_lib_cc"],
-    py_imports = ["."],
+cc_shared_library(
+    name = "secondary_direct_lib_cc",
+    srcs = [":example_lib_cc.solib"],
 )
 
-py_test(
-    name = "example_py",
-    srcs = ["example.py"],
-    main = "example.py",
-    deps = [":example_lib_py"],
+cc_shared_library(
+    name = "secondary_indirect_lib_cc",
+    deps = [":example_lib_cc"],
 )
 
-sh_binary(
+sh_test(
     name = "example_ldd",
     data = [
-        ":example_lib_py",
+        ":example_cc",
         ":example_lib_cc.solib",
-        ":second_lib_cc.solib",
+        ":secondary_direct_lib_cc.solib",
+        ":secondary_indirect_lib_cc.solib",
     ],
     srcs = ["example_ldd.sh"],
 )
