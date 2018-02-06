@@ -1,11 +1,11 @@
 + env
-SHELL=/bin/bash
 TERM=screen
+SHELL=/bin/bash
 USER=${user}
 PATH=/usr/local/bin:/usr/bin:/bin
 PWD=${bazel_workspace}
+SHLVL=1
 HOME=/home/${user}
-SHLVL=2
 DISPLAY=:0
 OLDPWD=${bazel_workspace}
 _=/usr/bin/env
@@ -90,15 +90,20 @@ INFO: Running command line: bazel-bin/example_ldd
 +++ dirname ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_ldd
 ++ cd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin
 ++ pwd
-+ bin_dir=${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin
++ src_dir=${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin
++ runfiles_dir=${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_ldd.runfiles/example
 + mkdir -p no_neighbor
 + cd no_neighbor
-+ pwd
-${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_ldd.runfiles/example/no_neighbor
 + ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/libexample_lib_cc.so
 + grep 'not found'
 + :
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_ldd.runfiles/example/libexample_lib_cc.so
++ grep 'not found'
++ :
 + ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_lib_py.so
++ grep 'not found'
++ :
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_ldd.runfiles/example/example_lib_py.so
 + grep 'not found'
 + :
 + bazel --bazelrc=/dev/null run @example//:example_ldd
@@ -109,21 +114,26 @@ INFO: Found 1 target...
 [0 / 3] [-----] BazelWorkspaceStatusAction stable-status.txt
 Target @example//:example_ldd up-to-date:
   bazel-bin/external/example/example_ldd
-INFO: Elapsed time: 0.207s, Critical Path: 0.01s
-INFO: Build completed successfully, 3 total actions
+INFO: Elapsed time: 0.217s, Critical Path: 0.00s
+INFO: Build completed successfully, 1 total action
 
 INFO: Running command line: bazel-bin/external/example/example_ldd
 +++ dirname ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_ldd
 ++ cd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example
 ++ pwd
-+ bin_dir=${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example
++ src_dir=${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example
++ runfiles_dir=${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_ldd.runfiles/example
 + mkdir -p no_neighbor
 + cd no_neighbor
-${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_ldd.runfiles/example/no_neighbor
-+ pwd
 + ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/libexample_lib_cc.so
++ grep 'not found'
++ :
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_ldd.runfiles/example/libexample_lib_cc.so
 + grep 'not found'
 + :
 + ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_lib_py.so
 + grep 'not found'
 + :
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_ldd.runfiles/example/example_lib_py.so
++ grep 'not found'
+	libexample_lib_cc.so => not found

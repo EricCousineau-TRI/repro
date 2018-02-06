@@ -1,10 +1,11 @@
 #!/bin/bash
 set -eux
 
-bin_dir=$(cd $(dirname $0) && pwd)
-
+src_dir=$(cd $(dirname $0) && pwd)
+runfiles_dir=${PWD}
 mkdir -p no_neighbor && cd no_neighbor
 
-pwd
-ldd ${bin_dir}/libexample_lib_cc.so | grep "not found" || :
-ldd ${bin_dir}/example_lib_py.so | grep "not found" || :
+ldd ${src_dir}/libexample_lib_cc.so | grep "not found" || :
+ldd ${runfiles_dir}/libexample_lib_cc.so | grep "not found" || :
+ldd ${src_dir}/example_lib_py.so | grep "not found" || :
+ldd ${runfiles_dir}/example_lib_py.so | grep "not found" || :

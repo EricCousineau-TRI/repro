@@ -1,6 +1,10 @@
 #!/bin/bash
 set -eu
 
+# To run:
+#  alias bash-isolate='env -i HOME=$HOME DISPLAY=$DISPLAY SHELL=$SHELL TERM=$TERM USER=$USER PATH=/usr/local/bin:/usr/bin:/bin bash --norc'
+#  bash-isolate ./repro.sh
+
 cd $(dirname $0)
 
 (
