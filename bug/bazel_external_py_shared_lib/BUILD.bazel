@@ -1,31 +1,18 @@
-load(":cc_shared.bzl", "cc_shared_library")
-
-cc_shared_library(
-    name = "example_lib_cc",
-    hdrs = ["example_shared.h"],
-    srcs = ["example_shared.cc"],
+cc_binary(
+    name = "libexample_lib.so",
+    srcs = [
+        "example_shared.cc",
+        "example_shared.h",
+    ],
+    linkshared = 1,
+    linkstatic = 1,
 )
 
 cc_test(
-    name = "example_cc_indirect",
-    srcs = ["example.cc"],
-    deps = [":example_lib_cc"],
-)
-
-cc_test(
-    name = "example_cc_direct",
+    name = "example_cc",
     srcs = [
         "example.cc",
         "example_shared.h",
-        ":example_lib_cc.solib",
+        "libexample_lib.so",
     ],
-)
-
-sh_test(
-    name = "example_ldd",
-    data = [
-        ":example_cc_indirect",
-        ":example_cc_direct",
-    ],
-    srcs = ["example_ldd.sh"],
 )
