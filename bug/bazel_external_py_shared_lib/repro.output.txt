@@ -11,31 +11,31 @@ OLDPWD=${bazel_workspace}
 _=/usr/bin/env
 + bazel --bazelrc=/dev/null run //:example_cc
 Another command holds the client lock: 
-pid=27028
+pid=42634
 owner=client
 cwd=${bazel_workspace}
 
 Waiting for it to complete...
 Loading: 
 Loading: 0 packages loaded
-INFO: Analysed target //:example_cc (0 packages loaded).
+INFO: Analysed target //:example_cc (1 packages loaded).
 INFO: Found 1 target...
-[0 / 1] [-----] BazelWorkspaceStatusAction stable-status.txt
+[0 / 2] [-----] BazelWorkspaceStatusAction stable-status.txt
 Target //:example_cc up-to-date:
   bazel-bin/example_cc
-INFO: Elapsed time: 0.311s, Critical Path: 0.00s
+INFO: Elapsed time: 0.347s, Critical Path: 0.00s
 INFO: Build completed successfully, 1 total action
 
 INFO: Running command line: bazel-bin/example_cc
 + bazel --bazelrc=/dev/null run @example//:example_cc
 Loading: 
 Loading: 0 packages loaded
-INFO: Analysed target @example//:example_cc (0 packages loaded).
+INFO: Analysed target @example//:example_cc (1 packages loaded).
 INFO: Found 1 target...
-[0 / 1] [-----] BazelWorkspaceStatusAction stable-status.txt
+[0 / 4] [-----] BazelWorkspaceStatusAction stable-status.txt
 Target @example//:example_cc up-to-date:
   bazel-bin/external/example/example_cc
-INFO: Elapsed time: 0.215s, Critical Path: 0.00s
+INFO: Elapsed time: 0.293s, Critical Path: 0.00s
 INFO: Build completed successfully, 1 total action
 
 INFO: Running command line: bazel-bin/external/example/example_cc
@@ -45,12 +45,12 @@ INFO: Running command line: bazel-bin/external/example/example_cc
 + bazel --bazelrc=/dev/null run //:example_py
 Loading: 
 Loading: 0 packages loaded
-INFO: Analysed target //:example_py (0 packages loaded).
+INFO: Analysed target //:example_py (8 packages loaded).
 INFO: Found 1 target...
-[0 / 1] [-----] BazelWorkspaceStatusAction stable-status.txt
+[1 / 5] [-----] BazelWorkspaceStatusAction stable-status.txt
 Target //:example_py up-to-date:
   bazel-bin/example_py
-INFO: Elapsed time: 0.193s, Critical Path: 0.00s
+INFO: Elapsed time: 0.505s, Critical Path: 0.00s
 INFO: Build completed successfully, 1 total action
 
 INFO: Running command line: bazel-bin/example_py
@@ -59,10 +59,10 @@ Loading:
 Loading: 0 packages loaded
 INFO: Analysed target @example//:example_py (0 packages loaded).
 INFO: Found 1 target...
-[0 / 1] [-----] BazelWorkspaceStatusAction stable-status.txt
+[1 / 5] [-----] BazelWorkspaceStatusAction stable-status.txt
 Target @example//:example_py up-to-date:
   bazel-bin/external/example/example_py
-INFO: Elapsed time: 0.184s, Critical Path: 0.00s
+INFO: Elapsed time: 0.215s, Critical Path: 0.00s
 INFO: Build completed successfully, 1 total action
 
 INFO: Running command line: bazel-bin/external/example/example_py
@@ -75,3 +75,55 @@ ImportError: libexample_lib_cc.so: cannot open shared object file: No such file 
 + ldd bazel-bin/external/example/example_py.runfiles/example/example_lib_py.so
 + grep 'not found'
 	libexample_lib_cc.so => not found
++ bazel --bazelrc=/dev/null run //:example_ldd
+Loading: 
+Loading: 0 packages loaded
+INFO: Analysed target //:example_ldd (0 packages loaded).
+INFO: Found 1 target...
+[0 / 3] [-----] BazelWorkspaceStatusAction stable-status.txt
+Target //:example_ldd up-to-date:
+  bazel-bin/example_ldd
+INFO: Elapsed time: 0.257s, Critical Path: 0.01s
+INFO: Build completed successfully, 3 total actions
+
+INFO: Running command line: bazel-bin/example_ldd
++++ dirname ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_ldd
+++ cd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin
+++ pwd
++ bin_dir=${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin
++ mkdir -p no_neighbor
++ cd no_neighbor
++ pwd
+${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_ldd.runfiles/example/no_neighbor
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/libexample_lib_cc.so
++ grep 'not found'
++ :
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/example_lib_py.so
++ grep 'not found'
++ :
++ bazel --bazelrc=/dev/null run @example//:example_ldd
+Loading: 
+Loading: 0 packages loaded
+INFO: Analysed target @example//:example_ldd (0 packages loaded).
+INFO: Found 1 target...
+[0 / 3] [-----] BazelWorkspaceStatusAction stable-status.txt
+Target @example//:example_ldd up-to-date:
+  bazel-bin/external/example/example_ldd
+INFO: Elapsed time: 0.207s, Critical Path: 0.01s
+INFO: Build completed successfully, 3 total actions
+
+INFO: Running command line: bazel-bin/external/example/example_ldd
++++ dirname ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_ldd
+++ cd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example
+++ pwd
++ bin_dir=${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example
++ mkdir -p no_neighbor
++ cd no_neighbor
+${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_ldd.runfiles/example/no_neighbor
++ pwd
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/libexample_lib_cc.so
++ grep 'not found'
++ :
++ ldd ${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_lib_py.so
++ grep 'not found'
++ :

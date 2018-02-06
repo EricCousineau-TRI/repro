@@ -26,3 +26,12 @@ py_test(
     main = "example.py",
     deps = [":example_lib_py"],
 )
+
+sh_binary(
+    name = "example_ldd",
+    data = [
+        ":example_lib_py",
+        ":example_lib_cc.solib",
+    ],
+    srcs = ["example_ldd.sh"],
+)
