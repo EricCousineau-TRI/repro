@@ -7,6 +7,11 @@ cc_shared_library(
     srcs = ["example_shared.cc"],
 )
 
+cc_shared_library(
+    name = "second_lib_cc",
+    srcs = [":example_lib_cc.solib"],
+)
+
 cc_test(
     name = "example_cc",
     srcs = ["example.cc"],
@@ -32,6 +37,7 @@ sh_binary(
     data = [
         ":example_lib_py",
         ":example_lib_cc.solib",
+        ":second_lib_cc.solib",
     ],
     srcs = ["example_ldd.sh"],
 )

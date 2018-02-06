@@ -1,11 +1,18 @@
 #!/bin/bash
-set -eux
+set -x
 
 src_dir=$(cd $(dirname $0) && pwd)
 runfiles_dir=${PWD}
 mkdir -p no_neighbor && cd no_neighbor
 
-ldd ${src_dir}/libexample_lib_cc.so | grep "not found" || :
-ldd ${runfiles_dir}/libexample_lib_cc.so | grep "not found" || :
-ldd ${src_dir}/example_lib_py.so | grep "not found" || :
-ldd ${runfiles_dir}/example_lib_py.so | grep "not found" || :
+check-lib() {
+    local name=$1
+    ldd ${src_dir}/${name} | grep "not found"
+    ldd ${runfiles_dir}/${name} | grep "not found"
+}
+
+check-lib libexample_lib_cc.so
+check-lib example_lib_py.so
+check-lib libsecond_lib_cc.so
+
+exit 0
