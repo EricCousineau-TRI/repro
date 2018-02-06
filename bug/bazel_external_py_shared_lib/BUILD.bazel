@@ -1,0 +1,13 @@
+load(":stuff.bzl", "cc_shared_library")
+
+cc_shared_library(
+    name = "example_shared",
+    hdrs = ["example_shared.h"],
+    srcs = ["example_shared.cc"],
+)
+
+cc_test(
+    name = "example",
+    srcs = ["example.cc"],
+    deps = [":example_shared"],
+)
