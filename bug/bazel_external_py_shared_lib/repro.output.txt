@@ -1,0 +1,77 @@
++ env
+SHELL=/bin/bash
+TERM=screen
+USER=${user}
+PATH=/usr/local/bin:/usr/bin:/bin
+PWD=${bazel_workspace}
+HOME=/home/${user}
+SHLVL=2
+DISPLAY=:0
+OLDPWD=${bazel_workspace}
+_=/usr/bin/env
++ bazel --bazelrc=/dev/null run //:example_cc
+Another command holds the client lock: 
+pid=27028
+owner=client
+cwd=${bazel_workspace}
+
+Waiting for it to complete...
+Loading: 
+Loading: 0 packages loaded
+INFO: Analysed target //:example_cc (0 packages loaded).
+INFO: Found 1 target...
+[0 / 1] [-----] BazelWorkspaceStatusAction stable-status.txt
+Target //:example_cc up-to-date:
+  bazel-bin/example_cc
+INFO: Elapsed time: 0.311s, Critical Path: 0.00s
+INFO: Build completed successfully, 1 total action
+
+INFO: Running command line: bazel-bin/example_cc
++ bazel --bazelrc=/dev/null run @example//:example_cc
+Loading: 
+Loading: 0 packages loaded
+INFO: Analysed target @example//:example_cc (0 packages loaded).
+INFO: Found 1 target...
+[0 / 1] [-----] BazelWorkspaceStatusAction stable-status.txt
+Target @example//:example_cc up-to-date:
+  bazel-bin/external/example/example_cc
+INFO: Elapsed time: 0.215s, Critical Path: 0.00s
+INFO: Build completed successfully, 1 total action
+
+INFO: Running command line: bazel-bin/external/example/example_cc
++ ldd bazel-bin/example_py.runfiles/example/example_lib_py.so
++ grep 'not found'
++ :
++ bazel --bazelrc=/dev/null run //:example_py
+Loading: 
+Loading: 0 packages loaded
+INFO: Analysed target //:example_py (0 packages loaded).
+INFO: Found 1 target...
+[0 / 1] [-----] BazelWorkspaceStatusAction stable-status.txt
+Target //:example_py up-to-date:
+  bazel-bin/example_py
+INFO: Elapsed time: 0.193s, Critical Path: 0.00s
+INFO: Build completed successfully, 1 total action
+
+INFO: Running command line: bazel-bin/example_py
++ bazel --bazelrc=/dev/null run @example//:example_py
+Loading: 
+Loading: 0 packages loaded
+INFO: Analysed target @example//:example_py (0 packages loaded).
+INFO: Found 1 target...
+[0 / 1] [-----] BazelWorkspaceStatusAction stable-status.txt
+Target @example//:example_py up-to-date:
+  bazel-bin/external/example/example_py
+INFO: Elapsed time: 0.184s, Critical Path: 0.00s
+INFO: Build completed successfully, 1 total action
+
+INFO: Running command line: bazel-bin/external/example/example_py
+Traceback (most recent call last):
+  File "${bazel_cache}/51190eb8fdb3971aa44e2291e3e7c318/execroot/example/bazel-out/k8-fastbuild/bin/external/example/example_py.runfiles/example/../example/example.py", line 1, in <module>
+    from example_lib_py import func
+ImportError: libexample_lib_cc.so: cannot open shared object file: No such file or directory
+[31m[1mERROR: [0mNon-zero return code '1' from command: Process exited with status 1
++ :
++ ldd bazel-bin/external/example/example_py.runfiles/example/example_lib_py.so
++ grep 'not found'
+	libexample_lib_cc.so => not found

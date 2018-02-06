@@ -1,13 +1,28 @@
-load(":stuff.bzl", "cc_shared_library")
+load(":cc_shared.bzl", "cc_shared_library")
+load(":pybind.bzl", "pybind_library")
 
 cc_shared_library(
-    name = "example_shared",
+    name = "example_lib_cc",
     hdrs = ["example_shared.h"],
     srcs = ["example_shared.cc"],
 )
 
 cc_test(
-    name = "example",
+    name = "example_cc",
     srcs = ["example.cc"],
-    deps = [":example_shared"],
+    deps = [":example_lib_cc"],
+)
+
+pybind_library(
+    name = "example_lib_py",
+    cc_srcs = ["example_lib_py.cc"],
+    cc_deps = [":example_lib_cc"],
+    py_imports = ["."],
+)
+
+py_test(
+    name = "example_py",
+    srcs = ["example.py"],
+    main = "example.py",
+    deps = [":example_lib_py"],
 )
