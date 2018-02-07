@@ -19,8 +19,9 @@ for piece in pieces:
     new_pieces.append(piece)
 
 # Write temporary script.
-tmp_script = "/tmp/drake_jupyter"
+tmp_script = "/tmp/drake_jupyter.sh"
 with open(tmp_script, "w") as f:
+    f.write("#!/bin/bash\n")
     f.write(" ".join(new_pieces))
 st = os.stat(tmp_script)
 os.chmod(tmp_script, st.st_mode | stat.S_IEXEC)
