@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+
+import os
+import stat
+from subprocess import check_output
+import sys
+
+# Find `jupyter` script.
+jupyter_path = check_output(["which", "jupyter"]).strip()
+with open(jupyter_path) as f:
+    text = f.read()
+
+pieces = text.split()
+new_pieces = []
+for piece in pieces:
+    if piece.startswith("PYTHONPATH="):
+        assert piece.endswith('"')
+        piece = piece[:-1] + ':${PYTHONPATH}"'
+    new_pieces.append(piece)
+
+# Write temporary script.
+tmp_script = "/tmp/drake_jupyter"
+with open(tmp_script, "w") as f:
+    f.write(" ".join(new_pieces))
+st = os.stat(tmp_script)
+os.chmod(tmp_script, st.st_mode | stat.S_IEXEC)
+
+os.execv(tmp_script, sys.argv)

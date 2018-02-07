@@ -1,0 +1,1 @@
+JUPYTER_PATH="/usr/local/etc/jupyter" PYTHONPATH="/usr/local/Cellar/jupyter/1.0.0_1/libexec/lib/python2.7/site-packages:/usr/local/Cellar/jupyter/1.0.0_1/libexec/vendor/lib/python2.7/site-packages:/usr/local/lib/python2.7/site-packages" exec "/usr/local/Cellar/jupyter/1.0.0_1/libexec/bin/jupyter" "$@"
