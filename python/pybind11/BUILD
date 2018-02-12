@@ -169,3 +169,12 @@ cc_binary(
     ],
     deps = [":include"],
 )
+
+cc_binary(
+    name = "test_callback_eigen_ref",
+    srcs = [
+         "custom_tests/test_callback_eigen_ref.cc",
+         "tests/pybind11_tests.cpp",
+    ],
+    deps = [":include"],
+)
