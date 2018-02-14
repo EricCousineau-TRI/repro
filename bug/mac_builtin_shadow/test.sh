@@ -13,6 +13,12 @@ mkdir example_module
 cd example_module
 touch __init__.py
 
+use_py=${USE_PY:-}
+
+if [[ -z ${use_py} ]]; then
+
+echo "Using shared library"
+
 cat > math.c <<EOF
 // https://docs.python.org/2/extending/extending.html
 
@@ -59,6 +65,17 @@ EOF
 
 python _math_build.py build
 cp $(find . -name '*.so') .
+
+else
+
+echo "Using .py"
+
+cat > math.py <<EOF
+stuff = 1
+EOF
+
+fi
+
 
 cat > other.py <<EOF
 from __future__ import absolute_import
