@@ -74,4 +74,10 @@ EOF
 
 cd ..
 export PYTHONPATH=${PWD}:${PYTHONPATH}
+
+set +e
+
 python example_module/import_test.py
+
+cp example_module/import_test.py .
+python import_test.py
