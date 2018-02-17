@@ -160,3 +160,12 @@ cc_binary(
     args = ["$(location custom_tests/test_const.py)"],
     deps = [":include"],
 )
+
+cc_binary(
+    name = "test_unique_ptr_cast_error",
+    srcs = [
+         "custom_tests/test_unique_ptr_cast_error.cc",
+         "tests/pybind11_tests.cpp",
+    ],
+    deps = [":include"],
+)
