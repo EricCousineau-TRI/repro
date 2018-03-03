@@ -357,3 +357,9 @@ cc_binary(
         ":wrap_function",
     ],
 )
+
+cc_binary(
+    name = "thread_daemon",
+    srcs = ["thread_daemon.cc"],
+    linkopts = ["-lpthread"],
+)
