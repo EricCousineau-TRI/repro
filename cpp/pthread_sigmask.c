@@ -5,6 +5,9 @@
 #include <signal.h>
 #include <errno.h>
 
+#include <iostream>
+#include <thread>
+
 /* Simple error handling functions */
 
 #define handle_error_en(en, msg) \
@@ -13,7 +16,7 @@
 static void *
 sig_thread(void *arg)
 {
-   sigset_t *set = arg;
+   sigset_t *set = static_cast<sigset_t*>(arg);
    int s, sig;
 
    for (;;) {
@@ -25,6 +28,7 @@ sig_thread(void *arg)
 }
 
 void* other_thread(void* x) {
+  std::cout << "pausing" << std::endl;
    pause();            /* Dummy pause so we can test program */
   return NULL;
 }
@@ -33,7 +37,6 @@ int
 main(int argc, char *argv[])
 {
    pthread_t thread;
-   pthread_t thread_2;
    sigset_t set;
    int s;
 
@@ -52,11 +55,8 @@ main(int argc, char *argv[])
    if (s != 0)
        handle_error_en(s, "pthread_create");
 
-   s = pthread_create(&thread_2, NULL, &other_thread, NULL);
-   if (s != 0)
-       handle_error_en(s, "pthread_create");
-
+  std::thread thread_2(&other_thread, nullptr);
    /* Main thread carries on to create other threads and/or do
       other work */
-   pthread_join(thread_2, NULL);
+   thread_2.join();
 }
