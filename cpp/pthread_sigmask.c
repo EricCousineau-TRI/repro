@@ -4,28 +4,59 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+#include <cassert>
 
 #include <iostream>
 #include <thread>
 
 /* Simple error handling functions */
 
-#define handle_error_en(en, msg) \
-       do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
+class SigintThread {
+ public:
+  SigintThread() {
+    // Block SIGINT using a main thread.
+    sigemptyset(&set_);
+    sigaddset(&set_, SIGINT);
+    assert(pthread_sigmask(SIG_BLOCK, &set_, NULL) == 0);
+    assert(
+        pthread_create(&sig_thread_, NULL, &SigintThread::loop, &set_) == 0);
+    std::cerr << "Installed sig_thread\n";
+  }
 
-static void *
-sig_thread(void *arg)
-{
-   sigset_t *set = static_cast<sigset_t*>(arg);
-   int s, sig;
+  ~SigintThread() {
+    std::cerr << "Destroying sig_thread\n";
+    done_ = true;
+    void* result = nullptr;
+    pthread_join(sig_thread_, &result);
+    std::cerr << "Done\n";
+  }
 
-   for (;;) {
-       s = sigwait(set, &sig);
-       if (s != 0)
-           handle_error_en(s, "sigwait");
-       printf("Signal handling thread got signal %d\n", sig);
-   }
-}
+  static void* loop(void* arg) {
+    sigset_t* set = static_cast<sigset_t*>(arg);
+    timespec t{};
+    t.tv_sec = 0;
+    t.tv_nsec = 100e3;  // 10ms
+    while (!done_) {
+      std::cerr << "Waiting\n";
+      // if (sigtimedwait(set, nullptr, &t) == 0) {
+      int sig{};
+      sigwait(set, &sig);
+      {
+        constexpr int return_code = 130;
+        std::cerr << "exit(" << return_code << ") on SIGINT" << std::endl;
+        exit(return_code);
+      }
+    }
+    return nullptr;
+  }
+
+ private:
+  static bool done_;
+  sigset_t set_;
+  pthread_t sig_thread_;
+};
+
+bool SigintThread::done_{};
 
 void* other_thread(void* x) {
   std::cout << "pausing" << std::endl;
@@ -48,12 +79,9 @@ main(int argc, char *argv[])
    // sigaddset(&set, SIGUSR1);
    sigaddset(&set, SIGINT);
    s = pthread_sigmask(SIG_BLOCK, &set, NULL);
-   if (s != 0)
-       handle_error_en(s, "pthread_sigmask");
+   assert(s == 0);
 
-   s = pthread_create(&thread, NULL, &sig_thread, (void *) &set);
-   if (s != 0)
-       handle_error_en(s, "pthread_create");
+   SigintThread sig_thread;
 
   std::thread thread_2(&other_thread, nullptr);
    /* Main thread carries on to create other threads and/or do
