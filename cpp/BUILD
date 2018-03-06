@@ -363,3 +363,8 @@ cc_binary(
     srcs = ["thread_daemon.cc"],
     linkopts = ["-lpthread"],
 )
+
+cc_binary(
+    name = "clone_stuff",
+    srcs = ["clone_stuff.cc"],
+)
