@@ -368,3 +368,8 @@ cc_binary(
     name = "clone_stuff",
     srcs = ["clone_stuff.cc"],
 )
+
+cc_binary(
+    name = "friend_stuff",
+    srcs = ["friend_stuff.cc"],
+)
