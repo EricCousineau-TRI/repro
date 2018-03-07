@@ -17,7 +17,7 @@ struct cloneable_helper {
 template <typename T>
 using is_cloneable = decltype(cloneable_helper<T>::Check(nullptr));
 
-template <typename T>
+template <typename T, typename Token = void>
 struct copyable_helper {
   template <typename U = T>
   static std::true_type Check(
@@ -49,8 +49,7 @@ struct CopyablePrivate {
  private:
   CopyablePrivate(const CopyablePrivate&) = default;
 
-  template <typename T>
-  friend struct copyable_helper;
+  friend struct copyable_helper<CopyablePrivate, int>;
 };
 
 struct NonCopyable {
@@ -65,9 +64,9 @@ int main() {
   cout << is_cloneable<NonCloneable>::value << endl;
 
   cout << is_copyable<CopyablePrivate>::value << endl;
-  unique_ptr<CopyablePrivate> copy(
-      copyable_helper<CopyablePrivate>::Do(CopyablePrivate{}));
-  cout << copy.get() << endl;
+  // unique_ptr<CopyablePrivate> copy(
+  //     copyable_helper<CopyablePrivate>::Do(CopyablePrivate{}));
+  // cout << copy.get() << endl;
   cout << is_copyable<NonCopyable>::value << endl;
 
   return 0;
