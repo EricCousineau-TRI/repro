@@ -65,7 +65,7 @@ int main() {
   // cout << clone.get() << endl;
   // cout << is_cloneable<NonCloneable>::value << endl;
 
-  cout << is_copyable<CopyablePrivate, void>::value << endl;
+  cout << is_copyable<CopyablePrivate, void>::value << endl;  // what???
   cout << is_copyable<CopyablePrivate, int>::value << endl;
   // unique_ptr<CopyablePrivate> copy(
   //     copyable_helper<CopyablePrivate>::Do(CopyablePrivate{}));
@@ -78,11 +78,8 @@ int main() {
 /*
 Output:
 
+1   <-- what???
 1
-0x802c30
-0
-1
-0x7ffdf4d42800
 0
 
 */
