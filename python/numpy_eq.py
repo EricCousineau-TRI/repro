@@ -1,6 +1,7 @@
 # Purpose: See if there's a way to not have == return a logical.
-
+import inspect
 import numpy as np
+import sys
 
 class Custom(object):
     def __init__(self, value):
@@ -18,15 +19,33 @@ class Custom(object):
     def __repr__(self):
         return repr(self.value)
 
-equal = np.frompyfunc(Custom.__eq__, 2, 1)
 
-a = Custom('a')
-b = Custom('b')
-print(a == b)
+def main():
+    eq = lambda a, b: a == b
+    generic_equal = np.frompyfunc(eq, 2, 1)
 
-av = np.array([a, b])
-bv = np.array([b, a])
+    a = Custom('a')
+    b = Custom('b')
+    print(a == b)
 
-print(equal(av, bv))
-# print(np.equal(av, bv, dtype=Custom))
-print(np.equal(av, bv))
+    av = np.array([a, b])
+    bv = np.array([b, a])
+
+    print(generic_equal(av, bv))
+    print(np.equal(av, bv))
+
+    np.set_numeric_ops(equal=generic_equal)
+    print(np.equal(av, bv))
+    print(av == bv)
+    np.equal = generic_equal
+    print(np.equal(av, bv))
+
+def exec_lines(func):
+    lines, _ = inspect.getsourcelines(func)
+    cur = {}
+    for line in lines[1:]:
+        line_trim = line[4:]
+        print(">> {}".format(line_trim.rstrip()))
+        exec line_trim in globals(), cur
+
+exec_lines(main)
