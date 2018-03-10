@@ -119,17 +119,16 @@ import sys; sys.stdout.flush();
 
   PyArray_InitArrFuncs(&npyrational_arrfuncs);
   npyrational_arrfuncs.getitem = [](void* in, void* arr) -> PyObject* {
-    const auto& obj = *(const Class*)in;
-    return py::cast(obj, py::return_value_policy::copy).release().ptr();
+    return py::cast(*(const Class*)in).release().ptr();
   };
   npyrational_arrfuncs.setitem = [](PyObject* in, void* out, void* arr) {
     *(Class*)out = *py::handle(in).cast<Class*>();
     return 0;
   };
   npyrational_arrfuncs.copyswap = [](void* dst, void* src, int swap, void* arr) {
+      if (!src) return;
       Class* r_dst = (Class*)dst;
       Class* r_src = (Class*)src;
-      if (!src) return;
       if (swap) {
           std::swap(*r_dst, *r_src);
       } else {
@@ -153,10 +152,17 @@ print(np.dtype(Custom))
 print(Custom.dtype)
 print(type(Custom.dtype))
 
+class Stuff(object): pass
+
 av = np.array([a, a], dtype=Custom)
+av_bad = np.array([a, a])
 print(a)
 print(av)
 print(av == av)
+print(av_bad == av_bad)
+print(av.dtype)
+print(np.dtype(Stuff))
+print(np.dtype(Custom))
 sys.stdout.flush()
 )""");
 
