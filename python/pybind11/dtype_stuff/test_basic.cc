@@ -322,20 +322,22 @@ int main() {
     py::module m("__main__");
 
     using Class = Custom;
-    py::class_<Class> cls(m, "Custom");
-    cls
-        .def(py::init<double>())
-        .def(py::self == Class{})
-        .def(py::self * Class{})
-        .def("value", &Class::value)
-        .def("__repr__", [](const Class* self) {
-            return py::str("Custom({})").format(self->value());
-        });
+    // py::class_<Class> cls(m, "Custom");
+    // cls
+    //     .def(py::init<double>())
+    //     .def(py::self == Class{})
+    //     .def(py::self * Class{})
+    //     .def("value", &Class::value)
+    //     .def("__repr__", [](const Class* self) {
+    //         return py::str("Custom({})").format(self->value());
+    //     });
 
     // Register thing.
-    auto py_type = &PyCustom_Type;
+    auto raw_type = &PyCustom_Type;
+    auto py_type = py::handle((PyObject*)raw_type);
     PyCustom_Type.tp_base = &PyGenericArrType_Type;
     PY_ASSERT_EX(PyType_Ready(&PyCustom_Type) >= 0, "Crap");
+    m.attr("Custom") = py_type;
 
     typedef struct { char c; Class r; } align_test;
 
@@ -343,7 +345,7 @@ int main() {
     
     static PyArray_Descr descr = {
         PyObject_HEAD_INIT(0)
-        py_type,                /* typeobj */
+        raw_type,                /* typeobj */
         'V',                    /* kind (V = arbitrary) */
         'r',                    /* type */
         '=',                    /* byteorder */
@@ -409,8 +411,9 @@ int main() {
     };
     Py_TYPE(&descr) = &PyArrayDescr_Type;
     npy_custom = PyArray_RegisterDataType(&descr);
-    cls.attr("dtype") = py::reinterpret_borrow<py::object>(
-        py::handle((PyObject*)&descr));
+    auto py_descr =
+        py::reinterpret_borrow<py::object>(py::handle((PyObject*)&descr));
+    // py::setattr(py_type, "dtype", py_descr);
 
     using Unary = type_pack<Class>;
     using Binary = type_pack<Class, Class>;
