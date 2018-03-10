@@ -177,10 +177,16 @@ struct npy_format_descriptor<Custom> {
 int main() {
     py::scoped_interpreter guard;
 
+
+    _import_array();
+    _import_umath();
+    py::module numpy = py::module::import("numpy");
     py::module m("__main__");
 
+    py::handle base((PyObject*)&PyGenericArrType_Type);
+
     using Class = Custom;
-    py::class_<Class> cls(m, "Custom");
+    py::class_<Class> cls(m, "Custom", base);
     cls
         .def(py::init<double>())
         .def(py::self == Class{})
@@ -191,11 +197,6 @@ int main() {
         });
 
     // Register thing.
-
-    _import_array();
-    _import_umath();
-
-    py::module numpy = py::module::import("numpy");
     auto py_type = (PyTypeObject*)cls.ptr();
 
     typedef struct { char c; Class r; } align_test;
