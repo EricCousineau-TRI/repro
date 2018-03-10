@@ -20,12 +20,13 @@ using namespace py::literals;
 using namespace std;
 
 using Callback =
-    std::function<void(const Eigen::Ref<const Eigen::VectorXd>& x)>;
+    std::function<Eigen::VectorXd (const Eigen::Ref<const Eigen::VectorXd>& x)>;
 
 void call_thing(const Callback& func) {
   Eigen::VectorXd x(4);
   x << 10, 20, 30, 40;
-  func(x);
+  Eigen::VectorXd y = func(x);
+  cout << y.transpose() << endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -40,6 +41,7 @@ int main(int argc, char* argv[]) {
     py::exec(R"""(
 def my_func(x):
     print("Python callback: {}".format(x))
+    return 2 * x
 
 m.call_thing(my_func)
 )""");
