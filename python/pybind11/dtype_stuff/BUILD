@@ -9,9 +9,8 @@ cc_library(
 
 cc_binary(
     name = "test_rational.so",
-    srcs = ["test_rational.cc"],
-    # copts = ["-fPIC"],
-    # linkopts = ["-fPIC"],
+    srcs = ["test_rational_min.cc"],
+    # srcs = ["test_rational.cc"],
     linkshared = 1,
     linkstatic = 0,
     deps = [
