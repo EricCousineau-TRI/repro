@@ -45,23 +45,30 @@ private:
     double value_{};
 };
 
-#define CHECK_EXPR(name, expr) \
-    template <typename A_, typename B = A_, typename C = A_, typename D = A_> \
+// Could increase param count?
+#define CHECK_EXPR(name, expr, lambda_expr) \
+    template <typename A_, typename B = A_> \
     struct name { \
       template <typename A = A_> \
       static std::true_type check(decltype(expr)*); \
       template <typename> \
       static std::false_type check(...); \
       static constexpr bool value = decltype(check<A_>(nullptr))::value; \
+      template <typename A = A_> \
+      static auto get_lambda() { return lambda_expr; } \
     };
 
-CHECK_EXPR(supports_equal, A{} == B{});
-CHECK_EXPR(supports_not_equal, A{} != B{});
-CHECK_EXPR(supports_not_equal, A{} != B{});
-CHECK_EXPR(supports_add, A{} + B{});
-CHECK_EXPR(supports_multiply, A{} * B{});
-CHECK_EXPR(supports_divide, A{} / B{});
-CHECK_EXPR(supports_neg, -A{});
+CHECK_EXPR(supports_equal, A{} == B{},
+           [](const A& a, const B& b) { return a == b; });
+CHECK_EXPR(supports_add, A{} + B{},
+           [](const A& a, const B& b) { return a + b; });
+CHECK_EXPR(supports_multiply, A{} * B{},
+           [](const A& a, const B& b) { return a * b; });
+// CHECK_EXPR(supports_not_equal, A{} != B{});
+// CHECK_EXPR(supports_not_equal, A{} != B{});
+// CHECK_EXPR(supports_add, A{} + B{});
+// CHECK_EXPR(supports_divide, A{} / B{});
+// CHECK_EXPR(supports_neg, -A{});
 
 void module(py::module m) {}
 
@@ -82,13 +89,18 @@ struct npy_format_descriptor<Custom> {
 
 template <
     template <typename...> class Check,
-    typename Pack,
-    typename Func>
-void run_if(Pack pack, Func func) {
-  using Result = typename Pack::template bind<Check>;
-  type_visit_impl<visit_with_default, Func>::
-      template runner<Pack, Result::value>::
-              run(std::forward<Func>(func));
+    typename Class,
+    typename ... Args>
+void maybe_add(PyUFuncObject* ufunc, type_pack<Args...> = {}) {
+  using Result = Check<Args...>;
+  using Pack = type_pack<Args...>;
+  auto defer = [ufunc](auto pack) {
+    using PackT = decltype(pack);
+    using ResultT = typename PackT::template bind<Check>;
+    RegisterBinaryUFunc<Class>(ufunc, ResultT::get_lambda());
+  };
+  type_visit_impl<visit_with_default, decltype(defer)&>::
+      template runner<Pack, Result::value>::run(defer);
 }
 
 int main() {
@@ -168,23 +180,28 @@ int main() {
         return (PyUFuncObject*)numpy.attr(name).ptr();
     };
 
-    RegisterBinaryUFunc<Class>(ufunc("equal"), Class::equal);
+    using Pair = type_pack<Class, Class>;
+    maybe_add<supports_equal, Class>(ufunc("equal"), Pair{});
+    maybe_add<supports_add, Class>(ufunc("add"), Pair{});
+    maybe_add<supports_multiply, Class>(ufunc("multiply"), Pair{});
+
+    // RegisterBinaryUFunc<Class>(ufunc("equal"), Class::equal);
     // RegisterBinaryUFunc<Class>(ufunc("multiply"), Class::multiply);
 
-    py::print("Supports add? {}", bool{supports_add<Class>::value});
-    py::print("Supports mult? {}", bool{supports_multiply<Class>::value});
-    py::print("Supports neg? {}", bool{supports_neg<Class>::value});
+    // py::print("Supports add? {}", bool{supports_add<Class>::value});
+    // py::print("Supports mult? {}", bool{supports_multiply<Class>::value});
+    // py::print("Supports neg? {}", bool{supports_neg<Class>::value});
 
-    run_if<supports_multiply>(
-        type_pack<Class, Class>{},
-        [&](auto pack) {
-      using Pack = decltype(pack);
-      using L_ = typename Pack::template type_at<0>;
-      using R_ = typename Pack::template type_at<1>;
-      RegisterBinaryUFunc<Class>(
-          ufunc("multiply"),
-          [](const L_& lhs, const R_& rhs) -> auto { return lhs * rhs; });
-    });
+    // run_if<supports_multiply>(
+    //     type_pack<Class, Class>{},
+    //     [&](auto pack) {
+    //   using Pack = decltype(pack);
+    //   using L_ = typename Pack::template type_at<0>;
+    //   using R_ = typename Pack::template type_at<1>;
+    //   RegisterBinaryUFunc<Class>(
+    //       ufunc("multiply"),
+    //       [](const L_& lhs, const R_& rhs) -> auto { return lhs * rhs; });
+    // });
 
     py::str file = "python/pybind11/dtype_stuff/test_basic.py";
     py::print(file);
