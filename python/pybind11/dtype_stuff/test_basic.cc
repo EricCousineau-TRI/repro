@@ -30,10 +30,14 @@ class Custom {
   Custom operator*(const Custom& rhs) const {
       return value_ * rhs.value_;
   }
+
   double value() const { return value_; }
 
   static Self equal(const Self& lhs, const Self& rhs) {
     return lhs == rhs;
+  }
+  static Self multiply(const Self& lhs, const Self& rhs) {
+    return lhs * rhs;
   }
 
  private:
@@ -144,6 +148,7 @@ int main() {
   };
 
   BinaryUFunc<Class, Class, Class, Class::equal>::Register(ufunc("equal"));
+    BinaryUFunc<Class, Class, Class, Class::multiply>::Register(ufunc("multiply"));
 
     py::str file = "python/pybind11/dtype_stuff/test_basic.py";
     py::print(file);
