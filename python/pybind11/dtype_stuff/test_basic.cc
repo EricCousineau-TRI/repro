@@ -148,7 +148,7 @@ int main() {
   };
 
   BinaryUFunc<Class, Class, Class, Class::equal>::Register(ufunc("equal"));
-    BinaryUFunc<Class, Class, Class, Class::multiply>::Register(ufunc("multiply"));
+//    BinaryUFunc<Class, Class, Class, Class::multiply>::Register(ufunc("multiply"));
 
     py::str file = "python/pybind11/dtype_stuff/test_basic.py";
     py::print(file);
