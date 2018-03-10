@@ -62,6 +62,6 @@ def check_rational():
     print(repr(y))
 
 # check_bad()
-# check_zero()
+check_zero()
 check_rational()
 # check_op()

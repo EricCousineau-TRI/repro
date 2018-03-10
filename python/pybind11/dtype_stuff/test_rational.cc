@@ -701,13 +701,13 @@ PyTypeObject PyRational_Type = {
 #else
     0,                                        /* tp_compare */
 #endif
-    pyrational_repr,                          /* tp_repr */
+    0,//pyrational_repr,                          /* tp_repr */
     0, //&pyrational_as_number,                    /* tp_as_number */
     0,                                        /* tp_as_sequence */
     0,                                        /* tp_as_mapping */
-    pyrational_hash,                          /* tp_hash */
+    0,//pyrational_hash,                          /* tp_hash */
     0,                                        /* tp_call */
-    pyrational_str,                           /* tp_str */
+    0,//pyrational_str,                           /* tp_str */
     0,                                        /* tp_getattro */
     0,                                        /* tp_setattro */
     0,                                        /* tp_as_buffer */
@@ -715,13 +715,13 @@ PyTypeObject PyRational_Type = {
     "Fixed precision rational numbers",       /* tp_doc */
     0,                                        /* tp_traverse */
     0,                                        /* tp_clear */
-    pyrational_richcompare,                   /* tp_richcompare */
+    0,//pyrational_richcompare,                   /* tp_richcompare */
     0,                                        /* tp_weaklistoffset */
     0,                                        /* tp_iter */
     0,                                        /* tp_iternext */
     0,                                        /* tp_methods */
     0,                                        /* tp_members */
-    pyrational_getset,                        /* tp_getset */
+    0,//pyrational_getset,                        /* tp_getset */
     0,                                        /* tp_base */
     0,                                        /* tp_dict */
     0,                                        /* tp_descr_get */
@@ -1207,10 +1207,11 @@ PyMODINIT_FUNC inittest_rational(void) {
     }
 
     /* Support dtype(rational) syntax */
-    if (PyDict_SetItemString(PyRational_Type.tp_dict, "dtype",
-                             (PyObject*)&npyrational_descr) < 0) {
-        goto fail;
-    }
+    // NOTE: This just produces ints, rather than rational objects...
+    // if (PyDict_SetItemString(PyRational_Type.tp_dict, "dtype",
+    //                          (PyObject*)&npyrational_descr) < 0) {
+    //     goto fail;
+    // }
 
     /* Register casts to and from rational */
     #define REGISTER_CAST(From,To,from_descr,to_typenum,safe) { \

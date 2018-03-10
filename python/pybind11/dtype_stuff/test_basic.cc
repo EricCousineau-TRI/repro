@@ -237,7 +237,23 @@ typedef struct {
     Custom r;
 } PyCustom;
 
-static PyTypeObject PyCustom_Type = {
+extern PyTypeObject PyCustom_Type;
+
+static PyObject*
+PyCustom_FromCustom(Custom x) {
+    PyCustom* p = (PyCustom*)PyCustom_Type.tp_alloc(&PyCustom_Type,0);
+    if (p) {
+        p->r = x;
+    }
+    return (PyObject*)p;
+}
+
+static PyObject*
+custom_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
+    return PyCustom_FromCustom(Custom{});
+}
+
+PyTypeObject PyCustom_Type = {
 #if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
 #else
@@ -284,7 +300,7 @@ static PyTypeObject PyCustom_Type = {
     0,                                        /* tp_dictoffset */
     0,                                        /* tp_init */
     0,                                        /* tp_alloc */
-    0,                           /* tp_new */
+    custom_new,                           /* tp_new */
     0,                                        /* tp_free */
     0,                                        /* tp_is_gc */
     0,                                        /* tp_bases */
