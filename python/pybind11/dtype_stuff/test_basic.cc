@@ -91,23 +91,23 @@ CHECK_EXPR(check_not_equal, "not_equal", A{} != B{},
 CHECK_EXPR(check_double, "er", double{A{}},
            [](const A& a) { return double{a}; });
 
-template <
-    template <typename...> class Check,
-    typename Class,
-    typename ... Args>
-void maybe_add(type_pack<Args...> = {}) {
-  using Result = Check<Args...>;
-  using Pack = type_pack<Args...>;
+template <typename Result, typename Func>
+void run_if(Func&& func) {
+  using Pack = type_pack<Result>;
+  type_visit_impl<visit_with_default, Func>::
+      template runner<Pack, Result::value>::run(func);
+}
+
+template <template <typename...> class Check, typename Class, typename ... Args>
+auto maybe_ufunc(type_pack<Args...> = {}) {
+  using Result = typename type_pack<Args...>::template bind<Check>;
   constexpr int N = sizeof...(Args);
-  auto defer = [](auto pack) {
-    using PackT = decltype(pack);
-    using ResultT = typename PackT::template bind<Check>;
+  auto defer = [](auto) {
     py::module numpy = py::module::import("numpy");
-    auto ufunc = (PyUFuncObject*)numpy.attr(ResultT::get_name()).ptr();
-    RegisterUFunc<Class>(ufunc, ResultT::get_lambda(), const_int<N>{});
+    auto ufunc = (PyUFuncObject*)numpy.attr(Result::get_name()).ptr();
+    RegisterUFunc<Class>(ufunc, Result::get_lambda(), const_int<N>{});
   };
-  type_visit_impl<visit_with_default, decltype(defer)&>::
-      template runner<Pack, Result::value>::run(defer);
+  run_if<Result>(defer);
 }
 
 void module(py::module m) {}
@@ -203,19 +203,19 @@ int main() {
     using Unary = type_pack<Class>;
     using Binary = type_pack<Class, Class>;
     // Arithmetic.
-    maybe_add<check_add, Class>(Binary{});
-    maybe_add<check_negative, Class>(Unary{});
-    maybe_add<check_multiply, Class>(Binary{});
-    maybe_add<check_divide, Class>(Binary{});
-    maybe_add<check_power, Class>(Binary{});
-    maybe_add<check_subtract, Class>(Binary{});
+    maybe_ufunc<check_add, Class>(Binary{});
+    maybe_ufunc<check_negative, Class>(Unary{});
+    maybe_ufunc<check_multiply, Class>(Binary{});
+    maybe_ufunc<check_divide, Class>(Binary{});
+    maybe_ufunc<check_power, Class>(Binary{});
+    maybe_ufunc<check_subtract, Class>(Binary{});
     // Comparison.
-    maybe_add<check_greater, Class>(Binary{});
-    maybe_add<check_greater_equal, Class>(Binary{});
-    maybe_add<check_less, Class>(Binary{});
-    maybe_add<check_less_equal, Class>(Binary{});
-    maybe_add<check_equal, Class>(Binary{});
-    maybe_add<check_not_equal, Class>(Binary{});
+    maybe_ufunc<check_greater, Class>(Binary{});
+    maybe_ufunc<check_greater_equal, Class>(Binary{});
+    maybe_ufunc<check_less, Class>(Binary{});
+    maybe_ufunc<check_less_equal, Class>(Binary{});
+    maybe_ufunc<check_equal, Class>(Binary{});
+    maybe_ufunc<check_not_equal, Class>(Binary{});
 
     // TODO(eric.cousineau): Casting...
 
