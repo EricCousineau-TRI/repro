@@ -17,14 +17,14 @@ using py::detail::npy_format_descriptor;
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/ufuncobject.h>
 
-template <typename Type, typename ... Args, typename F>
+template <typename Type, typename ... Args>
 void RegisterUFunc(
     PyUFuncObject* py_ufunc,
     PyUFuncGenericFunction func,
     void* data) {
   constexpr int N = sizeof...(Args);
   int dtype = npy_format_descriptor<Type>::value;
-  int dtype_args[] = {npy_format_descriptor<Args...>::value};
+  int dtype_args[] = {npy_format_descriptor<Args>::value...};
   if (N != py_ufunc->nargs) {
     throw py::cast_error("bad stuff");
   }
@@ -48,7 +48,7 @@ struct BinaryUFunc {
     int n = *dimensions;
     char *in_0 = args[0], *in_1 = args[1], *out = args[2];
     for (int k = 0; k < n; k++) {
-        *(Out*)out = func(*(Arg0)in_0, *(Arg1)in_1);
+        *(Out*)out = func(*(Arg0*)in_0, *(Arg1*)in_1);
         in_0 += step_0;
         in_1 += step_1;
         out += step_out;

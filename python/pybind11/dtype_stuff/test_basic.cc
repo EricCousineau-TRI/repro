@@ -37,7 +37,18 @@ class Custom {
 
 void module(py::module m) {}
 
+int npy_rational{-1};
 
+namespace pybind11 { namespace detail {
+
+template <>
+struct npy_format_descriptor<Custom> {
+  static const int& value;
+};
+
+const int& npy_format_descriptor<Custom>::value = npy_rational;
+
+} }  // namespace detail } namespace pybind11
 
 int main() {
   py::scoped_interpreter guard;
@@ -75,8 +86,7 @@ print(a == a)
        * since we're careful about thread safety, and hopefully future
        * versions of numpy will recognize that.
        */
-      0,
-      NPY_NEEDS_PYAPI | NPY_USE_GETITEM | NPY_USE_SETITEM, /* hasobject */
+      NPY_NEEDS_PYAPI | NPY_USE_GETITEM | NPY_USE_SETITEM, /* flags */
       0,                      /* type_num */
       sizeof(Class),       /* elsize */
       offsetof(align_test,r), /* alignment */
@@ -93,13 +103,14 @@ print(a == a)
   };
   npyrational_arrfuncs.setitem = [](PyObject* in, void* out, void* arr) {
     auto& obj = *(Class*)in;
-    py::object py_obj(in);
+    py::object py_obj(py::reinterpret_borrow<py::object>(py::handle(in)));
     obj = py::cast<Class>(py_obj);
     return 0;
   };
   Py_TYPE(&npyrational_descr) = &PyArrayDescr_Type;
-  int npy_rational = PyArray_RegisterDataType(&npyrational_descr);
-  cls.attr("dtype") = py::object(&npyrational_descr);
+  npy_rational = PyArray_RegisterDataType(&npyrational_descr);
+  cls.attr("dtype") = py::reinterpret_borrow<py::object>(
+      py::handle((PyObject*)&npyrational_descr));
 
   auto ufunc = [&numpy](const char* name) {
     return (PyUFuncObject*)numpy.attr(name).ptr();
