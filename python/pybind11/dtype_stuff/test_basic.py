@@ -11,7 +11,7 @@ sys.path.insert(0, p)
 from numpy.core.test_rational import rational as rational_orig
 assert hasattr(rational_orig, 'base')
 from test_rational import rational
-assert not hasattr(rational, 'base')
+# assert not hasattr(rational, 'base')
 
 
 
@@ -58,7 +58,7 @@ def check_zero():
 def check_rational():
     x = np.zeros((2, 2), rational)
     print(repr(x))
-    y = np.array([rational_wrap()])
+    y = np.array([rational()])
     print(repr(y))
 
 # check_bad()

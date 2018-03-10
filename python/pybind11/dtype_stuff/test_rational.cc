@@ -1179,7 +1179,7 @@ PyMODINIT_FUNC inittest_rational(void) {
     /* Can't set this until we import numpy */
     // HACK(eric)
     // Py_INCREF(&PyType_Type);
-    PyRational_Type.tp_base = 0; //&PyType_Type; //&PyGenericArrType_Type;
+    PyRational_Type.tp_base = &PyGenericArrType_Type;
 
     /* Initialize rational type object */
     if (PyType_Ready(&PyRational_Type) < 0) {
