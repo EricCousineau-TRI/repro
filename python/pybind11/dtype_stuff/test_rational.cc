@@ -701,13 +701,13 @@ PyTypeObject PyRational_Type = {
 #else
     0,                                        /* tp_compare */
 #endif
-    0,//pyrational_repr,                          /* tp_repr */
+    pyrational_repr,                          /* tp_repr */
     0, //&pyrational_as_number,                    /* tp_as_number */
     0,                                        /* tp_as_sequence */
     0,                                        /* tp_as_mapping */
-    0,//pyrational_hash,                          /* tp_hash */
+    pyrational_hash,                          /* tp_hash */
     0,                                        /* tp_call */
-    0,//pyrational_str,                           /* tp_str */
+    pyrational_str,                           /* tp_str */
     0,                                        /* tp_getattro */
     0,                                        /* tp_setattro */
     0,                                        /* tp_as_buffer */
@@ -715,13 +715,13 @@ PyTypeObject PyRational_Type = {
     "Fixed precision rational numbers",       /* tp_doc */
     0,                                        /* tp_traverse */
     0,                                        /* tp_clear */
-    0,//pyrational_richcompare,                   /* tp_richcompare */
+    pyrational_richcompare,                   /* tp_richcompare */
     0,                                        /* tp_weaklistoffset */
     0,                                        /* tp_iter */
     0,                                        /* tp_iternext */
     0,                                        /* tp_methods */
     0,                                        /* tp_members */
-    0,//pyrational_getset,                        /* tp_getset */
+    pyrational_getset,                        /* tp_getset */
     0,                                        /* tp_base */
     0,                                        /* tp_dict */
     0,                                        /* tp_descr_get */

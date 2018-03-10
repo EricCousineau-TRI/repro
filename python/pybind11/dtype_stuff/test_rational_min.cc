@@ -17,6 +17,7 @@
 #include <math.h>
 
 #include <pybind11/pybind11.h>
+#include <pybind11/eval.h>
 
 namespace py = pybind11;
 
@@ -40,7 +41,7 @@ static PyObject*
 npyrational_getitem(void* data, void* arr) {
     rational r;
     memcpy(&r,data,sizeof(rational));
-    return py::cast<rational>(r).release().ptr();
+    return py::globals()["rational_wrap"](py::cast<rational>(r)).release().ptr();
 }
 
 static int
@@ -118,12 +119,24 @@ PyMODINIT_FUNC inittest_rational(void) {
 
     /* Can't set this until we import numpy */
     // HACK(eric)
-    // PyRational_Type.tp_base = &PyGenericArrType_Type;
+    py::globals()["np"] = py::module::import("numpy");
     py::module mp("test_rational");
+    py::globals()["m"] = mp;
     py::class_<rational> cls(mp, "rational");
     cls.def(py::init());
 
-    PyTypeObject& PyRational_Type = *(PyTypeObject*)cls.ptr();
+    py::exec(R"""(
+class rational_wrap():
+    def __init__(self):
+        self.r = m.rational()
+    def __str__(self):
+        return self.r.__str__()
+m.rational_wrap = rational_wrap
+)""");
+    py::object new_cls = mp.attr("rational_wrap");
+
+    PyTypeObject& PyRational_Type = *(PyTypeObject*)new_cls.ptr();
+    PyRational_Type.tp_base = &PyGenericArrType_Type;  // np.generic
 
     /* Initialize rational type object */
     assert(PyType_Ready(&PyRational_Type) >= 0);
