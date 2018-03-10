@@ -42,8 +42,9 @@ template <typename T>
 void* heapit(const T& x) { return new T(x); }
 void* heapit(std::nullptr_t) { return nullptr; }
 
-template <typename Type, typename Func>
-void RegisterBinaryUFunc(PyUFuncObject* py_ufunc, Func func) {
+// Binary.
+template <typename Type, int = 2, typename Func = void>
+void RegisterUFunc(PyUFuncObject* py_ufunc, Func func) {
     auto info = detail::infer_function_info(func);
     using Info = decltype(info);
     using Arg0 = std::decay_t<typename Info::Args::template type_at<0>>;

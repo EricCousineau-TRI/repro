@@ -46,9 +46,9 @@ private:
 };
 
 // Could increase param count?
-#define CHECK_EXPR(name, expr, lambda_expr) \
+#define CHECK_EXPR(struct_name, name, expr, lambda_expr) \
     template <typename A_, typename B = A_> \
-    struct name { \
+    struct struct_name { \
       template <typename A = A_> \
       static std::true_type check(decltype(expr)*); \
       template <typename> \
@@ -56,19 +56,59 @@ private:
       static constexpr bool value = decltype(check<A_>(nullptr))::value; \
       template <typename A = A_> \
       static auto get_lambda() { return lambda_expr; } \
+      static const char* get_name() { return name; } \
     };
 
-CHECK_EXPR(supports_equal, A{} == B{},
-           [](const A& a, const B& b) { return a == b; });
-CHECK_EXPR(supports_add, A{} + B{},
+// https://docs.scipy.org/doc/numpy/reference/routines.math.html
+CHECK_EXPR(check_add, "add", A{} + B{},
            [](const A& a, const B& b) { return a + b; });
-CHECK_EXPR(supports_multiply, A{} * B{},
+CHECK_EXPR(check_negative, "negative", -A{},
+           [](const A& a) { return -a; });
+CHECK_EXPR(check_multiply, "multiply", A{} * B{},
            [](const A& a, const B& b) { return a * b; });
-// CHECK_EXPR(supports_not_equal, A{} != B{});
-// CHECK_EXPR(supports_not_equal, A{} != B{});
-// CHECK_EXPR(supports_add, A{} + B{});
-// CHECK_EXPR(supports_divide, A{} / B{});
-// CHECK_EXPR(supports_neg, -A{});
+CHECK_EXPR(check_divide, "divide", A{} / B{},
+           [](const A& a, const B& b) { return a / b; });
+CHECK_EXPR(check_power, "power", pow(A{}, B{}),
+           [](const A& a, const B& b) { return pow(a, b); });
+CHECK_EXPR(check_subtract, "subtract", A{} - B{},
+           [](const A& a, const B& b) { return a = b; });
+// https://docs.scipy.org/doc/numpy/reference/routines.logic.html
+CHECK_EXPR(check_greater, "greater", A{} > B{},
+           [](const A& a, const B& b) { return a > b; });
+CHECK_EXPR(check_greater_equal, "greater_equal", A{} >= B{},
+           [](const A& a, const B& b) { return a >= b; });
+CHECK_EXPR(check_less, "less", A{} < B{},
+           [](const A& a, const B& b) { return a < b; });
+CHECK_EXPR(check_less_equal, "less_equal", A{} <= B{},
+           [](const A& a, const B& b) { return a <= b; });
+CHECK_EXPR(check_equal, "equal", A{} == B{},
+           [](const A& a, const B& b) { return a == b; });
+CHECK_EXPR(check_not_equal, "not_equal", A{} != B{},
+           [](const A& a, const B& b) { return a != b; });
+
+// CHECK_EXPR(check_not_equal, A{} != B{});
+// CHECK_EXPR(check_not_equal, A{} != B{});
+// CHECK_EXPR(check_add, A{} + B{});
+// CHECK_EXPR(check_divide, A{} / B{});
+
+template <
+    template <typename...> class Check,
+    typename Class,
+    typename ... Args>
+void maybe_add(type_pack<Args...> = {}) {
+  using Result = Check<Args...>;
+  using Pack = type_pack<Args...>;
+  constexpr int N = sizeof...(Args);
+  static py::module numpy = py::module::import("numpy");
+  auto defer = [](auto pack) {
+    using PackT = decltype(pack);
+    using ResultT = typename PackT::template bind<Check>;
+    auto ufunc = (PyUFuncObject*)numpy.attr(ResultT::get_name()).ptr();
+    RegisterUFunc<Class, N>(ufunc, ResultT::get_lambda());
+  };
+  type_visit_impl<visit_with_default, decltype(defer)&>::
+      template runner<Pack, Result::value>::run(defer);
+}
 
 void module(py::module m) {}
 
@@ -86,22 +126,6 @@ struct npy_format_descriptor<Custom> {
 };
 
 } }  // namespace detail } namespace pybind11
-
-template <
-    template <typename...> class Check,
-    typename Class,
-    typename ... Args>
-void maybe_add(PyUFuncObject* ufunc, type_pack<Args...> = {}) {
-  using Result = Check<Args...>;
-  using Pack = type_pack<Args...>;
-  auto defer = [ufunc](auto pack) {
-    using PackT = decltype(pack);
-    using ResultT = typename PackT::template bind<Check>;
-    RegisterBinaryUFunc<Class>(ufunc, ResultT::get_lambda());
-  };
-  type_visit_impl<visit_with_default, decltype(defer)&>::
-      template runner<Pack, Result::value>::run(defer);
-}
 
 int main() {
     py::scoped_interpreter guard;
@@ -176,32 +200,21 @@ int main() {
     cls.attr("dtype") = py::reinterpret_borrow<py::object>(
         py::handle((PyObject*)&npyrational_descr));
 
-    auto ufunc = [&numpy](const char* name) {
-        return (PyUFuncObject*)numpy.attr(name).ptr();
-    };
-
     using Pair = type_pack<Class, Class>;
-    maybe_add<supports_equal, Class>(ufunc("equal"), Pair{});
-    maybe_add<supports_add, Class>(ufunc("add"), Pair{});
-    maybe_add<supports_multiply, Class>(ufunc("multiply"), Pair{});
-
-    // RegisterBinaryUFunc<Class>(ufunc("equal"), Class::equal);
-    // RegisterBinaryUFunc<Class>(ufunc("multiply"), Class::multiply);
-
-    // py::print("Supports add? {}", bool{supports_add<Class>::value});
-    // py::print("Supports mult? {}", bool{supports_multiply<Class>::value});
-    // py::print("Supports neg? {}", bool{supports_neg<Class>::value});
-
-    // run_if<supports_multiply>(
-    //     type_pack<Class, Class>{},
-    //     [&](auto pack) {
-    //   using Pack = decltype(pack);
-    //   using L_ = typename Pack::template type_at<0>;
-    //   using R_ = typename Pack::template type_at<1>;
-    //   RegisterBinaryUFunc<Class>(
-    //       ufunc("multiply"),
-    //       [](const L_& lhs, const R_& rhs) -> auto { return lhs * rhs; });
-    // });
+    // Arithmetic.
+    maybe_add<check_add, Class>(Pair{});
+    // maybe_add<check_negative, Class>(Pair{});
+    maybe_add<check_multiply, Class>(Pair{});
+    maybe_add<check_divide, Class>(Pair{});
+    maybe_add<check_power, Class>(Pair{});
+    maybe_add<check_subtract, Class>(Pair{});
+    // Comparison.
+    maybe_add<check_greater, Class>(Pair{});
+    maybe_add<check_greater_equal, Class>(Pair{});
+    maybe_add<check_less, Class>(Pair{});
+    maybe_add<check_less_equal, Class>(Pair{});
+    maybe_add<check_equal, Class>(Pair{});
+    maybe_add<check_not_equal, Class>(Pair{});
 
     py::str file = "python/pybind11/dtype_stuff/test_basic.py";
     py::print(file);
