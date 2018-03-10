@@ -35,11 +35,11 @@ template <typename Return, typename ... Args>
 using Func = Return (*)(Args...);
 
 template <
-    Func<Out, Arg0, Arg1> func,
-    typename Arg0, typename Arg1, typename Out>
+    typename Arg0, typename Arg1, typename Out,
+    Func<Arg0, Arg1, Out> func>
 struct BinaryUFunc {
+  static void ufunc(
       char** args, npy_intp* dimensions, npy_intp* steps, void* data) {
-    auto func = (Func<Out, Arg0, Arg1>)data;
     int step_0 = steps[0];
     int step_1 = steps[1];
     int step_out = steps[2];
@@ -51,5 +51,9 @@ struct BinaryUFunc {
         in_1 += step_1;
         out += step_out;
     }
+  }
+  template <typename Type = Arg0>
+  static void Register(PyUFuncObject* py_ufunc) {
+    RegisterUFunc<Type, Arg0, Arg1, Out>(py_ufunc, ufunc, nullptr);
   }
 };
