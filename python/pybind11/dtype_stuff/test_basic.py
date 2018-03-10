@@ -1,11 +1,15 @@
 import numpy as np
 import sys
+import os
 
 from __main__ import Custom
-from numpy.core.test_rational import rational
 
-print(__file__)
-exit(1)
+p = os.path.dirname(os.path.abspath(__file__))
+print(p)
+sys.path.insert(0, p)
+
+from test_rational import rational
+
 
 def check_bad():
     print("Check")

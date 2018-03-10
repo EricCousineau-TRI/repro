@@ -7,7 +7,7 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
-native.cc_binary(
+cc_binary(
     name = "test_rational.so",
     srcs = ["test_rational.cc"],
     # copts = ["-fPIC"],

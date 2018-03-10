@@ -433,6 +433,7 @@ int main() {
 
     py::str file = "python/pybind11/dtype_stuff/test_basic.py";
     py::print(file);
+    m.attr("__file__") = file;
     py::eval_file(file);
 
     py::exec(R"""(
