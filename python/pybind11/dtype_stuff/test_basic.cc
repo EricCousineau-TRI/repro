@@ -10,6 +10,7 @@ using std::endl;
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 #include <numpy/ufuncobject.h>
+#include <numpy/ndarraytypes.h>
 
 #include "ufunc_utility.h"
 
@@ -50,6 +51,18 @@ const int& npy_format_descriptor<Custom>::value = npy_rational;
 
 } }  // namespace detail } namespace pybind11
 
+static NPY_INLINE void
+byteswap(npy_int32* x) {
+    char* p = (char*)x;
+    size_t i;
+    for (i = 0; i < sizeof(*x)/2; i++) {
+        size_t j = sizeof(*x)-1-i;
+        char t = p[i];
+        p[i] = p[j];
+        p[j] = t;
+    }
+}
+
 int main() {
   py::scoped_interpreter guard;
 
@@ -65,9 +78,14 @@ int main() {
   py::exec(R"""(
 a = Custom(1)
 print(a == a)
+import sys; sys.stdout.flush();
 )""");
 
   // Register thing.
+
+  _import_array();
+  _import_umath();
+
   py::module numpy = py::module::import("numpy");
   auto py_type = (PyTypeObject*)cls.ptr();
 
@@ -106,6 +124,16 @@ print(a == a)
     py::object py_obj(py::reinterpret_borrow<py::object>(py::handle(in)));
     obj = py::cast<Class>(py_obj);
     return 0;
+  };
+  npyrational_arrfuncs.copyswap = [](void* dst, void* src, int swap, void* arr) {
+      Class* r_dst = (Class*)dst;
+      Class* r_src = (Class*)src;
+      if (!src) return;
+      if (swap) {
+          std::swap(*r_dst, *r_src);
+      } else {
+        *r_dst = *r_src;
+      }
   };
   Py_TYPE(&npyrational_descr) = &PyArrayDescr_Type;
   npy_rational = PyArray_RegisterDataType(&npyrational_descr);
