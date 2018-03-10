@@ -16,24 +16,107 @@
 #include <numpy/npy_3kcompat.h>
 #include <math.h>
 
-#include <pybind11/pybind11.h>
-#include <pybind11/eval.h>
-
-namespace py = pybind11;
-
 /* Relevant arithmetic exceptions */
 
 /* Fixed precision rational numbers */
 
 typedef struct {
     /* numerator */
-    npy_int32 n{1};
+    npy_int32 n;
     /*
      * denominator minus one: numpy.zeros() uses memset(0) for non-object
      * types, so need to ensure that rational(0) has all zero bytes
      */
-    npy_int32 dmm{1};
+    npy_int32 dmm;
 } rational;
+
+static NPY_INLINE rational
+make_rational_int(npy_int64 n) {
+    rational r = {(npy_int32)n,0};
+    return r;
+}
+
+/* Expose rational to Python as a numpy scalar */
+
+typedef struct {
+    PyObject_HEAD
+    rational r;
+} PyRational;
+
+extern PyTypeObject PyRational_Type;
+
+static PyObject*
+PyRational_FromRational(rational x) {
+    PyRational* p = (PyRational*)PyRational_Type.tp_alloc(&PyRational_Type,0);
+    if (p) {
+        p->r = x;
+    }
+    return (PyObject*)p;
+}
+
+static PyObject*
+pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
+    return PyRational_FromRational(make_rational_int(1));
+}
+
+PyTypeObject PyRational_Type = {
+#if defined(NPY_PY3K)
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
+    PyObject_HEAD_INIT(NULL)
+    0,                                        /* ob_size */
+#endif
+    "rational",                               /* tp_name */
+    sizeof(PyRational),                       /* tp_basicsize */
+    0,                                        /* tp_itemsize */
+    0,                                        /* tp_dealloc */
+    0,                                        /* tp_print */
+    0,                                        /* tp_getattr */
+    0,                                        /* tp_setattr */
+#if defined(NPY_PY3K)
+    0,                                        /* tp_reserved */
+#else
+    0,                                        /* tp_compare */
+#endif
+    0,//pyrational_repr,                          /* tp_repr */
+    0, //&pyrational_as_number,                    /* tp_as_number */
+    0,                                        /* tp_as_sequence */
+    0,                                        /* tp_as_mapping */
+    0,//pyrational_hash,                          /* tp_hash */
+    0,                                        /* tp_call */
+    0,//pyrational_str,                           /* tp_str */
+    0,                                        /* tp_getattro */
+    0,                                        /* tp_setattro */
+    0,                                        /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT /*| Py_TPFLAGS_BASETYPE*/, /* tp_flags */
+    "Fixed precision rational numbers",       /* tp_doc */
+    0,                                        /* tp_traverse */
+    0,                                        /* tp_clear */
+    0,//pyrational_richcompare,                   /* tp_richcompare */
+    0,                                        /* tp_weaklistoffset */
+    0,                                        /* tp_iter */
+    0,                                        /* tp_iternext */
+    0,                                        /* tp_methods */
+    0,                                        /* tp_members */
+    0,//pyrational_getset,                        /* tp_getset */
+    0,                                        /* tp_base */
+    0,                                        /* tp_dict */
+    0,                                        /* tp_descr_get */
+    0,                                        /* tp_descr_set */
+    0,                                        /* tp_dictoffset */
+    0,                                        /* tp_init */
+    0,                                        /* tp_alloc */
+    pyrational_new,                           /* tp_new */
+    0,                                        /* tp_free */
+    0,                                        /* tp_is_gc */
+    0,                                        /* tp_bases */
+    0,                                        /* tp_mro */
+    0,                                        /* tp_cache */
+    0,                                        /* tp_subclasses */
+    0,                                        /* tp_weaklist */
+    0,                                        /* tp_del */
+    0,                                        /* tp_version_tag */
+};
 
 /* Numpy support */
 
@@ -41,12 +124,12 @@ static PyObject*
 npyrational_getitem(void* data, void* arr) {
     rational r;
     memcpy(&r,data,sizeof(rational));
-    return py::globals()["rational_wrap"](py::cast<rational>(r)).release().ptr();
+    return PyRational_FromRational(r);
 }
 
 static int
 npyrational_setitem(PyObject* item, void* data, void* arr) {
-    rational r{};
+    rational r = make_rational_int(1);
     memcpy(data,&r,sizeof(rational));
     return 0;
 }
@@ -83,7 +166,7 @@ typedef struct { char c; rational r; } align_test;
 
 PyArray_Descr npyrational_descr = {
     PyObject_HEAD_INIT(0)
-    nullptr,       /* typeobj */
+    &PyRational_Type,       /* typeobj */
     'V',                    /* kind */
     'r',                    /* type */
     '=',                    /* byteorder */
@@ -103,6 +186,10 @@ PyArray_Descr npyrational_descr = {
     &npyrational_arrfuncs,  /* f */
 };
 
+PyMethodDef module_methods[] = {
+    {0} /* sentinel */
+};
+
 #define RETVAL
 PyMODINIT_FUNC inittest_rational(void) {
 
@@ -112,34 +199,31 @@ PyMODINIT_FUNC inittest_rational(void) {
     int npy_rational;
 
     import_array();
+    if (PyErr_Occurred()) {
+        goto fail;
+    }
     import_umath();
+    if (PyErr_Occurred()) {
+        goto fail;
+    }
     numpy_str = PyUString_FromString("numpy");
+    if (!numpy_str) {
+        goto fail;
+    }
     numpy = PyImport_Import(numpy_str);
     Py_DECREF(numpy_str);
+    if (!numpy) {
+        goto fail;
+    }
 
     /* Can't set this until we import numpy */
     // HACK(eric)
-    py::globals()["np"] = py::module::import("numpy");
-    py::module mp("test_rational");
-    py::globals()["m"] = mp;
-    py::class_<rational> cls(mp, "rational");
-    cls.def(py::init());
-
-    py::exec(R"""(
-class rational_wrap():
-    def __init__(self):
-        self.r = m.rational()
-    def __str__(self):
-        return self.r.__str__()
-m.rational_wrap = rational_wrap
-)""");
-    py::object new_cls = mp.attr("rational_wrap");
-
-    PyTypeObject& PyRational_Type = *(PyTypeObject*)new_cls.ptr();
-    PyRational_Type.tp_base = &PyGenericArrType_Type;  // np.generic
+    // PyRational_Type.tp_base = &PyGenericArrType_Type;
 
     /* Initialize rational type object */
-    assert(PyType_Ready(&PyRational_Type) >= 0);
+    if (PyType_Ready(&PyRational_Type) < 0) {
+        goto fail;
+    }
 
     /* Initialize rational descriptor */
     PyArray_InitArrFuncs(&npyrational_arrfuncs);
@@ -147,16 +231,41 @@ m.rational_wrap = rational_wrap
     npyrational_arrfuncs.setitem = npyrational_setitem;
     npyrational_arrfuncs.copyswap = npyrational_copyswap;
 
-    npyrational_descr.typeobj = &PyRational_Type;
     Py_TYPE(&npyrational_descr) = &PyArrayDescr_Type;
     npy_rational = PyArray_RegisterDataType(&npyrational_descr);
-    assert(npy_rational>=0);
+    if (npy_rational<0) {
+        goto fail;
+    }
 
     /* Support dtype(rational) syntax */
     // NOTE: This just produces ints, rather than rational objects...
-    assert(PyDict_SetItemString(PyRational_Type.tp_dict, "dtype",
-                             (PyObject*)&npyrational_descr) >= 0);
-    m = mp.ptr();
+    // if (PyDict_SetItemString(PyRational_Type.tp_dict, "dtype",
+    //                          (PyObject*)&npyrational_descr) < 0) {
+    //     goto fail;
+    // }
 
+    /* Create module */
+    m = Py_InitModule("test_rational", module_methods);
+    if (!m) {
+        goto fail;
+    }
+
+    /* Add rational type */
+    Py_INCREF(&PyRational_Type);
+    PyModule_AddObject(m,"rational",(PyObject*)&PyRational_Type);
+
+    return RETVAL;
+
+fail:
+    if (!PyErr_Occurred()) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "cannot load test_rational module.");
+    }
+#if defined(NPY_PY3K)
+    if (m) {
+        Py_DECREF(m);
+        m = NULL;
+    }
+#endif
     return RETVAL;
 }
