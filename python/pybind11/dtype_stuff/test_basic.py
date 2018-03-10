@@ -60,7 +60,6 @@ def check_rational():
     print(repr(x))
     y = np.array([rational(1)])
     print(repr(y))
-    sys.stdout.flush()
 
 # check_bad()
 # check_zero()
