@@ -34,16 +34,16 @@ def _impl(repository_ctx):
         fail("Could NOT find python{}".format(repository_ctx.attr.version))
     print(python)
 
-    # result = repository_ctx.execute([
-    #     python,
-    #     "-c",
-    #     "from __future__ import print_function; import numpy; print(numpy.get_include());",
-    # ])
+    result = repository_ctx.execute([
+        python,
+        "-c",
+        "from __future__ import print_function; import numpy; print(numpy.get_include());",
+    ])
 
-    # if result.return_code != 0:
-    #     fail("Could NOT determine NumPy include", attr=result.stderr)
-    # out = result.stdout.strip()
-    out = "/home/eacousineau/.local/python/2.7.12-dbg/lib/python2.7/site-packages/numpy-1.11.0-py2.7-linux-x86_64.egg/numpy/core/include"
+    if result.return_code != 0:
+        fail("Could NOT determine NumPy include", attr=result.stderr)
+    out = result.stdout.strip()
+    # If there's an issue with `libpython2.7`, it's because it's not RPATHd.
     source = repository_ctx.path(out)
     destination = repository_ctx.path("include")
     repository_ctx.symlink(source, destination)
