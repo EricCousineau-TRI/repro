@@ -19,28 +19,35 @@ using py::detail::npy_format_descriptor;
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/ufuncobject.h>
 
-template <typename Type, typename ... Args>
-void RegisterUFunc(
-    PyUFuncObject* py_ufunc,
-    PyUFuncGenericFunction func,
-    void* data) {
-  constexpr int N = sizeof...(Args);
-  int dtype = npy_format_descriptor<Type>::dtype().num();
-  int dtype_args[] = {npy_format_descriptor<Args>::dtype().num()...};
-  if (N != py_ufunc->nargs) {
-    throw py::cast_error("bad stuff");
-  }
-  int result = PyUFunc_RegisterLoopForType(
-      py_ufunc, dtype, func, dtype_args, data);
-  if (result < 0) throw py::cast_error("badder stuff");
+template <typename T>
+int dtype_num() {
+    return npy_format_descriptor<T>::dtype().num();
 }
 
-template <typename Return, typename ... Args>
-using Func = Return (*)(Args...);
+#define PY_ASSERT_EX(expr, message) \
+    if (!(expr)) throw py::cast_error(message);
 
 template <typename T>
 void* heapit(const T& x) { return new T(x); }
 void* heapit(std::nullptr_t) { return nullptr; }
+
+template <typename Type, typename ... Args>
+void RegisterUFunc(
+        PyUFuncObject* py_ufunc,
+        PyUFuncGenericFunction func,
+        void* data) {
+    constexpr int N = sizeof...(Args);
+    int dtype = dtype_num<Type>();
+    int dtype_args[] = {dtype_num<Args>()...};
+    PY_ASSERT_EX(N == py_ufunc->nargs, "Argument mismatch");
+    PY_ASSERT_EX(
+        PyUFunc_RegisterLoopForType(
+            py_ufunc, dtype, func, dtype_args, data) >= 0,
+        "Failed to regstiser ufunc");
+}
+
+template <typename Return, typename ... Args>
+using Func = Return (*)(Args...);
 
 template <int N>
 using const_int = std::integral_constant<int, N>;

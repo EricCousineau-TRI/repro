@@ -87,9 +87,9 @@ CHECK_EXPR(check_equal, "equal", A{} == B{},
            [](const A& a, const B& b) { return a == b; });
 CHECK_EXPR(check_not_equal, "not_equal", A{} != B{},
            [](const A& a, const B& b) { return a != b; });
-// Casting?
-CHECK_EXPR(check_double, "er", double{A{}},
-           [](const A& a) { return double{a}; });
+// Casting.
+CHECK_EXPR(check_cast, "", static_cast<B>(A{}),
+           [](const A& a) { return static_cast<B>(a); });
 
 template <typename Result, typename Func>
 void run_if(Func&& func) {
@@ -98,14 +98,43 @@ void run_if(Func&& func) {
       template runner<Pack, Result::value>::run(func);
 }
 
+PyUFuncObject* get_py_ufunc(const char* name) {
+  py::module numpy = py::module::import("numpy");
+  return (PyUFuncObject*)numpy.attr(name).ptr();
+}
+
 template <template <typename...> class Check, typename Class, typename ... Args>
-auto maybe_ufunc(type_pack<Args...> = {}) {
+void maybe_ufunc(type_pack<Args...> = {}) {
   using Result = typename type_pack<Args...>::template bind<Check>;
   constexpr int N = sizeof...(Args);
   auto defer = [](auto) {
-    py::module numpy = py::module::import("numpy");
-    auto ufunc = (PyUFuncObject*)numpy.attr(Result::get_name()).ptr();
-    RegisterUFunc<Class>(ufunc, Result::get_lambda(), const_int<N>{});
+    RegisterUFunc<Class>(
+        get_py_ufunc(Result::get_name()), Result::get_lambda(), const_int<N>{});
+  };
+  run_if<Result>(defer);
+}
+
+template <typename From, typename To>
+void maybe_cast(type_pack<From, To> = {}) {
+  using Result = check_cast<From, To>;
+  auto defer = [](auto) {
+    auto* from = PyArray_DescrFromType(dtype_num<From>());
+    int to = dtype_num<To>();
+    static auto cast_lambda = Result::get_lambda();
+    auto cast_func = [](
+          void* from_, void* to_, npy_intp n,
+          void* fromarr, void* toarr) {
+        const From* from = (From*)from_;
+        To* to = (To*)to_;
+        for (npy_intp i = 0; i < n; i++)
+            to[i] = cast_lambda(from[i]);
+    };
+    PY_ASSERT_EX(
+        PyArray_RegisterCastFunc(from, to, cast_func) >= 0,
+        "Cannot register cast");
+    PY_ASSERT_EX(
+        PyArray_RegisterCanCast(from, to, NPY_NOSCALAR) >= 0,
+        "Cannot register castability");
   };
   run_if<Result>(defer);
 }
@@ -218,6 +247,8 @@ int main() {
     maybe_ufunc<check_not_equal, Class>(Binary{});
 
     // TODO(eric.cousineau): Casting...
+    maybe_cast<Class, double>();
+    maybe_cast<double, Class>();
 
     py::str file = "python/pybind11/dtype_stuff/test_basic.py";
     py::print(file);
