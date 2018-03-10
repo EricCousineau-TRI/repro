@@ -26,6 +26,10 @@ class Custom {
   Custom& operator=(const Custom&) = default;
 
   Self operator==(const Self& rhs) const { return value_ + rhs.value_; }
+
+  Custom operator*(const Custom& rhs) const {
+      return value_ * rhs.value_;
+  }
   double value() const { return value_; }
 
   static Self equal(const Self& lhs, const Self& rhs) {
@@ -73,6 +77,7 @@ int main() {
   cls
       .def(py::init<double>())
       .def(py::self == Class{})
+      .def(py::self * Class{})
       .def("value", &Class::value)
       .def("__repr__", [](const Class* self) {
         return py::str("Custom({})").format(self->value());
