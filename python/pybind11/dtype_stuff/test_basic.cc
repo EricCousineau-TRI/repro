@@ -239,8 +239,19 @@ int main() {
             *r_dst = *r_src;
         }
     };
+    // - Test and ensure this doesn't overwrite our `equal` unfunc.
     npyrational_arrfuncs.compare = [](const void* d1, const void* d2, void* arr) {
       return 0;
+    };
+    // For `zeros`, `ones`, etc.
+    npyrational_arrfuncs.fillwithscalar = [](
+            void* buffer_raw, npy_intp length, void* value_raw, void* arr) {
+        const Class* value = (const Class*)value_raw;
+        Class* buffer = (Class*)buffer_raw;
+        for (int k = 0; k < length; k++) {
+            buffer[k] = *value;
+        }
+        return 0;
     };
     Py_TYPE(&npyrational_descr) = &PyArrayDescr_Type;
     npy_rational = PyArray_RegisterDataType(&npyrational_descr);

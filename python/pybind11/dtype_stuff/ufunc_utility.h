@@ -8,6 +8,8 @@
 #include <array>
 #include <string>
 
+#include <fmt/format.h>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 
@@ -24,8 +26,8 @@ int dtype_num() {
     return npy_format_descriptor<T>::dtype().num();
 }
 
-#define PY_ASSERT_EX(expr, message) \
-    if (!(expr)) throw py::cast_error(message);
+#define PY_ASSERT_EX(expr, ...) \
+    if (!(expr)) throw py::cast_error(fmt::format(__VA_ARGS__));
 
 template <typename T>
 void* heapit(const T& x) { return new T(x); }
@@ -39,7 +41,9 @@ void RegisterUFunc(
     constexpr int N = sizeof...(Args);
     int dtype = dtype_num<Type>();
     int dtype_args[] = {dtype_num<Args>()...};
-    PY_ASSERT_EX(N == py_ufunc->nargs, "Argument mismatch");
+    PY_ASSERT_EX(
+        N == py_ufunc->nargs, "Argument mismatch, {} != {}",
+        N, py_ufunc->nargs);
     PY_ASSERT_EX(
         PyUFunc_RegisterLoopForType(
             py_ufunc, dtype, func, dtype_args, data) >= 0,
@@ -59,7 +63,8 @@ void RegisterUFunc(PyUFuncObject* py_ufunc, Func func, const_int<1>) {
     using Info = decltype(info);
     using Arg0 = std::decay_t<typename Info::Args::template type_at<0>>;
     using Out = std::decay_t<typename Info::Return>;
-    auto ufunc = [](char** args, npy_intp* dimensions, npy_intp* steps, void* data) {
+    auto ufunc = [](
+            char** args, npy_intp* dimensions, npy_intp* steps, void* data) {
         Func& func = *(Func*)data;
         int step_0 = steps[0];
         int step_out = steps[1];

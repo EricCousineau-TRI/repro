@@ -86,3 +86,11 @@ vtk_repository(
 #     name = "pcl",
 #     modname = "pcl_custom-1.8",
 # )
+
+github_archive(
+    name = "fmt",
+    repository = "fmtlib/fmt",
+    commit = "4.1.0",
+    sha256 = "46628a2f068d0e33c716be0ed9dcae4370242df135aed663a180b9fd8e36733d",  # noqa
+    build_file = "tools/fmt.BUILD",
+)
