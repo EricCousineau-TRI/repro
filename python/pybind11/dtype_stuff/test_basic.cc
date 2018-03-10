@@ -24,22 +24,14 @@ public:
     Custom(double value) : value_{value} {}
     Custom(const Custom&) = default;
     Custom& operator=(const Custom&) = default;
+    double value() const { return value_; }
 
     Self operator==(const Self& rhs) const { return value_ + rhs.value_; }
-
+    Self operator<(const Self& rhs) const { return value_ * 10 * rhs.value_; }
     Custom operator*(const Custom& rhs) const {
         return value_ * rhs.value_;
     }
     Custom operator-() const { return -value_; }
-
-    double value() const { return value_; }
-
-    static Self equal(const Self& lhs, const Self& rhs) {
-        return lhs == rhs;
-    }
-    static Self multiply(const Self& lhs, const Self& rhs) {
-        return lhs * rhs;
-    }
 
 private:
     double value_{};
@@ -99,10 +91,10 @@ void maybe_add(type_pack<Args...> = {}) {
   using Result = Check<Args...>;
   using Pack = type_pack<Args...>;
   constexpr int N = sizeof...(Args);
-  static py::module numpy = py::module::import("numpy");
   auto defer = [](auto pack) {
     using PackT = decltype(pack);
     using ResultT = typename PackT::template bind<Check>;
+    py::module numpy = py::module::import("numpy");
     auto ufunc = (PyUFuncObject*)numpy.attr(ResultT::get_name()).ptr();
     RegisterUFunc<Class, N>(ufunc, ResultT::get_lambda());
   };

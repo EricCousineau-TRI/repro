@@ -23,5 +23,6 @@ def check_op():
     print(av)
     print(av == av)
     print av * av
+    print av < av
 
 check_op()
