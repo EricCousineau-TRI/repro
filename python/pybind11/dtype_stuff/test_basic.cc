@@ -44,11 +44,27 @@ private:
     double value_{};
 };
 
+template <typename T, typename U = T>
+struct supports_add {
+  template <typename Z = T>
+  static std::true_type check(decltype(std::declval<Z>() + std::declval<U>())*);
+  template <typename>
+  static std::false_type check(...);
+  static constexpr bool value = decltype(check<T>(nullptr))::value;
+};
+
+template <typename T, typename U = T>
+struct supports_mult {
+  template <typename Z = T>
+  static std::true_type check(decltype(std::declval<Z>() * std::declval<U>())*);
+  template <typename>
+  static std::false_type check(...);
+  static constexpr bool value = decltype(check<T>(nullptr))::value;
+};
+
 void module(py::module m) {}
 
 int npy_rational{-1};
-
-static PyArray_Descr npyrational_descr;
 
 namespace pybind11 { namespace detail {
 
@@ -62,18 +78,6 @@ struct npy_format_descriptor<Custom> {
 };
 
 } }  // namespace detail } namespace pybind11
-
-static NPY_INLINE void
-byteswap(npy_int32* x) {
-    char* p = (char*)x;
-    size_t i;
-    for (i = 0; i < sizeof(*x)/2; i++) {
-        size_t j = sizeof(*x)-1-i;
-        char t = p[i];
-        p[i] = p[j];
-        p[j] = t;
-    }
-}
 
 int main() {
     py::scoped_interpreter guard;
@@ -102,7 +106,8 @@ int main() {
     typedef struct { char c; Class r; } align_test;
 
     static PyArray_ArrFuncs npyrational_arrfuncs;
-    npyrational_descr = {
+    
+    static PyArray_Descr npyrational_descr = {
         PyObject_HEAD_INIT(0)
         py_type,                /* typeobj */
         'V',                    /* kind (V = arbitrary) */
@@ -153,6 +158,11 @@ int main() {
 
     RegisterBinaryUFunc<Class>(ufunc("equal"), Class::equal);
     RegisterBinaryUFunc<Class>(ufunc("multiply"), Class::multiply);
+
+    py::print("Supports add? {}", bool{supports_add<Class>::value});
+    py::print("Supports mult? {}", bool{supports_mult<Class>::value});
+
+    // See if we can get operator overloads.
 
     py::str file = "python/pybind11/dtype_stuff/test_basic.py";
     py::print(file);
