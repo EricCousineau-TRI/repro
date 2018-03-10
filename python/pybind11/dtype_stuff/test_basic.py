@@ -58,7 +58,7 @@ def check_zero():
 def check_rational():
     x = np.zeros((2, 2), rational)
     print(repr(x))
-    y = np.array([rational(1)])
+    y = np.array([rational()])
     print(repr(y))
 
 # check_bad()

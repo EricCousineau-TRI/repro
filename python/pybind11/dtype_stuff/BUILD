@@ -14,6 +14,7 @@ cc_binary(
     linkshared = 1,
     linkstatic = 0,
     deps = [
+        "//python/pybind11:include",
         "@python//:python",
         "@numpy",
     ],
