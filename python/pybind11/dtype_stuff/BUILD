@@ -9,7 +9,10 @@ cc_library(
 
 cc_binary(
     name = "test_basic",
-    srcs = ["test_basic.cc"],
+    srcs = [
+        "ufunc_utility.h",
+        "test_basic.cc",
+    ],
     deps = [
         ":pybind11_numpy",
     ],

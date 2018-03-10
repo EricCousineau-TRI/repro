@@ -9,6 +9,10 @@
 #include <string>
 
 #include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+
+namespace py = pybind11;
+using py::detail::npy_format_descriptor;
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/ufuncobject.h>
@@ -20,15 +24,13 @@ void RegisterUFunc(
     void* data) {
   constexpr int N = sizeof...(Args);
   int dtype = npy_format_descriptor<Type>::value;
-  int[] dtype_args = {npy_format_descriptor<Args...>::value};
-  int nargs = In + 1;
-  if (In + 1 != py_ufunc->nargs) {
-    py::error("ufunc {} requires {} args, we have {}",
-              name, py_ufunc->nargs, In + 1);
+  int dtype_args[] = {npy_format_descriptor<Args...>::value};
+  if (N != py_ufunc->nargs) {
+    throw py::cast_error("bad stuff");
   }
   int result = PyUFunc_RegisterLoopForType(
       py_ufunc, dtype, func, dtype_args, 0);
-  if (result < 0) py::error("crap");
+  if (result < 0) throw py::cast_error("badder stuff");
 }
 
 template <typename Return, typename ... Args>
@@ -36,7 +38,7 @@ using Func = Return (*)(Args...);
 
 template <
     typename Arg0, typename Arg1, typename Out,
-    Func<Arg0, Arg1, Out> func>
+    Func<Out, const Arg0&, const Arg1&> func>
 struct BinaryUFunc {
   static void ufunc(
       char** args, npy_intp* dimensions, npy_intp* steps, void* data) {
