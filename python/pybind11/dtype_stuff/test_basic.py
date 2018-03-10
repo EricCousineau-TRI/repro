@@ -24,5 +24,7 @@ def check_op():
     print(av == av)
     print av * av
     print av < av
+    print -av
+    print np.power(av, av)
 
 check_op()

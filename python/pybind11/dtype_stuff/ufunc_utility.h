@@ -42,9 +42,35 @@ template <typename T>
 void* heapit(const T& x) { return new T(x); }
 void* heapit(std::nullptr_t) { return nullptr; }
 
+template <int N>
+using const_int = std::integral_constant<int, N>;
+
+// Unary.
+template <typename Type, int N = 1, typename Func = void>
+void RegisterUFunc(PyUFuncObject* py_ufunc, Func func, const_int<1>) {
+    auto info = detail::infer_function_info(func);
+    using Info = decltype(info);
+    using Arg0 = std::decay_t<typename Info::Args::template type_at<0>>;
+    using Out = std::decay_t<typename Info::Return>;
+    auto ufunc = [](char** args, npy_intp* dimensions, npy_intp* steps, void* data) {
+        Func& func = *(Func*)data;
+        int step_0 = steps[0];
+        int step_out = steps[1];
+        int n = *dimensions;
+        char *in_0 = args[0], *out = args[1];
+        for (int k = 0; k < n; k++) {
+            // TODO(eric.cousineau): Support pointers being changed.
+            *(Out*)out = func(*(Arg0*)in_0);
+            in_0 += step_0;
+            out += step_out;
+        }
+    };
+    RegisterUFunc<Type, Arg0, Out>(py_ufunc, ufunc, new Func(func));
+};
+
 // Binary.
-template <typename Type, int = 2, typename Func = void>
-void RegisterUFunc(PyUFuncObject* py_ufunc, Func func) {
+template <typename Type, int N = 2, typename Func = void>
+void RegisterUFunc(PyUFuncObject* py_ufunc, Func func, const_int<2>) {
     auto info = detail::infer_function_info(func);
     using Info = decltype(info);
     using Arg0 = std::decay_t<typename Info::Args::template type_at<0>>;
@@ -58,7 +84,7 @@ void RegisterUFunc(PyUFuncObject* py_ufunc, Func func) {
         int n = *dimensions;
         char *in_0 = args[0], *in_1 = args[1], *out = args[2];
         for (int k = 0; k < n; k++) {
-            // TODO(eric.cousineau): Support pointers being changed.
+            // TODO(eric.cousineau): Support pointers being fed in.
             *(Out*)out = func(*(Arg0*)in_0, *(Arg1*)in_1);
             in_0 += step_0;
             in_1 += step_1;
