@@ -1207,11 +1207,10 @@ PyMODINIT_FUNC inittest_rational(void) {
     }
 
     /* Support dtype(rational) syntax */
-    // NOTE: This just produces ints, rather than rational objects...
-    // if (PyDict_SetItemString(PyRational_Type.tp_dict, "dtype",
-    //                          (PyObject*)&npyrational_descr) < 0) {
-    //     goto fail;
-    // }
+    if (PyDict_SetItemString(PyRational_Type.tp_dict, "dtype",
+                             (PyObject*)&npyrational_descr) < 0) {
+        goto fail;
+    }
 
     /* Register casts to and from rational */
     #define REGISTER_CAST(From,To,from_descr,to_typenum,safe) { \
