@@ -32,11 +32,11 @@ python_repository(
     version = "3.5",
 )
 
-# load("//tools:numpy.bzl", "numpy_repository")
-# numpy_repository(
-#     name = "numpy",
-#     python_version = "2.7",
-# )
+load("//tools:numpy.bzl", "numpy_repository")
+numpy_repository(
+    name = "numpy",
+    python_version = "2.7",
+)
 
 new_local_repository(
     name = "pybind11",
