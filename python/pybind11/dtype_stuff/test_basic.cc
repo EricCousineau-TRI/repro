@@ -48,14 +48,18 @@ void module(py::module m) {}
 
 int npy_rational{-1};
 
+static PyArray_Descr npyrational_descr;
+
 namespace pybind11 { namespace detail {
 
 template <>
 struct npy_format_descriptor<Custom> {
-    static const int& value;
+    static pybind11::dtype dtype() {
+        if (auto ptr = npy_api::get().PyArray_DescrFromType_(npy_rational))
+            return reinterpret_borrow<pybind11::dtype>(ptr);
+        pybind11_fail("Unsupported buffer format!");
+    }
 };
-
-const int& npy_format_descriptor<Custom>::value = npy_rational;
 
 } }  // namespace detail } namespace pybind11
 
@@ -98,7 +102,7 @@ int main() {
     typedef struct { char c; Class r; } align_test;
 
     static PyArray_ArrFuncs npyrational_arrfuncs;
-    static PyArray_Descr npyrational_descr = {
+    npyrational_descr = {
         PyObject_HEAD_INIT(0)
         py_type,                /* typeobj */
         'V',                    /* kind (V = arbitrary) */

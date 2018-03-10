@@ -25,8 +25,8 @@ void RegisterUFunc(
     PyUFuncGenericFunction func,
     void* data) {
   constexpr int N = sizeof...(Args);
-  int dtype = npy_format_descriptor<Type>::value;
-  int dtype_args[] = {npy_format_descriptor<Args>::value...};
+  int dtype = npy_format_descriptor<Type>::dtype().num();
+  int dtype_args[] = {npy_format_descriptor<Args>::dtype().num()...};
   if (N != py_ufunc->nargs) {
     throw py::cast_error("bad stuff");
   }
