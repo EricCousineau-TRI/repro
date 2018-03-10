@@ -75,7 +75,8 @@ def _impl(repository_ctx):
         if not linkopts[i].startswith("-"):
             linkopts[i - 1] += " " + linkopts.pop(i)
 
-    linkopts += ["-L/home/eacousineau/.local/python/2.7.12-dbg/lib"]
+    prefix = repository_ctx.execute([python_config, "--prefix"]).stdout.strip()
+    linkopts += ["-L{}/lib".format(prefix)]
 
     file_content = """
 cc_library(
