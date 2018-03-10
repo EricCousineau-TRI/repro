@@ -38,6 +38,10 @@ public:
     }
     Custom operator-() const { return -value_; }
 
+    Self& operator+=(const Self& rhs) { value_ += rhs.value_; return *this; }
+    Self operator+(const Self& rhs) const { return Self(*this) += rhs.value_; }
+    Self operator-(const Self& rhs) const { return value_ - rhs.value_; }
+
 private:
     double value_{};
 };
@@ -241,6 +245,17 @@ int main() {
     };
     // - Test and ensure this doesn't overwrite our `equal` unfunc.
     npyrational_arrfuncs.compare = [](const void* d1, const void* d2, void* arr) {
+      return 0;
+    };
+    npyrational_arrfuncs.fill = [](void* data_, npy_intp length, void* arr) {
+      Class* data = (Class*)data_;
+      Class delta = data[1] - data[0];
+      Class r = data[1];
+      npy_intp i;
+      for (i = 2; i < length; i++) {
+          r += delta;
+          data[i] = r;
+      }
       return 0;
     };
     // For `zeros`, `ones`, etc.
