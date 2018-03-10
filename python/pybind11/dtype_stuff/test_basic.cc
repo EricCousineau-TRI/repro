@@ -123,9 +123,7 @@ import sys; sys.stdout.flush();
     return py::cast(obj, py::return_value_policy::copy).release().ptr();
   };
   npyrational_arrfuncs.setitem = [](PyObject* in, void* out, void* arr) {
-    auto& obj = *(Class*)in;
-    py::object py_obj(py::reinterpret_borrow<py::object>(py::handle(in)));
-    obj = py::cast<Class>(py_obj);
+    *(Class*)out = *py::handle(in).cast<Class*>();
     return 0;
   };
   npyrational_arrfuncs.copyswap = [](void* dst, void* src, int swap, void* arr) {
