@@ -15,6 +15,7 @@ cc_binary(
     ],
     deps = [
         ":pybind11_numpy",
+        "//cpp:wrap_function",
     ],
     data = ["test_basic.py"],
 )

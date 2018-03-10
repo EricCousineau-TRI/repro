@@ -347,6 +347,7 @@ cc_binary(
 cc_library(
     name = "wrap_function",
     hdrs = ["wrap_function.h"],
+    deps = [":type_pack"],
 )
 
 cc_binary(
