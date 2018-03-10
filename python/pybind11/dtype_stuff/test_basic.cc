@@ -30,6 +30,7 @@ public:
     Custom operator*(const Custom& rhs) const {
         return value_ * rhs.value_;
     }
+    Custom operator-() const { return -value_; }
 
     double value() const { return value_; }
 
@@ -44,8 +45,8 @@ private:
     double value_{};
 };
 
-#define BINARY_CHECK(name, expr) \
-    template <typename A_, typename B = A_> \
+#define CHECK_EXPR(name, expr) \
+    template <typename A_, typename B = A_, typename C = A_, typename D = A_> \
     struct name { \
       template <typename A = A_> \
       static std::true_type check(decltype(expr)*); \
@@ -54,8 +55,13 @@ private:
       static constexpr bool value = decltype(check<A_>(nullptr))::value; \
     };
 
-// BINARY_CHECK(supports_add, A{} + B{});
-BINARY_CHECK(supports_multiply, A{} * B{});
+CHECK_EXPR(supports_equal, A{} == B{});
+CHECK_EXPR(supports_not_equal, A{} != B{});
+CHECK_EXPR(supports_not_equal, A{} != B{});
+CHECK_EXPR(supports_add, A{} + B{});
+CHECK_EXPR(supports_multiply, A{} * B{});
+CHECK_EXPR(supports_divide, A{} / B{});
+CHECK_EXPR(supports_neg, -A{});
 
 void module(py::module m) {}
 
@@ -73,6 +79,17 @@ struct npy_format_descriptor<Custom> {
 };
 
 } }  // namespace detail } namespace pybind11
+
+template <
+    template <typename...> class Check,
+    typename Pack,
+    typename Func>
+void run_if(Pack pack, Func func) {
+  using Result = typename Pack::template bind<Check>;
+  type_visit_impl<visit_with_default, Func>::
+      template runner<Pack, Result::value>::
+              run(std::forward<Func>(func));
+}
 
 int main() {
     py::scoped_interpreter guard;
@@ -152,12 +169,22 @@ int main() {
     };
 
     RegisterBinaryUFunc<Class>(ufunc("equal"), Class::equal);
-    RegisterBinaryUFunc<Class>(ufunc("multiply"), Class::multiply);
+    // RegisterBinaryUFunc<Class>(ufunc("multiply"), Class::multiply);
 
-    // py::print("Supports add? {}", bool{supports_add<Class>::value});
+    py::print("Supports add? {}", bool{supports_add<Class>::value});
     py::print("Supports mult? {}", bool{supports_multiply<Class>::value});
+    py::print("Supports neg? {}", bool{supports_neg<Class>::value});
 
-    // See if we can get operator overloads.
+    run_if<supports_multiply>(
+        type_pack<Class, Class>{},
+        [&](auto pack) {
+      using Pack = decltype(pack);
+      using L_ = typename Pack::template type_at<0>;
+      using R_ = typename Pack::template type_at<1>;
+      RegisterBinaryUFunc<Class>(
+          ufunc("multiply"),
+          [](const L_& lhs, const R_& rhs) -> auto { return lhs * rhs; });
+    });
 
     py::str file = "python/pybind11/dtype_stuff/test_basic.py";
     py::print(file);

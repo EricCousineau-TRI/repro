@@ -50,7 +50,7 @@ void RegisterBinaryUFunc(PyUFuncObject* py_ufunc, Func func) {
     using Arg1 = std::decay_t<typename Info::Args::template type_at<1>>;
     using Out = std::decay_t<typename Info::Return>;
     auto ufunc = [](char** args, npy_intp* dimensions, npy_intp* steps, void* data) {
-        auto& func = *(Func*)data;
+        Func& func = *(Func*)data;
         int step_0 = steps[0];
         int step_1 = steps[1];
         int step_out = steps[2];
