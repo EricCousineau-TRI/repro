@@ -29,6 +29,8 @@ public:
     Custom& operator=(const Custom&) = default;
     double value() const { return value_; }
 
+    operator double() const { return value_; }
+
     Self operator==(const Self& rhs) const { return value_ + rhs.value_; }
     Self operator<(const Self& rhs) const { return value_ * 10 * rhs.value_; }
     Custom operator*(const Custom& rhs) const {
@@ -85,6 +87,9 @@ CHECK_EXPR(check_equal, "equal", A{} == B{},
            [](const A& a, const B& b) { return a == b; });
 CHECK_EXPR(check_not_equal, "not_equal", A{} != B{},
            [](const A& a, const B& b) { return a != b; });
+// Casting?
+CHECK_EXPR(check_double, "er", double{A{}},
+           [](const A& a) { return double{a}; });
 
 template <
     template <typename...> class Check,
@@ -211,6 +216,8 @@ int main() {
     maybe_add<check_less_equal, Class>(Binary{});
     maybe_add<check_equal, Class>(Binary{});
     maybe_add<check_not_equal, Class>(Binary{});
+
+    // TODO(eric.cousineau): Casting...
 
     py::str file = "python/pybind11/dtype_stuff/test_basic.py";
     py::print(file);
