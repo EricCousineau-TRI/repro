@@ -27,8 +27,10 @@ def check_op():
     print -av
     print np.power(av, av)
     xv = av.astype(float)
-    print(xv)
-    axv = xv.astype(Custom)
-    print(axv)
+    print(repr(xv))
+    print(repr(xv.astype(Custom)))
+    ov = av.astype(object)
+    print(repr(ov))
+    print(repr(ov.astype(Custom)))
 
 check_op()

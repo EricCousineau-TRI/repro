@@ -114,27 +114,32 @@ void maybe_ufunc(type_pack<Args...> = {}) {
   run_if<Result>(defer);
 }
 
+template <typename From, typename To, typename Func>
+void add_cast(Func&& func, type_pack<From, To> = {}) {
+  auto* from = PyArray_DescrFromType(dtype_num<From>());
+  int to = dtype_num<To>();
+  static auto cast_lambda = func;
+  auto cast_func = [](
+        void* from_, void* to_, npy_intp n,
+        void* fromarr, void* toarr) {
+      const From* from = (From*)from_;
+      To* to = (To*)to_;
+      for (npy_intp i = 0; i < n; i++)
+          to[i] = cast_lambda(from[i]);
+  };
+  PY_ASSERT_EX(
+      PyArray_RegisterCastFunc(from, to, cast_func) >= 0,
+      "Cannot register cast");
+  PY_ASSERT_EX(
+      PyArray_RegisterCanCast(from, to, NPY_NOSCALAR) >= 0,
+      "Cannot register castability");
+}
+
 template <typename From, typename To>
 void maybe_cast(type_pack<From, To> = {}) {
   using Result = check_cast<From, To>;
   auto defer = [](auto) {
-    auto* from = PyArray_DescrFromType(dtype_num<From>());
-    int to = dtype_num<To>();
-    static auto cast_lambda = Result::get_lambda();
-    auto cast_func = [](
-          void* from_, void* to_, npy_intp n,
-          void* fromarr, void* toarr) {
-        const From* from = (From*)from_;
-        To* to = (To*)to_;
-        for (npy_intp i = 0; i < n; i++)
-            to[i] = cast_lambda(from[i]);
-    };
-    PY_ASSERT_EX(
-        PyArray_RegisterCastFunc(from, to, cast_func) >= 0,
-        "Cannot register cast");
-    PY_ASSERT_EX(
-        PyArray_RegisterCanCast(from, to, NPY_NOSCALAR) >= 0,
-        "Cannot register castability");
+    add_cast<From, To>(Result::get_lambda());
   };
   run_if<Result>(defer);
 }
@@ -144,6 +149,15 @@ void module(py::module m) {}
 int npy_rational{-1};
 
 namespace pybind11 { namespace detail {
+
+template <>
+struct npy_format_descriptor<py::object> {
+    static pybind11::dtype dtype() {
+        if (auto ptr = npy_api::get().PyArray_DescrFromType_(NPY_OBJECT))
+            return reinterpret_borrow<pybind11::dtype>(ptr);
+        pybind11_fail("Unsupported buffer format!");
+    }
+};
 
 template <>
 struct npy_format_descriptor<Custom> {
@@ -246,9 +260,15 @@ int main() {
     maybe_ufunc<check_equal, Class>(Binary{});
     maybe_ufunc<check_not_equal, Class>(Binary{});
 
-    // TODO(eric.cousineau): Casting...
+    // Casting.
     maybe_cast<Class, double>();
     maybe_cast<double, Class>();
+    add_cast<Class, py::object>([](const Class& obj) {
+      return py::cast(obj);
+    });
+    add_cast<py::object, Class>([](py::object obj) {
+      return py::cast<Class>(obj);
+    });
 
     py::str file = "python/pybind11/dtype_stuff/test_basic.py";
     py::print(file);
