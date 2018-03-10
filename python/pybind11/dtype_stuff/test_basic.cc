@@ -44,23 +44,18 @@ private:
     double value_{};
 };
 
-template <typename T, typename U = T>
-struct supports_add {
-  template <typename Z = T>
-  static std::true_type check(decltype(std::declval<Z>() + std::declval<U>())*);
-  template <typename>
-  static std::false_type check(...);
-  static constexpr bool value = decltype(check<T>(nullptr))::value;
-};
+#define BINARY_CHECK(name, expr) \
+    template <typename A_, typename B = A_> \
+    struct name { \
+      template <typename A = A_> \
+      static std::true_type check(decltype(expr)*); \
+      template <typename> \
+      static std::false_type check(...); \
+      static constexpr bool value = decltype(check<A_>(nullptr))::value; \
+    };
 
-template <typename T, typename U = T>
-struct supports_mult {
-  template <typename Z = T>
-  static std::true_type check(decltype(std::declval<Z>() * std::declval<U>())*);
-  template <typename>
-  static std::false_type check(...);
-  static constexpr bool value = decltype(check<T>(nullptr))::value;
-};
+// BINARY_CHECK(supports_add, A{} + B{});
+BINARY_CHECK(supports_multiply, A{} * B{});
 
 void module(py::module m) {}
 
@@ -159,8 +154,8 @@ int main() {
     RegisterBinaryUFunc<Class>(ufunc("equal"), Class::equal);
     RegisterBinaryUFunc<Class>(ufunc("multiply"), Class::multiply);
 
-    py::print("Supports add? {}", bool{supports_add<Class>::value});
-    py::print("Supports mult? {}", bool{supports_mult<Class>::value});
+    // py::print("Supports add? {}", bool{supports_add<Class>::value});
+    py::print("Supports mult? {}", bool{supports_multiply<Class>::value});
 
     // See if we can get operator overloads.
 
