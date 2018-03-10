@@ -154,16 +154,21 @@ print(type(Custom.dtype))
 
 class Stuff(object): pass
 
-av = np.array([a, a], dtype=Custom)
+av = np.array([[Custom(1), Custom(2)], [Custom(3), Custom(4)]], dtype=Custom)
 av_bad = np.array([a, a])
 print(a)
 print(av)
 print(av == av)
+print(av)
 print(av_bad == av_bad)
 print(av.dtype)
 print(np.dtype(Stuff))
 print(np.dtype(Custom))
 sys.stdout.flush()
+)""");
+
+  py::exec(R"""(
+x = np.array([Custom(1)])
 )""");
 
   return 0;
