@@ -299,6 +299,14 @@ int main() {
     add_cast<py::object, Class>([](py::object obj) {
       return py::cast<Class>(obj);
     });
+    // - _zerofill? What do I need?
+    add_cast<int, Class>([](int x) {
+      return Class{static_cast<double>(x)};
+    });
+    add_cast<long, Class>([](long x) {
+      return Class{static_cast<double>(x)};
+    });
+
 
     py::str file = "python/pybind11/dtype_stuff/test_basic.py";
     py::print(file);
