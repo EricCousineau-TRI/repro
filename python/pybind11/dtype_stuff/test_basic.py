@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 
 from __main__ import Custom
 from numpy.core.test_rational import rational
@@ -43,13 +44,14 @@ def check_zero():
     a0 = np.zeros(2, 2, np.dtype(Custom))
     print(a0)
 
-def yar():
+def check_rational():
     x = np.zeros((2, 2), rational)
     print(repr(x))
     y = np.array([rational(1)])
     print(repr(y))
+    sys.stdout.flush()
 
 # check_bad()
-check_zero()
-# yar()
+# check_zero()
+check_rational()
 # check_op()

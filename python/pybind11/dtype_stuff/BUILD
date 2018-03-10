@@ -7,6 +7,19 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+native.cc_binary(
+    name = "test_rational.so",
+    srcs = ["test_rational.cc"],
+    # copts = ["-fPIC"],
+    # linkopts = ["-fPIC"],
+    linkshared = 1,
+    linkstatic = 0,
+    deps = [
+        "@python//:python",
+        "@numpy",
+    ],
+)
+
 cc_binary(
     name = "test_basic",
     srcs = [
@@ -18,5 +31,8 @@ cc_binary(
         "//cpp:wrap_function",
         "@fmt",
     ],
-    data = ["test_basic.py"],
+    data = [
+        "test_basic.py",
+        "test_rational.so",
+    ],
 )
