@@ -4,6 +4,9 @@ import sys
 from __main__ import Custom
 from numpy.core.test_rational import rational
 
+print(__file__)
+exit(1)
+
 def check_bad():
     print("Check")
     print(np.dtype(Custom))
