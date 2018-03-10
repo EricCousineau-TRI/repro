@@ -151,6 +151,11 @@ import numpy as np
 print(np.dtype(Custom))
 print(Custom.dtype)
 print(type(Custom.dtype))
+
+av = np.array([a, a], dtype=Custom)
+print(av)
+print(av == av)
+sys.stdout.flush()
 )""");
 
   return 0;
