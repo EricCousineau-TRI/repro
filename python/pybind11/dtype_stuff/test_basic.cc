@@ -25,10 +25,10 @@ class Custom {
   Custom(const Custom&) = default;
   Custom& operator=(const Custom&) = default;
 
-  double operator==(const Self& rhs) const { return value_ + rhs.value_; }
+  Self operator==(const Self& rhs) const { return value_ + rhs.value_; }
   double value() const { return value_; }
 
-  static double equal(const Self& lhs, const Self& rhs) {
+  static Self equal(const Self& lhs, const Self& rhs) {
     return lhs == rhs;
   }
 
@@ -73,7 +73,10 @@ int main() {
   cls
       .def(py::init<double>())
       .def(py::self == Class{})
-      .def("value", &Class::value);
+      .def("value", &Class::value)
+      .def("__repr__", [](const Class* self) {
+        return py::str("Custom({})").format(self->value());
+      });
 
   py::exec(R"""(
 a = Custom(1)
@@ -144,7 +147,7 @@ import sys; sys.stdout.flush();
     return (PyUFuncObject*)numpy.attr(name).ptr();
   };
 
-  BinaryUFunc<Class, Class, double, Class::equal>::Register(ufunc("equal"));
+  BinaryUFunc<Class, Class, Class, Class::equal>::Register(ufunc("equal"));
 
   py::exec(R"""(
 import numpy as np
@@ -153,6 +156,7 @@ print(Custom.dtype)
 print(type(Custom.dtype))
 
 av = np.array([a, a], dtype=Custom)
+print(a)
 print(av)
 print(av == av)
 sys.stdout.flush()
