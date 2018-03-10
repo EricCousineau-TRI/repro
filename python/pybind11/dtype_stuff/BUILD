@@ -16,4 +16,5 @@ cc_binary(
     deps = [
         ":pybind11_numpy",
     ],
+    data = ["test_basic.py"],
 )

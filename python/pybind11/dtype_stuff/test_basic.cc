@@ -78,12 +78,6 @@ int main() {
         return py::str("Custom({})").format(self->value());
       });
 
-  py::exec(R"""(
-a = Custom(1)
-print(a == a)
-import sys; sys.stdout.flush();
-)""");
-
   // Register thing.
 
   _import_array();
@@ -146,26 +140,9 @@ import sys; sys.stdout.flush();
 
   BinaryUFunc<Class, Class, Class, Class::equal>::Register(ufunc("equal"));
 
-  py::exec(R"""(
-import numpy as np
-print(np.dtype(Custom))
-print(Custom.dtype)
-print(type(Custom.dtype))
-
-class Stuff(object): pass
-
-av = np.array([[Custom(1), Custom(2)], [Custom(3), Custom(4)]], dtype=Custom)
-av_bad = np.array([a, a])
-print(a)
-print(av)
-print(av == av)
-print(av)
-print(av_bad == av_bad)
-print(av.dtype)
-print(np.dtype(Stuff))
-print(np.dtype(Custom))
-sys.stdout.flush()
-)""");
+    py::str file = "python/pybind11/dtype_stuff/test_basic.py";
+    py::print(file);
+    py::eval_file(file);
 
   py::exec(R"""(
 x = np.array([Custom(1)])
