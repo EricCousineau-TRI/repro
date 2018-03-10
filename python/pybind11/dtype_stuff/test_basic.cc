@@ -221,6 +221,7 @@ int main() {
     };
 
     PyArray_InitArrFuncs(&npyrational_arrfuncs);
+    // https://docs.scipy.org/doc/numpy/reference/c-api.types-and-structures.html
     npyrational_arrfuncs.getitem = [](void* in, void* arr) -> PyObject* {
         return py::cast(*(const Class*)in).release().ptr();
     };
@@ -237,6 +238,9 @@ int main() {
         } else {
             *r_dst = *r_src;
         }
+    };
+    npyrational_arrfuncs.compare = [](const void* d1, const void* d2, void* arr) {
+      return 0;
     };
     Py_TYPE(&npyrational_descr) = &PyArrayDescr_Type;
     npy_rational = PyArray_RegisterDataType(&npyrational_descr);

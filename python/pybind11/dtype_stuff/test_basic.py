@@ -33,4 +33,7 @@ def check_op():
     print(repr(ov))
     print(repr(ov.astype(Custom)))
 
+    a0 = np.zeros(2, 2, Custom)
+    print(a0)
+
 check_op()
