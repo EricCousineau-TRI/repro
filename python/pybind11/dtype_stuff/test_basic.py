@@ -1,11 +1,11 @@
 import numpy as np
 
 from __main__ import Custom
-
-a = Custom(1)
+from numpy.core.test_rational import rational
 
 def check_bad():
     av_bad = np.array([Custom(1)])
+    print(repr(av_bad))
     print(av_bad == av_bad)
 
 def check_dtype():
@@ -18,6 +18,7 @@ def check_dtype():
     print(np.dtype(Custom))
 
 def check_op():
+    a = Custom(1)
     print(a == a)
     av = np.array([[Custom(1), Custom(2)], [Custom(3), Custom(4)]], dtype=Custom)
     print(av)
@@ -36,4 +37,12 @@ def check_op():
     a0 = np.zeros(2, 2, Custom)
     print(a0)
 
-check_op()
+def yar():
+    x = np.zeros((2, 2), rational)
+    print(repr(x))
+    y = np.array([rational(1)])
+    print(repr(y))
+
+check_bad()
+yar()
+# check_op()
