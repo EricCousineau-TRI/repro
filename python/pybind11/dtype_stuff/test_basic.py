@@ -8,7 +8,11 @@ p = os.path.dirname(os.path.abspath(__file__))
 print(p)
 sys.path.insert(0, p)
 
+from numpy.core.test_rational import rational as rational_orig
+assert hasattr(rational_orig, 'base')
 from test_rational import rational
+assert not hasattr(rational, 'base')
+
 
 
 def check_bad():
