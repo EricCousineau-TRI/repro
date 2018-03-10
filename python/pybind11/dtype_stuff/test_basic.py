@@ -39,12 +39,17 @@ def check_op():
     a0 = np.zeros(2, 2, Custom)
     print(a0)
 
+def check_zero():
+    a0 = np.zeros(2, 2, np.dtype(Custom))
+    print(a0)
+
 def yar():
     x = np.zeros((2, 2), rational)
     print(repr(x))
     y = np.array([rational(1)])
     print(repr(y))
 
-check_bad()
+# check_bad()
+check_zero()
 # yar()
 # check_op()
