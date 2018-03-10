@@ -702,7 +702,7 @@ PyTypeObject PyRational_Type = {
     0,                                        /* tp_compare */
 #endif
     pyrational_repr,                          /* tp_repr */
-    &pyrational_as_number,                    /* tp_as_number */
+    0, //&pyrational_as_number,                    /* tp_as_number */
     0,                                        /* tp_as_sequence */
     0,                                        /* tp_as_mapping */
     pyrational_hash,                          /* tp_hash */
@@ -1190,15 +1190,15 @@ PyMODINIT_FUNC inittest_rational(void) {
     PyArray_InitArrFuncs(&npyrational_arrfuncs);
     npyrational_arrfuncs.getitem = npyrational_getitem;
     npyrational_arrfuncs.setitem = npyrational_setitem;
-    npyrational_arrfuncs.copyswapn = npyrational_copyswapn;
+    // npyrational_arrfuncs.copyswapn = npyrational_copyswapn;
     npyrational_arrfuncs.copyswap = npyrational_copyswap;
-    npyrational_arrfuncs.compare = npyrational_compare;
-    npyrational_arrfuncs.argmin = npyrational_argmin;
-    npyrational_arrfuncs.argmax = npyrational_argmax;
-    npyrational_arrfuncs.dotfunc = npyrational_dot;
-    npyrational_arrfuncs.nonzero = npyrational_nonzero;
-    npyrational_arrfuncs.fill = npyrational_fill;
-    npyrational_arrfuncs.fillwithscalar = npyrational_fillwithscalar;
+    // npyrational_arrfuncs.compare = npyrational_compare;
+    // npyrational_arrfuncs.argmin = npyrational_argmin;
+    // npyrational_arrfuncs.argmax = npyrational_argmax;
+    // npyrational_arrfuncs.dotfunc = npyrational_dot;
+    // npyrational_arrfuncs.nonzero = npyrational_nonzero;
+    // npyrational_arrfuncs.fill = npyrational_fill;
+    // npyrational_arrfuncs.fillwithscalar = npyrational_fillwithscalar;
     /* Left undefined: scanfunc, fromstr, sort, argsort */
     Py_TYPE(&npyrational_descr) = &PyArrayDescr_Type;
     npy_rational = PyArray_RegisterDataType(&npyrational_descr);
@@ -1270,33 +1270,33 @@ PyMODINIT_FUNC inittest_rational(void) {
         REGISTER_UFUNC(name, {npy_rational, npy_rational, NPY_BOOL})
     #define REGISTER_UFUNC_UNARY(name) \
         REGISTER_UFUNC(name, {npy_rational, npy_rational})
-    /* Binary */
-    REGISTER_UFUNC_BINARY_RATIONAL(add)
-    REGISTER_UFUNC_BINARY_RATIONAL(subtract)
-    REGISTER_UFUNC_BINARY_RATIONAL(multiply)
-    REGISTER_UFUNC_BINARY_RATIONAL(divide)
-    REGISTER_UFUNC_BINARY_RATIONAL(remainder)
-    REGISTER_UFUNC_BINARY_RATIONAL(true_divide)
-    REGISTER_UFUNC_BINARY_RATIONAL(floor_divide)
-    REGISTER_UFUNC_BINARY_RATIONAL(minimum)
-    REGISTER_UFUNC_BINARY_RATIONAL(maximum)
-    /* Comparisons */
-    REGISTER_UFUNC_BINARY_COMPARE(equal)
-    REGISTER_UFUNC_BINARY_COMPARE(not_equal)
-    REGISTER_UFUNC_BINARY_COMPARE(less)
-    REGISTER_UFUNC_BINARY_COMPARE(greater)
-    REGISTER_UFUNC_BINARY_COMPARE(less_equal)
-    REGISTER_UFUNC_BINARY_COMPARE(greater_equal)
-    /* Unary */
-    REGISTER_UFUNC_UNARY(negative)
-    REGISTER_UFUNC_UNARY(absolute)
-    REGISTER_UFUNC_UNARY(floor)
-    REGISTER_UFUNC_UNARY(ceil)
-    REGISTER_UFUNC_UNARY(trunc)
-    REGISTER_UFUNC_UNARY(rint)
-    REGISTER_UFUNC_UNARY(square)
-    REGISTER_UFUNC_UNARY(reciprocal)
-    REGISTER_UFUNC_UNARY(sign)
+    // /* Binary */
+    // REGISTER_UFUNC_BINARY_RATIONAL(add)
+    // REGISTER_UFUNC_BINARY_RATIONAL(subtract)
+    // REGISTER_UFUNC_BINARY_RATIONAL(multiply)
+    // REGISTER_UFUNC_BINARY_RATIONAL(divide)
+    // REGISTER_UFUNC_BINARY_RATIONAL(remainder)
+    // REGISTER_UFUNC_BINARY_RATIONAL(true_divide)
+    // REGISTER_UFUNC_BINARY_RATIONAL(floor_divide)
+    // REGISTER_UFUNC_BINARY_RATIONAL(minimum)
+    // REGISTER_UFUNC_BINARY_RATIONAL(maximum)
+    // /* Comparisons */
+    // REGISTER_UFUNC_BINARY_COMPARE(equal)
+    // REGISTER_UFUNC_BINARY_COMPARE(not_equal)
+    // REGISTER_UFUNC_BINARY_COMPARE(less)
+    // REGISTER_UFUNC_BINARY_COMPARE(greater)
+    // REGISTER_UFUNC_BINARY_COMPARE(less_equal)
+    // REGISTER_UFUNC_BINARY_COMPARE(greater_equal)
+    // /* Unary */
+    // REGISTER_UFUNC_UNARY(negative)
+    // REGISTER_UFUNC_UNARY(absolute)
+    // REGISTER_UFUNC_UNARY(floor)
+    // REGISTER_UFUNC_UNARY(ceil)
+    // REGISTER_UFUNC_UNARY(trunc)
+    // REGISTER_UFUNC_UNARY(rint)
+    // REGISTER_UFUNC_UNARY(square)
+    // REGISTER_UFUNC_UNARY(reciprocal)
+    // REGISTER_UFUNC_UNARY(sign)
 
     /* Create module */
 #if defined(NPY_PY3K)
