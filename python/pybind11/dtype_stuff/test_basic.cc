@@ -146,5 +146,12 @@ import sys; sys.stdout.flush();
 
   BinaryUFunc<Class, Class, double, Class::equal>::Register(ufunc("equal"));
 
+  py::exec(R"""(
+import numpy as np
+print(np.dtype(Custom))
+print(Custom.dtype)
+print(type(Custom.dtype))
+)""");
+
   return 0;
 }
