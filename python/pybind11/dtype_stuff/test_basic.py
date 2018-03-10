@@ -4,7 +4,9 @@ from __main__ import Custom
 from numpy.core.test_rational import rational
 
 def check_bad():
-    av_bad = np.array([Custom(1)])
+    print("Check")
+    print(np.dtype(Custom))
+    av_bad = np.array([Custom(1)], dtype=Custom)
     print(repr(av_bad))
     print(av_bad == av_bad)
 
@@ -44,5 +46,5 @@ def yar():
     print(repr(y))
 
 check_bad()
-yar()
+# yar()
 # check_op()

@@ -150,7 +150,7 @@ void maybe_cast(type_pack<From, To> = {}) {
 
 void module(py::module m) {}
 
-int npy_rational{-1};
+int npy_custom{-1};
 
 namespace pybind11 { namespace detail {
 
@@ -166,13 +166,135 @@ struct npy_format_descriptor<py::object> {
 template <>
 struct npy_format_descriptor<Custom> {
     static pybind11::dtype dtype() {
-        if (auto ptr = npy_api::get().PyArray_DescrFromType_(npy_rational))
+        if (auto ptr = npy_api::get().PyArray_DescrFromType_(npy_custom))
             return reinterpret_borrow<pybind11::dtype>(ptr);
         pybind11_fail("Unsupported buffer format!");
     }
 };
 
 } }  // namespace detail } namespace pybind11
+
+
+
+// static PyNumberMethods custom_as_number = {
+//     0,          /* nb_add */
+//     0,     /* nb_subtract */
+//     0,     /* nb_multiply */
+// #if PY_MAJOR_VERSION < 3
+//     0,       /* nb_divide */
+// #endif
+//     0,    /* nb_remainder */
+//     0,                       /* nb_divmod */
+//     0,                       /* nb_power */
+//     0,     /* nb_negative */
+//     0,     /* nb_positive */
+//     0,     /* nb_absolute */
+//     0,      /* nb_nonzero */
+//     0,                       /* nb_invert */
+//     0,                       /* nb_lshift */
+//     0,                       /* nb_rshift */
+//     0,                       /* nb_and */
+//     0,                       /* nb_xor */
+//     0,                       /* nb_or */
+// #if PY_MAJOR_VERSION < 3
+//     0,                       /* nb_coerce */
+// #endif
+//     0,          /* nb_int */
+// #if PY_MAJOR_VERSION < 3
+//     0,          /* nb_long */
+// #else
+//     0,                       /* reserved */
+// #endif
+//     0,        /* nb_float */
+// #if PY_MAJOR_VERSION < 3
+//     0,                       /* nb_oct */
+//     0,                       /* nb_hex */
+// #endif
+
+//     0,                       /* nb_inplace_add */
+//     0,                       /* nb_inplace_subtract */
+//     0,                       /* nb_inplace_multiply */
+// #if PY_MAJOR_VERSION < 3
+//     0,                       /* nb_inplace_divide */
+// #endif
+//     0,                       /* nb_inplace_remainder */
+//     0,                       /* nb_inplace_power */
+//     0,                       /* nb_inplace_lshift */
+//     0,                       /* nb_inplace_rshift */
+//     0,                       /* nb_inplace_and */
+//     0,                       /* nb_inplace_xor */
+//     0,                       /* nb_inplace_or */
+
+//     0, /* nb_floor_divide */
+//     0,       /* nb_true_divide */
+//     0,                       /* nb_inplace_floor_divide */
+//     0,                       /* nb_inplace_true_divide */
+//     0,                       /* nb_index */
+// };
+
+typedef struct {
+    PyObject_HEAD
+    Custom r;
+} PyCustom;
+
+static PyTypeObject PyCustom_Type = {
+#if defined(NPY_PY3K)
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
+    PyObject_HEAD_INIT(NULL)
+    0,                                        /* ob_size */
+#endif
+    "Custom",                               /* tp_name */
+    sizeof(PyCustom),                       /* tp_basicsize */
+    0,                                        /* tp_itemsize */
+    0,                                        /* tp_dealloc */
+    0,                                        /* tp_print */
+    0,                                        /* tp_getattr */
+    0,                                        /* tp_setattr */
+#if defined(NPY_PY3K)
+    0,                                        /* tp_reserved */
+#else
+    0,                                        /* tp_compare */
+#endif
+    0,                          /* tp_repr */
+    0,                    /* tp_as_number */
+    0,                                        /* tp_as_sequence */
+    0,                                        /* tp_as_mapping */
+    0,                          /* tp_hash */
+    0,                                        /* tp_call */
+    0,                           /* tp_str */
+    0,                                        /* tp_getattro */
+    0,                                        /* tp_setattro */
+    0,                                        /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
+    "Minimal wrap for numpy",       /* tp_doc */
+    0,                                        /* tp_traverse */
+    0,                                        /* tp_clear */
+    0,                   /* tp_richcompare */
+    0,                                        /* tp_weaklistoffset */
+    0,                                        /* tp_iter */
+    0,                                        /* tp_iternext */
+    0,                                        /* tp_methods */
+    0,                                        /* tp_members */
+    0,                        /* tp_getset */
+    0, /* tp_base - To be set when numpy is imported */
+    0,                                        /* tp_dict */
+    0,                                        /* tp_descr_get */
+    0,                                        /* tp_descr_set */
+    0,                                        /* tp_dictoffset */
+    0,                                        /* tp_init */
+    0,                                        /* tp_alloc */
+    0,                           /* tp_new */
+    0,                                        /* tp_free */
+    0,                                        /* tp_is_gc */
+    0,                                        /* tp_bases */
+    0,                                        /* tp_mro */
+    0,                                        /* tp_cache */
+    0,                                        /* tp_subclasses */
+    0,                                        /* tp_weaklist */
+    0,                                        /* tp_del */
+    0,                                        /* tp_version_tag */
+};
 
 int main() {
     py::scoped_interpreter guard;
@@ -183,10 +305,8 @@ int main() {
     py::module numpy = py::module::import("numpy");
     py::module m("__main__");
 
-    py::handle base((PyObject*)&PyGenericArrType_Type);
-
     using Class = Custom;
-    py::class_<Class> cls(m, "Custom", base);
+    py::class_<Class> cls(m, "Custom");
     cls
         .def(py::init<double>())
         .def(py::self == Class{})
@@ -197,13 +317,15 @@ int main() {
         });
 
     // Register thing.
-    auto py_type = (PyTypeObject*)cls.ptr();
+    auto py_type = &PyCustom_Type;
+    PyCustom_Type.tp_base = &PyGenericArrType_Type;
+    PY_ASSERT_EX(PyType_Ready(&PyCustom_Type) >= 0, "Crap");
 
     typedef struct { char c; Class r; } align_test;
 
-    static PyArray_ArrFuncs npyrational_arrfuncs;
+    static PyArray_ArrFuncs arrfuncs;
     
-    static PyArray_Descr npyrational_descr = {
+    static PyArray_Descr descr = {
         PyObject_HEAD_INIT(0)
         py_type,                /* typeobj */
         'V',                    /* kind (V = arbitrary) */
@@ -222,19 +344,19 @@ int main() {
         0,                      /* subarray */
         0,                      /* fields */
         0,                      /* names */
-        &npyrational_arrfuncs,  /* f */
+        &arrfuncs,  /* f */
     };
 
-    PyArray_InitArrFuncs(&npyrational_arrfuncs);
+    PyArray_InitArrFuncs(&arrfuncs);
     // https://docs.scipy.org/doc/numpy/reference/c-api.types-and-structures.html
-    npyrational_arrfuncs.getitem = [](void* in, void* arr) -> PyObject* {
+    arrfuncs.getitem = [](void* in, void* arr) -> PyObject* {
         return py::cast(*(const Class*)in).release().ptr();
     };
-    npyrational_arrfuncs.setitem = [](PyObject* in, void* out, void* arr) {
+    arrfuncs.setitem = [](PyObject* in, void* out, void* arr) {
         *(Class*)out = *py::handle(in).cast<Class*>();
         return 0;
     };
-    npyrational_arrfuncs.copyswap = [](void* dst, void* src, int swap, void* arr) {
+    arrfuncs.copyswap = [](void* dst, void* src, int swap, void* arr) {
         if (!src) return;
         Class* r_dst = (Class*)dst;
         Class* r_src = (Class*)src;
@@ -245,10 +367,10 @@ int main() {
         }
     };
     // - Test and ensure this doesn't overwrite our `equal` unfunc.
-    npyrational_arrfuncs.compare = [](const void* d1, const void* d2, void* arr) {
+    arrfuncs.compare = [](const void* d1, const void* d2, void* arr) {
       return 0;
     };
-    npyrational_arrfuncs.fill = [](void* data_, npy_intp length, void* arr) {
+    arrfuncs.fill = [](void* data_, npy_intp length, void* arr) {
       Class* data = (Class*)data_;
       Class delta = data[1] - data[0];
       Class r = data[1];
@@ -260,7 +382,7 @@ int main() {
       return 0;
     };
     // For `zeros`, `ones`, etc.
-    npyrational_arrfuncs.fillwithscalar = [](
+    arrfuncs.fillwithscalar = [](
             void* buffer_raw, npy_intp length, void* value_raw, void* arr) {
         const Class* value = (const Class*)value_raw;
         Class* buffer = (Class*)buffer_raw;
@@ -269,10 +391,10 @@ int main() {
         }
         return 0;
     };
-    Py_TYPE(&npyrational_descr) = &PyArrayDescr_Type;
-    npy_rational = PyArray_RegisterDataType(&npyrational_descr);
+    Py_TYPE(&descr) = &PyArrayDescr_Type;
+    npy_custom = PyArray_RegisterDataType(&descr);
     cls.attr("dtype") = py::reinterpret_borrow<py::object>(
-        py::handle((PyObject*)&npyrational_descr));
+        py::handle((PyObject*)&descr));
 
     using Unary = type_pack<Class>;
     using Binary = type_pack<Class, Class>;
