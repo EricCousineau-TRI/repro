@@ -1,6 +1,10 @@
 // taken from: numpy/core/src/umath/test_rational.c.src
 // see ufuncobject.h
 
+
+// Goal: Define functions that need no capture...
+
+
 #include <array>
 #include <string>
 
@@ -30,9 +34,10 @@ void RegisterUFunc(
 template <typename Return, typename ... Args>
 using Func = Return (*)(Args...);
 
-template <typename Arg0, typename Arg1, typename Out>
-auto RegisterBinaryUFunc(py::object py_ufunc, Func<Out, Arg0, Arg1> func) {
-  PyUFuncGenericFunction lambda = [](
+template <
+    Func<Out, Arg0, Arg1> func,
+    typename Arg0, typename Arg1, typename Out>
+struct BinaryUFunc {
       char** args, npy_intp* dimensions, npy_intp* steps, void* data) {
     auto func = (Func<Out, Arg0, Arg1>)data;
     int step_0 = steps[0];
@@ -47,4 +52,4 @@ auto RegisterBinaryUFunc(py::object py_ufunc, Func<Out, Arg0, Arg1> func) {
         out += step_out;
     }
   }
-}
+};
