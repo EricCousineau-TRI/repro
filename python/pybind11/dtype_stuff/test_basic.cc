@@ -203,20 +203,25 @@ sys.stdout = sys.stderr
 class CustomShim(np.generic):
     def __init__(self, x):
         print("a")
-        if not isinstance(x, _Custom):
-            x = _Custom(x)
+        #if not isinstance(x, _Custom):
+        #    x = _Custom(x)
         print("b")
         self.x = x
         print("c")
 
     def __repr__(self):
-        return repr(self.x)
+        return "blech"  #repr(self.x)
 )""", m.attr("__dict__"), m.attr("__dict__"));
 
     // Register thing.
     auto py_type_py = m.attr("CustomShim");
     auto py_type = (PyTypeObject*)py_type_py.ptr();
-    py_type->tp_new = PyBaseObject_Type.tp_new;
+    py_type->tp_alloc = PyType_GenericAlloc;
+    py_type->tp_new = PyType_GenericNew;
+
+    py::exec(R"""(
+print(CustomShim(1))
+)""");
 
     typedef struct { char c; Class r; } align_test;
 
