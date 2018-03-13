@@ -177,7 +177,6 @@ struct npy_format_descriptor<Custom> {
 int main() {
     py::scoped_interpreter guard;
 
-
     _import_array();
     _import_umath();
     py::module numpy = py::module::import("numpy");
@@ -194,8 +193,23 @@ int main() {
             return py::str("Custom({})").format(self->value());
         });
 
+    // TODO(eric.cousineau): Ensure this class does not get cleared.
+    py::exec(R"""(
+import numpy as np
+
+class CustomShim(np.generic):
+    def __init__(self, x):
+        if not isinstance(x, Custom):
+            x = Custom(x)
+        self.x = x
+
+    def __repr__(self):
+        return repr(self.x)
+)""", m.attr("__dict__"), m.attr("__dict__"));
+
     // Register thing.
-    auto py_type = (PyTypeObject*)cls.ptr();
+    auto py_type_py = m.attr("CustomShim");
+    auto py_type = (PyTypeObject*)py_type_py.ptr();
 
     typedef struct { char c; Class r; } align_test;
 
@@ -223,13 +237,21 @@ int main() {
         &arrfuncs,  /* f */
     };
 
+    static auto from_py = [](py::handle h) {
+      return *h.attr("x").cast<Class*>();
+    };
+    static auto to_py = [](const Class* obj) {
+      py::object yar = py::module::import("__main__").attr("CustomShim");
+      return yar(py::cast(*obj)).release().ptr();
+    };
+
     PyArray_InitArrFuncs(&arrfuncs);
     // https://docs.scipy.org/doc/numpy/reference/c-api.types-and-structures.html
     arrfuncs.getitem = [](void* in, void* arr) -> PyObject* {
-        return py::cast(*(const Class*)in).release().ptr();
+        return to_py((const Class*)in);
     };
     arrfuncs.setitem = [](PyObject* in, void* out, void* arr) {
-        *(Class*)out = *py::handle(in).cast<Class*>();
+        *(Class*)out = from_py(in);
         return 0;
     };
     arrfuncs.copyswap = [](void* dst, void* src, int swap, void* arr) {
@@ -257,7 +279,6 @@ int main() {
       }
       return 0;
     };
-    // For `zeros`, `ones`, etc.
     arrfuncs.fillwithscalar = [](
             void* buffer_raw, npy_intp length, void* value_raw, void* arr) {
         const Class* value = (const Class*)value_raw;
@@ -269,7 +290,7 @@ int main() {
     };
     Py_TYPE(&descr) = &PyArrayDescr_Type;
     npy_custom = PyArray_RegisterDataType(&descr);
-    cls.attr("dtype") = py::reinterpret_borrow<py::object>(
+    py_type_py.attr("dtype") = py::reinterpret_borrow<py::object>(
         py::handle((PyObject*)&descr));
 
     using Unary = type_pack<Class>;

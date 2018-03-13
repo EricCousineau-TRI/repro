@@ -2,7 +2,7 @@ import numpy as np
 import sys
 import os
 
-from __main__ import Custom
+from __main__ import CustomShim as Custom
 
 p = os.path.dirname(os.path.abspath(__file__))
 print(p)
@@ -18,7 +18,8 @@ from test_rational_min import rational
 def check_bad():
     print("Check")
     print(np.dtype(Custom))
-    av_bad = np.array([Custom(1)], dtype=Custom)
+    print(Custom.dtype)
+    av_bad = np.array([Custom(1)], dtype=Custom.dtype)
     print(repr(av_bad))
     print(av_bad == av_bad)
 
@@ -61,7 +62,7 @@ def check_rational():
     y = np.array([rational()])
     print(repr(y))
 
-# check_bad()
-# check_zero()
 check_rational()
+check_bad()
+# check_zero()
 # check_op()
