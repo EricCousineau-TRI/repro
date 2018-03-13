@@ -202,17 +202,30 @@ int main() {
     BarObject_Type.tp_doc = "Instantiable np.generic.";
     // It's painful to inherit from `np.generic`, because it has no `tp_new`.
     BarObject_Type.tp_base = &PyGenericArrType_Type;
+    // Ensure that we define these, because `generic_repr`, etc. are defined
+    // recursively.
+    BarObject_Type.tp_repr = [](PyObject *self) {
+      return py::str("<>").release().ptr();
+    };
+    BarObject_Type.tp_str = [](PyObject* self) {
+      return py::str("<>").release().ptr();
+    };
     // BarObject_Type.tp_dict = PyDict_New();
     // Py_XINCREF(BarObject_Type.tp_dict);
     if (PyType_Ready(&BarObject_Type) < 0)
       return -1;
 
+     py::object py_type =
+         py::reinterpret_borrow<py::object>(py::handle((PyObject*)&BarObject_Type));
+     m.attr("_Generic") = py_type;
+
     using Class = Custom;
-    py::class_<Class> cls(
-        m, "Custom", py::metaclass((PyObject*)&PyType_Type),
-        py::handle((PyObject*)&BarObject_Type));
+    py::class_<Class> cls(m, "Custom");
+//        py::handle((PyObject*)&BarObject_Type));
     cls
-        .def(py::init<double>())
+        .def(py::init([](double x) {
+            return new Custom(x);
+        }))
         .def(py::self == Class{})
         .def(py::self * Class{})
         .def("value", &Class::value)
@@ -221,17 +234,13 @@ int main() {
         });
 
     py::exec(R"""(
-c = Custom(1)
+c = _Generic()
+print(dir(c))
 print(c)
 )""", m.attr("__dict__"));
     return 0;
 
 //     PyDict_SetItemString(BarObject_Type.tp_dict, "blergh", Py_None);
-
-//     py::object py_type =
-//         py::reinterpret_borrow<py::object>(py::handle((PyObject*)&BarObject_Type));
-
-//     m.attr("_Custom") = py_type;
 
 //     py::exec(R"""(
 // _Custom.junk = 2
