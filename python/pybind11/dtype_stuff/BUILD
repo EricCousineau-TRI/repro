@@ -44,7 +44,7 @@ cc_binary(
     ],
     data = [
         "test_basic.py",
-        "test_rational.so",
-        "test_rational_min.so",
+#        "test_rational.so",
+        # "test_rational_min.so",
     ],
 )

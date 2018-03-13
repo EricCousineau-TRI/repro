@@ -192,10 +192,25 @@ int main() {
     py::module numpy = py::module::import("numpy");
     py::module m("__main__");
 
+    BarObject_Type.tp_new = PyType_GenericNew;
+    BarObject_Type.tp_name = "_Generic";
+    BarObject_Type.tp_basicsize = sizeof(BarObject);
+    BarObject_Type.tp_getattro = PyObject_GenericGetAttr;
+    BarObject_Type.tp_setattro = PyObject_GenericSetAttr;
+    BarObject_Type.tp_flags = Py_TPFLAGS_DEFAULT;
+    BarObject_Type.tp_dictoffset = offsetof(BarObject, dict);
+    BarObject_Type.tp_doc = "Instantiable np.generic.";
+    // It's painful to inherit from `np.generic`, because it has no `tp_new`.
+    BarObject_Type.tp_base = &PyGenericArrType_Type;
+    // BarObject_Type.tp_dict = PyDict_New();
+    // Py_XINCREF(BarObject_Type.tp_dict);
+    if (PyType_Ready(&BarObject_Type) < 0)
+      return -1;
+
     using Class = Custom;
     py::class_<Class> cls(
         m, "Custom", py::metaclass((PyObject*)&PyType_Type),
-        numpy.attr("generic"));
+        py::handle((PyObject*)&BarObject_Type));
     cls
         .def(py::init<double>())
         .def(py::self == Class{})
@@ -211,20 +226,6 @@ print(c)
 )""", m.attr("__dict__"));
     return 0;
 
-//     BarObject_Type.tp_new = PyType_GenericNew;
-//     BarObject_Type.tp_name = "_Custom";
-//     BarObject_Type.tp_basicsize = sizeof(BarObject);
-//     BarObject_Type.tp_getattro = PyObject_GenericGetAttr;
-//     BarObject_Type.tp_setattro = PyObject_GenericSetAttr;
-//     BarObject_Type.tp_flags = Py_TPFLAGS_DEFAULT;
-//     BarObject_Type.tp_dictoffset = offsetof(BarObject,dict);
-//     BarObject_Type.tp_doc = "Doc string for class Bar in module Foo.";
-//     // It's painful to inherit from `np.generic`, because it has no `tp_new`.
-//     BarObject_Type.tp_base = &PyGenericArrType_Type;
-//     // BarObject_Type.tp_dict = PyDict_New();
-//     // Py_XINCREF(BarObject_Type.tp_dict);
-//     if (PyType_Ready(&BarObject_Type) < 0)
-//       return -1;
 //     PyDict_SetItemString(BarObject_Type.tp_dict, "blergh", Py_None);
 
 //     py::object py_type =
