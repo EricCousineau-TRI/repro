@@ -193,7 +193,9 @@ int main() {
     py::module m("__main__");
 
     using Class = Custom;
-    py::class_<Class> cls(m, "_Custom");
+    py::class_<Class> cls(
+        m, "Custom", py::metaclass((PyObject*)&PyType_Type),
+        numpy.attr("generic"));
     cls
         .def(py::init<double>())
         .def(py::self == Class{})
@@ -203,36 +205,42 @@ int main() {
             return py::str("_Custom({})").format(self->value());
         });
 
-    BarObject_Type.tp_new = PyType_GenericNew;
-    BarObject_Type.tp_name = "_Custom";
-    BarObject_Type.tp_basicsize = sizeof(BarObject);
-    BarObject_Type.tp_getattro = PyObject_GenericGetAttr;
-    BarObject_Type.tp_setattro = PyObject_GenericSetAttr;
-    BarObject_Type.tp_flags = Py_TPFLAGS_DEFAULT;
-    BarObject_Type.tp_dictoffset = offsetof(BarObject,dict);
-    BarObject_Type.tp_doc = "Doc string for class Bar in module Foo.";
-    // It's painful to inherit from `np.generic`, because it has no `tp_new`.
-    BarObject_Type.tp_base = &PyGenericArrType_Type;
-    // BarObject_Type.tp_dict = PyDict_New();
-    // Py_XINCREF(BarObject_Type.tp_dict);
-    if (PyType_Ready(&BarObject_Type) < 0)
-      return -1;
-    PyDict_SetItemString(BarObject_Type.tp_dict, "blergh", Py_None);
-
-    py::object py_type =
-        py::reinterpret_borrow<py::object>(py::handle((PyObject*)&BarObject_Type));
-
-    m.attr("_Custom") = py_type;
-
     py::exec(R"""(
-_Custom.junk = 2
-print(_Custom.blergh)
-print(_Custom.__dict__)
-def _c_init(self, x):
-    self.x = x
-_Custom.__init__ = _c_init
-_Custom.__repr__ = lambda self: "blerg"
+c = Custom(1)
+print(c)
 )""", m.attr("__dict__"));
+    return 0;
+
+//     BarObject_Type.tp_new = PyType_GenericNew;
+//     BarObject_Type.tp_name = "_Custom";
+//     BarObject_Type.tp_basicsize = sizeof(BarObject);
+//     BarObject_Type.tp_getattro = PyObject_GenericGetAttr;
+//     BarObject_Type.tp_setattro = PyObject_GenericSetAttr;
+//     BarObject_Type.tp_flags = Py_TPFLAGS_DEFAULT;
+//     BarObject_Type.tp_dictoffset = offsetof(BarObject,dict);
+//     BarObject_Type.tp_doc = "Doc string for class Bar in module Foo.";
+//     // It's painful to inherit from `np.generic`, because it has no `tp_new`.
+//     BarObject_Type.tp_base = &PyGenericArrType_Type;
+//     // BarObject_Type.tp_dict = PyDict_New();
+//     // Py_XINCREF(BarObject_Type.tp_dict);
+//     if (PyType_Ready(&BarObject_Type) < 0)
+//       return -1;
+//     PyDict_SetItemString(BarObject_Type.tp_dict, "blergh", Py_None);
+
+//     py::object py_type =
+//         py::reinterpret_borrow<py::object>(py::handle((PyObject*)&BarObject_Type));
+
+//     m.attr("_Custom") = py_type;
+
+//     py::exec(R"""(
+// _Custom.junk = 2
+// print(_Custom.blergh)
+// print(_Custom.__dict__)
+// def _c_init(self, x):
+//     self.x = x
+// _Custom.__init__ = _c_init
+// _Custom.__repr__ = lambda self: "blerg"
+// )""", m.attr("__dict__"));
 
     typedef struct { char c; Class r; } align_test;
 
@@ -317,8 +325,8 @@ _Custom.__repr__ = lambda self: "blerg"
     };
     Py_TYPE(&descr) = &PyArrayDescr_Type;
     npy_custom = PyArray_RegisterDataType(&descr);
-    py_type.attr("dtype") = py::reinterpret_borrow<py::object>(
-        py::handle((PyObject*)&descr));
+    // py_type.attr("dtype") = py::reinterpret_borrow<py::object>(
+    //     py::handle((PyObject*)&descr));
 
     using Unary = type_pack<Class>;
     using Binary = type_pack<Class, Class>;
