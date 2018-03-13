@@ -1,0 +1,1 @@
+build --define=HAS_1=ON

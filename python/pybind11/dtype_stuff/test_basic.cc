@@ -98,16 +98,85 @@ struct DTypeObject {
   PyObject_HEAD
   Class value;
 
-  static Class* load(py::handle src) {
+  static Class* load_raw(py::handle src) {
+    DTypeObject* obj = (DTypeObject*)src.ptr();
+    return &obj->value;
+  }
+
+  static ClassObject* alloc_py() {
     auto cls = get_class<Class>();
-    if (!py::isinstance(src, cls)) {
-      throw py::cast_error("Must be of the same type");
-    } else {
-      DTypeObject* obj = (DTypeObject*)src.ptr();
-      return &obj->value;
-    }
+    PyTypeObject* cls_raw = (PyTypeObject*)cls.ptr();
+    return (ClassObject*)cls_raw->tp_alloc((PyTypeObject*)cls.ptr(), 0);
+  }
+
+  static PyObject* tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
+    return (PyObject*)alloc_py();
   }
 };
+
+// Value.
+template <typename Class, bool is_pointer = false>
+struct dtype_arg {
+  using ClassObject = DTypeObject<Class>;
+  dtype_arg(py::handle h)
+    : h_(h), is_py_{true} {}
+  dtype_arg(const T& obj)
+    : obj_(obj), is_py_{false} {}
+
+  bool load(bool convert) {
+    assert(is_py_);
+    auto cls = get_class<Class>();
+    if (!py::isinstance(src, cls)) {
+      if (convert) {
+        throw py::cast_error("not implemented");
+      } else {
+        throw py::cast_error("Must be of the same type");
+      }
+    } else {
+      value_ = *ClassObject::load_raw(h_);
+      return true;
+    }
+  }
+  Class& value() const {
+    return value_;
+  }
+  Class* ptr() const {
+    return value_ptr_;
+  }
+  py::object py() const {
+    if (!h_) {
+      ClassObject* obj = ClassObject::alloc_py();
+      obj->value = value_;
+    }
+    return h_;
+  }
+ private:
+  bool is_py_{};
+  py::handle h_;
+  T* value_ptr_;
+};
+
+template <typename Class>
+struct dtype_arg_caster {
+  // Using this structure because `intrinsic_t` masks our abilities to natively
+  // use pointers when using `make_caster` with the temporary return check.
+  // See fork, modded func `cast_is_known_safe`.
+  using Arg = dtype_arg<Class>;
+  using ClassObject = typename DType::ClassObject;
+  static py::handle cast(Arg& src, py::return_value_policy, py::handle) {
+    return src.py().release();
+  }
+  bool load(py::handle src, bool convert) {
+    value_ = src;
+    return value_.load(convert);
+  }
+  template <typename T_> using cast_op_type = pybind11::detail::movable_cast_op_type<T_>;
+
+  operator Arg&() { return value_; }
+  Arg value_;
+};
+
+template <typename Class>
 
 // Following `pybind11/detail/init.h`
 template <typename... Args>
@@ -118,10 +187,9 @@ struct dtype_init_factory {
     using ClassObject = typename PyClass::ClassObject;
     // Do not construct this with the name `__init__` as pybind will try to
     // take over the init setup.
-    cl.def("_dtype_init", [](py::handle py_self, Args... args) {
-      Class* self = ClassObject::load(py_self);
+    cl.def("_dtype_init", [](dtype_arg<Class*> self, Args... args) {
       // Old-style. No factories for now.
-      new (self) Class(std::forward<Args>(args)...);
+      new (self.value()) Class(std::forward<Args>(args)...);
     });
     if (!py::hasattr(cl, "__init__")) {
       py::handle h = cl;
@@ -155,7 +223,7 @@ class dtype_class : public py::class_<Class_> {
     auto& ClassObject_Type = heap_type->ht_type;
     ClassObject_Type.tp_base = &PyGenericArrType_Type;
     // Define other things.
-    ClassObject_Type.tp_new = tp_new;
+    ClassObject_Type.tp_new = &ClassObject::tp_new;
     ClassObject_Type.tp_name = name;  // Er... scope?
     ClassObject_Type.tp_basicsize = sizeof(ClassObject);
     // ClassObject_Type.tp_getattro = PyObject_GenericGetAttr;
@@ -170,56 +238,11 @@ class dtype_class : public py::class_<Class_> {
     cls_map()[index_of<Class>()] = *self;
   }
 
-  static ClassObject* alloc_py() {
-    auto cls = get_class<Class>();
-    PyTypeObject* cls_raw = (PyTypeObject*)cls.ptr();
-    return (ClassObject*)cls_raw->tp_alloc((PyTypeObject*)cls.ptr(), 0);
-  }
-
-  static PyObject* tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
-    return (PyObject*)alloc_py();
-  }
-
   template <typename ... Args, typename... Extra>
   dtype_class &def_dtype(dtype_init_factory<Args...>&& init, const Extra&... extra) {
     std::move(init).execute(*this, extra...);
     return *this;
   }
-};
-
-// TODO(eric.cousineau): Figure out how to get pointers, avoiding `intrinsic_t`
-// that `make_caster` uses.
-template <typename Class>
-struct dtype_caster {
-  using DType = dtype_class<Class>;
-  using ClassObject = typename DType::ClassObject;
-
-  static py::handle cast(Class& src, py::return_value_policy, py::handle) {
-    // Can only return copies.
-    ClassObject* obj = DType::alloc_py();
-    obj->value = src;
-    return py::handle((PyObject*)obj);
-  }
-
-  bool load(py::handle src, bool convert) {
-    auto cls = get_class<Class>();
-    if (!py::isinstance(src, cls)) {
-      if (!convert) {
-        return false;
-      }
-      else {
-        throw py::cast_error("Not yet implemented");
-      }
-    } else {
-      ClassObject* obj = (ClassObject*)src.ptr();
-      value_ = obj->value;
-      return true;
-    }
-  }
-
-  template <typename T_> using cast_op_type = pybind11::detail::movable_cast_op_type<T_>;
-  operator Class&() { return value_; }
-  Class value_;
 };
 
 namespace pybind11 { namespace detail {
@@ -251,17 +274,17 @@ using Class = Custom;
     dtype_class<Custom> py_type(m, "Custom");
     // Do not define `__init__`. Rather, use a custom thing.
     py_type
-        .def_dtype(dtype_init<double>());
+        .def_dtype(dtype_init<double>())
         // .def(py::self == Class{})
         // .def(py::self * Class{})
         // .def("value", &Class::value)
-        // .def("__repr__", [](const Class* self) {
-        //     return py::str("_Custom({})").format(self->value());
-        // });
+        .def("__repr__", [](const Class* self) {
+            return py::str("_Custom({})").format(self->value());
+        });
 
     py::exec(R"""(
 print(Custom)
-print(Custom(1))
+#print(Custom(1))
 )""", md, md);
 
 #if 0
