@@ -1,5 +1,6 @@
 #include <cmath>
 
+#include <map>
 #include <iostream>
 
 using std::pow;
@@ -16,6 +17,7 @@ using std::endl;
 #include <numpy/ndarraytypes.h>
 
 #include "ufunc_utility.h"
+#include "ufunc_op.h"
 
 namespace py = pybind11;
 
@@ -50,104 +52,6 @@ Custom pow(Custom a, Custom b) {
   return pow(a.value(), b.value());
 }
 
-// Could increase param count?
-#define CHECK_EXPR(struct_name, name, expr, lambda_expr) \
-    template <typename A_, typename B = A_> \
-    struct struct_name { \
-      template <typename A = A_> \
-      static std::true_type check(decltype(expr)*); \
-      template <typename> \
-      static std::false_type check(...); \
-      static constexpr bool value = decltype(check<A_>(nullptr))::value; \
-      template <typename A = A_> \
-      static auto get_lambda() { return lambda_expr; } \
-      static const char* get_name() { return name; } \
-    };
-
-// https://docs.scipy.org/doc/numpy/reference/routines.math.html
-CHECK_EXPR(check_add, "add", A{} + B{},
-           [](const A& a, const B& b) { return a + b; });
-CHECK_EXPR(check_negative, "negative", -A{},
-           [](const A& a) { return -a; });
-CHECK_EXPR(check_multiply, "multiply", A{} * B{},
-           [](const A& a, const B& b) { return a * b; });
-CHECK_EXPR(check_divide, "divide", A{} / B{},
-           [](const A& a, const B& b) { return a / b; });
-// TODO(eric.cousineau): Figger out non-operator things...
-CHECK_EXPR(check_power, "power", pow(A{}, B{}),
-           [](const A& a, const B& b) { return pow(a, b); });
-CHECK_EXPR(check_subtract, "subtract", A{} - B{},
-           [](const A& a, const B& b) { return a - b; });
-// https://docs.scipy.org/doc/numpy/reference/routines.logic.html
-CHECK_EXPR(check_greater, "greater", A{} > B{},
-           [](const A& a, const B& b) { return a > b; });
-CHECK_EXPR(check_greater_equal, "greater_equal", A{} >= B{},
-           [](const A& a, const B& b) { return a >= b; });
-CHECK_EXPR(check_less, "less", A{} < B{},
-           [](const A& a, const B& b) { return a < b; });
-CHECK_EXPR(check_less_equal, "less_equal", A{} <= B{},
-           [](const A& a, const B& b) { return a <= b; });
-CHECK_EXPR(check_equal, "equal", A{} == B{},
-           [](const A& a, const B& b) { return a == b; });
-CHECK_EXPR(check_not_equal, "not_equal", A{} != B{},
-           [](const A& a, const B& b) { return a != b; });
-// Casting.
-CHECK_EXPR(check_cast, "", static_cast<B>(A{}),
-           [](const A& a) { return static_cast<B>(a); });
-
-template <typename Result, typename Func>
-void run_if(Func&& func) {
-  using Pack = type_pack<Result>;
-  type_visit_impl<visit_with_default, Func>::
-      template runner<Pack, Result::value>::run(func);
-}
-
-PyUFuncObject* get_py_ufunc(const char* name) {
-  py::module numpy = py::module::import("numpy");
-  return (PyUFuncObject*)numpy.attr(name).ptr();
-}
-
-template <template <typename...> class Check, typename Class, typename ... Args>
-void maybe_ufunc(type_pack<Args...> = {}) {
-  using Result = typename type_pack<Args...>::template bind<Check>;
-  constexpr int N = sizeof...(Args);
-  auto defer = [](auto) {
-    RegisterUFunc<Class>(
-        get_py_ufunc(Result::get_name()), Result::get_lambda(), const_int<N>{});
-  };
-  run_if<Result>(defer);
-}
-
-template <typename From, typename To, typename Func>
-void add_cast(Func&& func, type_pack<From, To> = {}) {
-  auto* from = PyArray_DescrFromType(dtype_num<From>());
-  int to = dtype_num<To>();
-  static auto cast_lambda = func;
-  auto cast_func = [](
-        void* from_, void* to_, npy_intp n,
-        void* fromarr, void* toarr) {
-      const From* from = (From*)from_;
-      To* to = (To*)to_;
-      for (npy_intp i = 0; i < n; i++)
-          to[i] = cast_lambda(from[i]);
-  };
-  PY_ASSERT_EX(
-      PyArray_RegisterCastFunc(from, to, cast_func) >= 0,
-      "Cannot register cast");
-  PY_ASSERT_EX(
-      PyArray_RegisterCanCast(from, to, NPY_NOSCALAR) >= 0,
-      "Cannot register castability");
-}
-
-template <typename From, typename To>
-void maybe_cast(type_pack<From, To> = {}) {
-  using Result = check_cast<From, To>;
-  auto defer = [](auto) {
-    add_cast<From, To>(Result::get_lambda());
-  };
-  run_if<Result>(defer);
-}
-
 void module(py::module m) {}
 
 int npy_custom{-1};
@@ -174,86 +78,198 @@ struct npy_format_descriptor<Custom> {
 
 } }  // namespace detail } namespace pybind11
 
-// https://stackoverflow.com/a/12505371/7829525
-typedef struct {
-  PyObject_HEAD
-  PyObject* dict;
-} BarObject;
+template <typename T>
+std::type_index index_of() {
+  return std::type_index(typeid(T));
+}
 
-//static PyTypeObject BarObject_Type = {
-//  PyObject_HEAD_INIT(NULL)
-//};
+auto& cls_map() {
+  static std::map<std::type_index, py::handle> value;
+  return value;
+}
+
+template <typename T>
+static py::handle get_class() {
+  return cls_map().at(index_of<T>());
+}
+
+template <typename Class>
+struct DTypeObject {
+  PyObject_HEAD
+  Class value;
+
+  static Class* load(py::handle src) {
+    auto cls = get_class<Class>();
+    if (!py::isinstance(src, cls)) {
+      throw py::cast_error("Must be of the same type");
+    } else {
+      DTypeObject* obj = (DTypeObject*)src.ptr();
+      return &obj->value;
+    }
+  }
+};
+
+// Following `pybind11/detail/init.h`
+template <typename... Args>
+struct dtype_init_factory {
+  template <typename PyClass, typename... Extra>
+  void execute(PyClass& cl, const Extra&... extra) {
+    using Class = typename PyClass::Class;
+    using ClassObject = typename PyClass::ClassObject;
+    // Do not construct this with the name `__init__` as pybind will try to
+    // take over the init setup.
+    cl.def("_dtype_init", [](py::handle py_self, Args... args) {
+      Class* self = ClassObject::load(py_self);
+      // Old-style. No factories for now.
+      new (self) Class(std::forward<Args>(args)...);
+    });
+    if (!py::hasattr(cl, "__init__")) {
+      py::handle h = cl;
+      auto init = cl.attr("_dtype_init");
+      auto func = py::cpp_function(
+          [init](py::handle self, py::args args, py::kwargs kwargs) {
+            // Dispatch.
+            self.attr("_dtype_init")(*args, **kwargs);
+          }, py::is_method(h));
+      cl.attr("__init__") = func;
+    }
+  }
+};
+
+template <typename... Args>
+dtype_init_factory<Args...> dtype_init() { return {}; }
+
+template <typename Class_>
+class dtype_class : public py::class_<Class_> {
+ public:
+  using Base = py::class_<Class_>;
+  using Class = Class_;
+  using ClassObject = DTypeObject<Class>;
+  // https://stackoverflow.com/a/12505371/7829525
+  
+  dtype_class(py::handle scope, const char* name) : Base(py::none()) {
+    auto heap_type = (PyHeapTypeObject*)PyType_Type.tp_alloc(&PyType_Type, 0);
+    PY_ASSERT_EX(heap_type, "yar");
+    heap_type->ht_name = py::str(name).release().ptr();
+    // It's painful to inherit from `np.generic`, because it has no `tp_new`.
+    auto& ClassObject_Type = heap_type->ht_type;
+    ClassObject_Type.tp_base = &PyGenericArrType_Type;
+    // Define other things.
+    ClassObject_Type.tp_new = tp_new;
+    ClassObject_Type.tp_name = name;  // Er... scope?
+    ClassObject_Type.tp_basicsize = sizeof(ClassObject);
+    // ClassObject_Type.tp_getattro = PyObject_GenericGetAttr;
+    // ClassObject_Type.tp_setattro = PyObject_GenericSetAttr;
+    ClassObject_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HEAPTYPE;
+    // ClassObject_Type.tp_dictoffset = offsetof(ClassObject, dict);
+    ClassObject_Type.tp_doc = "Stuff.";
+    PY_ASSERT_EX(PyType_Ready(&ClassObject_Type) == 0, "");
+    py::object* self = this;
+    *self = py::reinterpret_borrow<py::object>(py::handle((PyObject*)&ClassObject_Type));
+    scope.attr(name) = *self;
+    cls_map()[index_of<Class>()] = *self;
+  }
+
+  static ClassObject* alloc_py() {
+    auto cls = get_class<Class>();
+    PyTypeObject* cls_raw = (PyTypeObject*)cls.ptr();
+    return (ClassObject*)cls_raw->tp_alloc((PyTypeObject*)cls.ptr(), 0);
+  }
+
+  static PyObject* tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
+    return (PyObject*)alloc_py();
+  }
+
+  template <typename ... Args, typename... Extra>
+  dtype_class &def_dtype(dtype_init_factory<Args...>&& init, const Extra&... extra) {
+    std::move(init).execute(*this, extra...);
+    return *this;
+  }
+};
+
+// TODO(eric.cousineau): Figure out how to get pointers, avoiding `intrinsic_t`
+// that `make_caster` uses.
+template <typename Class>
+struct dtype_caster {
+  using DType = dtype_class<Class>;
+  using ClassObject = typename DType::ClassObject;
+
+  static py::handle cast(Class& src, py::return_value_policy, py::handle) {
+    // Can only return copies.
+    ClassObject* obj = DType::alloc_py();
+    obj->value = src;
+    return py::handle((PyObject*)obj);
+  }
+
+  bool load(py::handle src, bool convert) {
+    auto cls = get_class<Class>();
+    if (!py::isinstance(src, cls)) {
+      if (!convert) {
+        return false;
+      }
+      else {
+        throw py::cast_error("Not yet implemented");
+      }
+    } else {
+      ClassObject* obj = (ClassObject*)src.ptr();
+      value_ = obj->value;
+      return true;
+    }
+  }
+
+  template <typename T_> using cast_op_type = pybind11::detail::movable_cast_op_type<T_>;
+  operator Class&() { return value_; }
+  Class value_;
+};
+
+namespace pybind11 { namespace detail {
+
+template <>
+struct type_caster<Custom> : public dtype_caster<Custom> {};
+
+// template <typename T>
+// struct cast_is_known_safe<T,
+//     enable_if_t<std::is_same<dtype_caster_ptr<std::remove_pointer_t<T>>, make_caster<T>>::value>>
+//     : public std::true_type {};
+
+} } // namespace pybind11 { namespace detail {
 
 int main() {
     py::scoped_interpreter guard;
+
+using Class = Custom;
 
     _import_array();
     _import_umath();
     py::module numpy = py::module::import("numpy");
     py::module m("__main__");
+    py::dict md = m.attr("__dict__");
+    py::dict locals;
 
-    auto heap_type = (PyHeapTypeObject*)PyType_Type.tp_alloc(&PyType_Type, 0);
-    PY_ASSERT_EX(heap_type, "yar");
+    // static_assert(py::detail::cast_is_known_safe<Custom*>::value, "Yoew");
 
-    auto& BarObject_Type = heap_type->ht_type;
-    heap_type->ht_name = py::str("_Generic").release().ptr();
-
-    using Class = Custom;
-
-    BarObject_Type.tp_new = PyType_GenericNew;
-    BarObject_Type.tp_name = "_Generic";
-    BarObject_Type.tp_basicsize = sizeof(BarObject);
-    BarObject_Type.tp_getattro = PyObject_GenericGetAttr;
-    BarObject_Type.tp_setattro = PyObject_GenericSetAttr;
-    BarObject_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HEAPTYPE | Py_TPFLAGS_BASETYPE;
-    BarObject_Type.tp_dictoffset = offsetof(BarObject, dict);
-    BarObject_Type.tp_doc = "Instantiable np.generic.";
-    // It's painful to inherit from `np.generic`, because it has no `tp_new`.
-    BarObject_Type.tp_base = &PyGenericArrType_Type;
-    // Ensure that we define these, because `generic_repr`, etc. are defined
-    // recursively.
-//    BarObject_Type.tp_repr = [](PyObject *self) {
-//      return py::str("<>").release().ptr();
-//    };
-//    BarObject_Type.tp_str = [](PyObject* self) {
-//      return py::str("<>").release().ptr();
-//    };
-    // BarObject_Type.tp_dict = PyDict_New();
-    // Py_XINCREF(BarObject_Type.tp_dict);
-    if (PyType_Ready(&BarObject_Type) < 0)
-      return -1;
-
-    m.attr("Generic") = py::reinterpret_borrow<py::object>(py::handle((PyObject*)&BarObject_Type));
+    dtype_class<Custom> py_type(m, "Custom");
+    // Do not define `__init__`. Rather, use a custom thing.
+    py_type
+        .def_dtype(dtype_init<double>());
+        // .def(py::self == Class{})
+        // .def(py::self * Class{})
+        // .def("value", &Class::value)
+        // .def("__repr__", [](const Class* self) {
+        //     return py::str("_Custom({})").format(self->value());
+        // });
 
     py::exec(R"""(
-class Custom(Generic):
-    def __init__(self, x):
-        self.x = Custom.maybe_value(x)
+print(Custom)
+print(Custom(1))
+)""", md, md);
 
-    @staticmethod
-    def maybe_me(x):
-        if isinstance(x, Custom):
-            return x
-        else:
-            return Custom(x)
-
-    @staticmethod
-    def maybe_value(x):
-        if isinstance(x, Custom):
-            return x.x
-        elif isinstance(x, _Custom):
-            return x
-        else:
-            return _Custom(x)
-)""", m.attr("__dict__"), m.attr("__dict__"));
-
-    py::object py_type = m.attr("Custom");
-
+#if 0
     typedef struct { char c; Class r; } align_test;
     static PyArray_ArrFuncs arrfuncs;
     static PyArray_Descr descr = {
         PyObject_HEAD_INIT(0)
-        &BarObject_Type,                /* typeobj */
+        &ClassObject_Type,                /* typeobj */
         'V',                    /* kind (V = arbitrary) */
         'r',                    /* type */
         '=',                    /* byteorder */
@@ -272,6 +288,13 @@ class Custom(Generic):
         0,                      /* names */
         &arrfuncs,  /* f */
     };
+
+    py::class_<Class> cls(m, "_Custom");
+//        py::handle((PyObject*)&ClassObject_Type));
+    cls
+        .def(py::init([](double x) {
+            return new Custom(x);
+        }))
 
     static auto from_py = [](py::handle h) {
       py::print(py::str("yar eadf: {}").format(h.get_type()));
@@ -332,19 +355,6 @@ class Custom(Generic):
      py_type.attr("dtype") = py::reinterpret_borrow<py::object>(
          py::handle((PyObject*)&descr));
 
-    py::class_<Class> cls(m, "_Custom");
-//        py::handle((PyObject*)&BarObject_Type));
-    cls
-        .def(py::init([](double x) {
-            return new Custom(x);
-        }))
-        .def(py::self == Class{})
-        .def(py::self * Class{})
-        .def("value", &Class::value)
-        .def("__repr__", [](const Class* self) {
-            return py::str("_Custom({})").format(self->value());
-        });
-
     py::exec(R"""(
 c = Custom(1)
 print(dir(c))
@@ -352,7 +362,7 @@ print(repr(c))
 )""", m.attr("__dict__"), m.attr("__dict__"));
     return 0;
 
-//     PyDict_SetItemString(BarObject_Type.tp_dict, "blergh", Py_None);
+//     PyDict_SetItemString(ClassObject_Type.tp_dict, "blergh", Py_None);
 
 //     py::exec(R"""(
 // _Custom.junk = 2
@@ -407,6 +417,7 @@ print(repr(c))
     py::exec(R"""(
 x = np.array([Custom(1)])
 )""");
+#endif // 0
 
     return 0;
 }

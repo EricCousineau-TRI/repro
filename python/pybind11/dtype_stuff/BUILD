@@ -35,6 +35,7 @@ cc_binary(
     name = "test_basic",
     srcs = [
         "ufunc_utility.h",
+        "ufunc_op.h",
         "test_basic.cc",
     ],
     deps = [
@@ -44,7 +45,7 @@ cc_binary(
     ],
     data = [
         "test_basic.py",
-#        "test_rational.so",
+        "test_rational.so",
         # "test_rational_min.so",
     ],
 )

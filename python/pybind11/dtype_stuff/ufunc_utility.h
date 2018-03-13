@@ -1,3 +1,5 @@
+#pragma once
+
 // taken from: numpy/core/src/umath/test_rational.c.src
 // see ufuncobject.h
 
