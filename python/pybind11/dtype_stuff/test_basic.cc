@@ -180,9 +180,9 @@ typedef struct {
   PyObject* dict;
 } BarObject;
 
-static PyTypeObject BarObject_Type = {
-  PyObject_HEAD_INIT(NULL)
-};
+//static PyTypeObject BarObject_Type = {
+//  PyObject_HEAD_INIT(NULL)
+//};
 
 int main() {
     py::scoped_interpreter guard;
@@ -192,70 +192,43 @@ int main() {
     py::module numpy = py::module::import("numpy");
     py::module m("__main__");
 
+    auto heap_type = (PyHeapTypeObject*)PyType_Type.tp_alloc(&PyType_Type, 0);
+    PY_ASSERT_EX(heap_type, "yar");
+
+    auto& BarObject_Type = heap_type->ht_type;
+    heap_type->ht_name = py::str("_Generic").release().ptr();
+
+    using Class = Custom;
+
     BarObject_Type.tp_new = PyType_GenericNew;
     BarObject_Type.tp_name = "_Generic";
     BarObject_Type.tp_basicsize = sizeof(BarObject);
     BarObject_Type.tp_getattro = PyObject_GenericGetAttr;
     BarObject_Type.tp_setattro = PyObject_GenericSetAttr;
-    BarObject_Type.tp_flags = Py_TPFLAGS_DEFAULT;
+    BarObject_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HEAPTYPE;
     BarObject_Type.tp_dictoffset = offsetof(BarObject, dict);
     BarObject_Type.tp_doc = "Instantiable np.generic.";
     // It's painful to inherit from `np.generic`, because it has no `tp_new`.
     BarObject_Type.tp_base = &PyGenericArrType_Type;
     // Ensure that we define these, because `generic_repr`, etc. are defined
     // recursively.
-    BarObject_Type.tp_repr = [](PyObject *self) {
-      return py::str("<>").release().ptr();
-    };
-    BarObject_Type.tp_str = [](PyObject* self) {
-      return py::str("<>").release().ptr();
-    };
+//    BarObject_Type.tp_repr = [](PyObject *self) {
+//      return py::str("<>").release().ptr();
+//    };
+//    BarObject_Type.tp_str = [](PyObject* self) {
+//      return py::str("<>").release().ptr();
+//    };
     // BarObject_Type.tp_dict = PyDict_New();
     // Py_XINCREF(BarObject_Type.tp_dict);
     if (PyType_Ready(&BarObject_Type) < 0)
       return -1;
 
-     py::object py_type =
-         py::reinterpret_borrow<py::object>(py::handle((PyObject*)&BarObject_Type));
-     m.attr("_Generic") = py_type;
-
-    using Class = Custom;
-    py::class_<Class> cls(m, "Custom");
-//        py::handle((PyObject*)&BarObject_Type));
-    cls
-        .def(py::init([](double x) {
-            return new Custom(x);
-        }))
-        .def(py::self == Class{})
-        .def(py::self * Class{})
-        .def("value", &Class::value)
-        .def("__repr__", [](const Class* self) {
-            return py::str("_Custom({})").format(self->value());
-        });
-
-    py::exec(R"""(
-c = _Generic()
-print(dir(c))
-print(c)
-)""", m.attr("__dict__"));
-    return 0;
-
-//     PyDict_SetItemString(BarObject_Type.tp_dict, "blergh", Py_None);
-
-//     py::exec(R"""(
-// _Custom.junk = 2
-// print(_Custom.blergh)
-// print(_Custom.__dict__)
-// def _c_init(self, x):
-//     self.x = x
-// _Custom.__init__ = _c_init
-// _Custom.__repr__ = lambda self: "blerg"
-// )""", m.attr("__dict__"));
+    py::object py_type =
+        py::reinterpret_borrow<py::object>(py::handle((PyObject*)&BarObject_Type));
+    m.attr("_Generic") = py_type;
 
     typedef struct { char c; Class r; } align_test;
-
     static PyArray_ArrFuncs arrfuncs;
-    
     static PyArray_Descr descr = {
         PyObject_HEAD_INIT(0)
         &BarObject_Type,                /* typeobj */
@@ -279,14 +252,17 @@ print(c)
     };
 
     static auto from_py = [](py::handle h) {
-      py::object yar = py::module::import("__main__").attr("CustomShim");
-      py::object he = yar(h);
-      py::print("yar: {}", he);
-      py::object he_2 = he.attr("x");
-      return *he_2.cast<Class*>();
+      py::print(py::str("yar eadf: {}").format(h.get_type()));
+        // return Class(10);
+      py::object yar = py::module::import("__main__").attr("maybe_custom");
+     py::object he = yar(h);
+     py::print("yar: {}", he);
+     py::object he_2 = he.attr("x");
+     return *he_2.cast<Class*>();
     };
     static auto to_py = [](const Class* obj) {
-      py::object yar = py::module::import("__main__").attr("CustomShim");
+      py::object yar = py::module::import("__main__").attr("Custom");
+//      return yar(100).release().ptr();
       return yar(py::cast(*obj)).release().ptr();
     };
 
@@ -335,8 +311,55 @@ print(c)
     };
     Py_TYPE(&descr) = &PyArrayDescr_Type;
     npy_custom = PyArray_RegisterDataType(&descr);
-    // py_type.attr("dtype") = py::reinterpret_borrow<py::object>(
-    //     py::handle((PyObject*)&descr));
+     py_type.attr("dtype") = py::reinterpret_borrow<py::object>(
+         py::handle((PyObject*)&descr));
+
+    py::class_<Class> cls(m, "Custom");
+//        py::handle((PyObject*)&BarObject_Type));
+    cls
+        .def(py::init([](double x) {
+            return new Custom(x);
+        }))
+        .def(py::self == Class{})
+        .def(py::self * Class{})
+        .def("value", &Class::value)
+        .def("__repr__", [](const Class* self) {
+            return py::str("_Custom({})").format(self->value());
+        });
+
+    py::exec(R"""(
+def maybe_custom(x):
+    if isinstance(x, _Generic):
+        return x.x
+    elif isinstance(x, Custom):
+        return x
+    else:
+        return Custom(x)
+
+def _c_init(self, x):
+    self.x = maybe_custom(x)
+
+_Generic.__init__ = _c_init
+c = _Generic(1)
+_Generic.blarg = 2
+print(_Generic)
+print(_Generic.__dict__)
+print(dir(c))
+print(c)
+)""", m.attr("__dict__"), m.attr("__dict__"));
+    return 0;
+
+//     PyDict_SetItemString(BarObject_Type.tp_dict, "blergh", Py_None);
+
+//     py::exec(R"""(
+// _Custom.junk = 2
+// print(_Custom.blergh)
+// print(_Custom.__dict__)
+// def _c_init(self, x):
+//     self.x = x
+// _Custom.__init__ = _c_init
+// _Custom.__repr__ = lambda self: "blerg"
+// )""", m.attr("__dict__"));
 
     using Unary = type_pack<Class>;
     using Binary = type_pack<Class, Class>;
