@@ -183,25 +183,31 @@ int main() {
     py::module m("__main__");
 
     using Class = Custom;
-    py::class_<Class> cls(m, "Custom");
+    py::class_<Class> cls(m, "_Custom");
     cls
         .def(py::init<double>())
         .def(py::self == Class{})
         .def(py::self * Class{})
         .def("value", &Class::value)
         .def("__repr__", [](const Class* self) {
-            return py::str("Custom({})").format(self->value());
+            return py::str("_Custom({})").format(self->value());
         });
 
     // TODO(eric.cousineau): Ensure this class does not get cleared.
     py::exec(R"""(
 import numpy as np
+import sys
+
+sys.stdout = sys.stderr
 
 class CustomShim(np.generic):
     def __init__(self, x):
-        if not isinstance(x, Custom):
-            x = Custom(x)
+        print("a")
+        if not isinstance(x, _Custom):
+            x = _Custom(x)
+        print("b")
         self.x = x
+        print("c")
 
     def __repr__(self):
         return repr(self.x)
@@ -210,6 +216,7 @@ class CustomShim(np.generic):
     // Register thing.
     auto py_type_py = m.attr("CustomShim");
     auto py_type = (PyTypeObject*)py_type_py.ptr();
+    py_type->tp_new = PyBaseObject_Type.tp_new;
 
     typedef struct { char c; Class r; } align_test;
 
@@ -238,7 +245,11 @@ class CustomShim(np.generic):
     };
 
     static auto from_py = [](py::handle h) {
-      return *h.attr("x").cast<Class*>();
+      py::object yar = py::module::import("__main__").attr("CustomShim");
+      py::object he = yar(h);
+      py::print("yar: {}", he);
+      py::object he_2 = he.attr("x");
+      return *he_2.cast<Class*>();
     };
     static auto to_py = [](const Class* obj) {
       py::object yar = py::module::import("__main__").attr("CustomShim");

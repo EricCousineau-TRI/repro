@@ -1,3 +1,7 @@
+av_bad = np.array([0], dtype=CustomShim)
+print(repr(av_bad))
+
+exit(0)
 import numpy as np
 import sys
 import os
@@ -16,6 +20,8 @@ from test_rational_min import rational
 
 
 def check_bad():
+    x = Custom(1)
+    print(x)
     print("Check")
     print(np.dtype(Custom))
     print(Custom.dtype)
