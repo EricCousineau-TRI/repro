@@ -205,7 +205,7 @@ int main() {
     BarObject_Type.tp_basicsize = sizeof(BarObject);
     BarObject_Type.tp_getattro = PyObject_GenericGetAttr;
     BarObject_Type.tp_setattro = PyObject_GenericSetAttr;
-    BarObject_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HEAPTYPE;
+    BarObject_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HEAPTYPE | Py_TPFLAGS_BASETYPE;
     BarObject_Type.tp_dictoffset = offsetof(BarObject, dict);
     BarObject_Type.tp_doc = "Instantiable np.generic.";
     // It's painful to inherit from `np.generic`, because it has no `tp_new`.
@@ -223,9 +223,31 @@ int main() {
     if (PyType_Ready(&BarObject_Type) < 0)
       return -1;
 
-    py::object py_type =
-        py::reinterpret_borrow<py::object>(py::handle((PyObject*)&BarObject_Type));
-    m.attr("_Generic") = py_type;
+    m.attr("Generic") = py::reinterpret_borrow<py::object>(py::handle((PyObject*)&BarObject_Type));
+
+    py::exec(R"""(
+class Custom(Generic):
+    def __init__(self, x):
+        self.x = Custom.maybe_value(x)
+
+    @staticmethod
+    def maybe_me(x):
+        if isinstance(x, Custom):
+            return x
+        else:
+            return Custom(x)
+
+    @staticmethod
+    def maybe_value(x):
+        if isinstance(x, Custom):
+            return x.x
+        elif isinstance(x, _Custom):
+            return x
+        else:
+            return _Custom(x)
+)""", m.attr("__dict__"), m.attr("__dict__"));
+
+    py::object py_type = m.attr("Custom");
 
     typedef struct { char c; Class r; } align_test;
     static PyArray_ArrFuncs arrfuncs;
@@ -254,15 +276,11 @@ int main() {
     static auto from_py = [](py::handle h) {
       py::print(py::str("yar eadf: {}").format(h.get_type()));
         // return Class(10);
-      py::object yar = py::module::import("__main__").attr("maybe_custom");
-     py::object he = yar(h);
-     py::print("yar: {}", he);
-     py::object he_2 = he.attr("x");
-     return *he_2.cast<Class*>();
+      py::object yar = py::module::import("__main__").attr("Custom").attr("maybe_value");
+     return *yar(h).cast<Class*>();
     };
     static auto to_py = [](const Class* obj) {
-      py::object yar = py::module::import("__main__").attr("Custom");
-//      return yar(100).release().ptr();
+      py::object yar = py::module::import("__main__").attr("_Custom");
       return yar(py::cast(*obj)).release().ptr();
     };
 
@@ -314,7 +332,7 @@ int main() {
      py_type.attr("dtype") = py::reinterpret_borrow<py::object>(
          py::handle((PyObject*)&descr));
 
-    py::class_<Class> cls(m, "Custom");
+    py::class_<Class> cls(m, "_Custom");
 //        py::handle((PyObject*)&BarObject_Type));
     cls
         .def(py::init([](double x) {
@@ -328,24 +346,9 @@ int main() {
         });
 
     py::exec(R"""(
-def maybe_custom(x):
-    if isinstance(x, _Generic):
-        return x.x
-    elif isinstance(x, Custom):
-        return x
-    else:
-        return Custom(x)
-
-def _c_init(self, x):
-    self.x = maybe_custom(x)
-
-_Generic.__init__ = _c_init
-c = _Generic(1)
-_Generic.blarg = 2
-print(_Generic)
-print(_Generic.__dict__)
+c = Custom(1)
 print(dir(c))
-print(c)
+print(repr(c))
 )""", m.attr("__dict__"), m.attr("__dict__"));
     return 0;
 
