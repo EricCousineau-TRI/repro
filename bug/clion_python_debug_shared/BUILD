@@ -19,3 +19,10 @@ py_test(
     srcs = ["noddy_test.py"],
     deps = [":noddy"],
 )
+
+cc_binary(
+    name = "from_cc",
+    srcs = ["from_cc.cc"],
+    data = [":noddy_test"],
+    testonly = 1,
+)
