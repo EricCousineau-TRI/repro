@@ -1,1 +1,4 @@
+# This is not allowed.
+#startup --bazelrc=%workspace%/bazel_2.rc
+
 build --define=HAS_1=ON
