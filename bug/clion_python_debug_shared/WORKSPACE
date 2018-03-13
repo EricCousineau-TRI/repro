@@ -1,0 +1,7 @@
+workspace(name = "clion_python_debug_shared")
+
+load(":python.bzl", "python_repository")
+python_repository(
+    name = "python",
+    version = "2.7",
+)
