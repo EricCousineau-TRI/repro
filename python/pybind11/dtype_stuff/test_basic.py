@@ -10,9 +10,9 @@ sys.path.insert(0, p)
 
 from numpy.core.test_rational import rational as rational_orig
 assert hasattr(rational_orig, 'base')
-from test_rational import rational
+# from test_rational import rational
+from test_rational_min import rational
 # assert not hasattr(rational, 'base')
-
 
 
 def check_bad():

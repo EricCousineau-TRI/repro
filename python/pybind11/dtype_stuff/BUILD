@@ -9,8 +9,19 @@ cc_library(
 
 cc_binary(
     name = "test_rational.so",
-    # srcs = ["test_rational_min.cc"],
     srcs = ["test_rational.cc"],
+    linkshared = 1,
+    linkstatic = 0,
+    deps = [
+        "//python/pybind11:include",
+        "@python//:python",
+        "@numpy",
+    ],
+)
+
+cc_binary(
+    name = "test_rational_min.so",
+    srcs = ["test_rational_min.cc"],
     linkshared = 1,
     linkstatic = 0,
     deps = [
@@ -34,5 +45,6 @@ cc_binary(
     data = [
         "test_basic.py",
         "test_rational.so",
+        "test_rational_min.so",
     ],
 )

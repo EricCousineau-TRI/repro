@@ -59,6 +59,24 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
     return PyRational_FromRational(make_rational_int(1));
 }
 
+static NPY_INLINE npy_int32
+d(rational r) {
+    return r.dmm+1;
+}
+
+static PyObject*
+pyrational_repr(PyObject* self) {
+    rational x = ((PyRational*)self)->r;
+    if (d(x)!=1) {
+        return PyUString_FromFormat(
+                "rational(%ld,%ld)",(long)x.n,(long)d(x));
+    }
+    else {
+        return PyUString_FromFormat(
+                "rational(%ld)",(long)x.n);
+    }
+}
+
 PyTypeObject PyRational_Type = {
 #if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -78,7 +96,7 @@ PyTypeObject PyRational_Type = {
 #else
     0,                                        /* tp_compare */
 #endif
-    0,//pyrational_repr,                          /* tp_repr */
+    pyrational_repr,                          /* tp_repr */
     0, //&pyrational_as_number,                    /* tp_as_number */
     0,                                        /* tp_as_sequence */
     0,                                        /* tp_as_mapping */
@@ -191,7 +209,7 @@ PyMethodDef module_methods[] = {
 };
 
 #define RETVAL
-PyMODINIT_FUNC inittest_rational(void) {
+PyMODINIT_FUNC inittest_rational_min(void) {
 
     PyObject *m = NULL;
     PyObject* numpy_str;
@@ -218,7 +236,7 @@ PyMODINIT_FUNC inittest_rational(void) {
 
     /* Can't set this until we import numpy */
     // HACK(eric)
-    // PyRational_Type.tp_base = &PyGenericArrType_Type;
+    PyRational_Type.tp_base = &PyGenericArrType_Type;
 
     /* Initialize rational type object */
     if (PyType_Ready(&PyRational_Type) < 0) {
@@ -239,13 +257,13 @@ PyMODINIT_FUNC inittest_rational(void) {
 
     /* Support dtype(rational) syntax */
     // NOTE: This just produces ints, rather than rational objects...
-    // if (PyDict_SetItemString(PyRational_Type.tp_dict, "dtype",
-    //                          (PyObject*)&npyrational_descr) < 0) {
-    //     goto fail;
-    // }
+    if (PyDict_SetItemString(PyRational_Type.tp_dict, "dtype",
+                             (PyObject*)&npyrational_descr) < 0) {
+        goto fail;
+    }
 
     /* Create module */
-    m = Py_InitModule("test_rational", module_methods);
+    m = Py_InitModule("test_rational_min", module_methods);
     if (!m) {
         goto fail;
     }
@@ -259,7 +277,7 @@ PyMODINIT_FUNC inittest_rational(void) {
 fail:
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load test_rational module.");
+                        "cannot load test_rational_min module.");
     }
 #if defined(NPY_PY3K)
     if (m) {
