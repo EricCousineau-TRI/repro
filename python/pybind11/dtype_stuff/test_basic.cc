@@ -21,15 +21,16 @@ using MatrixX = Eigen::Matrix<T, -1, -1>;
 #include <pybind11/embed.h>
 #include <pybind11/operators.h>
 #include <pybind11/eigen.h>
+#include <pybind11/numpy_dtype_user.h>
 
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
-#include <numpy/ufuncobject.h>
-#include <numpy/ndarraytypes.h>
+// #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+// #include <numpy/arrayobject.h>
+// #include <numpy/ufuncobject.h>
+// #include <numpy/ndarraytypes.h>
 
-#include "dtype_user.h"
-#include "ufunc_utility.h"
-#include "ufunc_op.h"
+// #include "dtype_user.h"
+// #include "ufunc_utility.h"
+// #include "ufunc_op.h"
 
 namespace py = pybind11;
 
@@ -74,14 +75,7 @@ Custom pow(Custom a, Custom b) {
   return pow(a.value(), b.value());
 }
 
-namespace pybind11 { namespace detail {
-
-template <>
-struct type_caster<Custom> : public dtype_caster<Custom> {};
-template <>
-struct npy_format_descriptor<Custom> : public npy_format_descriptor_custom<Custom> {};
-
-} } // namespace pybind11 { namespace detail {
+PYBIND11_NUMPY_DTYPE_USER(Custom);
 
 int main() {
   py::scoped_interpreter guard;
@@ -91,7 +85,7 @@ int main() {
   py::dict locals;
 
   {
-    dtype_user<Custom> py_type(m, "Custom");
+    py::dtype_user<Custom> py_type(m, "Custom");
     // Do not define `__init__` since `cpp_function` is special-purposed for
     // it. Rather, use a custom thing.
     py_type

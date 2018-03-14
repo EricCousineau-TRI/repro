@@ -229,6 +229,9 @@ PyMODINIT_FUNC inittest_rational_min(void) {
     PyObject* numpy;
     int npy_rational;
 
+    printf("NPY_NTYPES = %d\n", NPY_NTYPES);
+    printf("NPY_NSORTS = %d\n", NPY_NSORTS);
+
     import_array();
     if (PyErr_Occurred()) {
         goto fail;
