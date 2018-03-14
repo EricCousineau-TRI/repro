@@ -71,6 +71,7 @@ struct dtype_py_object {
     auto obj = alloc_py();
     // // Register.
     auto& entry = dtype_info::get_mutable_entry<Class>();
+    cerr << "add: " << &obj->value << endl;
     entry.instance_to_py[&obj->value] = (PyObject*)obj;
     return (PyObject*)obj;
   }
@@ -80,6 +81,7 @@ struct dtype_py_object {
     // Call destructor.
     value->~Class();
     // Deregister.
+    cerr << "remove: " << value << endl;
     auto& entry = dtype_info::get_mutable_entry<Class>();
     entry.instance_to_py.erase(value);
   }
@@ -140,11 +142,13 @@ struct dtype_caster {
   using Arg = dtype_arg<Class>;
   using DTypePyObject = dtype_py_object<Class>;
   static py::handle cast(const Class& src, py::return_value_policy, py::handle) {
+    cerr << "check: " << &src << endl;
     auto& entry = dtype_info::get_entry<Class>();
     auto it = entry.instance_to_py.find((void*)&src);
     if (it != entry.instance_to_py.end()) {
       // Return existing.
-      return py::handle(it->second);
+      cerr << "Found existing\n";
+      return py::handle(it->second).inc_ref();
     } else {
       // Make new instance.
       return Arg(src).py().release();

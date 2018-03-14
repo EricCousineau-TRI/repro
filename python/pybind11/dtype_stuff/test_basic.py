@@ -22,12 +22,13 @@ def check_meta():
 def check_id():
     a = Custom(1)
     print(id(a))
-    b = a
-    print(id(b))
-    a.incr()
-    print(id(a))
-    a += 1
-    print(id(a))
+    print(id(a.self()))
+    # b = a
+    # print(id(b))
+    # a.incr()
+    # print(id(a))
+    # a += 1
+    # print(id(a))
 
 def check_op_min():
     a = Custom(1)

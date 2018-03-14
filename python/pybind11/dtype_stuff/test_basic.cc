@@ -100,6 +100,9 @@ int main() {
         .def("__str__", [](const Custom* self) {
           return py::str("Custom({})").format(self->value());
         })
+        .def("self", [](Custom* self) -> auto& {
+          return *self;
+        }, py::return_value_policy::reference)
         // Operators + ufuncs, with some just-operators (e.g. in-place)
         .def_ufunc(py::self + py::self)
         // .def(py::self += py::self)
