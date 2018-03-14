@@ -214,7 +214,9 @@ struct dtype_init_factory {
       // Old-style. No factories for now.
       new (self) Class(std::forward<Args>(args)...);
     });
-    if (!py::hasattr(cl, "__init__")) {
+    py::dict d = cl.attr("__dict__");
+    if (!d.contains("__init__")) {
+      cerr << "adding init\n";
       py::handle h = cl;
       auto init = cl.attr("_dtype_init");
       auto func = py::cpp_function(
@@ -316,6 +318,10 @@ using Class = Custom;
 //         // .def(py::self == Class{})
 //         // .def(py::self * Class{})
         .def("value", &Class::value)
+        .def("incr", [](Class* self) {
+          cerr << "incr\n";
+          *self += 10;
+        })
         .def("__repr__", [](const Class* self) {
             std::cerr << "Death\n";
             exit(8);
@@ -326,7 +332,9 @@ using Class = Custom;
 print(Custom)
 c = Custom(1)
 print(c.value())
-#print(Custom(1))
+c.incr()
+print(c.value())
+print(Custom(1))
 )""", md, md);
 
 #if 0
