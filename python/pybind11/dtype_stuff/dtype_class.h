@@ -437,6 +437,7 @@ class dtype_class : public py::class_<Class_> {
 
 template <typename Class>
 struct npy_format_descriptor_custom {
+    static constexpr auto name = py::detail::_<Class>();
     static pybind11::dtype dtype() {
         int dtype_num = dtype_info::get_entry<Class>().dtype_num;
         if (auto ptr = py::detail::npy_api::get().PyArray_DescrFromType_(dtype_num))

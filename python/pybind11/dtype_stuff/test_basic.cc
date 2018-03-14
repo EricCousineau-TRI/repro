@@ -4,16 +4,23 @@
 #include <iostream>
 #include <experimental/optional>
 
+#include <Eigen/Dense>
+
 using std::pow;
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::experimental::optional;
 using std::experimental::nullopt;
+using Eigen::Ref;
+
+template <typename T>
+using MatrixX = Eigen::Matrix<T, -1, -1>;
 
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
 #include <pybind11/operators.h>
+#include <pybind11/eigen.h>
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
@@ -113,8 +120,12 @@ int main() {
         .def_ufunc(py::self + py::self)
         .def_ufunc_cast([](const Custom& in) -> double { return in; })
         .def_ufunc_cast([](const double& in) -> Custom { return in; });
-        ;
   }
+
+  // Define a mutating function.
+  m.def("mutate", [](Ref<MatrixX<Custom>> value) {
+    value.array() += Custom(100);
+  });
 
   py::str file = "python/pybind11/dtype_stuff/test_basic.py";
   py::print(file);

@@ -86,13 +86,21 @@ def check_dtor():
     x = Custom(1)
     print(x)
 
+def check_mutate():
+    av = np.array([Custom(1), Custom(2)])
+    mutate(av)
+    print(av)
+    print(av == av)
+
 # check_meta()
 
 # check_rational()
 # check_bad()
 # check_zero()
-check_op()
+# check_op()
 # check_id()
 # check_op_min()
 
 # check_dtor()
+
+check_mutate()
