@@ -72,6 +72,8 @@ struct dtype_arg {
         // Just try to call it.
         // TODO(eric.cousineau): Return false on failure.
         // See if there's a succinct way to test overloads?
+        // TODO(eric.cousineau): Take out the Python middle man?
+        // Use registered ufuncs? See how `implicitly_convertible` is implemented.
         py::object old = *h_;
         h_ = cls(old);
       } else {
@@ -119,11 +121,9 @@ struct dtype_caster {
   using Arg = dtype_arg<Class>;
   using ClassObject = DTypeObject<Class>;
   static py::handle cast(const Class& src, py::return_value_policy, py::handle) {
-    cerr << "cast\n";
     return Arg(src).py().release();
   }
   bool load(py::handle src, bool convert) {
-    cerr << "load\n";
     arg_ = src;
     return arg_.load(convert);
   }
