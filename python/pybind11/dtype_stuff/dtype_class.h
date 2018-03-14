@@ -55,8 +55,8 @@ struct dtype_py_object {
   // here.
   Class value;
 
-  static Class* load_raw(py::handle src) {
-    dtype_py_object* obj = (dtype_py_object*)src.ptr();
+  static Class* load_raw(PyObject* src) {
+    dtype_py_object* obj = (dtype_py_object*)src;
     return &obj->value;
   }
 
@@ -76,12 +76,12 @@ struct dtype_py_object {
   }
 
   static void tp_dealloc(PyObject* self) {
-    auto obj = (dtype_py_object*)self;
-    // Call in-place destructor.
-    obj->value.~Class();
+    Class* value = load_raw(self);
+    // Call destructor.
+    value->~Class();
     // Deregister.
     auto& entry = dtype_info::get_mutable_entry<Class>();
-    entry.instance_to_py.erase(&obj->value);
+    entry.instance_to_py.erase(value);
   }
 };
 
@@ -115,7 +115,7 @@ struct dtype_arg {
         return false;
       }
     }
-    ptr_ = DTypePyObject::load_raw(*h_);
+    ptr_ = DTypePyObject::load_raw(h_->ptr());
     return true;
   }
 
@@ -129,8 +129,6 @@ struct dtype_arg {
  private:
   optional<py::object> h_;
   optional<Class*> ptr_;
-  optional<Class> value_;
-  bool convert_{};
 };
 
 template <typename Class>
@@ -347,6 +345,7 @@ class dtype_class : public py::class_<Class_> {
     };
 
     PyArray_InitArrFuncs(&arrfuncs);
+
     // https://docs.scipy.org/doc/numpy/reference/c-api.types-and-structures.html
     arrfuncs.getitem = [](void* in, void* arr) -> PyObject* {
         auto item = (const Class*)in;
