@@ -1,8 +1,8 @@
-av_bad = np.array([0], dtype=CustomShim)
+import numpy as np
+av_bad = np.array([0], dtype=Custom)
 print(repr(av_bad))
 
 exit(0)
-import numpy as np
 import sys
 import os
 

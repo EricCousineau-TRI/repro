@@ -80,7 +80,8 @@ int main() {
 
   {
     dtype_class<Custom> py_type(m, "Custom");
-    // Do not define `__init__`. Rather, use a custom thing.
+    // Do not define `__init__` since `cpp_function` is special-purposed for
+    // it. Rather, use a custom thing.
     py_type
         .def_dtype(dtype_init<double>())
 //         // .def(py::self == Class{})
@@ -98,7 +99,6 @@ int main() {
         });
   }
 
-#if 0
   using Unary = type_pack<Class>;
   using Binary = type_pack<Class, Class>;
   // Arithmetic.
@@ -137,7 +137,6 @@ int main() {
   py::print(file);
   m.attr("__file__") = file;
   py::eval_file(file);
-#endif // 0
 
   return 0;
 }

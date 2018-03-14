@@ -116,7 +116,7 @@ struct dtype_caster {
   // See fork, modded func `cast_is_known_safe`.
   using Arg = dtype_arg<Class>;
   using ClassObject = DTypeObject<Class>;
-  static py::handle cast(Arg& src, py::return_value_policy, py::handle) {
+  static py::handle cast(const Class& src, py::return_value_policy, py::handle) {
     cerr << "cast\n";
     return Arg(src).py().release();
   }
@@ -142,7 +142,6 @@ struct dtype_init_factory {
   template <typename PyClass, typename... Extra>
   void execute(PyClass& cl, const Extra&... extra) {
     using Class = typename PyClass::Class;
-    using ClassObject = typename PyClass::ClassObject;
     // Do not construct this with the name `__init__` as pybind will try to
     // take over the init setup.
     cl.def("_dtype_init", [](Class* self, Args... args) {
