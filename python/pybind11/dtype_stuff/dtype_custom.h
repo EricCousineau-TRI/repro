@@ -59,7 +59,7 @@ struct dtype_arg {
 
   dtype_arg() = default;
   dtype_arg(py::handle h)
-    : h_(h) {}
+    : h_(py::reinterpret_borrow<py::object>(h)) {}
   dtype_arg(const Class& obj)
     : value_(obj) {}
   // Cannot pass pointers in, as they are not registered.
@@ -72,7 +72,7 @@ struct dtype_arg {
         // Just try to call it.
         // TODO(eric.cousineau): Return false on failure.
         // See if there's a succinct way to test overloads?
-        py::handle old = *h_;
+        py::object old = *h_;
         h_ = cls(old);
       } else {
         return false;
@@ -98,14 +98,13 @@ struct dtype_arg {
     if (!h_) {
       ClassObject* obj = ClassObject::alloc_py();
       obj->value = *value_;
-      out = (PyObject*)obj;
+      return py::reinterpret_borrow<py::object>((PyObject*)obj);
     } else {
-      out = *h_;
+      return *h_;
     }
-    return py::reinterpret_borrow<py::object>(out);
   }
  private:
-  optional<py::handle> h_;
+  optional<py::object> h_;
   optional<Class*> ptr_;
   optional<Class> value_;
   bool convert_{};
