@@ -6,30 +6,30 @@
 
 namespace py = pybind11;
 
-struct dtype_generic {
-  py::handle cls;
-  int dtype_num{-1};
-};
-
 template <typename T>
 std::type_index index_of() {
   return std::type_index(typeid(T));
 }
 
-auto& cls_map() {
-  static std::map<std::type_index, dtype_generic> value;
-  return value;
-}
+struct dtype_info {
+  py::handle cls;
+  int dtype_num{-1};
 
-template <typename T>
-int get_dtype_num() {
-  return cls_map().at(index_of<T>()).dtype_num;
-}
+  static auto& cls_map() {
+    static std::map<std::type_index, dtype_info> value;
+    return value;
+  }
 
-template <typename T>
-static py::handle get_class() {
-  return cls_map().at(index_of<T>()).cls;
-}
+  template <typename T>
+  static int get_dtype_num() {
+    return cls_map().at(index_of<T>()).dtype_num;
+  }
+
+  template <typename T>
+  static py::handle get_class() {
+    return cls_map().at(index_of<T>()).cls;
+  }
+};
 
 template <typename Class>
 struct dtype_py_object {
@@ -42,7 +42,7 @@ struct dtype_py_object {
   }
 
   static dtype_py_object* alloc_py() {
-    auto cls = get_class<Class>();
+    auto cls = dtype_info::get_class<Class>();
     PyTypeObject* cls_raw = (PyTypeObject*)cls.ptr();
     return (dtype_py_object*)cls_raw->tp_alloc((PyTypeObject*)cls.ptr(), 0);
   }
@@ -66,7 +66,7 @@ struct dtype_arg {
 
   // Blech. Would love to hide this, but can't.
   bool load(bool convert) {
-    auto cls = get_class<Class>();
+    auto cls = dtype_info::get_class<Class>();
     if (!py::isinstance(*h_, cls)) {
       if (convert) {
         // Just try to call it.
@@ -185,7 +185,7 @@ class dtype_class : public py::class_<Class_> {
     register_type(name);
 
     scope.attr(name) = self();
-    auto& entry = cls_map()[index_of<Class>()];
+    auto& entry = dtype_info::cls_map()[index_of<Class>()];
     entry.cls = self();
 
     // Registry numpy type.
@@ -326,7 +326,7 @@ class dtype_class : public py::class_<Class_> {
 template <typename Class>
 struct npy_format_descriptor_custom {
     static pybind11::dtype dtype() {
-        int dtype_num = get_dtype_num<Class>();
+        int dtype_num = dtype_info::get_dtype_num<Class>();
         if (auto ptr = py::detail::npy_api::get().PyArray_DescrFromType_(dtype_num))
             return py::reinterpret_borrow<pybind11::dtype>(ptr);
         py::pybind11_fail("Unsupported buffer format!");
