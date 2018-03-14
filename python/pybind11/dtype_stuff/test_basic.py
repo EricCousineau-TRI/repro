@@ -19,6 +19,16 @@ def check_meta():
     print(np.dtype(Unknown))
     print(np.dtype(Custom))
 
+def check_id():
+    a = Custom(1)
+    print(id(a))
+    b = a
+    print(id(b))
+    a.incr()
+    print(id(a))
+    a += 1
+    print(id(a))
+
 def check_op_min():
     a = Custom(1)
     print(id(a))
@@ -81,6 +91,7 @@ def check_dtor():
 # check_bad()
 # check_zero()
 # check_op()
-check_op_min()
+check_id()
+# check_op_min()
 
 # check_dtor()
