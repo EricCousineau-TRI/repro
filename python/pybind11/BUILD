@@ -182,7 +182,10 @@ cc_binary(
 # Original tests.
 cc_binary(
     name = "tests/pybind11_tests.so",
-    srcs = ["tests/pybind11_tests.cpp"],
+    srcs = [
+        "tests/pybind11_tests.cpp",
+        "tests/test_numpy_dtype_user.cpp",
+    ],
     linkstatic = 0,
     linkshared = 1,
     deps = [
@@ -194,7 +197,6 @@ cc_binary(
 
 cc_binary(
     name = "tests/numpy_dtype_user.so",
-    srcs = ["tests/test_numpy_dtype_user.cpp"],
     linkstatic = 0,
     linkshared = 1,
     deps = [
@@ -209,7 +211,6 @@ py_library(
     imports = ["tests"],
     data = [
         "tests/pybind11_tests.so",
-        "tests/numpy_dtype_user.so",
     ],
 )
 
