@@ -53,7 +53,9 @@ public:
     }
     Custom operator-() const { return -value_; }
 
-    Custom& operator+=(const Custom& rhs) { value_ += rhs.value_; return *this; }
+    Custom& operator+=(const Custom& rhs) {
+      value_ += rhs.value_; return *this;
+    }
     Custom operator+(const Custom& rhs) const { return Custom(*this) += rhs.value_; }
     Custom operator-(const Custom& rhs) const { return value_ - rhs.value_; }
 
@@ -86,7 +88,7 @@ int main() {
     // Do not define `__init__` since `cpp_function` is special-purposed for
     // it. Rather, use a custom thing.
     py_type
-        .def_dtype(dtype_init<double>())
+        .def(dtype_init<double>())
         .def("value", &Custom::value)
         .def("incr", [](Custom* self) {
           cerr << "incr\n";
@@ -97,11 +99,15 @@ int main() {
         })
         .def("__str__", [](const Custom* self) {
           return py::str("Custom({})").format(self->value());
-        });
-    py_type
+        })
         // Operators + ufuncs, with some just-operators (e.g. in-place)
         .def_ufunc(py::self + py::self)
         .def(py::self += py::self)
+        .def_ufunc(-py::self)
+        .def_ufunc(py::self == py::self)
+        .def_ufunc(py::self < py::self)
+        .def_ufunc(py::self * py::self)
+        .def_ufunc(py::self + py::self)
         // Just operators
         ;
   }
@@ -111,18 +117,18 @@ int main() {
   using Binary = type_pack<Class, Class>;
   // Arithmetic.
   // maybe_ufunc<check_add, Class>(Binary{});
-  maybe_ufunc<check_negative, Class>(Unary{});
-  maybe_ufunc<check_multiply, Class>(Binary{});
-  maybe_ufunc<check_divide, Class>(Binary{});
-  maybe_ufunc<check_power, Class>(Binary{});
-  maybe_ufunc<check_subtract, Class>(Binary{});
-  // Comparison.
-  maybe_ufunc<check_greater, Class>(Binary{});
-  maybe_ufunc<check_greater_equal, Class>(Binary{});
-  maybe_ufunc<check_less, Class>(Binary{});
-  maybe_ufunc<check_less_equal, Class>(Binary{});
-  maybe_ufunc<check_equal, Class>(Binary{});
-  maybe_ufunc<check_not_equal, Class>(Binary{});
+  // maybe_ufunc<check_negative, Class>(Unary{});
+  // maybe_ufunc<check_multiply, Class>(Binary{});
+  // maybe_ufunc<check_divide, Class>(Binary{});
+  // maybe_ufunc<check_power, Class>(Binary{});
+  // maybe_ufunc<check_subtract, Class>(Binary{});
+  // // Comparison.
+  // maybe_ufunc<check_greater, Class>(Binary{});
+  // maybe_ufunc<check_greater_equal, Class>(Binary{});
+  // maybe_ufunc<check_less, Class>(Binary{});
+  // maybe_ufunc<check_less_equal, Class>(Binary{});
+  // maybe_ufunc<check_equal, Class>(Binary{});
+  // maybe_ufunc<check_not_equal, Class>(Binary{});
 
   // Casting.
   maybe_cast<Class, double>();

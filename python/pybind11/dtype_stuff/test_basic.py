@@ -21,16 +21,22 @@ def check_meta():
 
 def check_op_min():
     a = Custom(1)
-    a += 1
-    print(a)
+    print(id(a))
+    b = a
+    print(id(b))
+    a += 10  # TODO: This is changing the reference???
+    print(id(a))
+    print(Custom.__iadd__)
+    print(a, b)
     av = np.array([a])
-    print(av)
-    print(av + av)
+    print(a + a, av + av)
+    print(-a, -av)
+    print(a == a, av == av)
+    print(a * a, av * av)
 
 def check_op():
     a = Custom(1)
     print(a == a)
-
     av = np.array([a])  # Implicit cast.
     ov = av.astype(object)
     print(av == av)  # non-logical

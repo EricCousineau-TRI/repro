@@ -241,8 +241,14 @@ class dtype_class : public py::class_<Class_> {
     check();    
   }
 
+  template <typename ... Args>
+  dtype_class& def(const char* name, Args&&... args) {
+    base().def(name, std::forward<Args>(args)...);
+    return *this;
+  }
+
   template <typename ... Args, typename... Extra>
-  dtype_class& def_dtype(dtype_init_factory<Args...>&& init, const Extra&... extra) {
+  dtype_class& def(dtype_init_factory<Args...>&& init, const Extra&... extra) {
     std::move(init).execute(*this, extra...);
     return *this;
   }
@@ -266,7 +272,17 @@ class dtype_class : public py::class_<Class_> {
     return *this;
   }
 
+  // Nominal operator.
+  template <py::detail::op_id id, py::detail::op_type ot,
+      typename L, typename R, typename... Extra>
+  dtype_class& def(
+      const py::detail::op_<id, ot, L, R>& op, const Extra&... extra) {
+    base().def(op, extra...);
+    return *this;
+  }
+
  private:
+  Base& base() { return *this; }
   py::object& self() { return *this; }
   const py::object& self() const { return *this; }
 
