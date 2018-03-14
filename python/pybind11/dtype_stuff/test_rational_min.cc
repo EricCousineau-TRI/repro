@@ -77,6 +77,19 @@ pyrational_repr(PyObject* self) {
     }
 }
 
+static PyObject*
+pyrational_str(PyObject* self) {
+    rational x = ((PyRational*)self)->r;
+    if (d(x)!=1) {
+        return PyString_FromFormat(
+                "%ld/%ld",(long)x.n,(long)d(x));
+    }
+    else {
+        return PyString_FromFormat(
+                "%ld",(long)x.n);
+    }
+}
+
 PyTypeObject PyRational_Type = {
 #if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -102,7 +115,7 @@ PyTypeObject PyRational_Type = {
     0,                                        /* tp_as_mapping */
     0,//pyrational_hash,                          /* tp_hash */
     0,                                        /* tp_call */
-    0,//pyrational_str,                           /* tp_str */
+    pyrational_str,                           /* tp_str */
     0,                                        /* tp_getattro */
     0,                                        /* tp_setattro */
     0,                                        /* tp_as_buffer */
