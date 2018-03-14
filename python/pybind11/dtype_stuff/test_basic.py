@@ -47,6 +47,8 @@ def check_op():
     a = Custom(1)
     print(a == a)
     av = np.array([a])  # Implicit cast.
+    dv = av.astype(float)
+    print(dv)
     ov = av.astype(object)
     print(av == av)  # non-logical
     print(ov == ov)  # logical
@@ -89,8 +91,8 @@ def check_dtor():
 # check_rational()
 # check_bad()
 # check_zero()
-# check_op()
+check_op()
 # check_id()
-check_op_min()
+# check_op_min()
 
 # check_dtor()

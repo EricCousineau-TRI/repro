@@ -260,6 +260,10 @@ class dtype_class : public py::class_<Class_> {
     // Registry numpy type.
     // (Note that not registering the type will result in infinte recursion).
     entry.dtype_num = register_numpy();
+
+    // Register default ufunc cast to `object`.
+    this->def_ufunc_cast([](const Class& self) { return py::cast(self); });
+    this->def_ufunc_cast([](py::object self) { return py::cast<Class>(self); });
   }
 
   ~dtype_class() {
@@ -303,6 +307,16 @@ class dtype_class : public py::class_<Class_> {
   dtype_class& def(
       const py::detail::op_<id, ot, L, R>& op, const Extra&... extra) {
     base().def(op, extra...);
+    return *this;
+  }
+
+  template <typename Func_>
+  dtype_class& def_ufunc_cast(Func_&& func) {
+    auto func_infer = detail::infer_function_info(func);
+    using Func = decltype(func_infer);
+    using From = py::detail::intrinsic_t<typename Func::Args::template type_at<0>>;
+    using To = py::detail::intrinsic_t<typename Func::Return>;
+    add_cast<From, To>(func);
     return *this;
   }
 

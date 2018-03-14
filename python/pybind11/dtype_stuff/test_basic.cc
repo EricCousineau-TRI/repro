@@ -111,43 +111,10 @@ int main() {
         .def_ufunc(py::self < py::self)
         .def_ufunc(py::self * py::self)
         .def_ufunc(py::self + py::self)
+        .def_ufunc_cast([](const Custom& in) -> double { return in; })
+        .def_ufunc_cast([](const double& in) -> Custom { return in; });
         ;
   }
-
-  // using Class = Custom;
-  // using Unary = type_pack<Class>;
-  // using Binary = type_pack<Class, Class>;
-  // Arithmetic.
-  // maybe_ufunc<check_add, Class>(Binary{});
-  // maybe_ufunc<check_negative, Class>(Unary{});
-  // maybe_ufunc<check_multiply, Class>(Binary{});
-  // maybe_ufunc<check_divide, Class>(Binary{});
-  // maybe_ufunc<check_power, Class>(Binary{});
-  // maybe_ufunc<check_subtract, Class>(Binary{});
-  // // Comparison.
-  // maybe_ufunc<check_greater, Class>(Binary{});
-  // maybe_ufunc<check_greater_equal, Class>(Binary{});
-  // maybe_ufunc<check_less, Class>(Binary{});
-  // maybe_ufunc<check_less_equal, Class>(Binary{});
-  // maybe_ufunc<check_equal, Class>(Binary{});
-  // maybe_ufunc<check_not_equal, Class>(Binary{});
-
-  // // Casting.
-  // maybe_cast<Class, double>();
-  // maybe_cast<double, Class>();
-  // add_cast<Class, py::object>([](const Class& obj) {
-  //   return py::cast(obj);
-  // });
-  // add_cast<py::object, Class>([](py::object obj) {
-  //   return py::cast<Class>(obj);
-  // });
-  // // - _zerofill? What do I need?
-  // add_cast<int, Class>([](int x) {
-  //   return Class{static_cast<double>(x)};
-  // });
-  // add_cast<long, Class>([](long x) {
-  //   return Class{static_cast<double>(x)};
-  // });
 
   py::str file = "python/pybind11/dtype_stuff/test_basic.py";
   py::print(file);
