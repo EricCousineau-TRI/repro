@@ -65,7 +65,7 @@ def check_op():
     print av * av
     print av < av
     print -av
-    print np.power(av, av)
+    print np.power(av, av)  # ... How does this even work???
     xv = av.astype(float)
     print(repr(xv))
     print(repr(xv.astype(Custom)))
@@ -97,7 +97,7 @@ def check_mutate():
 # check_rational()
 # check_bad()
 # check_zero()
-# check_op()
+check_op()
 # check_id()
 # check_op_min()
 
