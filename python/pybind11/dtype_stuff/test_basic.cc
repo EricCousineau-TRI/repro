@@ -102,7 +102,10 @@ int main() {
         })
         // Operators + ufuncs, with some just-operators (e.g. in-place)
         .def_ufunc(py::self + py::self)
-        .def(py::self += py::self)
+        // .def(py::self += py::self)
+        // .def("__iadd__", [](Custom* self, double value) {
+        //   *self += value;
+        // })
         .def_ufunc(-py::self)
         .def_ufunc(py::self == py::self)
         .def_ufunc(py::self < py::self)
