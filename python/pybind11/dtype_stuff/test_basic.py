@@ -23,6 +23,8 @@ def check_id():
     a = Custom(1)
     print(id(a))
     print(id(a.self()))
+    a += 1
+    print(id(a))
     # b = a
     # print(id(b))
     # a.incr()

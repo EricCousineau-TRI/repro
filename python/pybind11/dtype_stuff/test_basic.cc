@@ -105,7 +105,7 @@ int main() {
         }, py::return_value_policy::reference)
         // Operators + ufuncs, with some just-operators (e.g. in-place)
         .def_ufunc(py::self + py::self)
-        // .def(py::self += py::self)
+        .def(py::self += py::self, py::return_value_policy::reference)
         // .def("__iadd__", [](Custom* self, double value) {
         //   *self += value;
         // })
