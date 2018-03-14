@@ -71,7 +71,6 @@ struct dtype_py_object {
     auto obj = alloc_py();
     // // Register.
     auto& entry = dtype_info::get_mutable_entry<Class>();
-    cerr << "add: " << &obj->value << endl;
     entry.instance_to_py[&obj->value] = (PyObject*)obj;
     return (PyObject*)obj;
   }
@@ -81,7 +80,6 @@ struct dtype_py_object {
     // Call destructor.
     value->~Class();
     // Deregister.
-    cerr << "remove: " << value << endl;
     auto& entry = dtype_info::get_mutable_entry<Class>();
     entry.instance_to_py.erase(value);
   }
@@ -245,15 +243,6 @@ const char* get_ufunc_name(py::detail::op_id id) {
   return m.at(id);
 }
 
-bool is_op_inplace(py::detail::op_id id) {
-  using namespace py::detail;
-  static std::vector<op_id> in_place = {
-      op_iadd, op_isub, op_imul, op_idiv, op_imod, op_ilshift,
-      op_irshift, op_iand, op_ixor, op_ior, op_itruediv};
-  return false;
-  // return std::find(in_place.begin(), in_place.end(), id) != in_place.end();
-}
-
 template <typename Class_>
 class dtype_class : public py::class_<Class_> {
  public:
@@ -313,9 +302,7 @@ class dtype_class : public py::class_<Class_> {
       typename L, typename R, typename... Extra>
   dtype_class& def(
       const py::detail::op_<id, ot, L, R>& op, const Extra&... extra) {
-    using rvp = py::return_value_policy;
-    rvp p = is_op_inplace(id) ? rvp::reference : rvp::automatic;
-    base().def(op, p, extra...);
+    base().def(op, extra...);
     return *this;
   }
 

@@ -34,12 +34,8 @@ def check_id():
 
 def check_op_min():
     a = Custom(1)
-    print(id(a))
     b = a
-    print(id(b))
-    a += 10  # TODO: This is changing the reference???
-    print(id(a))
-    print(Custom.__iadd__)
+    a += 10
     print(a, b)
     av = np.array([a])
     print(a + a, av + av)
@@ -94,7 +90,7 @@ def check_dtor():
 # check_bad()
 # check_zero()
 # check_op()
-check_id()
-# check_op_min()
+# check_id()
+check_op_min()
 
 # check_dtor()
