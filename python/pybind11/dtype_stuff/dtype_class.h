@@ -314,21 +314,12 @@ class dtype_class : public py::class_<Class_> {
     // It's painful to inherit from `np.generic`, because it has no `tp_new`.
     auto& ClassObject_Type = heap_type->ht_type;
     ClassObject_Type.tp_base = &PyGenericArrType_Type;
-    // Define other things.
-    ClassObject_Type.tp_repr = [](PyObject*) -> PyObject* {
-      std::cerr << "SLOT NOT GET CALLED\n";
-      exit(100);
-    };
     ClassObject_Type.tp_new = &DTypePyObject::tp_new;
     ClassObject_Type.tp_dealloc = &DTypePyObject::tp_dealloc;
     ClassObject_Type.tp_name = name;  // Er... scope?
     ClassObject_Type.tp_basicsize = sizeof(DTypePyObject);
     ClassObject_Type.tp_getset = 0;
-    // ClassObject_Type.tp_getattro = PyObject_GenericGetAttr;
-    // ClassObject_Type.tp_setattro = PyObject_GenericSetAttr;
     ClassObject_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HEAPTYPE;
-    // ClassObject_Type.tp_dictoffset = offsetof(DTypePyObject, dict);
-    ClassObject_Type.tp_doc = "Stuff.";
     PY_ASSERT_EX(PyType_Ready(&ClassObject_Type) == 0, "");
     self() = py::reinterpret_borrow<py::object>(py::handle((PyObject*)&ClassObject_Type));
   }
