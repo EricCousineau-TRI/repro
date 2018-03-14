@@ -18,11 +18,6 @@ new scalar types.
 
 namespace py = pybind11;
 
-template <typename T>
-std::type_index index_of() {
-  return std::type_index(typeid(T));
-}
-
 struct dtype_info {
   py::handle cls;
   int dtype_num{-1};
@@ -38,12 +33,12 @@ struct dtype_info {
   template <typename T>
   static dtype_info& get_mutable_entry(bool is_new = false) {
     // TODO: implement is_new
-    return cls_map()[index_of<T>()];
+    return cls_map()[std::type_index(typeid(T))];
   }
 
   template <typename T>
   static const dtype_info& get_entry() {
-    return cls_map().at(index_of<T>());
+    return cls_map().at(std::type_index(typeid(T)));
   }
 };
 

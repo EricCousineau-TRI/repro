@@ -75,6 +75,11 @@ def check_op():
 
     a0 = np.zeros((2, 2), Custom)
     print(a0)
+    try:
+        av[0] = "aow"
+        print("dflkj")
+    except:
+        print("error")
 
 def check_rational():
     x = np.zeros((2, 2), rational)
