@@ -20,7 +20,7 @@ using std::experimental::nullopt;
 #include <numpy/ufuncobject.h>
 #include <numpy/ndarraytypes.h>
 
-#include "dtype_custom.h"
+#include "dtype_class.h"
 #include "ufunc_utility.h"
 #include "ufunc_op.h"
 
