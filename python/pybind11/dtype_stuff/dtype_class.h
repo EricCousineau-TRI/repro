@@ -26,7 +26,7 @@ std::type_index index_of() {
 struct dtype_info {
   py::handle cls;
   int dtype_num{-1};
-  // std::map<void*, PyObject*> instance_to_py;
+  std::map<void*, PyObject*> instance_to_py;
 
  private:
   static auto& cls_map() {
@@ -70,7 +70,8 @@ struct dtype_py_object {
     // N.B. `__init__` should call the in-place constructor.
     auto obj = alloc_py();
     // // Register.
-    // auto& entry = dtype
+    auto& entry = dtype_info::get_mutable_entry<Class>();
+    entry.instance_to_py[&obj->value] = (PyObject*)obj;
     return (PyObject*)obj;
   }
 
@@ -78,6 +79,9 @@ struct dtype_py_object {
     auto obj = (dtype_py_object*)self;
     // Call in-place destructor.
     obj->value.~Class();
+    // Deregister.
+    auto& entry = dtype_info::get_mutable_entry<Class>();
+    entry.instance_to_py.erase(&obj->value);
   }
 };
 
@@ -89,8 +93,11 @@ struct dtype_arg {
   dtype_arg() = default;
   dtype_arg(py::handle h)
     : h_(py::reinterpret_borrow<py::object>(h)) {}
-  dtype_arg(const Class& obj)
-    : value_(obj) {}
+  dtype_arg(const Class& value) {
+    DTypePyObject* obj = DTypePyObject::alloc_py();
+    obj->value = value;
+    h_ = py::reinterpret_borrow<py::object>((PyObject*)obj);
+  }
   // Cannot pass pointers in, as they are not registered.
 
   // Blech. Would love to hide this, but can't.
@@ -109,14 +116,7 @@ struct dtype_arg {
       }
     }
     ptr_ = DTypePyObject::load_raw(*h_);
-    // Store temporary due to lifetime of `type_caster` setup.
-    value_ = **ptr_;
     return true;
-  }
-
-  Class& value() {
-    // Reference should stay alive with caster.
-    return *value_;
   }
 
   Class* ptr() const {
@@ -124,14 +124,7 @@ struct dtype_arg {
   }
 
   py::object py() const {
-    py::handle out;
-    if (!h_) {
-      DTypePyObject* obj = DTypePyObject::alloc_py();
-      obj->value = *value_;
-      return py::reinterpret_borrow<py::object>((PyObject*)obj);
-    } else {
-      return *h_;
-    }
+    return *h_;
   }
  private:
   optional<py::object> h_;
@@ -149,7 +142,15 @@ struct dtype_caster {
   using Arg = dtype_arg<Class>;
   using DTypePyObject = dtype_py_object<Class>;
   static py::handle cast(const Class& src, py::return_value_policy, py::handle) {
-    return Arg(src).py().release();
+    auto& entry = dtype_info::get_entry<Class>();
+    auto it = entry.instance_to_py.find((void*)&src);
+    if (it != entry.instance_to_py.end()) {
+      // Return existing.
+      return py::handle(it->second);
+    } else {
+      // Make new instance.
+      return Arg(src).py().release();
+    }
   }
   bool load(py::handle src, bool convert) {
     arg_ = src;
@@ -160,7 +161,7 @@ struct dtype_caster {
       pybind11::detail::cast_op_type<T_>;
 
   // Er... Is it possible to return a value here?
-  operator Class&() { return arg_.value(); }
+  operator Class&() { return *arg_.ptr(); }
   // ... Not sure how to enforce copying, without `const`.
   operator Class*() { return arg_.ptr(); }
   Arg arg_;
@@ -364,7 +365,8 @@ class dtype_class : public py::class_<Class_> {
     arrfuncs.setitem = [](PyObject* in, void* out, void* arr) {
         dtype_arg<Class> arg(in);
         PY_ASSERT_EX(arg.load(true), "Could not convert");
-        *(Class*)out = arg.value();
+        // Cut out the middle-man?
+        *(Class*)out = *arg.ptr();
         return 0;
     };
     arrfuncs.copyswap = [](void* dst, void* src, int swap, void* arr) {
