@@ -57,9 +57,15 @@ def check_rational():
     y = np.array([rational()])
     print(repr(y))
 
+def check_dtor():
+    x = Custom(1)
+    print(x)
+
 # check_meta()
 
 # check_rational()
 # check_bad()
 # check_zero()
-check_op()
+# check_op()
+
+check_dtor()

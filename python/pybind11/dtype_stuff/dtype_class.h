@@ -1,3 +1,10 @@
+/**
+@file
+Provides mechanism to make user-defined NumPy dtypes.
+Note that these are not "custom" dtypes (e.g. records); these are actually
+new scalar types.
+*/
+
 #pragma once
 
 #include <pybind11/pybind11.h>
@@ -34,6 +41,9 @@ struct dtype_info {
 template <typename Class>
 struct dtype_py_object {
   PyObject_HEAD
+  // TODO(eric.cousineau): Reduce the number of temporaries. To construct one
+  // item, three temporaries are generated. Consider storing (unique) pointer
+  // here.
   Class value;
 
   static Class* load_raw(py::handle src) {
@@ -48,7 +58,14 @@ struct dtype_py_object {
   }
 
   static PyObject* tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
+    // N.B. `__init__` should call the in-place constructor.
     return (PyObject*)alloc_py();
+  }
+
+  static void tp_dealloc(PyObject* self) {
+    auto obj = (dtype_py_object*)self;
+    // Call in-place destructor.
+    obj->value.~Class();
   }
 };
 
@@ -233,6 +250,7 @@ class dtype_class : public py::class_<Class_> {
       exit(100);
     };
     ClassObject_Type.tp_new = &DTypePyObject::tp_new;
+    ClassObject_Type.tp_dealloc = &DTypePyObject::tp_dealloc;
     ClassObject_Type.tp_name = name;  // Er... scope?
     ClassObject_Type.tp_basicsize = sizeof(DTypePyObject);
     ClassObject_Type.tp_getset = 0;
