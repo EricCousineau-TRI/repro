@@ -271,9 +271,11 @@ class dtype_class : public py::class_<Class_> {
   }
 
   void check() const {
-    py::object& self = *this;
-    if (!py::hasattr(self, "__repr__")) {
-      throw std::runtime_error("Class is missing __repr__");
+    const py::object& self = *this;
+    // This `dict` should indicate whether we've directly overridden methods.
+    py::dict d = self.attr("__dict__");
+    if (!d.contains("__repr__")) {
+      throw std::runtime_error("Class is missing explicit __repr__");
     }
   }
 };
@@ -306,7 +308,7 @@ using Class = Custom;
     static_assert(py::detail::cast_is_known_safe<Custom*>::value,
         "Should be true!");
 
-//     dtype_class<Custom> py_type(m, "Custom");
+    dtype_class<Custom> py_type(m, "Custom");
 //     // Do not define `__init__`. Rather, use a custom thing.
 //     py_type
 //         .def_dtype(dtype_init<double>())
