@@ -248,6 +248,11 @@ class dtype_class : public py::class_<Class_> {
     auto& ClassObject_Type = heap_type->ht_type;
     ClassObject_Type.tp_base = &PyGenericArrType_Type;
     // Define other things.
+    ClassObject_Type.tp_repr = [](PyObject*) -> PyObject* {
+      std::cerr << "Death\n";
+      exit(100);
+    };
+    cerr << "tp_repr" << ClassObject_Type.tp_repr << "\n";
     ClassObject_Type.tp_new = &ClassObject::tp_new;
     ClassObject_Type.tp_name = name;  // Er... scope?
     ClassObject_Type.tp_basicsize = sizeof(ClassObject);
@@ -323,8 +328,6 @@ using Class = Custom;
           *self += 10;
         })
         .def("__repr__", [](const Class* self) {
-            std::cerr << "Death\n";
-            exit(8);
             return py::str("Custom({})").format(self->value());
         });
 
@@ -334,6 +337,7 @@ c = Custom(1)
 print(c.value())
 c.incr()
 print(c.value())
+print(c.__repr__())
 print(Custom(1))
 )""", md, md);
 
