@@ -95,7 +95,7 @@ int main() {
     // Do not define `__init__` since `cpp_function` is special-purposed for
     // it. Rather, use a custom thing.
     py_type
-        .def(dtype_init<double>())
+        .def(py::init<double>())
         .def("value", &Custom::value)
         .def("incr", [](Custom* self) {
           cerr << "incr\n";

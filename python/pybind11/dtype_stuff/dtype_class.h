@@ -184,35 +184,6 @@ struct dtype_caster {
   Arg arg_;
 };
 
-// Following `pybind11/detail/init.h`
-template <typename... Args>
-struct dtype_init_factory {
-  template <typename PyClass, typename... Extra>
-  void execute(PyClass& cl, const Extra&... extra) {
-    using Class = typename PyClass::Class;
-    // Do not construct this with the name `__init__` as pybind will try to
-    // take over the init setup.
-    cl.def("_dtype_init", [](Class* self, Args... args) {
-      // Old-style. No factories for now.
-      new (self) Class(std::forward<Args>(args)...);
-    });
-    py::dict d = cl.attr("__dict__");
-    if (!d.contains("__init__")) {
-      py::handle h = cl;
-      auto init = cl.attr("_dtype_init");
-      auto func = py::cpp_function(
-          [init](py::handle self, py::args args, py::kwargs kwargs) {
-            // Dispatch.
-            self.attr("_dtype_init")(*args, **kwargs);
-          }, py::is_method(h));
-      cl.attr("__init__") = func;
-    }
-  }
-};
-
-template <typename... Args>
-dtype_init_factory<Args...> dtype_init() { return {}; }
-
 void init_numpy() {
   _import_array();
   _import_umath();
@@ -277,8 +248,13 @@ class dtype_class : public py::class_<Class_> {
   }
 
   template <typename ... Args, typename... Extra>
-  dtype_class& def(dtype_init_factory<Args...>&& init, const Extra&... extra) {
-    std::move(init).execute(*this, extra...);
+  dtype_class& def(py::detail::initimpl::constructor<Args...>&& init, const Extra&... extra) {
+    // Do not construct this with the name `__init__` as pybind will try to
+    // take over the init setup.
+    add_init([](Class* self, Args... args) {
+      // Old-style. No factories for now.
+      new (self) Class(std::forward<Args>(args)...);
+    });
     return *this;
   }
 
@@ -335,6 +311,22 @@ class dtype_class : public py::class_<Class_> {
     }
     if (!d.contains("__str__")) {
       throw std::runtime_error("Class is missing explicit __str__");
+    }
+  }
+
+  template <typename Func>
+  void add_init(Func&& f) {
+    this->def("_dtype_init", std::forward<Func>(f));
+    // Ensure that this is called by a non-pybind11-instance `__init__`.
+    py::dict d = self().attr("__dict__");
+    if (!d.contains("__init__")) {
+      auto init = self().attr("_dtype_init");
+      auto func = py::cpp_function(
+          [init](py::handle self, py::args args, py::kwargs kwargs) {
+            // Dispatch.
+            self.attr("_dtype_init")(*args, **kwargs);
+          }, py::is_method(self()));
+      self().attr("__init__") = func;
     }
   }
 
