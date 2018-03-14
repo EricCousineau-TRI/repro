@@ -85,6 +85,16 @@ struct dtype_py_object {
     auto& entry = dtype_info::get_mutable_entry<Class>();
     entry.instance_to_py.erase(value);
   }
+
+  static py::object find_existing(const Class* value) {
+    auto& entry = dtype_info::get_entry<Class>();
+    auto it = entry.instance_to_py.find((void*)value);
+    if (it == entry.instance_to_py.end())
+      return {};
+    else {
+      return py::reinterpret_borrow<py::object>(it->second);
+    }
+  }
 };
 
 // Value.
@@ -142,18 +152,25 @@ struct dtype_caster {
   using Arg = dtype_arg<Class>;
   using DTypePyObject = dtype_py_object<Class>;
   static py::handle cast(const Class& src, py::return_value_policy, py::handle) {
-    cerr << "check: " << &src << endl;
-    auto& entry = dtype_info::get_entry<Class>();
-    auto it = entry.instance_to_py.find((void*)&src);
-    if (it != entry.instance_to_py.end()) {
-      // Return existing.
-      cerr << "Found existing\n";
-      return py::handle(it->second).inc_ref();
+    py::object h = DTypePyObject::find_existing(&src);
+    // TODO(eric.cousineau): Handle parenting?
+    if (h) {
+      return h.release();
     } else {
       // Make new instance.
       return Arg(src).py().release();
     }
   }
+
+  static py::handle cast(const Class* src, py::return_value_policy, py::handle) {
+    py::object h = DTypePyObject::find_existing(src);
+    if (h) {
+      return h.release();
+    } else {
+      throw py::cast_error("Cannot find existing instance");
+    }
+  }
+
   bool load(py::handle src, bool convert) {
     arg_ = src;
     return arg_.load(convert);
@@ -228,6 +245,15 @@ const char* get_ufunc_name(py::detail::op_id id) {
   return m.at(id);
 }
 
+bool is_op_inplace(py::detail::op_id id) {
+  using namespace py::detail;
+  static std::vector<op_id> in_place = {
+      op_iadd, op_isub, op_imul, op_idiv, op_imod, op_ilshift,
+      op_irshift, op_iand, op_ixor, op_ior, op_itruediv};
+  return false;
+  // return std::find(in_place.begin(), in_place.end(), id) != in_place.end();
+}
+
 template <typename Class_>
 class dtype_class : public py::class_<Class_> {
  public:
@@ -287,7 +313,9 @@ class dtype_class : public py::class_<Class_> {
       typename L, typename R, typename... Extra>
   dtype_class& def(
       const py::detail::op_<id, ot, L, R>& op, const Extra&... extra) {
-    base().def(op, extra...);
+    using rvp = py::return_value_policy;
+    rvp p = is_op_inplace(id) ? rvp::reference : rvp::automatic;
+    base().def(op, p, extra...);
     return *this;
   }
 
