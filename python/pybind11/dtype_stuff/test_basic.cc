@@ -77,8 +77,6 @@ int main() {
     // it. Rather, use a custom thing.
     py_type
         .def_dtype(dtype_init<double>())
-        // .def(py::self == Class{})
-//         // .def(py::self * Class{})
         .def("value", &Custom::value)
         .def("incr", [](Custom* self) {
           cerr << "incr\n";
@@ -89,7 +87,11 @@ int main() {
         })
         .def("__str__", [](const Custom* self) {
           return py::str("Custom({})").format(self->value());
-        });
+        })
+        // Operators + ufuncs
+        // .def_ufunc(py::self + py::self)
+        // Just operators
+        .def(py::self += py::self);
   }
 
   using Class = Custom;
