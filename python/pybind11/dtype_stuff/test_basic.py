@@ -5,7 +5,7 @@ import sys
 class Unknown(object): pass
 
 def check_zero():
-    a0 = np.zeros(2, 2, Custom)
+    a0 = np.zeros((2, 2), Custom)
     print(a0)
 
 def check_meta():
