@@ -256,6 +256,9 @@ class dtype_class : public py::class_<Class_> {
     if (!d.contains("__repr__")) {
       throw std::runtime_error("Class is missing explicit __repr__");
     }
+    if (!d.contains("__str__")) {
+      throw std::runtime_error("Class is missing explicit __str__");
+    }
   }
 
   void register_type(const char* name) {
@@ -411,20 +414,22 @@ using Class = Custom;
     static_assert(py::detail::cast_is_known_safe<Custom*>::value,
         "Should be true!");
 
-    dtype_class<Custom> py_type(m, "Custom");
-    // Do not define `__init__`. Rather, use a custom thing.
-    py_type
-        .def_dtype(dtype_init<double>())
-//         // .def(py::self == Class{})
-//         // .def(py::self * Class{})
-        .def("value", &Class::value)
-        .def("incr", [](Class* self) {
-          cerr << "incr\n";
-          *self += 10;
-        })
-        .def("__repr__", [](const Class* self) {
-            return py::str("Custom({})").format(self->value());
-        });
+    {
+      dtype_class<Custom> py_type(m, "Custom");
+      // Do not define `__init__`. Rather, use a custom thing.
+      py_type
+          .def_dtype(dtype_init<double>())
+  //         // .def(py::self == Class{})
+  //         // .def(py::self * Class{})
+          .def("value", &Class::value)
+          .def("incr", [](Class* self) {
+            cerr << "incr\n";
+            *self += 10;
+          })
+          .def("__repr__", [](const Class* self) {
+              return py::str("Custom({})").format(self->value());
+          });
+    }
 
     py::exec(R"""(
 print(Custom)
