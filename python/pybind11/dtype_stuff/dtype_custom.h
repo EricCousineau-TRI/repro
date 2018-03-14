@@ -32,19 +32,19 @@ static py::handle get_class() {
 }
 
 template <typename Class>
-struct DTypeObject {
+struct dtype_py_object {
   PyObject_HEAD
   Class value;
 
   static Class* load_raw(py::handle src) {
-    DTypeObject* obj = (DTypeObject*)src.ptr();
+    dtype_py_object* obj = (dtype_py_object*)src.ptr();
     return &obj->value;
   }
 
-  static DTypeObject* alloc_py() {
+  static dtype_py_object* alloc_py() {
     auto cls = get_class<Class>();
     PyTypeObject* cls_raw = (PyTypeObject*)cls.ptr();
-    return (DTypeObject*)cls_raw->tp_alloc((PyTypeObject*)cls.ptr(), 0);
+    return (dtype_py_object*)cls_raw->tp_alloc((PyTypeObject*)cls.ptr(), 0);
   }
 
   static PyObject* tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
@@ -55,7 +55,7 @@ struct DTypeObject {
 // Value.
 template <typename Class>
 struct dtype_arg {
-  using ClassObject = DTypeObject<Class>;
+  using DTypePyObject = dtype_py_object<Class>;
 
   dtype_arg() = default;
   dtype_arg(py::handle h)
@@ -70,17 +70,16 @@ struct dtype_arg {
     if (!py::isinstance(*h_, cls)) {
       if (convert) {
         // Just try to call it.
-        // TODO(eric.cousineau): Return false on failure.
-        // See if there's a succinct way to test overloads?
         // TODO(eric.cousineau): Take out the Python middle man?
-        // Use registered ufuncs? See how `implicitly_convertible` is implemented.
+        // Use registered ufuncs? See how `implicitly_convertible` is
+        // implemented.
         py::object old = *h_;
         h_ = cls(old);
       } else {
         return false;
       }
     }
-    ptr_ = ClassObject::load_raw(*h_);
+    ptr_ = DTypePyObject::load_raw(*h_);
     // Store temporary due to lifetime of `type_caster` setup.
     value_ = **ptr_;
     return true;
@@ -98,7 +97,7 @@ struct dtype_arg {
   py::object py() const {
     py::handle out;
     if (!h_) {
-      ClassObject* obj = ClassObject::alloc_py();
+      DTypePyObject* obj = DTypePyObject::alloc_py();
       obj->value = *value_;
       return py::reinterpret_borrow<py::object>((PyObject*)obj);
     } else {
@@ -119,7 +118,7 @@ struct dtype_caster {
   // use pointers when using `make_caster` with the temporary return check.
   // See fork, modded func `cast_is_known_safe`.
   using Arg = dtype_arg<Class>;
-  using ClassObject = DTypeObject<Class>;
+  using DTypePyObject = dtype_py_object<Class>;
   static py::handle cast(const Class& src, py::return_value_policy, py::handle) {
     return Arg(src).py().release();
   }
@@ -167,15 +166,22 @@ struct dtype_init_factory {
 template <typename... Args>
 dtype_init_factory<Args...> dtype_init() { return {}; }
 
+void init_numpy() {
+  _import_array();
+  _import_umath();
+  py::module::import("numpy");
+}
+
 template <typename Class_>
 class dtype_class : public py::class_<Class_> {
  public:
   using Base = py::class_<Class_>;
   using Class = Class_;
-  using ClassObject = DTypeObject<Class>;
+  using DTypePyObject = dtype_py_object<Class>;
   // https://stackoverflow.com/a/12505371/7829525
 
   dtype_class(py::handle scope, const char* name) : Base(py::none()) {
+    init_numpy();
     register_type(name);
 
     scope.attr(name) = self();
@@ -226,21 +232,22 @@ class dtype_class : public py::class_<Class_> {
       std::cerr << "SLOT NOT GET CALLED\n";
       exit(100);
     };
-    ClassObject_Type.tp_new = &ClassObject::tp_new;
+    ClassObject_Type.tp_new = &DTypePyObject::tp_new;
     ClassObject_Type.tp_name = name;  // Er... scope?
-    ClassObject_Type.tp_basicsize = sizeof(ClassObject);
+    ClassObject_Type.tp_basicsize = sizeof(DTypePyObject);
     ClassObject_Type.tp_getset = 0;
     // ClassObject_Type.tp_getattro = PyObject_GenericGetAttr;
     // ClassObject_Type.tp_setattro = PyObject_GenericSetAttr;
     ClassObject_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HEAPTYPE;
-    // ClassObject_Type.tp_dictoffset = offsetof(ClassObject, dict);
+    // ClassObject_Type.tp_dictoffset = offsetof(DTypePyObject, dict);
     ClassObject_Type.tp_doc = "Stuff.";
     PY_ASSERT_EX(PyType_Ready(&ClassObject_Type) == 0, "");
     self() = py::reinterpret_borrow<py::object>(py::handle((PyObject*)&ClassObject_Type));
   }
 
   int register_numpy() {
-    // Adapted from `test_rational`.
+    // Adapted from `numpy/core/multiarrya/src/test_rational.c.src`.
+    // Define NumPy description.
     auto type = (PyTypeObject*)self().ptr();
     typedef struct { char c; Class r; } align_test;
     static PyArray_ArrFuncs arrfuncs;

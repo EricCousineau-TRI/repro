@@ -28,8 +28,6 @@ namespace py = pybind11;
 
 class Custom {
 public:
-    using Self = Custom;
-
     Custom() {}
     Custom(double value) : value_{value} {}
     Custom(const Custom&) = default;
@@ -38,16 +36,16 @@ public:
 
     operator double() const { return value_; }
 
-    Self operator==(const Self& rhs) const { return value_ + rhs.value_; }
-    Self operator<(const Self& rhs) const { return value_ * 10 * rhs.value_; }
+    Custom operator==(const Custom& rhs) const { return value_ + rhs.value_; }
+    Custom operator<(const Custom& rhs) const { return value_ * 10 * rhs.value_; }
     Custom operator*(const Custom& rhs) const {
         return value_ * rhs.value_;
     }
     Custom operator-() const { return -value_; }
 
-    Self& operator+=(const Self& rhs) { value_ += rhs.value_; return *this; }
-    Self operator+(const Self& rhs) const { return Self(*this) += rhs.value_; }
-    Self operator-(const Self& rhs) const { return value_ - rhs.value_; }
+    Custom& operator+=(const Custom& rhs) { value_ += rhs.value_; return *this; }
+    Custom operator+(const Custom& rhs) const { return Custom(*this) += rhs.value_; }
+    Custom operator-(const Custom& rhs) const { return value_ - rhs.value_; }
 
 private:
     double value_{};
@@ -69,11 +67,6 @@ struct npy_format_descriptor<Custom> : public npy_format_descriptor_custom<Custo
 int main() {
   py::scoped_interpreter guard;
 
-  using Class = Custom;
-
-  _import_array();
-  _import_umath();
-  py::module numpy = py::module::import("numpy");
   py::module m("__main__");
   py::dict md = m.attr("__dict__");
   py::dict locals;
@@ -84,21 +77,22 @@ int main() {
     // it. Rather, use a custom thing.
     py_type
         .def_dtype(dtype_init<double>())
-//         // .def(py::self == Class{})
+        // .def(py::self == Class{})
 //         // .def(py::self * Class{})
-        .def("value", &Class::value)
-        .def("incr", [](Class* self) {
+        .def("value", &Custom::value)
+        .def("incr", [](Custom* self) {
           cerr << "incr\n";
           *self += 10;
         })
-        .def("__repr__", [](const Class* self) {
+        .def("__repr__", [](const Custom* self) {
           return py::str("<Custom({})>").format(self->value());
         })
-        .def("__str__", [](const Class* self) {
+        .def("__str__", [](const Custom* self) {
           return py::str("Custom({})").format(self->value());
         });
   }
 
+  using Class = Custom;
   using Unary = type_pack<Class>;
   using Binary = type_pack<Class, Class>;
   // Arithmetic.
