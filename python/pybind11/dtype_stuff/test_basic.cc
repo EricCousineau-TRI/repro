@@ -106,10 +106,10 @@ struct DTypeObject {
     return &obj->value;
   }
 
-  static ClassObject* alloc_py() {
+  static DTypeObject* alloc_py() {
     auto cls = get_class<Class>();
     PyTypeObject* cls_raw = (PyTypeObject*)cls.ptr();
-    return (ClassObject*)cls_raw->tp_alloc((PyTypeObject*)cls.ptr(), 0);
+    return (DTypeObject*)cls_raw->tp_alloc((PyTypeObject*)cls.ptr(), 0);
   }
 
   static PyObject* tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
@@ -121,10 +121,12 @@ struct DTypeObject {
 template <typename Class, bool is_pointer = false>
 struct dtype_arg {
   using ClassObject = DTypeObject<Class>;
+
   dtype_arg(py::handle h, bool convert = false)
     : h_(h), convert_{convert} {}
-  dtype_arg(const T& obj)
+  dtype_arg(const Class& obj)
     : value_(obj) {}
+  // Cannot pass pointers in, as they are not registered.
 
   Class& value() const {
     if (!value_) {
@@ -147,6 +149,7 @@ struct dtype_arg {
   }
  private:
   bool load_ptr() {
+    auto cls = get_class<Class>();
     if (!py::isinstance(*h_, cls))
       throw py::cast_error("Bad cast");
     ptr_ = ClassObject::load_raw(h_);
@@ -173,12 +176,12 @@ struct dtype_arg {
 };
 
 template <typename Class>
-struct dtype_arg_caster {
+struct dtype_caster {
   // Using this structure because `intrinsic_t` masks our abilities to natively
   // use pointers when using `make_caster` with the temporary return check.
   // See fork, modded func `cast_is_known_safe`.
   using Arg = dtype_arg<Class>;
-  using ClassObject = typename DType::ClassObject;
+  using ClassObject = DTypeObject<Class>;
   static py::handle cast(Arg& src, py::return_value_policy, py::handle) {
     return Arg(src).py().release();
   }
@@ -186,13 +189,16 @@ struct dtype_arg_caster {
     value_ = {src, convert};
     return value_;
   }
-  template <typename T_> using cast_op_type = pybind11::detail::movable_cast_op_type<T_>;
+  // Copy `type_caster_base`.
+  template <typename T_> using cast_op_type =
+      pybind11::detail::cast_op_type<T_>;
 
-  operator Arg&() { return value_; }
+  // Er... Is it possible to return a value here?
+  operator Arg&() { return value_.value(); }
+  // ... Not sure how to enforce copying, without `const`.
+  operator Arg*() { return *value_.ptr(); }
   Arg value_;
 };
-
-template <typename Class>
 
 // Following `pybind11/detail/init.h`
 template <typename... Args>
@@ -203,9 +209,9 @@ struct dtype_init_factory {
     using ClassObject = typename PyClass::ClassObject;
     // Do not construct this with the name `__init__` as pybind will try to
     // take over the init setup.
-    cl.def("_dtype_init", [](dtype_arg<Class> self, Args... args) {
+    cl.def("_dtype_init", [](Class* self, Args... args) {
       // Old-style. No factories for now.
-      new (self.ptr()) Class(std::forward<Args>(args)...);
+      new (self) Class(std::forward<Args>(args)...);
     });
     if (!py::hasattr(cl, "__init__")) {
       py::handle h = cl;
@@ -248,10 +254,10 @@ class dtype_class : public py::class_<Class_> {
     // ClassObject_Type.tp_dictoffset = offsetof(ClassObject, dict);
     ClassObject_Type.tp_doc = "Stuff.";
     PY_ASSERT_EX(PyType_Ready(&ClassObject_Type) == 0, "");
-    py::object* self = this;
-    *self = py::reinterpret_borrow<py::object>(py::handle((PyObject*)&ClassObject_Type));
-    scope.attr(name) = *self;
-    cls_map()[index_of<Class>()] = *self;
+    py::object& self = *this;
+    self = py::reinterpret_borrow<py::object>(py::handle((PyObject*)&ClassObject_Type));
+    scope.attr(name) = self;
+    cls_map()[index_of<Class>()] = self;
   }
 
   ~dtype_class() {
@@ -265,7 +271,7 @@ class dtype_class : public py::class_<Class_> {
   }
 
   void check() const {
-    py::object* self = this;
+    py::object& self = *this;
     if (!py::hasattr(self, "__repr__")) {
       throw std::runtime_error("Class is missing __repr__");
     }
@@ -277,10 +283,11 @@ namespace pybind11 { namespace detail {
 template <>
 struct type_caster<Custom> : public dtype_caster<Custom> {};
 
-// template <typename T>
-// struct cast_is_known_safe<T,
-//     enable_if_t<std::is_same<dtype_caster_ptr<std::remove_pointer_t<T>>, make_caster<T>>::value>>
-//     : public std::true_type {};
+template <typename T>
+struct cast_is_known_safe<T,
+    enable_if_t<std::is_base_of<
+        dtype_caster<intrinsic_t<T>>, make_caster<T>>::value>>
+    : public std::true_type {};
 
 } } // namespace pybind11 { namespace detail {
 
@@ -296,23 +303,24 @@ using Class = Custom;
     py::dict md = m.attr("__dict__");
     py::dict locals;
 
-    // static_assert(py::detail::cast_is_known_safe<Custom*>::value, "Yoew");
+    static_assert(py::detail::cast_is_known_safe<Custom*>::value,
+        "Should be true!");
 
-    dtype_class<Custom> py_type(m, "Custom");
-    // Do not define `__init__`. Rather, use a custom thing.
-    py_type
-        .def_dtype(dtype_init<double>())
-        // .def(py::self == Class{})
-        // .def(py::self * Class{})
-        // .def("value", &Class::value)
-        .def("__repr__", [](const Class* self) {
-            return py::str("_Custom({})").format(self->value());
-        });
+//     dtype_class<Custom> py_type(m, "Custom");
+//     // Do not define `__init__`. Rather, use a custom thing.
+//     py_type
+//         .def_dtype(dtype_init<double>())
+//         // .def(py::self == Class{})
+//         // .def(py::self * Class{})
+//         // .def("value", &Class::value)
+//         .def("__repr__", [](const Class* self) {
+//             return py::str("_Custom({})").format(self->value());
+//         });
 
-    py::exec(R"""(
-print(Custom)
-#print(Custom(1))
-)""", md, md);
+//     py::exec(R"""(
+// print(Custom)
+// #print(Custom(1))
+// )""", md, md);
 
 #if 0
     typedef struct { char c; Class r; } align_test;
