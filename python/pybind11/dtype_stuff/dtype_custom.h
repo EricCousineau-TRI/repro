@@ -69,16 +69,19 @@ struct dtype_arg {
     auto cls = get_class<Class>();
     if (!py::isinstance(*h_, cls)) {
       if (convert) {
-        throw std::runtime_error("Not yet implemented");
+        // Just try to call it.
+        // TODO(eric.cousineau): Return false on failure.
+        // See if there's a succinct way to test overloads?
+        py::handle old = *h_;
+        h_ = cls(old);
       } else {
-        throw py::cast_error("Must be of the same type");
+        return false;
       }
-    } else {
-      ptr_ = ClassObject::load_raw(*h_);
-      // Store temporary, because pybind will do weird things.
-      value_ = **ptr_;
-      return true;
     }
+    ptr_ = ClassObject::load_raw(*h_);
+    // Store temporary due to lifetime of `type_caster` setup.
+    value_ = **ptr_;
+    return true;
   }
 
   Class& value() {
