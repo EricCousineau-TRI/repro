@@ -9,7 +9,10 @@ new scalar types.
 
 #include <pybind11/pybind11.h>
 
+#include "cpp/wrap_function.h"
+
 #include "ufunc_utility.h"
+#include "ufunc_op.h"
 
 namespace py = pybind11;
 
@@ -189,6 +192,30 @@ void init_numpy() {
   py::module::import("numpy");
 }
 
+const char* get_ufunc_name(py::detail::op_id id) {
+  using namespace py::detail;
+  static std::map<op_id, const char*> m = {
+    // https://docs.scipy.org/doc/numpy/reference/routines.math.html
+    {op_add, "add"},
+    {op_neg, "negative"},
+    {op_mul, "multiply"},
+    {op_div, "divide"},
+    {op_pow, "power"},
+    {op_sub, "subtract"},
+    // https://docs.scipy.org/doc/numpy/reference/routines.logic.htmls
+    {op_gt, "greater"},
+    {op_ge, "greater_equal"},
+    {op_lt, "less"},
+    {op_le, "less_equal"},
+    {op_eq, "equal"},
+    {op_ne, "not_equal"},
+    {op_bool, "nonzero"},
+    {op_invert, "logical_not"}
+    // TODO(eric.cousineau): Add something for junction-style logic?
+  };
+  return m.at(id);
+}
+
 template <typename Class_>
 class dtype_class : public py::class_<Class_> {
  public:
@@ -215,8 +242,27 @@ class dtype_class : public py::class_<Class_> {
   }
 
   template <typename ... Args, typename... Extra>
-  dtype_class &def_dtype(dtype_init_factory<Args...>&& init, const Extra&... extra) {
+  dtype_class& def_dtype(dtype_init_factory<Args...>&& init, const Extra&... extra) {
     std::move(init).execute(*this, extra...);
+    return *this;
+  }
+
+  template <py::detail::op_id id, py::detail::op_type ot,
+      typename L, typename R, typename... Extra>
+  dtype_class& def_ufunc(
+      const py::detail::op_<id, ot, L, R>& op, const Extra&... extra) {
+    using op_ = py::detail::op_<id, ot, L, R>;
+    using op_impl = typename op_::template info<dtype_class>::op;
+    auto func = &op_impl::execute;
+    const char* ufunc_name = get_ufunc_name(id);
+    // Define operators.
+    this->def(op_impl::name(), func, py::is_operator(), extra...);
+    // Register ufunction.
+    auto func_infer = detail::infer_function_info(func);
+    using Func = decltype(func_infer);
+    constexpr int N = Func::Args::size;
+    RegisterUFunc<Class>(
+        get_py_ufunc(ufunc_name), func, const_int<N>{});
     return *this;
   }
 

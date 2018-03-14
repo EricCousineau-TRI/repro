@@ -97,18 +97,20 @@ int main() {
         })
         .def("__str__", [](const Custom* self) {
           return py::str("Custom({})").format(self->value());
-        })
-        // Operators + ufuncs
-        // .def_ufunc(py::self + py::self)
+        });
+    py_type
+        // Operators + ufuncs, with some just-operators (e.g. in-place)
+        .def_ufunc(py::self + py::self)
+        .def(py::self += py::self)
         // Just operators
-        .def(py::self += py::self);
+        ;
   }
 
   using Class = Custom;
   using Unary = type_pack<Class>;
   using Binary = type_pack<Class, Class>;
   // Arithmetic.
-  maybe_ufunc<check_add, Class>(Binary{});
+  // maybe_ufunc<check_add, Class>(Binary{});
   maybe_ufunc<check_negative, Class>(Unary{});
   maybe_ufunc<check_multiply, Class>(Binary{});
   maybe_ufunc<check_divide, Class>(Binary{});

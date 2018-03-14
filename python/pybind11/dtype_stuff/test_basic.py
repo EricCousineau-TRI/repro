@@ -19,6 +19,14 @@ def check_meta():
     print(np.dtype(Unknown))
     print(np.dtype(Custom))
 
+def check_op_min():
+    a = Custom(1)
+    a += 1
+    print(a)
+    av = np.array([a])
+    print(av)
+    print(av + av)
+
 def check_op():
     a = Custom(1)
     print(a == a)
@@ -66,6 +74,7 @@ def check_dtor():
 # check_rational()
 # check_bad()
 # check_zero()
-check_op()
+# check_op()
+check_op_min()
 
-check_dtor()
+# check_dtor()
