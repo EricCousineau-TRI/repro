@@ -29,16 +29,16 @@ namespace py = pybind11;
 class Custom {
 public:
     Custom() {
-      cerr << "Construct\n";
+      // cerr << "Construct\n";
     }
     ~Custom() {
-      cerr << "Destruct\n";
+      // cerr << "Destruct\n";
     }
     Custom(double value) : value_{value} {
-      cerr << "Construct\n";
+      // cerr << "Construct\n";
     }
     Custom(const Custom& other) {
-      cerr << "Construct\n";
+      // cerr << "Construct\n";
       value_ = other.value_;
     }
     Custom& operator=(const Custom&) = default;

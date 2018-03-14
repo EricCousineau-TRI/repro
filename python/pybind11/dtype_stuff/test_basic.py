@@ -24,15 +24,15 @@ def check_op():
     print(a == a)
 
     av = np.array([a])  # Implicit cast.
+    ov = av.astype(object)
+    print(av == av)  # non-logical
+    print(ov == ov)  # logical
 
     print("---")
     a2v_bad = np.array([a, 10])  # Cannot mix easily.
     print(repr(a2v_bad))
-    a2v = np.array([a, 10], dtype=Custom)  # Cannot mix easily.
-    print(repr(a2v))
-    ov = av.astype(object)
-    print(av == av)  # non-logical
-    print(ov == ov)  # logical
+    print(">>>")
+    print(repr(a2v_bad.astype(Custom)))  # But we can cast.
 
     av = np.array([[Custom(1), Custom(2)], [Custom(3), Custom(4)]], dtype=Custom)
     print(av)
@@ -66,6 +66,6 @@ def check_dtor():
 # check_rational()
 # check_bad()
 # check_zero()
-# check_op()
+check_op()
 
 check_dtor()
