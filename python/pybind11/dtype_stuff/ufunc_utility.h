@@ -23,11 +23,6 @@ using py::detail::npy_format_descriptor;
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/ufuncobject.h>
 
-template <typename T>
-int dtype_num() {
-    return npy_format_descriptor<T>::dtype().num();
-}
-
 #define PY_ASSERT_EX(expr, ...) \
     if (!(expr)) throw py::cast_error(fmt::format(__VA_ARGS__));
 
@@ -41,8 +36,8 @@ void RegisterUFunc(
         PyUFuncGenericFunction func,
         void* data) {
     constexpr int N = sizeof...(Args);
-    int dtype = dtype_num<Type>();
-    int dtype_args[] = {dtype_num<Args>()...};
+    int dtype = npy_format_descriptor<Type>::dtype().num();
+    int dtype_args[] = {npy_format_descriptor<Args>::dtype().num()...};
     PY_ASSERT_EX(
         N == py_ufunc->nargs, "Argument mismatch, {} != {}",
         N, py_ufunc->nargs);
