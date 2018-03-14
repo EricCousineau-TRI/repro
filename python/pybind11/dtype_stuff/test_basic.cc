@@ -122,24 +122,39 @@ template <typename Class, bool is_pointer = false>
 struct dtype_arg {
   using ClassObject = DTypeObject<Class>;
 
-  dtype_arg(py::handle h, bool convert = false)
-    : h_(h), convert_{convert} {}
+  dtype_arg() = default;
+  dtype_arg(py::handle h)
+    : h_(h) {}
   dtype_arg(const Class& obj)
     : value_(obj) {}
   // Cannot pass pointers in, as they are not registered.
 
-  Class& value() const {
-    if (!value_) {
-      load_value();
+  // Blech. Would love to hide this, but can't.
+  bool load(bool convert) {
+    auto cls = get_class<Class>();
+    if (!py::isinstance(*h_, cls)) {
+      if (convert) {
+        throw std::runtime_error("Not yet implemented");
+      } else {
+        throw py::cast_error("Must be of the same type");
+      }
+    } else {
+      ptr_ = ClassObject::load_raw(*h_);
+      // Store temporary, because pybind will do weird things.
+      value_ = **ptr_;
+      return true;
     }
+  }
+
+  Class& value() const {
+    // Reference should stay alive with caster.
     return *value_;
   }
+
   Class* ptr() const {
-    if (!ptr_) {
-      load_ptr();
-    }
     return *ptr_;
   }
+
   py::object py() const {
     if (!h_) {
       ClassObject* obj = ClassObject::alloc_py();
@@ -148,35 +163,15 @@ struct dtype_arg {
     return *h_;
   }
  private:
-  bool load_ptr() {
-    auto cls = get_class<Class>();
-    if (!py::isinstance(*h_, cls))
-      throw py::cast_error("Bad cast");
-    ptr_ = ClassObject::load_raw(h_);
-  }
-
-  bool load_value() {
-    auto cls = get_class<Class>();
-    if (!py::isinstance(*h_, cls)) {
-      if (convert_) {
-        throw py::cast_error("not implemented");
-      } else {
-        throw py::cast_error("Must be of the same type");
-      }
-    } else {
-      value_ = *ClassObject::load_raw(h_);
-      return true;
-    }
-  }
-
-  bool convert_{};
   optional<py::handle> h_;
-  optional<Class> value_;
   optional<Class*> ptr_;
+  optional<Class> value_;
+  bool convert_{};
 };
 
 template <typename Class>
 struct dtype_caster {
+  static constexpr auto name = py::detail::_<Class>();
   // Using this structure because `intrinsic_t` masks our abilities to natively
   // use pointers when using `make_caster` with the temporary return check.
   // See fork, modded func `cast_is_known_safe`.
@@ -186,18 +181,18 @@ struct dtype_caster {
     return Arg(src).py().release();
   }
   bool load(py::handle src, bool convert) {
-    value_ = {src, convert};
-    return value_;
+    arg_ = src;
+    return arg_.load(convert);
   }
   // Copy `type_caster_base`.
   template <typename T_> using cast_op_type =
       pybind11::detail::cast_op_type<T_>;
 
   // Er... Is it possible to return a value here?
-  operator Arg&() { return value_.value(); }
+  operator Class&() { return arg_.value(); }
   // ... Not sure how to enforce copying, without `const`.
-  operator Arg*() { return *value_.ptr(); }
-  Arg value_;
+  operator Class*() { return arg_.ptr(); }
+  Arg arg_;
 };
 
 // Following `pybind11/detail/init.h`
@@ -309,20 +304,22 @@ using Class = Custom;
         "Should be true!");
 
     dtype_class<Custom> py_type(m, "Custom");
-//     // Do not define `__init__`. Rather, use a custom thing.
-//     py_type
-//         .def_dtype(dtype_init<double>())
+    // Do not define `__init__`. Rather, use a custom thing.
+    py_type
+        .def_dtype(dtype_init<double>())
 //         // .def(py::self == Class{})
 //         // .def(py::self * Class{})
 //         // .def("value", &Class::value)
-//         .def("__repr__", [](const Class* self) {
-//             return py::str("_Custom({})").format(self->value());
-//         });
+        .def("__repr__", [](const Class* self) {
+            std::cerr << "Death\n";
+            exit(8);
+            return py::str("Custom({})").format(self->value());
+        });
 
-//     py::exec(R"""(
-// print(Custom)
-// #print(Custom(1))
-// )""", md, md);
+    py::exec(R"""(
+print(Custom)
+print(Custom(1))
+)""", md, md);
 
 #if 0
     typedef struct { char c; Class r; } align_test;
