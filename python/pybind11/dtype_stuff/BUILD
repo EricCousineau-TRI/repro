@@ -40,7 +40,7 @@ py_library(
 cc_binary(
     name = "test_basic",
     srcs = [
-        "dtype_class.h",
+        "dtype_user.h",
         "ufunc_utility.h",
         "ufunc_op.h",
         "test_basic.cc",

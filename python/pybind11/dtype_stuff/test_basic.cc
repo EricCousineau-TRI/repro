@@ -27,7 +27,7 @@ using MatrixX = Eigen::Matrix<T, -1, -1>;
 #include <numpy/ufuncobject.h>
 #include <numpy/ndarraytypes.h>
 
-#include "dtype_class.h"
+#include "dtype_user.h"
 #include "ufunc_utility.h"
 #include "ufunc_op.h"
 
@@ -91,7 +91,7 @@ int main() {
   py::dict locals;
 
   {
-    dtype_class<Custom> py_type(m, "Custom");
+    dtype_user<Custom> py_type(m, "Custom");
     // Do not define `__init__` since `cpp_function` is special-purposed for
     // it. Rather, use a custom thing.
     py_type

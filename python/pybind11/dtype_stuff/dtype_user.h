@@ -178,14 +178,14 @@ const char* get_ufunc_name(py::detail::op_id id) {
 }
 
 template <typename Class_>
-class dtype_class : public py::class_<Class_> {
+class dtype_user : public py::class_<Class_> {
  public:
   using Base = py::class_<Class_>;
   using Class = Class_;
   using DTypePyObject = dtype_py_object<Class>;
   // https://stackoverflow.com/a/12505371/7829525
 
-  dtype_class(py::handle scope, const char* name) : Base(py::none()) {
+  dtype_user(py::handle scope, const char* name) : Base(py::none()) {
     init_numpy();
     register_type(name);
     scope.attr(name) = self();
@@ -200,18 +200,18 @@ class dtype_class : public py::class_<Class_> {
     this->def_ufunc_cast([](py::object self) { return py::cast<Class>(self); });
   }
 
-  ~dtype_class() {
+  ~dtype_user() {
     check();    
   }
 
   template <typename ... Args>
-  dtype_class& def(const char* name, Args&&... args) {
+  dtype_user& def(const char* name, Args&&... args) {
     base().def(name, std::forward<Args>(args)...);
     return *this;
   }
 
   template <typename ... Args, typename... Extra>
-  dtype_class& def(py::detail::initimpl::constructor<Args...>&& init, const Extra&... extra) {
+  dtype_user& def(py::detail::initimpl::constructor<Args...>&& init, const Extra&... extra) {
     // Do not construct this with the name `__init__` as pybind will try to
     // take over the init setup.
     add_init([](Class* self, Args... args) {
@@ -223,10 +223,10 @@ class dtype_class : public py::class_<Class_> {
 
   template <py::detail::op_id id, py::detail::op_type ot,
       typename L, typename R, typename... Extra>
-  dtype_class& def_ufunc(
+  dtype_user& def_ufunc(
       const py::detail::op_<id, ot, L, R>& op, const Extra&... extra) {
     using op_ = py::detail::op_<id, ot, L, R>;
-    using op_impl = typename op_::template info<dtype_class>::op;
+    using op_impl = typename op_::template info<dtype_user>::op;
     auto func = &op_impl::execute;
     const char* ufunc_name = get_ufunc_name(id);
     // Define operators.
@@ -243,14 +243,14 @@ class dtype_class : public py::class_<Class_> {
   // Nominal operator.
   template <py::detail::op_id id, py::detail::op_type ot,
       typename L, typename R, typename... Extra>
-  dtype_class& def(
+  dtype_user& def(
       const py::detail::op_<id, ot, L, R>& op, const Extra&... extra) {
     base().def(op, extra...);
     return *this;
   }
 
   template <typename Func_>
-  dtype_class& def_ufunc_cast(Func_&& func) {
+  dtype_user& def_ufunc_cast(Func_&& func) {
     auto func_infer = detail::infer_function_info(func);
     using Func = decltype(func_infer);
     using From = py::detail::intrinsic_t<typename Func::Args::template type_at<0>>;
