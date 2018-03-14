@@ -5,6 +5,7 @@
 #include <experimental/optional>
 
 using std::pow;
+using std::cerr;
 using std::cout;
 using std::endl;
 using std::experimental::optional;
@@ -159,8 +160,11 @@ struct dtype_arg {
     if (!h_) {
       ClassObject* obj = ClassObject::alloc_py();
       obj->value = value_;
+      py::handle h_new((PyObject*)obj);
+      return py::reinterpret_borrow<py::object>(h_new);
+    } else {
+      return *h_;
     }
-    return *h_;
   }
  private:
   optional<py::handle> h_;
@@ -178,9 +182,11 @@ struct dtype_caster {
   using Arg = dtype_arg<Class>;
   using ClassObject = DTypeObject<Class>;
   static py::handle cast(Arg& src, py::return_value_policy, py::handle) {
+    cerr << "cast\n";
     return Arg(src).py().release();
   }
   bool load(py::handle src, bool convert) {
+    cerr << "load\n";
     arg_ = src;
     return arg_.load(convert);
   }
@@ -309,7 +315,7 @@ using Class = Custom;
         .def_dtype(dtype_init<double>())
 //         // .def(py::self == Class{})
 //         // .def(py::self * Class{})
-//         // .def("value", &Class::value)
+        .def("value", &Class::value)
         .def("__repr__", [](const Class* self) {
             std::cerr << "Death\n";
             exit(8);
@@ -318,7 +324,9 @@ using Class = Custom;
 
     py::exec(R"""(
 print(Custom)
-print(Custom(1))
+c = Custom(1)
+print(c.value())
+#print(Custom(1))
 )""", md, md);
 
 #if 0
