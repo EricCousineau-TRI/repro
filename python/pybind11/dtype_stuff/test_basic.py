@@ -109,3 +109,6 @@ check_op()
 # check_dtor()
 
 check_mutate()
+
+import code
+code.InteractiveConsole(locals=globals()).interact()
