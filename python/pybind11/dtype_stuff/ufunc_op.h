@@ -72,8 +72,6 @@ void maybe_ufunc(type_pack<Args...> = {}) {
 
 template <typename From, typename To, typename Func>
 void add_cast(Func&& func, type_pack<From, To> = {}) {
-  auto* from = PyArray_DescrFromType(dtype_num<From>());
-  int to = dtype_num<To>();
   static auto cast_lambda = func;
   auto cast_func = [](
         void* from_, void* to_, npy_intp n,
@@ -83,11 +81,15 @@ void add_cast(Func&& func, type_pack<From, To> = {}) {
       for (npy_intp i = 0; i < n; i++)
           to[i] = cast_lambda(from[i]);
   };
+  auto from = npy_format_descriptor<From>::dtype();
+  int to_num = npy_format_descriptor<To>::dtype().num();
   PY_ASSERT_EX(
-      PyArray_RegisterCastFunc(from, to, cast_func) >= 0,
+      PyArray_RegisterCastFunc(
+          (PyArray_Descr*)from.ptr(), to_num, cast_func) >= 0,
       "Cannot register cast");
   PY_ASSERT_EX(
-      PyArray_RegisterCanCast(from, to, NPY_NOSCALAR) >= 0,
+      PyArray_RegisterCanCast(
+          (PyArray_Descr*)from.ptr(), to_num, NPY_NOSCALAR) >= 0,
       "Cannot register castability");
 }
 
