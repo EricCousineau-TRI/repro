@@ -58,29 +58,10 @@ Custom pow(Custom a, Custom b) {
 
 void module(py::module m) {}
 
-int npy_custom{-1};
-
-namespace pybind11 { namespace detail {
-
-template <>
-struct npy_format_descriptor<py::object> {
-    static pybind11::dtype dtype() {
-        if (auto ptr = npy_api::get().PyArray_DescrFromType_(NPY_OBJECT))
-            return reinterpret_borrow<pybind11::dtype>(ptr);
-        pybind11_fail("Unsupported buffer format!");
-    }
+struct dtype_generic {
+  py::handle cls;
+  int dtype_num{-1};
 };
-
-template <>
-struct npy_format_descriptor<Custom> {
-    static pybind11::dtype dtype() {
-        if (auto ptr = npy_api::get().PyArray_DescrFromType_(npy_custom))
-            return reinterpret_borrow<pybind11::dtype>(ptr);
-        pybind11_fail("Unsupported buffer format!");
-    }
-};
-
-} }  // namespace detail } namespace pybind11
 
 template <typename T>
 std::type_index index_of() {
@@ -88,13 +69,18 @@ std::type_index index_of() {
 }
 
 auto& cls_map() {
-  static std::map<std::type_index, py::handle> value;
+  static std::map<std::type_index, dtype_generic> value;
   return value;
 }
 
 template <typename T>
+int get_dtype_num() {
+  return cls_map().at(index_of<T>()).dtype_num;
+}
+
+template <typename T>
 static py::handle get_class() {
-  return cls_map().at(index_of<T>());
+  return cls_map().at(index_of<T>()).cls;
 }
 
 template <typename Class>
@@ -119,7 +105,7 @@ struct DTypeObject {
 };
 
 // Value.
-template <typename Class, bool is_pointer = false>
+template <typename Class>
 struct dtype_arg {
   using ClassObject = DTypeObject<Class>;
 
@@ -147,7 +133,7 @@ struct dtype_arg {
     }
   }
 
-  Class& value() const {
+  Class& value() {
     // Reference should stay alive with caster.
     return *value_;
   }
@@ -157,14 +143,15 @@ struct dtype_arg {
   }
 
   py::object py() const {
+    py::handle out;
     if (!h_) {
       ClassObject* obj = ClassObject::alloc_py();
-      obj->value = value_;
-      py::handle h_new((PyObject*)obj);
-      return py::reinterpret_borrow<py::object>(h_new);
+      obj->value = *value_;
+      out = (PyObject*)obj;
     } else {
-      return *h_;
+      out = *h_;
     }
+    return py::reinterpret_borrow<py::object>(out);
   }
  private:
   optional<py::handle> h_;
@@ -239,8 +226,39 @@ class dtype_class : public py::class_<Class_> {
   using Class = Class_;
   using ClassObject = DTypeObject<Class>;
   // https://stackoverflow.com/a/12505371/7829525
-  
+
   dtype_class(py::handle scope, const char* name) : Base(py::none()) {
+    register_type(name);
+
+    scope.attr(name) = self();
+    auto& entry = cls_map()[index_of<Class>()];
+    entry.cls = self();
+    entry.dtype_num = register_numpy();
+  }
+
+  ~dtype_class() {
+    check();    
+  }
+
+  template <typename ... Args, typename... Extra>
+  dtype_class &def_dtype(dtype_init_factory<Args...>&& init, const Extra&... extra) {
+    std::move(init).execute(*this, extra...);
+    return *this;
+  }
+
+ private:
+  py::object& self() { return *this; }
+  const py::object& self() const { return *this; }
+
+  void check() const {
+    // This `dict` should indicate whether we've directly overridden methods.
+    py::dict d = self().attr("__dict__");
+    if (!d.contains("__repr__")) {
+      throw std::runtime_error("Class is missing explicit __repr__");
+    }
+  }
+
+  void register_type(const char* name) {
     auto heap_type = (PyHeapTypeObject*)PyType_Type.tp_alloc(&PyType_Type, 0);
     PY_ASSERT_EX(heap_type, "yar");
     heap_type->ht_name = py::str(name).release().ptr();
@@ -263,30 +281,94 @@ class dtype_class : public py::class_<Class_> {
     // ClassObject_Type.tp_dictoffset = offsetof(ClassObject, dict);
     ClassObject_Type.tp_doc = "Stuff.";
     PY_ASSERT_EX(PyType_Ready(&ClassObject_Type) == 0, "");
-    py::object& self = *this;
-    self = py::reinterpret_borrow<py::object>(py::handle((PyObject*)&ClassObject_Type));
-    scope.attr(name) = self;
-    cls_map()[index_of<Class>()] = self;
+    self() = py::reinterpret_borrow<py::object>(py::handle((PyObject*)&ClassObject_Type));
   }
 
-  ~dtype_class() {
-    check();    
-  }
+  int register_numpy() {
+    // Adapted from `test_rational`.
+    auto type = (PyTypeObject*)self().ptr();
+    typedef struct { char c; Class r; } align_test;
+    static PyArray_ArrFuncs arrfuncs;
+    static PyArray_Descr descr = {
+        PyObject_HEAD_INIT(0)
+        type,                   /* typeobj */
+        'V',                    /* kind (V = arbitrary) */
+        'r',                    /* type */
+        '=',                    /* byteorder */
+        NPY_NEEDS_PYAPI | NPY_USE_GETITEM | NPY_USE_SETITEM, /* flags */
+        0,                      /* type_num */
+        sizeof(Class),          /* elsize */
+        offsetof(align_test,r), /* alignment */
+        0,                      /* subarray */
+        0,                      /* fields */
+        0,                      /* names */
+        &arrfuncs,  /* f */
+    };
 
-  template <typename ... Args, typename... Extra>
-  dtype_class &def_dtype(dtype_init_factory<Args...>&& init, const Extra&... extra) {
-    std::move(init).execute(*this, extra...);
-    return *this;
+    PyArray_InitArrFuncs(&arrfuncs);
+    // https://docs.scipy.org/doc/numpy/reference/c-api.types-and-structures.html
+    arrfuncs.getitem = [](void* in, void* arr) -> PyObject* {
+        auto item = (const Class*)in;
+        dtype_arg<Class> arg(*item);
+        return arg.py().release().ptr();
+    };
+    arrfuncs.setitem = [](PyObject* in, void* out, void* arr) {
+        dtype_arg<Class> arg(in);
+        PY_ASSERT_EX(arg.load(true), "Could not convert");
+        *(Class*)out = arg.value();
+        return 0;
+    };
+    arrfuncs.copyswap = [](void* dst, void* src, int swap, void* arr) {
+        // TODO(eric.cousineau): Figure out actual purpose of this.
+        if (!src) return;
+        Class* r_dst = (Class*)dst;
+        Class* r_src = (Class*)src;
+        if (swap) {
+            std::swap(*r_dst, *r_src);
+        } else {
+            *r_dst = *r_src;
+        }
+    };
+    // - Test and ensure this doesn't overwrite our `equal` unfunc.
+    arrfuncs.compare = [](const void* d1, const void* d2, void* arr) {
+      return 0;
+    };
+    arrfuncs.fill = [](void* data_, npy_intp length, void* arr) {
+      Class* data = (Class*)data_;
+      Class delta = data[1] - data[0];
+      Class r = data[1];
+      npy_intp i;
+      for (i = 2; i < length; i++) {
+          r += delta;
+          data[i] = r;
+      }
+      return 0;
+    };
+    arrfuncs.fillwithscalar = [](
+            void* buffer_raw, npy_intp length, void* value_raw, void* arr) {
+        const Class* value = (const Class*)value_raw;
+        Class* buffer = (Class*)buffer_raw;
+        for (int k = 0; k < length; k++) {
+            buffer[k] = *value;
+        }
+        return 0;
+    };
+    Py_TYPE(&descr) = &PyArrayDescr_Type;
+    int dtype_num = PyArray_RegisterDataType(&descr);
+    self().attr("dtype") =
+        py::reinterpret_borrow<py::object>(py::handle((PyObject*)&descr));
+    return dtype_num;
   }
+};
 
-  void check() const {
-    const py::object& self = *this;
-    // This `dict` should indicate whether we've directly overridden methods.
-    py::dict d = self.attr("__dict__");
-    if (!d.contains("__repr__")) {
-      throw std::runtime_error("Class is missing explicit __repr__");
+template <typename Class>
+struct npy_format_descriptor_custom {
+    static pybind11::dtype dtype() {
+        int dtype_num = get_dtype_num<Class>();
+        if (auto ptr = py::detail::npy_api::get().PyArray_DescrFromType_(dtype_num))
+            return py::reinterpret_borrow<pybind11::dtype>(ptr);
+        py::pybind11_fail("Unsupported buffer format!");
     }
-  }
 };
 
 namespace pybind11 { namespace detail {
@@ -299,6 +381,18 @@ struct cast_is_known_safe<T,
     enable_if_t<std::is_base_of<
         dtype_caster<intrinsic_t<T>>, make_caster<T>>::value>>
     : public std::true_type {};
+
+template <>
+struct npy_format_descriptor<py::object> {
+    static pybind11::dtype dtype() {
+        if (auto ptr = npy_api::get().PyArray_DescrFromType_(NPY_OBJECT))
+            return reinterpret_borrow<pybind11::dtype>(ptr);
+        pybind11_fail("Unsupported buffer format!");
+    }
+};
+
+template <>
+struct npy_format_descriptor<Custom> : public npy_format_descriptor_custom<Custom> {};
 
 } } // namespace pybind11 { namespace detail {
 
@@ -342,104 +436,6 @@ print(c.__repr__())
 print(Custom(1))
 )""", md, md);
 
-#if 0
-    typedef struct { char c; Class r; } align_test;
-    static PyArray_ArrFuncs arrfuncs;
-    static PyArray_Descr descr = {
-        PyObject_HEAD_INIT(0)
-        &ClassObject_Type,                /* typeobj */
-        'V',                    /* kind (V = arbitrary) */
-        'r',                    /* type */
-        '=',                    /* byteorder */
-        /*
-         * For now, we need NPY_NEEDS_PYAPI in order to make numpy detect our
-         * exceptions.  This isn't technically necessary,
-         * since we're careful about thread safety, and hopefully future
-         * versions of numpy will recognize that.
-         */
-        NPY_NEEDS_PYAPI | NPY_USE_GETITEM | NPY_USE_SETITEM, /* flags */
-        0,                      /* type_num */
-        sizeof(Class),       /* elsize */
-        offsetof(align_test,r), /* alignment */
-        0,                      /* subarray */
-        0,                      /* fields */
-        0,                      /* names */
-        &arrfuncs,  /* f */
-    };
-
-    py::class_<Class> cls(m, "_Custom");
-//        py::handle((PyObject*)&ClassObject_Type));
-    cls
-        .def(py::init([](double x) {
-            return new Custom(x);
-        }))
-
-    static auto from_py = [](py::handle h) {
-      py::print(py::str("yar eadf: {}").format(h.get_type()));
-        // return Class(10);
-      py::object yar = py::module::import("__main__").attr("Custom").attr("maybe_value");
-     return *yar(h).cast<Class*>();
-    };
-    static auto to_py = [](const Class* obj) {
-      py::object yar = py::module::import("__main__").attr("_Custom");
-      return yar(py::cast(*obj)).release().ptr();
-    };
-
-    PyArray_InitArrFuncs(&arrfuncs);
-    // https://docs.scipy.org/doc/numpy/reference/c-api.types-and-structures.html
-    arrfuncs.getitem = [](void* in, void* arr) -> PyObject* {
-        return to_py((const Class*)in);
-    };
-    arrfuncs.setitem = [](PyObject* in, void* out, void* arr) {
-        *(Class*)out = from_py(in);
-        return 0;
-    };
-    arrfuncs.copyswap = [](void* dst, void* src, int swap, void* arr) {
-        if (!src) return;
-        Class* r_dst = (Class*)dst;
-        Class* r_src = (Class*)src;
-        if (swap) {
-            std::swap(*r_dst, *r_src);
-        } else {
-            *r_dst = *r_src;
-        }
-    };
-    // - Test and ensure this doesn't overwrite our `equal` unfunc.
-    arrfuncs.compare = [](const void* d1, const void* d2, void* arr) {
-      return 0;
-    };
-    arrfuncs.fill = [](void* data_, npy_intp length, void* arr) {
-      Class* data = (Class*)data_;
-      Class delta = data[1] - data[0];
-      Class r = data[1];
-      npy_intp i;
-      for (i = 2; i < length; i++) {
-          r += delta;
-          data[i] = r;
-      }
-      return 0;
-    };
-    arrfuncs.fillwithscalar = [](
-            void* buffer_raw, npy_intp length, void* value_raw, void* arr) {
-        const Class* value = (const Class*)value_raw;
-        Class* buffer = (Class*)buffer_raw;
-        for (int k = 0; k < length; k++) {
-            buffer[k] = *value;
-        }
-        return 0;
-    };
-    Py_TYPE(&descr) = &PyArrayDescr_Type;
-    npy_custom = PyArray_RegisterDataType(&descr);
-     py_type.attr("dtype") = py::reinterpret_borrow<py::object>(
-         py::handle((PyObject*)&descr));
-
-    py::exec(R"""(
-c = Custom(1)
-print(dir(c))
-print(repr(c))
-)""", m.attr("__dict__"), m.attr("__dict__"));
-    return 0;
-
 //     PyDict_SetItemString(ClassObject_Type.tp_dict, "blergh", Py_None);
 
 //     py::exec(R"""(
@@ -452,6 +448,7 @@ print(repr(c))
 // _Custom.__repr__ = lambda self: "blerg"
 // )""", m.attr("__dict__"));
 
+#if 0
     using Unary = type_pack<Class>;
     using Binary = type_pack<Class, Class>;
     // Arithmetic.
