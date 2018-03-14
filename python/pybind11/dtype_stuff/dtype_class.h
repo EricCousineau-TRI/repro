@@ -7,6 +7,8 @@ new scalar types.
 
 #pragma once
 
+#include <map>
+
 #include <pybind11/pybind11.h>
 
 #include "cpp/wrap_function.h"
@@ -24,20 +26,24 @@ std::type_index index_of() {
 struct dtype_info {
   py::handle cls;
   int dtype_num{-1};
+  // std::map<void*, PyObject*> instance_to_py;
 
+ private:
   static auto& cls_map() {
     static std::map<std::type_index, dtype_info> value;
     return value;
   }
 
+ public:
   template <typename T>
-  static int get_dtype_num() {
-    return cls_map().at(index_of<T>()).dtype_num;
+  static dtype_info& get_mutable_entry(bool is_new = false) {
+    // TODO: implement is_new
+    return cls_map()[index_of<T>()];
   }
 
   template <typename T>
-  static py::handle get_class() {
-    return cls_map().at(index_of<T>()).cls;
+  static const dtype_info& get_entry() {
+    return cls_map().at(index_of<T>());
   }
 };
 
@@ -55,14 +61,17 @@ struct dtype_py_object {
   }
 
   static dtype_py_object* alloc_py() {
-    auto cls = dtype_info::get_class<Class>();
+    auto cls = dtype_info::get_entry<Class>().cls;
     PyTypeObject* cls_raw = (PyTypeObject*)cls.ptr();
     return (dtype_py_object*)cls_raw->tp_alloc((PyTypeObject*)cls.ptr(), 0);
   }
 
   static PyObject* tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
     // N.B. `__init__` should call the in-place constructor.
-    return (PyObject*)alloc_py();
+    auto obj = alloc_py();
+    // // Register.
+    // auto& entry = dtype
+    return (PyObject*)obj;
   }
 
   static void tp_dealloc(PyObject* self) {
@@ -86,7 +95,7 @@ struct dtype_arg {
 
   // Blech. Would love to hide this, but can't.
   bool load(bool convert) {
-    auto cls = dtype_info::get_class<Class>();
+    auto cls = dtype_info::get_entry<Class>().cls;
     if (!py::isinstance(*h_, cls)) {
       if (convert) {
         // Just try to call it.
@@ -227,11 +236,9 @@ class dtype_class : public py::class_<Class_> {
   dtype_class(py::handle scope, const char* name) : Base(py::none()) {
     init_numpy();
     register_type(name);
-
     scope.attr(name) = self();
-    auto& entry = dtype_info::cls_map()[index_of<Class>()];
+    auto& entry = dtype_info::get_mutable_entry<Class>(true);
     entry.cls = self();
-
     // Registry numpy type.
     // (Note that not registering the type will result in infinte recursion).
     entry.dtype_num = register_numpy();
@@ -406,7 +413,7 @@ class dtype_class : public py::class_<Class_> {
 template <typename Class>
 struct npy_format_descriptor_custom {
     static pybind11::dtype dtype() {
-        int dtype_num = dtype_info::get_dtype_num<Class>();
+        int dtype_num = dtype_info::get_entry<Class>().dtype_num;
         if (auto ptr = py::detail::npy_api::get().PyArray_DescrFromType_(dtype_num))
             return py::reinterpret_borrow<pybind11::dtype>(ptr);
         py::pybind11_fail("Unsupported buffer format!");
