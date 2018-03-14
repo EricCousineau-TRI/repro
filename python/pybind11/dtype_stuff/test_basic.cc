@@ -2,10 +2,13 @@
 
 #include <map>
 #include <iostream>
+#include <experimental/optional>
 
 using std::pow;
 using std::cout;
 using std::endl;
+using std::experimental::optional;
+using std::experimental::nullopt;
 
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
@@ -118,16 +121,41 @@ struct DTypeObject {
 template <typename Class, bool is_pointer = false>
 struct dtype_arg {
   using ClassObject = DTypeObject<Class>;
-  dtype_arg(py::handle h)
-    : h_(h), is_py_{true} {}
+  dtype_arg(py::handle h, bool convert = false)
+    : h_(h), convert_{convert} {}
   dtype_arg(const T& obj)
-    : obj_(obj), is_py_{false} {}
+    : value_(obj) {}
 
-  bool load(bool convert) {
-    assert(is_py_);
+  Class& value() const {
+    if (!value_) {
+      load_value();
+    }
+    return *value_;
+  }
+  Class* ptr() const {
+    if (!ptr_) {
+      load_ptr();
+    }
+    return *ptr_;
+  }
+  py::object py() const {
+    if (!h_) {
+      ClassObject* obj = ClassObject::alloc_py();
+      obj->value = value_;
+    }
+    return *h_;
+  }
+ private:
+  bool load_ptr() {
+    if (!py::isinstance(*h_, cls))
+      throw py::cast_error("Bad cast");
+    ptr_ = ClassObject::load_raw(h_);
+  }
+
+  bool load_value() {
     auto cls = get_class<Class>();
-    if (!py::isinstance(src, cls)) {
-      if (convert) {
+    if (!py::isinstance(*h_, cls)) {
+      if (convert_) {
         throw py::cast_error("not implemented");
       } else {
         throw py::cast_error("Must be of the same type");
@@ -137,23 +165,11 @@ struct dtype_arg {
       return true;
     }
   }
-  Class& value() const {
-    return value_;
-  }
-  Class* ptr() const {
-    return value_ptr_;
-  }
-  py::object py() const {
-    if (!h_) {
-      ClassObject* obj = ClassObject::alloc_py();
-      obj->value = value_;
-    }
-    return h_;
-  }
- private:
-  bool is_py_{};
-  py::handle h_;
-  T* value_ptr_;
+
+  bool convert_{};
+  optional<py::handle> h_;
+  optional<Class> value_;
+  optional<Class*> ptr_;
 };
 
 template <typename Class>
@@ -164,11 +180,11 @@ struct dtype_arg_caster {
   using Arg = dtype_arg<Class>;
   using ClassObject = typename DType::ClassObject;
   static py::handle cast(Arg& src, py::return_value_policy, py::handle) {
-    return src.py().release();
+    return Arg(src).py().release();
   }
   bool load(py::handle src, bool convert) {
-    value_ = src;
-    return value_.load(convert);
+    value_ = {src, convert};
+    return value_;
   }
   template <typename T_> using cast_op_type = pybind11::detail::movable_cast_op_type<T_>;
 
@@ -187,9 +203,9 @@ struct dtype_init_factory {
     using ClassObject = typename PyClass::ClassObject;
     // Do not construct this with the name `__init__` as pybind will try to
     // take over the init setup.
-    cl.def("_dtype_init", [](dtype_arg<Class*> self, Args... args) {
+    cl.def("_dtype_init", [](dtype_arg<Class> self, Args... args) {
       // Old-style. No factories for now.
-      new (self.value()) Class(std::forward<Args>(args)...);
+      new (self.ptr()) Class(std::forward<Args>(args)...);
     });
     if (!py::hasattr(cl, "__init__")) {
       py::handle h = cl;
@@ -238,10 +254,21 @@ class dtype_class : public py::class_<Class_> {
     cls_map()[index_of<Class>()] = *self;
   }
 
+  ~dtype_class() {
+    check();    
+  }
+
   template <typename ... Args, typename... Extra>
   dtype_class &def_dtype(dtype_init_factory<Args...>&& init, const Extra&... extra) {
     std::move(init).execute(*this, extra...);
     return *this;
+  }
+
+  void check() const {
+    py::object* self = this;
+    if (!py::hasattr(self, "__repr__")) {
+      throw std::runtime_error("Class is missing __repr__");
+    }
   }
 };
 

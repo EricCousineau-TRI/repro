@@ -31,6 +31,12 @@ cc_binary(
     ],
 )
 
+py_library(
+    name = "test_rational",
+    data = [":test_rational.so", ":test_rational_min.so"],
+    imports = ["."],
+)
+
 cc_binary(
     name = "test_basic",
     srcs = [
@@ -45,7 +51,12 @@ cc_binary(
     ],
     data = [
         "test_basic.py",
-        "test_rational.so",
-        # "test_rational_min.so",
+        ":test_rational",
     ],
+)
+
+py_binary(
+    name = "test_rational_bin",
+    srcs = ["test_rational_bin.py"],
+    deps = [":test_rational"],
 )
