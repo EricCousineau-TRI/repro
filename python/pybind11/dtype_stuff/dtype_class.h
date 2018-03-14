@@ -95,69 +95,24 @@ struct dtype_py_object {
   }
 };
 
-// Value.
-template <typename Class>
-struct dtype_arg {
-  using DTypePyObject = dtype_py_object<Class>;
-
-  dtype_arg() = default;
-  dtype_arg(py::handle h)
-    : h_(py::reinterpret_borrow<py::object>(h)) {}
-  dtype_arg(const Class& value) {
-    DTypePyObject* obj = DTypePyObject::alloc_py();
-    obj->value = value;
-    h_ = py::reinterpret_borrow<py::object>((PyObject*)obj);
-  }
-  // Cannot pass pointers in, as they are not registered.
-
-  // Blech. Would love to hide this, but can't.
-  bool load(bool convert) {
-    auto cls = dtype_info::get_entry<Class>().cls;
-    if (!py::isinstance(*h_, cls)) {
-      if (convert) {
-        // Just try to call it.
-        // TODO(eric.cousineau): Take out the Python middle man?
-        // Use registered ufuncs? See how `implicitly_convertible` is
-        // implemented.
-        py::object old = *h_;
-        h_ = cls(old);
-      } else {
-        return false;
-      }
-    }
-    ptr_ = DTypePyObject::load_raw(h_->ptr());
-    return true;
-  }
-
-  Class* ptr() const {
-    return *ptr_;
-  }
-
-  py::object py() const {
-    return *h_;
-  }
- private:
-  optional<py::object> h_;
-  optional<Class*> ptr_;
-};
-
 template <typename Class>
 struct dtype_caster {
   static constexpr auto name = py::detail::_<Class>();
   // Using this structure because `intrinsic_t` masks our abilities to natively
   // use pointers when using `make_caster` with the temporary return check.
   // See fork, modded func `cast_is_known_safe`.
-  using Arg = dtype_arg<Class>;
   using DTypePyObject = dtype_py_object<Class>;
   static py::handle cast(const Class& src, py::return_value_policy, py::handle) {
     py::object h = DTypePyObject::find_existing(&src);
     // TODO(eric.cousineau): Handle parenting?
-    if (h) {
-      return h.release();
-    } else {
+    if (!h) {
       // Make new instance.
-      return Arg(src).py().release();
+      DTypePyObject* obj = DTypePyObject::alloc_py();
+      obj->value = src;
+      h = py::reinterpret_borrow<py::object>((PyObject*)obj);
+      return h.release();
     }
+    return h.release();
   }
 
   static py::handle cast(const Class* src, py::return_value_policy, py::handle) {
@@ -170,18 +125,31 @@ struct dtype_caster {
   }
 
   bool load(py::handle src, bool convert) {
-    arg_ = src;
-    return arg_.load(convert);
+    auto cls = dtype_info::get_entry<Class>().cls;
+    py::object obj;
+    if (!py::isinstance(src, cls)) {
+      if (convert) {
+        // Just try to call it.
+        // TODO(eric.cousineau): Take out the Python middle man?
+        // Use registered ufuncs? See how `implicitly_convertible` is
+        // implemented.
+        obj = cls(src);
+      } else {
+        return false;
+      }
+    } else {
+      obj = py::reinterpret_borrow<py::object>(src);
+    }
+    ptr_ = DTypePyObject::load_raw(obj.ptr());
+    return true;
   }
   // Copy `type_caster_base`.
   template <typename T_> using cast_op_type =
       pybind11::detail::cast_op_type<T_>;
 
-  // Er... Is it possible to return a value here?
-  operator Class&() { return *arg_.ptr(); }
-  // ... Not sure how to enforce copying, without `const`.
-  operator Class*() { return arg_.ptr(); }
-  Arg arg_;
+  operator Class&() { return *ptr_; }
+  operator Class*() { return ptr_; }
+  Class* ptr_{};
 };
 
 void init_numpy() {
@@ -374,14 +342,13 @@ class dtype_class : public py::class_<Class_> {
     // https://docs.scipy.org/doc/numpy/reference/c-api.types-and-structures.html
     arrfuncs.getitem = [](void* in, void* arr) -> PyObject* {
         auto item = (const Class*)in;
-        dtype_arg<Class> arg(*item);
-        return arg.py().release().ptr();
+        return py::cast(*item).release().ptr();
     };
     arrfuncs.setitem = [](PyObject* in, void* out, void* arr) {
-        dtype_arg<Class> arg(in);
-        PY_ASSERT_EX(arg.load(true), "Could not convert");
+        dtype_caster<Class> caster;
+        PY_ASSERT_EX(caster.load(in, true), "Could not convert");
         // Cut out the middle-man?
-        *(Class*)out = *arg.ptr();
+        *(Class*)out = caster;
         return 0;
     };
     arrfuncs.copyswap = [](void* dst, void* src, int swap, void* arr) {
