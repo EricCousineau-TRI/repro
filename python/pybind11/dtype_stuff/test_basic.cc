@@ -6,6 +6,12 @@
 
 #include <Eigen/Dense>
 
+#include <pybind11/pybind11.h>
+#include <pybind11/embed.h>
+#include <pybind11/operators.h>
+#include <pybind11/eigen.h>
+#include <pybind11/numpy_dtype_user.h>
+
 using std::pow;
 using std::cerr;
 using std::cout;
@@ -16,21 +22,6 @@ using Eigen::Ref;
 
 template <typename T>
 using MatrixX = Eigen::Matrix<T, -1, -1>;
-
-#include <pybind11/pybind11.h>
-#include <pybind11/embed.h>
-#include <pybind11/operators.h>
-#include <pybind11/eigen.h>
-#include <pybind11/numpy_dtype_user.h>
-
-// #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-// #include <numpy/arrayobject.h>
-// #include <numpy/ufuncobject.h>
-// #include <numpy/ndarraytypes.h>
-
-// #include "dtype_user.h"
-// #include "ufunc_utility.h"
-// #include "ufunc_op.h"
 
 namespace py = pybind11;
 
