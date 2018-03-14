@@ -184,7 +184,7 @@ cc_binary(
     name = "tests/pybind11_tests.so",
     srcs = [
         "tests/pybind11_tests.cpp",
-        "tests/test_numpy_dtype_user.cpp",
+#        "tests/test_numpy_dtype_user.cpp",
     ],
     linkstatic = 0,
     linkshared = 1,
@@ -195,27 +195,31 @@ cc_binary(
     ],
 )
 
+#py_library(
+#    name = "tests",
+#    imports = ["tests"],
+#    data = [
+#        "tests/pybind11_tests.so",
+#    ],
+#)
+
+load(":orig_tests.bzl", "symlink")
+
+symlink(
+    name = "tests/libpybind11_tests.so",
+    actual = "tests/pybind11_tests.so",
+)
+
 cc_binary(
-    name = "tests/numpy_dtype_user.so",
-    linkstatic = 0,
-    linkshared = 1,
+    name = "tests/test_numpy_dtype_user",
+    srcs = [
+        "tests/test_numpy_dtype_user.cpp",
+        "tests/pybind11_tests.cpp",
+    ],
+    data = ["tests/test_numpy_dtype_user.py"],
     deps = [
         ":include",
         "@python",
         "@numpy",
     ],
-)
-
-py_library(
-    name = "tests",
-    imports = ["tests"],
-    data = [
-        "tests/pybind11_tests.so",
-    ],
-)
-
-py_binary(
-    name = "tests/test_numpy_dtype_user",
-    srcs = ["tests/test_numpy_dtype_user.py"],
-    deps = [":tests"],
 )
