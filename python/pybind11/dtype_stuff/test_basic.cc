@@ -252,10 +252,11 @@ class dtype_class : public py::class_<Class_> {
       std::cerr << "Death\n";
       exit(100);
     };
-    cerr << "tp_repr" << ClassObject_Type.tp_repr << "\n";
+    cerr << "tp_repr" << (void*)ClassObject_Type.tp_repr << "\n";
     ClassObject_Type.tp_new = &ClassObject::tp_new;
     ClassObject_Type.tp_name = name;  // Er... scope?
     ClassObject_Type.tp_basicsize = sizeof(ClassObject);
+    ClassObject_Type.tp_getset = 0;
     // ClassObject_Type.tp_getattro = PyObject_GenericGetAttr;
     // ClassObject_Type.tp_setattro = PyObject_GenericSetAttr;
     ClassObject_Type.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HEAPTYPE;
