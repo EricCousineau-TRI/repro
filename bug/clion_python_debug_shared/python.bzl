@@ -1,29 +1,7 @@
 # -*- mode: python -*-
 # vi: set ft=python :
 
-"""
-Finds local system Python headers and libraries using python-config and
-makes them available to be used as a C/C++ dependency.
-
-Example:
-    WORKSPACE:
-        load("//tools:python.bzl", "python_repository")
-        python_repository(
-            name = "foo",
-            version = "2.7",
-        )
-
-    BUILD:
-        cc_library(
-            name = "foobar",
-            deps = ["@foo//:python"],
-            srcs = ["bar.cc"],
-        )
-
-Arguments:
-    name: A unique name for this rule.
-    version: The version of Python headers and libraries to be found.
-"""
+# Derived from RobotLocomotion/drake's Pyton rules.
 
 def _impl(repository_ctx):
     python_config = repository_ctx.which("python{}-config".format(
@@ -76,6 +54,8 @@ def _impl(repository_ctx):
             linkopts[i - 1] += " " + linkopts.pop(i)
 
     prefix = repository_ctx.execute([python_config, "--prefix"]).stdout.strip()
+
+    # If Python is compiled with `--enable-shared`.
     linkopts += ["-L{}/lib".format(prefix)]
 
     file_content = """
@@ -95,15 +75,3 @@ python_repository = repository_rule(
     attrs = {"version": attr.string(default = "2.7")},
     local = True,
 )
-
-def py_test_simple(name, srcs = [], **kwargs):
-    py_main = "test/{}.py".format(name)
-    native.py_test(
-        name = name,
-        srcs = [
-            py_main,
-            ] + srcs,
-        main = py_main,
-        **kwargs
-    )
-

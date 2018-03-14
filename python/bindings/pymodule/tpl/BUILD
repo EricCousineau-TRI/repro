@@ -20,13 +20,13 @@ py_library(
 #     ],
 # )
 
-py_library(
-    name = "tpl",  # This is the package's name.
-    deps = [
-        ":scalar_type",
-    ],
-    visibility = ["//visibility:public"],
-)
+#py_library(
+#    name = "tpl",  # This is the package's name.
+#    deps = [
+#        ":scalar_type",
+#    ],
+#    visibility = ["//visibility:public"],
+#)
 
 pybind11_module(
     name = "ownership",

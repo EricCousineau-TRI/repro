@@ -32,6 +32,7 @@ def _impl(repository_ctx):
 
     if not python:
         fail("Could NOT find python{}".format(repository_ctx.attr.version))
+    print(python)
 
     result = repository_ctx.execute([
         python,
@@ -41,8 +42,9 @@ def _impl(repository_ctx):
 
     if result.return_code != 0:
         fail("Could NOT determine NumPy include", attr=result.stderr)
-
-    source = repository_ctx.path(result.stdout.strip())
+    out = result.stdout.strip()
+    # If there's an issue with `libpython2.7`, it's because it's not RPATHd.
+    source = repository_ctx.path(out)
     destination = repository_ctx.path("include")
     repository_ctx.symlink(source, destination)
 

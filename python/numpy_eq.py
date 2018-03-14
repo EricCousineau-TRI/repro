@@ -1,7 +1,5 @@
 # Purpose: See if there's a way to not have == return a logical.
-import inspect
 import numpy as np
-import sys
 
 class Custom(object):
     def __init__(self, value):
@@ -9,9 +7,6 @@ class Custom(object):
 
     def __eq__(self, rhs):
         return "eq({}, {})".format(self, rhs)
-
-    def __lt__(self, rhs):
-        return "lhs({}, {})".format(self, rhs)
 
     def __str__(self):
         return repr(self.value)
@@ -21,31 +16,34 @@ class Custom(object):
 
 
 def main():
-    eq = lambda a, b: a == b
-    generic_equal = np.frompyfunc(eq, 2, 1)
-
+    # Scalar case works.
     a = Custom('a')
-    b = Custom('b')
-    print(a == b)
-
-    av = np.array([a, b])
-    bv = np.array([b, a])
-
-    print(generic_equal(av, bv))
-    print(np.equal(av, bv))
-
+    print(a == a)
+    # Not what we want.
+    av = np.array([a, a])
+    print(np.equal(av, av))
+    # Try custom ufunc:
+    generic_equal = np.frompyfunc(lambda a, b: a == b, 2, 1)
+    print(generic_equal(av, av))
+    # Try replacing.
     np.set_numeric_ops(equal=generic_equal)
-    print(np.equal(av, bv))
-    print(av == bv)
+    print(av == av)
+    print(np.equal(av, av))
+    # Now replace original ufunc.
     np.equal = generic_equal
-    print(np.equal(av, bv))
+    print(np.equal(av, av))
 
 def exec_lines(func):
+    import inspect
+    import sys
+
     lines, _ = inspect.getsourcelines(func)
     cur = {}
     for line in lines[1:]:
-        line_trim = line[4:]
-        print(">> {}".format(line_trim.rstrip()))
+        line_trim = line[4:].rstrip()
+        if not line_trim:
+            continue
+        print(">>> {}".format(line_trim))
         exec line_trim in globals(), cur
 
 exec_lines(main)

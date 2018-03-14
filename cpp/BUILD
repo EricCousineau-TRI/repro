@@ -347,6 +347,7 @@ cc_binary(
 cc_library(
     name = "wrap_function",
     hdrs = ["wrap_function.h"],
+    deps = [":type_pack"],
 )
 
 cc_binary(
@@ -372,4 +373,9 @@ cc_binary(
 cc_binary(
     name = "friend_stuff",
     srcs = ["friend_stuff.cc"],
+)
+
+cc_binary(
+    name = "func_ptr_c",
+    srcs = ["func_ptr_c.cc"],
 )
