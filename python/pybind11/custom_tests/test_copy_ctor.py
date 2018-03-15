@@ -1,9 +1,11 @@
 import copy_ctor as m
 
-def check():
+def main():
     c = m.Custom(1)
-    print("---")
     c2 = m.Custom(c)
 
-def main():
-    check()
+import trace, sys
+sys.stdout = sys.stderr
+tracer = trace.Trace(ignoredirs=sys.path, trace=1, count=0)
+# N.B. `run` seems to use the wrong locals / globals...
+tracer.runfunc(main)

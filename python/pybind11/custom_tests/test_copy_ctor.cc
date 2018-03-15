@@ -39,26 +39,12 @@ int main(int argc, char* argv[]) {
         .def(py::init<Custom>())
         .def(py::init<int>());
 
-    py::dict globals = py::globals();
-    globals["m"] = m;
-
-    // py::str file = ;
-    // py::print(file);
-    // py::eval_file(file);
+    // Execute it new set of globals?
     py::exec(R"""(
 import imp
-
-def _main_impl():
-    m = imp.load_source(
-        "test_copy_ctor",
-        "python/pybind11/custom_tests/test_copy_ctor.py")
-    m.main()
-
-import trace, sys
-sys.stdout = sys.stderr
-tracer = trace.Trace(ignoredirs=sys.path, trace=1, count=0)
-print(tracer)
-tracer.run('_main_impl()')
+imp.load_source(
+   "test_copy_ctor",
+   "python/pybind11/custom_tests/test_copy_ctor.py")
 )""");
 
     cout << "[ Done ]" << endl;
