@@ -22,9 +22,16 @@ void bind_ConstructorStats(py::module &m);
 struct Custom {
   Custom(const Custom& other)
       : value_(other.value_) {
-    py::print("wooh");
+    py::print("Custom");
   }
-  Custom(int value) : value_(value) {}
+  Custom(int value) : value_(value) {
+    py::print("int");
+  }
+
+  operator int() const {
+    py::print("cast");
+    return value_;
+  }
 
   int value_{};
 };
@@ -37,7 +44,9 @@ int main(int argc, char* argv[]) {
 
     py::class_<Custom>(m, "Custom")
         .def(py::init<Custom>())
-        .def(py::init<int>());
+        .def(py::init<int>())
+        .def("__int__", &Custom::operator int);
+    py::implicitly_convertible<int, Custom>();
 
     // Execute it new set of globals?
     py::exec(R"""(

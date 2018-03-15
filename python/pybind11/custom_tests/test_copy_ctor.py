@@ -3,6 +3,7 @@ import copy_ctor as m
 def main():
     c = m.Custom(1)
     c2 = m.Custom(c)
+    print(int(c))
 
 import trace, sys
 sys.stdout = sys.stderr
