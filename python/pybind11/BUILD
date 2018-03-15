@@ -179,6 +179,18 @@ cc_binary(
     deps = [":include"],
 )
 
+cc_binary(
+    name = "test_copy_ctor",
+    srcs = [
+         "custom_tests/test_copy_ctor.cc",
+         "tests/pybind11_tests.cpp",
+    ],
+    data = [
+        "custom_tests/test_copy_ctor.py",
+    ],
+    deps = [":include"],
+)
+
 # Original tests.
 cc_binary(
     name = "tests/pybind11_tests.so",
