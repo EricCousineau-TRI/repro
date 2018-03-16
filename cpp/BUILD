@@ -385,3 +385,8 @@ cc_binary(
     srcs = ["type_pack_stuff.cc"],
     deps = [":type_pack", ":name_trait"],
 )
+
+cc_binary(
+    name = "enum_ostream_overload",
+    srcs = ["enum_ostream_overload.cc"],
+)
