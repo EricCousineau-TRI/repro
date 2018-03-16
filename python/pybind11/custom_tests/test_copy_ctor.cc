@@ -43,8 +43,8 @@ int main(int argc, char* argv[]) {
     bind_ConstructorStats(m);
 
     py::class_<Custom>(m, "Custom")
-        .def(py::init<Custom>())
         .def(py::init<int>())
+        .def(py::init<Custom>())
         .def("__int__", &Custom::operator int);
     py::implicitly_convertible<int, Custom>();
 

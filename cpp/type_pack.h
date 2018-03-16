@@ -1,5 +1,6 @@
 #pragma once
 
+#include <typeindex>
 #include <utility>
 
 template <size_t N, size_t K, typename T, typename ... Ts>

@@ -379,3 +379,9 @@ cc_binary(
     name = "func_ptr_c",
     srcs = ["func_ptr_c.cc"],
 )
+
+cc_binary(
+    name = "type_pack_stuff",
+    srcs = ["type_pack_stuff.cc"],
+    deps = [":type_pack", ":name_trait"],
+)
