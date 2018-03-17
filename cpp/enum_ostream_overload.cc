@@ -26,6 +26,7 @@ ostream& operator<<(ostream& os, ThatThing x) {
 int main() {
   cout << ValueA << endl;
   cout << to_string(ValueA) << endl;
+  cout << to_string(ThatThing::ValueA) << endl;
   cout << ValueB << endl;
   cout << to_string(ValueB) << endl;
   cout << 10 << endl;
