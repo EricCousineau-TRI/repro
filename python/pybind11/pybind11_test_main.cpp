@@ -18,6 +18,9 @@ import pytest
 import sys
 import trace
 
+# For debug in CLion, PWD sucks. Override it.
+os.chdir(sys.argv[0] + ".runfiles/repro")
+# Change directory, and execute.
 os.chdir("python/pybind11/tests")
 tracer = trace.Trace(trace=1, count=0, ignoredirs=sys.path)
 tracer.run('pytest.main(args=sys.argv[1:])')
