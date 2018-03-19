@@ -63,6 +63,16 @@ py_binary(
 )
 
 cc_binary(
+    name = "test_rational_bin_cc",
+    srcs = ["test_rational_bin.cc"],
+    data = ["test_rational_bin"],
+    deps = [
+        "//python/pybind11:include",
+        "@python//:python",
+    ],
+)
+
+cc_binary(
     name = "test_issue_1288",
     srcs = ["test_issue_1288.cc"],
     deps = [

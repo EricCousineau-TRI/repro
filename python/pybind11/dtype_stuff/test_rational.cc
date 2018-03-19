@@ -940,10 +940,15 @@ PyArray_Descr npyrational_descr = {
     &npyrational_arrfuncs,  /* f */
 };
 
+void breakpoint() {
+    fprintf(stderr, "breakpoint\n");
+}
+
 #define DEFINE_CAST(From,To,statement) \
     static void \
     npycast_##From##_##To(void* from_, void* to_, npy_intp n, \
                           void* fromarr, void* toarr) { \
+        breakpoint(); \
         const From* from = (From*)from_; \
         To* to = (To*)to_; \
         npy_intp i; \
