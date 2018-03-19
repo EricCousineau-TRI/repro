@@ -63,3 +63,5 @@ xcode
 .cproject
 .project
 .settings
+
+.cache/
