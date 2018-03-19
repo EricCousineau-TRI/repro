@@ -12,6 +12,9 @@ cc_binary(
     srcs = ["test_rational.cc"],
     linkshared = 1,
     linkstatic = 0,
+    data = [
+        "test_rational_bin.py",
+    ],
     deps = [
         "//python/pybind11:include",
         "@python//:python",
@@ -65,7 +68,10 @@ py_binary(
 cc_binary(
     name = "test_rational_bin_cc",
     srcs = ["test_rational_bin.cc"],
-    data = ["test_rational_bin"],
+    data = [
+        "test_rational.so",
+        "test_rational_min.so",
+    ],
     deps = [
         "//python/pybind11:include",
         "@python//:python",
