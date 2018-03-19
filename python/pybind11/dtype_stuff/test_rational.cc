@@ -1234,7 +1234,7 @@ PyMODINIT_FUNC inittest_rational(void) {
     // REGISTER_INT_CASTS(8)
     // REGISTER_INT_CASTS(16)
     // REGISTER_INT_CASTS(32)
-    // REGISTER_INT_CASTS(64)
+     REGISTER_INT_CASTS(64)
     // REGISTER_CAST(rational,float,&npyrational_descr,NPY_FLOAT,0)
     // REGISTER_CAST(rational,double,&npyrational_descr,NPY_DOUBLE,1)
     // REGISTER_CAST(npy_bool,rational, PyArray_DescrFromType(NPY_BOOL),
