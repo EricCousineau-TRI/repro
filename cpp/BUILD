@@ -390,3 +390,8 @@ cc_binary(
     name = "enum_ostream_overload",
     srcs = ["enum_ostream_overload.cc"],
 )
+
+cc_binary(
+    name = "optional_stuff",
+    srcs = ["optional_stuff.cc"],
+)
