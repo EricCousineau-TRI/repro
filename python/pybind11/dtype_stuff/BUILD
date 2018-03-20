@@ -87,3 +87,13 @@ cc_binary(
         "@numpy",
     ],
 )
+
+cc_binary(
+    name = "test_issue_1328",
+    srcs = ["test_issue_1328.cc"],
+    deps = [
+        "//python/pybind11:include",
+        "@python//:python",
+        "@numpy",
+    ],
+)
