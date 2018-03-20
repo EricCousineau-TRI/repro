@@ -8,6 +8,7 @@ int main(int argc, char** argv) {
   py::list py_argv;
   for (int i = 0; i < argc; ++i)
     py_argv.append(argv[i]);
+  py_argv.append("-s");
   py::module::import("sys").attr("argv") = py_argv;
 
   py::globals()["__file__"] = py_argv[0];

@@ -23,6 +23,7 @@ int main() {
   cout << py::detail::npy_format_descriptor<int64_t>::dtype()
           .attr("num").template cast<int>() << endl;
   cout << constants::NPY_LONGLONG_ << endl;
+  cout << constants::NPY_INT64_ << endl;
 
   // Get NumPy's interpretation (what should be used):
   cout << constants::NPY_LONG_ << endl;  // What we should be using.
