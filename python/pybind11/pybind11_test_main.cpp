@@ -19,6 +19,8 @@ import pytest
 import sys
 import trace
 
+sys.stdout = sys.stderr
+
 # For debug in CLion, PWD sucks. Override it.
 os.chdir(sys.argv[0] + ".runfiles/repro")
 # Change directory, and execute.
