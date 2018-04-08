@@ -97,3 +97,13 @@ cc_binary(
         "@numpy",
     ],
 )
+
+cc_binary(
+    name = "test_numpy_eq_8500",
+    srcs = ["test_numpy_eq_8500.cc"],
+    deps = [
+        "//python/pybind11:include",
+        "@python//:python",
+    ],
+    data = ["test_numpy_eq_8500.py"],
+)
