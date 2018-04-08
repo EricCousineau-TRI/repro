@@ -1,5 +1,8 @@
  # Purpose: Check why NumPy does weird things...
 import numpy as np
+import warnings
+
+warnings.simplefilter("default", DeprecationWarning)
 
 
 class NonConvertible(object):
