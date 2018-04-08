@@ -2,7 +2,8 @@
 import numpy as np
 import warnings
 
-warnings.simplefilter("default", DeprecationWarning)
+warnings.filterwarnings("default", category=DeprecationWarning, message="numpy equal will not")
+warnings.filterwarnings("default", category=DeprecationWarning, message="elementwise == comparison failed")
 
 
 class NonConvertible(object):
