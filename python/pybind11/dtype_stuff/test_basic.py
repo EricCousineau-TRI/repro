@@ -98,7 +98,8 @@ def check_mutate():
     print(av == av)
 
 def check_func():
-    def func(x):
+    def func():
+        x = np.array([Custom(1), Custom(2)])
         print("called: ", x)
         x += Custom(10)
         return x
