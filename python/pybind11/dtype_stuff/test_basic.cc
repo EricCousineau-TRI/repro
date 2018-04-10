@@ -43,6 +43,10 @@ public:
       stuff_ << 1, 2, 3;
       // cerr << "Construct\n";
     }
+
+    Custom(double value, const VectorXd& stuff)
+      : value_(value), stuff_(stuff) {}
+
     Custom(const Custom& other) {
       // cerr << "Construct\n";
       value_ = other.value_;
@@ -69,6 +73,8 @@ public:
     }
     Custom operator+(const Custom& rhs) const { return Custom(*this) += rhs.value_; }
     Custom operator-(const Custom& rhs) const { return value_ - rhs.value_; }
+
+    VectorXd stuff() const { return stuff_; }
 
 private:
     double value_{};
@@ -97,16 +103,17 @@ int main() {
     // it. Rather, use a custom thing.
     py_type
         .def(py::init<double>())
+        .def(py::init<double, const VectorXd&>())
         .def("value", &Custom::value)
         .def("incr", [](Custom* self) {
           cerr << "incr\n";
           *self += 10;
         })
         .def("__repr__", [](const Custom* self) {
-          return py::str("<Custom({})>").format(self->value());
+          return py::str("<Custom({} - {})>").format(self->value(), self->stuff());
         })
         .def("__str__", [](const Custom* self) {
-          return py::str("Custom({})").format(self->value());
+          return py::str("Custom({} - {})").format(self->value(), self->stuff());
         })
         .def("self", [](Custom* self) {
           return self;
@@ -132,11 +139,14 @@ int main() {
   m.def("call_func", [](py::function f) {
     using Func = std::function<MatrixX<Custom>(const MatrixX<Custom>&)>;
     auto f_cpp = py::cast<Func>(f);
-    MatrixX<Custom> value(1, 2);
-    value << Custom(1), Custom(2);
-    py::print("Call func");
     MatrixX<Custom> output;
-    output = f_cpp(value);
+    {
+      MatrixX<Custom> value(1, 2);
+      value << Custom(1), Custom(2);
+      py::print("Call func");
+      output = f_cpp(value);
+      cerr << "value: " << value.transpose() << endl;
+    }
     py::print("output: ", output);
   });
 

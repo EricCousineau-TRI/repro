@@ -97,6 +97,15 @@ def check_mutate():
     print(av)
     print(av == av)
 
+def check_copy():
+    x = np.array([Custom(1), Custom(2)])
+    y = np.copy(x)
+    print(x)
+    x[0] = Custom(10, [10, 20, 30])
+    print(x)
+    # Damn...
+    print(y)
+
 def check_func():
     def func(x):
         # x = np.array([Custom(1), Custom(2)])
@@ -124,7 +133,8 @@ subprocess.Popen(
     "export -p | sed 's# PWD=# OLD_PWD=#g' > /tmp/env.sh",
     shell=True)
 
-check_func()
+# check_func()
+check_copy()
 
 # import code
 # code.InteractiveConsole(locals=globals()).interact()
