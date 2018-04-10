@@ -17,7 +17,7 @@ int main() {
   char buffer[n];
   AutoDiffXd* value = reinterpret_cast<AutoDiffXd*>(buffer);
   memset(buffer, 0, n);
-  *value = AutoDiffXd(10, VectorXd::Constant(3, 10));
+  // *value = AutoDiffXd(10, VectorXd::Constant(3, 10));
   cout
       << "value: " << *value << " - "
       << value->derivatives().transpose() << endl;
