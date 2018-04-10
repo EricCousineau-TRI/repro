@@ -13,7 +13,8 @@ int main() {
   constexpr int n = sizeof(VectorXd);
   storage_for<VectorXd> buffer;
   VectorXd* value = reinterpret_cast<VectorXd*>(&buffer);
-  new (value) VectorXd(0);
+  memset(&buffer, 0, n);
+  // new (value) VectorXd(0);
   *value = VectorXd::Constant(3, 10);
   cout << "value: " << value->transpose() << endl;
   // delete value;
