@@ -10,7 +10,7 @@
 #include <pybind11/embed.h>
 #include <pybind11/operators.h>
 #include <pybind11/eigen.h>
-#include <pybind11/numpy_dtype_user.h>
+#include <pybind11/numpy_dtypes_user.h>
 
 using std::pow;
 using std::cerr;
@@ -96,15 +96,15 @@ int main() {
           return self;
         }, py::return_value_policy::reference)
         // Operators + ufuncs, with some just-operators (e.g. in-place)
-        .def_ufunc(py::self + py::self)
+        .def_loop(py::self + py::self)
         .def(py::self += py::self)
-        .def_ufunc(-py::self)
-        .def_ufunc(py::self == py::self)
-        .def_ufunc(py::self < py::self)
-        .def_ufunc(py::self * py::self)
-        .def_ufunc(py::self + py::self)
-        .def_ufunc_cast([](const Custom& in) -> double { return in; })
-        .def_ufunc_cast([](const double& in) -> Custom { return in; });
+        .def_loop(-py::self)
+        .def_loop(py::self == py::self)
+        .def_loop(py::self < py::self)
+        .def_loop(py::self * py::self)
+        .def_loop(py::self + py::self)
+        .def_loop_cast([](const Custom& in) -> double { return in; })
+        .def_loop_cast([](const double& in) -> Custom { return in; });
   }
 
   // Define a mutating function.
