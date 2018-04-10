@@ -16,6 +16,7 @@ int main() {
   new (value) VectorXd(0);
   *value = VectorXd::Constant(3, 10);
   cout << "value: " << value->transpose() << endl;
-  delete value;
+  // delete value;
+  value->~VectorXd();
   return 0;
 }
