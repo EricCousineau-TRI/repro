@@ -97,18 +97,26 @@ def check_mutate():
     print(av)
     print(av == av)
 
+def check_func():
+    def func(x):
+        print("called: ", x)
+        x += Custom(10)
+        return x
+    call_func(func)
+
 # check_meta()
 
 # check_rational()
 # check_bad()
 # check_zero()
-check_op()
+# check_op()
 # check_id()
 # check_op_min()
 
 # check_dtor()
 
-check_mutate()
+# check_mutate()
+check_func()
 
-import code
-code.InteractiveConsole(locals=globals()).interact()
+# import code
+# code.InteractiveConsole(locals=globals()).interact()

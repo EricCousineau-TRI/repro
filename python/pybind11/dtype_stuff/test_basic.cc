@@ -10,6 +10,8 @@
 #include <pybind11/embed.h>
 #include <pybind11/operators.h>
 #include <pybind11/eigen.h>
+#include "pybind11/functional.h"
+#include <pybind11/stl.h>
 #include <pybind11/numpy_dtypes_user.h>
 
 using std::pow;
@@ -110,6 +112,17 @@ int main() {
   // Define a mutating function.
   m.def("mutate", [](Ref<MatrixX<Custom>> value) {
     value.array() += Custom(100);
+  });
+
+  // Test `std::function` stuff.
+  m.def("call_func", [](py::function f) {
+    using Func = std::function<MatrixX<Custom>(const MatrixX<Custom>&)>;
+    auto f_cpp = py::cast<Func>(f);
+    MatrixX<Custom> value(1, 2);
+    value << Custom(1), Custom(2);
+    py::print("Call func");
+    value = f_cpp(value);
+    py::print("value: ", value);
   });
 
   py::str file = "python/pybind11/dtype_stuff/test_basic.py";
