@@ -30,15 +30,21 @@ namespace py = pybind11;
 class Custom {
 public:
     Custom() {
+      stuff_.resize(3);
+      stuff_ << 1, 2, 3;
       // cerr << "Construct\n";
     }
     ~Custom() {
       // cerr << "Destruct\n";
     }
     Custom(double value) : value_{value} {
+      stuff_.resize(3);
+      stuff_ << 1, 2, 3;
       // cerr << "Construct\n";
     }
     Custom(const Custom& other) {
+      stuff_.resize(3);
+      stuff_ << 1, 2, 3;
       // cerr << "Construct\n";
       value_ = other.value_;
     }
@@ -62,6 +68,7 @@ public:
 
 private:
     double value_{};
+    Eigen::VectorXd stuff_;
 };
 
 Custom pow(Custom a, Custom b) {

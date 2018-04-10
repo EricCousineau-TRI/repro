@@ -116,6 +116,12 @@ def check_func():
 # check_dtor()
 
 # check_mutate()
+
+import subprocess
+subprocess.Popen(
+    "export -p | sed 's# PWD=# OLD_PWD=#g' > /tmp/env.sh",
+    shell=True)
+
 check_func()
 
 # import code
