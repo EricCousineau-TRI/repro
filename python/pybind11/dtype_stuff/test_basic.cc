@@ -51,6 +51,7 @@ public:
     Custom& operator=(const Custom& other) {
       value_ = other.value_;
       stuff_ = other.stuff_;
+      return *this;
     }
     double value() const { return value_; }
 
@@ -86,7 +87,9 @@ int main() {
     constexpr int n = sizeof(VectorXd);
     char buffer[n];
     memset(buffer, 0, n);
-    VectorXd& value = *reinterpret_cast<VectorXd*>(buffer);
+    // VectorXd& value = *reinterpret_cast<VectorXd*>(buffer);
+    VectorXd value;
+    // new (&value) VectorXd(0);
     value = VectorXd::Constant(3, 10);
     cout << "value: " << value.transpose() << endl;
     // delete &value;
