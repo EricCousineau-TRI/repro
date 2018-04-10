@@ -116,6 +116,7 @@ def check_func():
 # check_dtor()
 
 # check_mutate()
+sys.stdout = sys.stderr
 
 import subprocess
 subprocess.Popen(
