@@ -88,11 +88,11 @@ int main() {
     char buffer[n];
     memset(buffer, 0, n);
     // VectorXd& value = *reinterpret_cast<VectorXd*>(buffer);
-    VectorXd value;
+    VectorXd& value = *new VectorXd(0);
     // new (&value) VectorXd(0);
     value = VectorXd::Constant(3, 10);
     cout << "value: " << value.transpose() << endl;
-    // delete &value;
+    delete &value;
     return 0;
   }
 
