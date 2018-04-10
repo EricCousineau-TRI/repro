@@ -101,7 +101,7 @@ def check_func():
     def func(x):
         # x = np.array([Custom(1), Custom(2)])
         print("called: ", x)
-        x += (10)
+        x += Custom(10)
         return x
     call_func(func)
 
