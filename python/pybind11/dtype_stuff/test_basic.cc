@@ -24,6 +24,7 @@ using Eigen::Ref;
 
 template <typename T>
 using MatrixX = Eigen::Matrix<T, -1, -1>;
+using Eigen::VectorXd;
 
 namespace py = pybind11;
 
@@ -43,12 +44,14 @@ public:
       // cerr << "Construct\n";
     }
     Custom(const Custom& other) {
-      stuff_.resize(3);
-      stuff_ << 1, 2, 3;
       // cerr << "Construct\n";
       value_ = other.value_;
+      stuff_ = other.stuff_;
     }
-    Custom& operator=(const Custom&) = default;
+    Custom& operator=(const Custom& other) {
+      value_ = other.value_;
+      stuff_ = other.stuff_;
+    }
     double value() const { return value_; }
 
     operator double() const { return value_; }
@@ -68,7 +71,7 @@ public:
 
 private:
     double value_{};
-    Eigen::VectorXd stuff_;
+    VectorXd stuff_;
 };
 
 Custom pow(Custom a, Custom b) {
@@ -78,6 +81,18 @@ Custom pow(Custom a, Custom b) {
 PYBIND11_NUMPY_DTYPE_USER(Custom);
 
 int main() {
+  // Step 1: Ensure that Eigen plays well with starting with zero memory.
+  {
+    constexpr int n = sizeof(VectorXd);
+    char buffer[n];
+    memset(buffer, 0, n);
+    VectorXd& value = *reinterpret_cast<VectorXd*>(buffer);
+    value = VectorXd::Constant(3, 10);
+    cout << "value: " << value.transpose() << endl;
+    // delete &value;
+    return 0;
+  }
+
   py::scoped_interpreter guard;
 
   py::module m("__main__");

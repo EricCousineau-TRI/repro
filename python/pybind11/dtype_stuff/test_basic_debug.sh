@@ -9,5 +9,6 @@
     source_dir=${workspace}/bazel-${name}
     source /tmp/env.sh
     cd ${target_bin_path}.runfiles/${name}
-    valgrind --tool=memcheck --leak-check=full python ${target_bin_path}
+    valgrind --tool=memcheck --leak-check=full ${target_bin_path}
+    # gdb --directory ${source_dir} ${target_bin_path}
 )
