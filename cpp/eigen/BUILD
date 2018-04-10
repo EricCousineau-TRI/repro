@@ -132,3 +132,9 @@ cc_binary(
     srcs = ["map_ref_copy.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "placement_new",
+    srcs = ["placement_new.cc"],
+    deps = ["@eigen//:eigen"],
+)

@@ -91,12 +91,12 @@ int main() {
     // char buffer[n];
     storage_for<VectorXd> buffer;
     // memset(&buffer, 0, n);
-    VectorXd& value = *reinterpret_cast<VectorXd*>(&buffer);
+    VectorXd* value = reinterpret_cast<VectorXd*>(&buffer);
     // VectorXd& value = *new VectorXd(0);
-    new (&value) VectorXd(0);
-    value = VectorXd::Constant(3, 10);
-    cout << "value: " << value.transpose() << endl;
-    delete &value;
+    new (value) VectorXd(0);
+    *value = VectorXd::Constant(3, 10);
+    cout << "value: " << value->transpose() << endl;
+    delete value;
     return 0;
   }
 
