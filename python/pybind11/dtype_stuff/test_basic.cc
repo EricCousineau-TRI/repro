@@ -135,8 +135,9 @@ int main() {
     MatrixX<Custom> value(1, 2);
     value << Custom(1), Custom(2);
     py::print("Call func");
-    value = f_cpp(value);
-    py::print("value: ", value);
+    MatrixX<Custom> output;
+    output = f_cpp(value);
+    py::print("output: ", output);
   });
 
   py::str file = "python/pybind11/dtype_stuff/test_basic.py";
