@@ -79,17 +79,21 @@ Custom pow(Custom a, Custom b) {
   return pow(a.value(), b.value());
 }
 
+template <typename T>
+using storage_for = typename std::aligned_storage<sizeof(T), alignof(T)>::type;
+
 PYBIND11_NUMPY_DTYPE_USER(Custom);
 
 int main() {
   // Step 1: Ensure that Eigen plays well with starting with zero memory.
   {
     constexpr int n = sizeof(VectorXd);
-    char buffer[n];
-    memset(buffer, 0, n);
-    // VectorXd& value = *reinterpret_cast<VectorXd*>(buffer);
-    VectorXd& value = *new VectorXd(0);
-    // new (&value) VectorXd(0);
+    // char buffer[n];
+    storage_for<VectorXd> buffer;
+    // memset(&buffer, 0, n);
+    VectorXd& value = *reinterpret_cast<VectorXd*>(&buffer);
+    // VectorXd& value = *new VectorXd(0);
+    new (&value) VectorXd(0);
     value = VectorXd::Constant(3, 10);
     cout << "value: " << value.transpose() << endl;
     delete &value;
