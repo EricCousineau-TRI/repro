@@ -130,11 +130,12 @@ int main() {
 
   // Test `std::function` stuff.
   m.def("call_func", [](py::function f) {
-    using Func = std::function<MatrixX<Custom>()>;
+    using Func = std::function<void(const MatrixX<Custom>&)>;
     auto f_cpp = py::cast<Func>(f);
-    MatrixX<Custom> value;
+    MatrixX<Custom> value(1, 2);
+    value << Custom(1), Custom(2);
     py::print("Call func");
-    value = f_cpp();
+    f_cpp(value);
     py::print("value: ", value);
   });
 
