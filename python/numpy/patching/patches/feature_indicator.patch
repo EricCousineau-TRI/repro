@@ -1,0 +1,37 @@
+From 60394949b91aec9c0d451fe10e8632e37e494d11 Mon Sep 17 00:00:00 2001
+From: Eric Cousineau <eric.cousineau@tri.global>
+Date: Tue, 10 Apr 2018 20:37:41 -0400
+Subject: [PATCH] dev MAINT: Indicate what development patches / features are
+ present
+
+---
+ numpy/lib/_version.py | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/numpy/lib/_version.py b/numpy/lib/_version.py
+index 54b9c1d..867699d 100644
+--- a/numpy/lib/_version.py
++++ b/numpy/lib/_version.py
+@@ -12,7 +12,7 @@ import re
+ from numpy.compat import basestring
+ 
+ 
+-__all__ = ['NumpyVersion']
++__all__ = ['NumpyVersion', 'dev_patch_features']
+ 
+ 
+ class NumpyVersion():
+@@ -154,3 +154,10 @@ class NumpyVersion():
+ 
+     def __repr(self):
+         return "NumpyVersion(%s)" % self.vstring
++
++
++# Indicates what patch features are present for the present NumPy distribution
++# when the given distribution is not mainstream.
++dev_patch_features = [
++    'prefer_user_copyswap',
++]
+-- 
+2.7.4
+

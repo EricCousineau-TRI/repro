@@ -67,17 +67,21 @@ else:
     else:
         np_git_rev = np_ver
 
-fork = "https://github.com/EricCousineau-TRI/numpy"
+fork = "https://github.com/numpy/numpy"
 feature_commit_attempts = [
-    '7e0ca4b',  # 1.11.0
-    '71de985',  # `master` (1.15.0.dev0+40ef8a6)
+    'patches/feature_v1.11.0.patch',
+    'patches/feature_v1.15.0.dev0+40ef8a6.patch',
 ]
-simple_commits = [
-    '6039494',  # add `dev_patch_features` to `np.lib`
-]
+indicator_commit = 'patches/feature_indicator.patch'
 
 # Clone fork
 cd(dirname(__file__))
+cur_dir = pwd()
+
+def apply_patch_cmd(rel):
+    patch_path = os.path.join(cur_dir, rel)
+    return "git am --committer-date-is-author-date < {}".format(patch_path)
+
 mkcd("tmp/patch_{}".format(np_ver))
 if isdir("numpy"):
     cd("numpy")
@@ -89,17 +93,18 @@ else:
     call("git checkout -B tmp_patch {}".format(np_git_rev))
 
 good = False
-for attempt in feature_commit_attempts:
-    if call_status("git cherry-pick {}".format(attempt)) == 0:
+# Try out commits in order
+for commit in feature_commit_attempts:
+    if call_status(apply_patch_cmd(commit)) == 0:
         good = True
         break
     else:
-        call("git cherry-pick --abort")
+        call("git am --abort")
 if not good:
-    raise Exception("Could not apply patch")
+    raise Exception(
+        "Could not apply any patch. Please try to resolve merge conflict.")
 
-for commit in simple_commits:
-    call("git cherry-pick {}".format(commit))
+call(apply_patch_cmd(indicator_commit))
 
 # Virtualenv
 mkcd("../env")
