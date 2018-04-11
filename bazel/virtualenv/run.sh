@@ -18,5 +18,7 @@ python -c 'from python_pkg import some_func; print(some_func())'
 
 (
     cd bazel_pkg
+    bazel clean
     bazel run :python_pkg_test
+    bazel test :python_pkg_test
 )
