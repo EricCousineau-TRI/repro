@@ -62,7 +62,10 @@ if args.version is None:
     np_git_rev = subshell(python + " -c 'import numpy as np; print(np.version.git_revision)'")
 else:
     np_ver = args.version
-    np_git_rev = "v" + args.version
+    if np_ver[0] in "0123456789":
+        np_git_rev = "v" + args.version
+    else:
+        np_git_rev = np_ver
 
 fork = "https://github.com/EricCousineau-TRI/numpy"
 feature_commit_attempts = [
