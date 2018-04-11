@@ -133,8 +133,8 @@ subprocess.Popen(
     "export -p | sed 's# PWD=# OLD_PWD=#g' > /tmp/env.sh",
     shell=True)
 
-# check_func()
-check_copy()
+check_func()
+# check_copy()
 
 # import code
 # code.InteractiveConsole(locals=globals()).interact()
