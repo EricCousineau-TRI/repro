@@ -5,6 +5,6 @@ mkdir build
 
 virtualenv --system-site-packages build
 source build/bin/activate
-python setup.py install
+python setup.py -v install
 
 python cos_module_np_example.py
