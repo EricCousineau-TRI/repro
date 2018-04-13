@@ -44,13 +44,12 @@ def call_status(cmd):
 
 def source(file):
     # Hoist environment post-sourcing of a bash file into this process.
-    call("""
+    raw = subprocess.check_output("""
         source {};
-        python -c 'import os, pickle; pickle.dump(dict(os.environ), open("env.pkl", "wb"))'
-    """.format(file))
-    with open('env.pkl', 'rb') as f:
-        env = pickle.load(f)
-        os.environ.update(env)
+        python -c 'import os, pickle, sys; sys.stdout.write(pickle.dumps(dict(os.environ)))'
+    """.format(file), shell=True, executable="/bin/bash")
+    env = pickle.loads(raw)
+    os.environ.update(env)
 
 if args.python is None:
     python = subshell("which python")
