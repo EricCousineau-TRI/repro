@@ -1,6 +1,6 @@
-From 60394949b91aec9c0d451fe10e8632e37e494d11 Mon Sep 17 00:00:00 2001
+From 3cba415d2b7436fed9c7596b1dc6ad2f85f3d516 Mon Sep 17 00:00:00 2001
 From: Eric Cousineau <eric.cousineau@tri.global>
-Date: Tue, 10 Apr 2018 20:37:41 -0400
+Date: Fri, 13 Apr 2018 15:41:26 -0400
 Subject: [PATCH] dev MAINT: Indicate what development patches / features are
  present
 
@@ -9,7 +9,7 @@ Subject: [PATCH] dev MAINT: Indicate what development patches / features are
  1 file changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/numpy/lib/_version.py b/numpy/lib/_version.py
-index 54b9c1d..867699d 100644
+index 54b9c1d..3f9fe46 100644
 --- a/numpy/lib/_version.py
 +++ b/numpy/lib/_version.py
 @@ -12,7 +12,7 @@ import re
@@ -29,9 +29,9 @@ index 54b9c1d..867699d 100644
 +
 +# Indicates what patch features are present for the present NumPy distribution
 +# when the given distribution is not mainstream.
-+dev_patch_features = [
-+    'prefer_user_copyswap',
-+]
++dev_patch_features = []
++dev_patch_features.append('prefer_user_copyswap')
++dev_patch_features.append('fix_9351')
 -- 
 2.7.4
 

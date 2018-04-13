@@ -73,7 +73,7 @@ feature_commit_attempts = [
     'patches/feature_v1.11.0.patch',
     'patches/feature_v1.15.0.dev0+3ec8875.patch',
 ]
-indicator_commit = 'patches/feature_indicator.patch'
+dev_patch_features_commit = 'patches/dev_patch_features.patch'
 fix_9351_commit = 'patches/fix_9351_v1.13.1.x.patch'
 
 # Clone fork
@@ -116,8 +116,8 @@ if not good:
     raise Exception(
         "Could not apply any patch. Please try to resolve merge conflict.")
 
-apply_patch(indicator_commit)
 try_apply_patch(fix_9351_commit)
+apply_patch(dev_patch_features_commit)
 
 # Virtualenv
 mkcd("../env")
