@@ -5,7 +5,8 @@ import sys
 class Unknown(object): pass
 
 def check_zero():
-    a0 = np.zeros((2, 2), Custom)
+    # a0 = np.zeros((2, 2), Custom)  # Causes segfault with NPY_ITEM_REFCOUNT
+    a0 = np.zeros((2, 2)).astype(Custom)
     print(a0)
 
 def check_meta():
@@ -138,3 +139,4 @@ check_zero()
 
 # import code
 # code.InteractiveConsole(locals=globals()).interact()
+print("[ Done ]")
