@@ -127,7 +127,11 @@ int main() {
         .def_loop(py::self * py::self)
         .def_loop(py::self + py::self)
         .def_loop_cast([](const Custom& in) -> double { return in; })
-        .def_loop_cast([](const double& in) -> Custom { return in; });
+        .def_loop_cast([](const double& in) -> Custom { return in; })
+        // For reduction methods identity functions, for NumPy <= 1.14, you must define
+        // a cast from `bool` to this type for correct behavior for reduction.
+        // This may have been fixed by: https://github.com/numpy/numpy/pull/8952
+        .def_loop_cast([](const bool& in) -> Custom { return in; });
   }
 
   // Define a mutating function.
