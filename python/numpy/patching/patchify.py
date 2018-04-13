@@ -74,6 +74,7 @@ feature_commit_attempts = [
     'patches/feature_v1.15.0.dev0+3ec8875.patch',
 ]
 indicator_commit = 'patches/feature_indicator.patch'
+fix_9351_commit = 'patches/fix_9351_v1.13.1.x.patch'
 
 # Clone fork
 cd(dirname(__file__))
@@ -82,6 +83,18 @@ cur_dir = pwd()
 def apply_patch_cmd(rel):
     patch_path = os.path.join(cur_dir, rel)
     return "git am --committer-date-is-author-date < {}".format(patch_path)
+
+def apply_patch(rel):
+    return call(apply_patch_cmd(rel))
+
+def try_apply_patch(rel):
+    if call_status(apply_patch_cmd(rel)) == 0:
+        return True
+    else:
+        call("git am --abort")
+        return False
+
+# TODO(eric.cousineau): Figure out how to get a base version from a Git commit...
 
 mkcd("tmp/patch_{}".format(np_ver))
 if isdir("numpy"):
@@ -96,16 +109,15 @@ else:
 good = False
 # Try out commits in order
 for commit in feature_commit_attempts:
-    if call_status(apply_patch_cmd(commit)) == 0:
+    if try_apply_patch(commit):
         good = True
         break
-    else:
-        call("git am --abort")
 if not good:
     raise Exception(
         "Could not apply any patch. Please try to resolve merge conflict.")
 
-call(apply_patch_cmd(indicator_commit))
+apply_patch(indicator_commit)
+try_apply_patch(fix_9351_commit)
 
 # Virtualenv
 mkcd("../env")
@@ -115,18 +127,17 @@ source("bin/activate")
 os.environ["NUMPY_PATCH"] = "1"
 
 # Build
-def has_patch():
-    status = call_status("""
-        python -c 'import numpy as np; has = "prefer_user_copyswap" in getattr(np.lib, "dev_patch_features", []); exit(not has)'
-    """)
-    return status == 0
 cd("..")
-if not has_patch():
-    cd("numpy")
-    call("python setup.py build -j 8 install")
-    cd("..")
-    # Test
-    call("python -c 'import numpy; numpy.test()'")
+
+cd("numpy")
+call("python setup.py build -j 8 install")
+cd("..")
+# Ensure we have the patch.
+call("""python -c '
+import numpy as np; has = "prefer_user_copyswap" in getattr(np.lib, "dev_patch_features", []);
+exit(not has)'""")
+# Test
+call("python -c 'import numpy; numpy.test()'")
 
 # Test `pybind11`
 pybind11 = "/home/eacousineau/proj/tri/repo/repro/externals/pybind11"

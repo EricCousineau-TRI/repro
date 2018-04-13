@@ -1,0 +1,77 @@
+From 074770f9446dd4d2bfe3c0d64c31b907b4d885c7 Mon Sep 17 00:00:00 2001
+From: Eric Wieser <wieser.eric@gmail.com>
+Date: Sun, 2 Jul 2017 22:29:44 +0100
+Subject: [PATCH] BUG: Prevent hangs traversing ufunc userloop linked lists
+
+Fixes gh-9351
+---
+ numpy/core/src/umath/ufunc_type_resolution.c | 15 +++++++--------
+ numpy/core/tests/test_ufunc.py               |  5 +++++
+ 2 files changed, 12 insertions(+), 8 deletions(-)
+
+diff --git a/numpy/core/src/umath/ufunc_type_resolution.c b/numpy/core/src/umath/ufunc_type_resolution.c
+index 3aa8f31..b3d0296 100644
+--- a/numpy/core/src/umath/ufunc_type_resolution.c
++++ b/numpy/core/src/umath/ufunc_type_resolution.c
+@@ -1306,8 +1306,9 @@ find_userloop(PyUFuncObject *ufunc,
+             if (obj == NULL) {
+                 continue;
+             }
+-            funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
+-            while (funcdata != NULL) {
++            for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
++                 funcdata != NULL;
++                 funcdata = funcdata->next) {
+                 int *types = funcdata->arg_types;
+ 
+                 for (j = 0; j < nargs; ++j) {
+@@ -1321,8 +1322,6 @@ find_userloop(PyUFuncObject *ufunc,
+                     *out_innerloopdata = funcdata->data;
+                     return 1;
+                 }
+-
+-                funcdata = funcdata->next;
+             }
+         }
+     }
+@@ -1793,8 +1792,10 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
+             if (obj == NULL) {
+                 continue;
+             }
+-            funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
+-            while (funcdata != NULL) {
++
++            for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
++                 funcdata != NULL;
++                 funcdata = funcdata->next) {
+                 int *types = funcdata->arg_types;
+                 int matched = 1;
+ 
+@@ -1839,8 +1840,6 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
+                     case -1:
+                         return -1;
+                 }
+-
+-                funcdata = funcdata->next;
+             }
+         }
+     }
+diff --git a/numpy/core/tests/test_ufunc.py b/numpy/core/tests/test_ufunc.py
+index 9c49932..d7c3374 100644
+--- a/numpy/core/tests/test_ufunc.py
++++ b/numpy/core/tests/test_ufunc.py
+@@ -1011,6 +1011,11 @@ class TestUfunc(TestCase):
+             dtype=rational)
+         assert_equal(result, expected)
+ 
++    def test_custom_ufunc_forced_sig(self):
++        # gh-9351 - looking for a non-first userloop would previously hang
++        assert_raises(TypeError,
++            np.multiply, rational(1), 1, signature=(rational, int, None))
++
+     def test_custom_array_like(self):
+ 
+         class MyThing(object):
+-- 
+2.7.4
+
