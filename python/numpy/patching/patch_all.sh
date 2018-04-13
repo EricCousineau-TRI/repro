@@ -5,6 +5,7 @@ cd $(dirname $BASH_SOURCE)
 
 versions="1.11.0 1.12.0 1.13.0 1.14.0 1.14.1 master"
 
+mkdir -p tmp
 for version in $versions; do
     output="tmp/patch_${version}-output.txt"
     echo "Version ${version}: ${output}"

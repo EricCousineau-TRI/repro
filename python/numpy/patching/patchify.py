@@ -6,6 +6,7 @@ import pickle
 import sys
 import subprocess
 
+import os
 from os.path import dirname, isdir, isfile
 
 
@@ -70,7 +71,7 @@ else:
 fork = "https://github.com/numpy/numpy"
 feature_commit_attempts = [
     'patches/feature_v1.11.0.patch',
-    'patches/feature_v1.15.0.dev0+40ef8a6.patch',
+    'patches/feature_v1.15.0.dev0+3ec8875.patch',
 ]
 indicator_commit = 'patches/feature_indicator.patch'
 
@@ -111,6 +112,7 @@ mkcd("../env")
 if not isfile("bin/activate"):
     call("virtualenv --system-site-packages .")
 source("bin/activate")
+os.environ["NUMPY_PATCH"] = "1"
 
 # Build
 def has_patch():
