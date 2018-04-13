@@ -118,7 +118,6 @@ def check_func():
 
 # check_rational()
 # check_bad()
-# check_zero()
 # check_op()
 # check_id()
 # check_op_min()
@@ -134,7 +133,8 @@ subprocess.Popen(
     shell=True)
 
 check_func()
-# check_copy()
+check_copy()
+check_zero()
 
 # import code
 # code.InteractiveConsole(locals=globals()).interact()
