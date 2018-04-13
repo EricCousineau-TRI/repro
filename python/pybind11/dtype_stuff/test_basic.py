@@ -115,6 +115,10 @@ def check_func():
         return x
     call_func(func)
 
+def check_trace():
+    x = np.array([[Custom(1)]])
+    print(np.trace(x))
+
 # check_meta()
 
 # check_rational()
@@ -133,9 +137,11 @@ subprocess.Popen(
     "export -p | sed 's# PWD=# OLD_PWD=#g' > /tmp/env.sh",
     shell=True)
 
-check_func()
-check_copy()
-check_zero()
+# check_func()
+# check_copy()
+# check_zero()
+
+check_trace()
 
 # import code
 # code.InteractiveConsole(locals=globals()).interact()
