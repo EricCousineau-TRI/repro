@@ -213,13 +213,15 @@ cc_binary(
     name = "tests/pybind11_tests.so",
     srcs = [
         "tests/pybind11_tests.cpp",
-        "tests/test_numpy_dtypes_user.cpp",
+        # "tests/test_numpy_dtypes_user.cpp",
+        "tests/test_eigen.cpp",
     ],
     linkstatic = 0,
     linkshared = 1,
     data = [
         "tests/conftest.py",
-        "tests/test_numpy_dtypes_user.py",
+        # "tests/test_numpy_dtypes_user.py",
+        "tests/test_eigen.py",
     ],
     deps = [
         ":include",
@@ -228,15 +230,32 @@ cc_binary(
     ],
 )
 
+# cc_binary(
+#     name = "tests/test_numpy_dtypes_user",
+#     srcs = [
+#         "pybind11_test_main.cpp",
+#     ],
+#     data = [
+#         "tests/pybind11_tests.so",
+#     ],
+#     args = ["test_numpy_dtypes_user.py", "-s"],
+#     deps = [
+#         ":include",
+#         "@python",
+#         "@numpy",
+#     ],
+# )
+
+
 cc_binary(
-    name = "tests/test_numpy_dtypes_user",
+    name = "tests/test_eigen",
     srcs = [
         "pybind11_test_main.cpp",
     ],
     data = [
         "tests/pybind11_tests.so",
     ],
-    args = ["test_numpy_dtypes_user.py", "-s"],
+    args = ["test_eigen.py", "-s"],
     deps = [
         ":include",
         "@python",
