@@ -19,13 +19,18 @@ cc_binary(
     linkstatic = 1,
 )
 
+cc_import(
+    name = "example_lib",
+    hdrs = ["example_shared.h"],
+    shared_library = "libexample_lib.so",
+)
+
 cc_test(
     name = "example_cc",
     srcs = [
         "example.cc",
-        "example_shared.h",
-        "libexample_lib.so",
     ],
+    deps = [":example_lib"],
 )
 EOF
 
