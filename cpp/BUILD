@@ -395,3 +395,8 @@ cc_binary(
     name = "optional_stuff",
     srcs = ["optional_stuff.cc"],
 )
+
+cc_binary(
+    name = "unique_ptr_cast",
+    srcs = ["unique_ptr_cast.cc"],
+)
