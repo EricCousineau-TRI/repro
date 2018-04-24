@@ -1,6 +1,8 @@
 #!/bin/bash
 set -ux
 
+bazel version
+
 rm -rf build
 mkdir build && cd build
 
