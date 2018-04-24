@@ -56,6 +56,9 @@ class ChildDirect(Base):
 # Should only define these classes once.
 @TemplateClass.define('ChildTpl', param_list=BaseTpl.param_list)
 def ChildTpl(param, ChildTpl):
+    # N.B. We must redefine `ChildTpl`, because it will be used before the
+    # decorator returns :(
+    # print(ChildTpl)
     T, U = param
     Base = BaseTpl[T, U]
 
