@@ -5,6 +5,9 @@ from pymodule.tpl.cpp_template import TemplateClass, is_class_instantiation, is_
 
 from pymodule.tpl.test import _scalar_type_test as m
 
+import sys
+sys.stdout = sys.stderr
+
 # Default class.
 BaseTpl = m.BaseTpl
 Base = m.Base
@@ -28,7 +31,7 @@ def child_template_converter(ChildTpl, BaseTpl, param_list=BaseTpl.param_list):
         for from_param in param_list:
             if to_param == from_param:
                 continue
-            cls_to = ChildTpl.get_instantiation(to_param)
+            cls_to, _ = ChildTpl.get_instantiation(to_param)
             def converter_func(obj_from):
                 return cls_to(obj_from)
             converter.Add(to_param, from_param, converter_func)
@@ -69,8 +72,6 @@ Child, _ = ChildTpl.get_instantiation()
 print(Child)
 print(ChildTpl[int, float])
 print(ChildTpl[float, int])
-
-exit(10)
 
 # Check type identity persistence.
 assert Child == ChildTpl.get_instantiation()[0]
