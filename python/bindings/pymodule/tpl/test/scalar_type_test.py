@@ -36,7 +36,8 @@ def child_template_converter(ChildTpl, BaseTpl, param_list=BaseTpl.param_list):
 
 
 # Should only define these classes once.
-def _ChildTpl_instantiation(param):
+@TemplateClass.define('ChildTpl', param_list=BaseTpl.param_list)
+def ChildTpl(param):
     T, U = param
     Base = BaseTpl[T, U]
 
@@ -62,15 +63,14 @@ def _ChildTpl_instantiation(param):
 
     return Child
 
-
-ChildTpl = TemplateClass('ChildTpl')
-ChildTpl.add_instantiations(_ChildTpl_instantiation, BaseTpl.param_list)
 # Default instantiation.
 Child, _ = ChildTpl.get_instantiation()
 
 print(Child)
 print(ChildTpl[int, float])
 print(ChildTpl[float, int])
+
+exit(10)
 
 # Check type identity persistence.
 assert Child == ChildTpl.get_instantiation()[0]

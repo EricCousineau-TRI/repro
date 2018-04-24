@@ -152,6 +152,16 @@ class Template(object):
                 return generic
         return None
 
+    @classmethod
+    def define(cls, name, param_list, *args, **kwargs):
+
+        def decorator(instantiation_func):
+            tpl = cls(name, *args, **kwargs)
+            tpl.add_instantiations(instantiation_func, param_list)
+            return tpl
+
+        return decorator
+
 
 def is_instantiation_of(obj, tpl):
     # TODO: Return parameters for a given instantiation?
