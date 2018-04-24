@@ -66,18 +66,21 @@ def _ChildTpl_instantiation(param):
 ChildTpl = TemplateClass('ChildTpl')
 ChildTpl.add_instantiations(_ChildTpl_instantiation, BaseTpl.param_list)
 # Default instantiation.
-Child = ChildTpl.get_instantiation()
+Child, _ = ChildTpl.get_instantiation()
 
 print(Child)
 print(ChildTpl[int, float])
 print(ChildTpl[float, int])
 
 # Check type identity persistence.
-assert Child == ChildTpl.get_instantiation()
+assert Child == ChildTpl.get_instantiation()[0]
 assert ChildTpl[int, float] == ChildTpl[int, float]
 assert ChildTpl[int, float] != ChildTpl[float, int]
 
 # Check default instantiation.
+print("--------")
+print(Child)
+print(Base)
 assert issubclass(Child, Base)
 # Check other instantiation.
 assert issubclass(ChildTpl[float, int], BaseTpl[float, int])

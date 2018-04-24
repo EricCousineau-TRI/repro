@@ -169,7 +169,7 @@ PYBIND11_MODULE(_scalar_type_test, m) {
         .def("pure", &BaseT::pure)
         .def("optional", &BaseT::optional)
         .def("dispatch", &BaseT::dispatch);
-      py::object tpl = AddTemplateClass(m, "BaseTpl", py_class, "Base", param);
+      py::object tpl = AddTemplateClass(m, "BaseTpl", py_class, param, "Base");
 
       // Can't get `overload_cast` to infer `Return` type.
       // Have to explicitly cast... :(
