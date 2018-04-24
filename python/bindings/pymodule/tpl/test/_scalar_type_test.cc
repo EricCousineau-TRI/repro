@@ -37,10 +37,12 @@ typedef SimpleConverter<Base> BaseConverter;
 template <typename T, typename U>
 class Base {
  public:
-  Base(T t, U u, std::unique_ptr<BaseConverter> converter = nullptr)
-    : t_(t),
-      u_(u),
-      converter_(std::move(converter)) {
+  Base(T t, U u)
+    : Base(nullptr, t, u) {}
+
+ // protected:
+  Base(std::unique_ptr<BaseConverter> converter, T t, U u)
+    : t_(t), u_(u), converter_(std::move(converter)) {
     if (!converter_) {
       converter_.reset(new BaseConverter());
       typedef Base<double, int> A;
@@ -50,11 +52,12 @@ class Base {
     }
   }
 
+ public:
   template <typename Tc, typename Uc>
   Base(const Base<Tc, Uc>& other)
-    : Base(static_cast<T>(other.t_),
-           static_cast<U>(other.u_),
-           std::make_unique<BaseConverter>(*other.converter_)) {}
+    : Base(std::make_unique<BaseConverter>(*other.converter_),
+           static_cast<T>(other.t_),
+           static_cast<U>(other.u_)) {}
 
   virtual ~Base() {
     cout << "Base::~Base" << endl;
@@ -162,8 +165,12 @@ PYBIND11_MODULE(_scalar_type_test, m) {
       py::class_<BaseT, PyBaseT> py_class(
           m, (std::string("_") + typeid(BaseT).name()).c_str());
       py_class
-        .def(py::init<T, U, std::unique_ptr<BaseConverter>>(),
-             py::arg("t"), py::arg("u"), py::arg("converter") = nullptr)
+        .def(py::init<T, U>(), py::arg("t"), py::arg("u"))
+        .def(py::init(
+            [](std::unique_ptr<BaseConverter> converter, T t, U u) {
+              return new PyBaseT(std::move(converter), t, u);
+            }),
+             py::arg("converter"), py::arg("t"), py::arg("u"))
         .def("t", &BaseT::t)
         .def("u", &BaseT::u)
         .def("pure", &BaseT::pure)

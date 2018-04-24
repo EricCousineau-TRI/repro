@@ -100,7 +100,7 @@ class Template(object):
             self, instantiation_func, param_list=None):
         assert param_list is not None
         for param in param_list:
-            self.add_instantiation(param, instantiation_func(param))
+            self.add_instantiation(param, instantiation_func(param, self))
 
     def use_generator(self, instantiation_func, cache=True):
         # Not useful, but eh.
@@ -175,6 +175,7 @@ class TemplateClass(Template):
         # Update class information.
         cls._is_tpl = True
         cls.__name__ = self._get_instantiation_name(param)
+        cls.__qualname__ = cls.__name__
         return param
 
 

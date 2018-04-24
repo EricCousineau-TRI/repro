@@ -12,6 +12,34 @@ sys.stdout = sys.stderr
 BaseTpl = m.BaseTpl
 Base = m.Base
 
+def child_template_converter(ChildTpl, BaseTpl, param_list=None):
+    if param_list is None:
+        param_list = BaseTpl.param_list
+    converter = BaseTpl.Converter()
+    for to_param in param_list:
+        for from_param in param_list:
+            if to_param == from_param:
+                continue
+            cls_to, _ = ChildTpl.get_instantiation(to_param)
+            def converter_func(obj_from):
+                return cls_to(obj_from)
+            converter.Add(to_param, from_param, converter_func)
+    return converter
+
+def scalar_converter_init(ChildTpl, BaseTpl):
+    def decorator(init_object):
+
+        def init_wrapped(self, *args, **kwargs):
+            if len(args) == 1 and is_instantiation_of(type(args[0]), ChildTpl):
+                init_object.init_copy(self, args[0])
+            else:
+                scalar_converter = child_template_converter(ChildTpl, BaseTpl)
+                init_object.init_normal(self, scalar_converter, *args, **kwargs)
+
+        return init_wrapped
+
+    return decorator
+
 print("---")
 # Test direct inheritance.
 class ChildDirect(Base):
@@ -25,42 +53,32 @@ class ChildDirect(Base):
         return 2.
 
 
-def child_template_converter(ChildTpl, BaseTpl, param_list=BaseTpl.param_list):
-    converter = BaseTpl.Converter()
-    for to_param in param_list:
-        for from_param in param_list:
-            if to_param == from_param:
-                continue
-            cls_to, _ = ChildTpl.get_instantiation(to_param)
-            def converter_func(obj_from):
-                return cls_to(obj_from)
-            converter.Add(to_param, from_param, converter_func)
-    return converter
-
-
 # Should only define these classes once.
 @TemplateClass.define('ChildTpl', param_list=BaseTpl.param_list)
-def ChildTpl(param):
+def ChildTpl(param, ChildTpl):
     T, U = param
     Base = BaseTpl[T, U]
 
     class Child(Base):
-        def __init__(self, *args, **kwargs):
-            if args and is_instantiation_of(type(args[0]), ChildTpl):
-                # Handle copy constructor overload.
-                Base.__init__(self, *args, **kwargs)
-            else:
-                self._init(*args, **kwargs)
+        @scalar_converter_init(ChildTpl, BaseTpl)
+        class __init__(object):
+            @staticmethod
+            def init_copy(self, other):
+                Base.__init__(self, other)
+                self.extra = 'copied'
 
-        def _init(self, t, u):
-            Base.__init__(
-                self, t, u, child_template_converter(ChildTpl, BaseTpl))
+            @staticmethod
+            def init_normal(self, scalar_converter, t, u):
+                Base.__init__(self, scalar_converter, t, u)
+                self.extra = 'normal'
 
         def pure(self, value):
+            print("py extra: ", self.extra)
             print("py: pure [{}]".format(type(self).__name__))
             return U(2 * value)
 
         def optional(self, value):
+            print("py extra: ", self.extra)
             print("py: optional [{}]".format(type(self).__name__))
             return U(3 * value)
 
