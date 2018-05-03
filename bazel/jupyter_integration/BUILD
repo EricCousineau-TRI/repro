@@ -1,4 +1,7 @@
-load(":jupyter.bzl", "py_jupyter_binary", "py_jupyter_test")
+load(":jupyter.bzl",
+    "py_jupyter_binary",
+    # "py_jupyter_test",
+)
 
 py_library(
     name = "my_library",
@@ -11,7 +14,7 @@ py_jupyter_binary(
     deps = [":my_library"],
 )
 
-py_jupyter_test(
-    name = "simple_test",
-    deps = [":my_library"],
-)
+# py_jupyter_test(
+#     name = "simple_notebook_test",
+#     deps = [":my_library"],
+# )
