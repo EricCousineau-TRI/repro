@@ -30,7 +30,11 @@ import sys
 cur_dir = os.path.dirname(__file__)
 notebook_file = "{notebook_file}"
 notebook_path = os.path.join(cur_dir, notebook_file)
-print(notebook_path)
+if not os.path.isfile(notebook_path):
+    # `name` may contain a subdirectory. Just use basename of file.
+    notebook_path = os.path.join(cur_dir, os.path.basename(notebook_file))
+# Failure mode: If user puts a slash in the `name` which does not match the
+# notebook's location. Meh.
 
 # Determine if this is being run as a test, or via `./run`.
 in_bazel = True
@@ -41,7 +45,11 @@ if "BAZEL_RUNFILES" in os.environ:
     os.chdir(os.environ["BAZEL_RUNFILES"])
     os.execvp("jupyter", ["jupyter", "notebook", notebook_path])
 else:
-    os.execvp("jupyter", ["jupyter", "nbconvert", "--execute", notebook_path])
+    # TODO(eric.cousineau): Just execute by importing Jupyter.
+    # http://nbconvert.readthedocs.io/en/latest/execute_api.html
+    os.execvp("jupyter", [
+        "jupyter", "nbconvert", "--to", "notebook",
+        "--execute", notebook_path])
 """
 
 def _py_jupyter_target(name, target, notebook = None, data = [], **kwargs):

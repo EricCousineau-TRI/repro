@@ -14,6 +14,11 @@ py_jupyter_binary(
     deps = [":my_library"],
 )
 
+py_jupyter_binary(
+    name = "subdir/simple_notebook",
+    deps = [":my_library"],
+)
+
 py_jupyter_test(
     name = "simple_notebook_test",
     deps = [":my_library"],
