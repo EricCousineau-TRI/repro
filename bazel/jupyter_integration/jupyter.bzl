@@ -36,7 +36,9 @@ if "BAZEL_RUNFILES" in os.environ:
     # We are running via `./run`; we should be able to run without conversion.
     in_bazel = False
     print("Running direct notebook")
-    exit(1)
+    os.chdir(os.environ["BAZEL_RUNFILES"])
+    subprocess.check_call(
+        ["jupyter", "notebook", notebook_path])
 else:
     subprocess.check_call(
         ["jupyter", "nbconvert", "--execute", notebook_path])

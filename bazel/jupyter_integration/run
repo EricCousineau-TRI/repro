@@ -15,6 +15,7 @@ import os
 import subprocess
 import sys
 
+workspace_name = "jupyter_integration"
 sys.dont_write_bytecode = True
 
 
@@ -131,7 +132,6 @@ if __name__ == "__main__":
 
     # Resolve workspace, absolute target path, and binary.
     workspace_abspath = os.path.dirname(os.path.abspath(__file__))
-    workspace_name = "repro"
     package_abspath = bazel_package_abspath(workspace_abspath)
     target_abspath = bazel_target_abspath(args.target, package_abspath)
     binary_abspath, runfiles_abspath = bazel_binary_info(
