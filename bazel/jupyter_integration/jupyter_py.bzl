@@ -45,7 +45,8 @@ if "BAZEL_RUNFILES" in os.environ:
     os.chdir(os.environ["BAZEL_RUNFILES"])
     os.execvp("jupyter", ["jupyter", "notebook", notebook_path])
 else:
-    # TODO(eric.cousineau): Just execute by importing Jupyter.
+    # TODO(eric.cousineau): Just execute by importing Jupyter, as writing to
+    # the runfiles directory is a bad idea for caching.
     # http://nbconvert.readthedocs.io/en/latest/execute_api.html
     os.execvp("jupyter", [
         "jupyter", "nbconvert", "--to", "notebook",

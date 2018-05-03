@@ -1,4 +1,4 @@
-load(":jupyter.bzl",
+load(":jupyter_py.bzl",
     "py_jupyter_binary",
     "py_jupyter_test",
 )
