@@ -17,6 +17,8 @@ generate_file = rule(
     implementation = _generate_file_impl,
 )
 
+# Generate file, because we wish to bake the file directly in, and not require
+# it be passed as an argument.
 jupyter_template = """
 #!/usr/bin/env python2
 
@@ -37,15 +39,12 @@ if "BAZEL_RUNFILES" in os.environ:
     in_bazel = False
     print("Running direct notebook")
     os.chdir(os.environ["BAZEL_RUNFILES"])
-    subprocess.check_call(
-        ["jupyter", "notebook", notebook_path])
+    os.execvp("jupyter", ["jupyter", "notebook", notebook_path])
 else:
-    subprocess.check_call(
-        ["jupyter", "nbconvert", "--execute", notebook_path])
+    os.execvp("jupyter", ["jupyter", "nbconvert", "--execute", notebook_path])
 """
 
-
-def py_jupyter_binary(name, notebook = None, data = [], **kwargs):
+def _py_jupyter_target(name, target, notebook = None, data = [], **kwargs):
     if notebook == None:
         notebook = name + ".ipynb"
     impl_file = "{}_run_notebook.py".format(name)
@@ -56,11 +55,23 @@ def py_jupyter_binary(name, notebook = None, data = [], **kwargs):
         name = impl_file,
         content = jupyter_template.format(**vars),
     )
-    native.py_binary(
+    target(
         name = name,
         srcs = [impl_file],
         main = impl_file,
         data = data + [
             notebook,
         ],
+        **kwargs)
+
+def py_jupyter_binary(name, **kwargs):
+    _py_jupyter_target(
+        name = name,
+        target = native.py_binary,
+        **kwargs)
+
+def py_jupyter_test(name, **kwargs):
+    _py_jupyter_target(
+        name = name,
+        target = native.py_test,
         **kwargs)
