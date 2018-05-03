@@ -45,8 +45,6 @@ else:
 """
 
 def _py_jupyter_target(name, target, notebook = None, data = [], **kwargs):
-    if notebook == None:
-        notebook = name + ".ipynb"
     impl_file = "{}_run_notebook.py".format(name)
     vars = dict(
         notebook_file = notebook,
@@ -64,14 +62,20 @@ def _py_jupyter_target(name, target, notebook = None, data = [], **kwargs):
         ],
         **kwargs)
 
-def py_jupyter_binary(name, **kwargs):
+def py_jupyter_binary(name, notebook = None, **kwargs):
+    if notebook == None:
+        notebook = name + ".ipynb"
     _py_jupyter_target(
         name = name,
         target = native.py_binary,
+        notebook = notebook,
         **kwargs)
 
-def py_jupyter_test(name, **kwargs):
+def py_jupyter_test(name, notebook = None, **kwargs):
+    if notebook == None:
+        notebook = "test/" + name + ".ipynb"
     _py_jupyter_target(
         name = name,
         target = native.py_test,
+        notebook = notebook,
         **kwargs)
