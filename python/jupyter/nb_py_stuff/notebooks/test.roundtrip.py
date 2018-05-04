@@ -13,7 +13,3 @@ print("I want nbformat 3")
 
 # Hola munda
 
-# <headingcell level=3>
-
-# Teh Markdown Plz
-
