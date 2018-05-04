@@ -3,15 +3,15 @@ set -eux -o pipefail
 
 cd $(dirname $0)
 
-./convert.py --from json --to py_v3 ./notebooks/test.{ipynb,py}
-./convert.py --from py_v3 --to json ./notebooks/test.{py,roundtrip.ipynb}
-./convert.py --from json --to py_v3 ./notebooks/test.roundtrip.{ipynb,py}
-./convert.py --from py_v3 --to json ./notebooks/test.{roundtrip.py,final.ipynb}
+./convert.py --from json --to py_v3 ./notebooks/test{.ipynb,.initial.py}
+./convert.py --from py_v3 --to json ./notebooks/test.initial{.py,.ipynb}
+./convert.py --from json --to py_v3 ./notebooks/test{.initial.ipynb,.final.py}
+./convert.py --from py_v3 --to json ./notebooks/test.final{.py,.ipynb}
 
 # Convert both roundtrips.
 (
-    git diff --no-index ./notebooks/test{,.roundtrip}.py
-    git diff --no-index ./notebooks/test{.roundtrip,.final}.ipynb
+    git diff --no-index ./notebooks/test{.initial,.final}.py
+    git diff --no-index ./notebooks/test{.initial,.final}.ipynb
 ) || {
     echo "FAILURE" >&2
     exit 1
