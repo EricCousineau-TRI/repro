@@ -7,7 +7,6 @@ from nbformat import v4
 from nbformat import v3
 from nbformat.converter import convert
 
-
 conversions = {
     "json": (4, v4.nbjson),
     "py_v3": (3, v3.nbpy),
