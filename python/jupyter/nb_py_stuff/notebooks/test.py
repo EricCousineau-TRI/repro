@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
+# <nbformat>3.0</nbformat>
 
-# coding: utf-8
-
-# In[1]:
-
+# <codecell>
 
 print("I want nbformat 3")
+
+# <codecell>
+
 
