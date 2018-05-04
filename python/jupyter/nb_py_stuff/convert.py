@@ -1,19 +1,42 @@
+#!/usr/bin/env python
+
+import argparse
 import os
 
-from nbformat.v4 import nbjson as nbjson4
-from nbformat.v3 import nbpy as nbpy3
+from nbformat import v4
+from nbformat import v3
 from nbformat.converter import convert
 
-# Load v4 notebook.
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-src = "notebooks/test.ipynb"
-dst = "notebooks/test.v3.py"
+def v4_json_to_v3_py(fin, fout):
+    nbin_v4 = v4.nbjson.read(fin)
+    nbin_v3 = convert(nbin_v4, to_version=3)
+    v3.nbpy.write(nbin_v3, fout)
 
-with open(src) as f:
-    src_nb4 = nbjson4.read(f)
 
-src_nb3 = convert(src_nb4, to_version=3)
+def v3_py_to_v4_json(fin, fout):
+    nbin_v3 = v3.nbpy.read(fin)
+    nbin_v4 = convert(nbin_v3, to_version=4)
+    v4.nbjson.write(nbin_v4, fout)
 
-with open(dst, 'w') as f:
-    dst_nb = nbpy3.write(src_nb3, f)
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--to_python", action="store_true")
+parser.add_argument("--from_python", action="store_true")
+parser.add_argument("input", type=argparse.FileType('r'))
+parser.add_argument("output", type=argparse.FileType('w'))
+
+args = parser.parse_args()
+
+assert args.to_python ^ args.from_python, "Must choose one format"
+
+func = None
+if args.to_python:
+    func = v4_json_to_v3_py
+elif args.from_python:
+    func = v3_py_to_v4_json
+
+assert func is not None
+
+func(args.input, args.output)
