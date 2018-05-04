@@ -8,35 +8,24 @@ from nbformat import v3
 from nbformat.converter import convert
 
 
-def v4_json_to_v3_py(fin, fout):
-    nbin_v4 = v4.nbjson.read(fin)
-    nbin_v3 = convert(nbin_v4, to_version=3)
-    v3.nbpy.write(nbin_v3, fout)
-
-
-def v3_py_to_v4_json(fin, fout):
-    nbin_v3 = v3.nbpy.read(fin)
-    nbin_v4 = convert(nbin_v3, to_version=4)
-    v4.nbjson.write(nbin_v4, fout)
-
-
+conversions = {
+    "json": (4, v4.nbjson),
+    "py_v3": (3, v3.nbpy),
+}
+choices = conversions.keys()
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--to_python", action="store_true")
-parser.add_argument("--from_python", action="store_true")
+parser.add_argument("--to", type=str, choices=choices, default="json")
+parser.add_argument("--from", dest="from_", type=str, choices=choices, default="py_v3")
 parser.add_argument("input", type=argparse.FileType('r'))
 parser.add_argument("output", type=argparse.FileType('w'))
 
 args = parser.parse_args()
 
-assert args.to_python ^ args.from_python, "Must choose one format"
+(v_from, m_from) = conversions[args.from_]
+(v_out, m_to) = conversions[args.to]
 
-func = None
-if args.to_python:
-    func = v4_json_to_v3_py
-elif args.from_python:
-    func = v3_py_to_v4_json
-
-assert func is not None
-
-func(args.input, args.output)
+nb_from = m_from.read(args.input)
+if v_from != v_out:
+    nb_from = convert(nb_from, to_version=v_out)
+m_to.write(nb_from, args.output)
