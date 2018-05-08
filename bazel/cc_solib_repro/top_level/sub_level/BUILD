@@ -1,11 +1,25 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_binary(
+    name = "libupstream.so",
+    srcs = ["upstream.cc"],
+    linkshared = 1,
+    linkstatic = 1,
+)
+
+cc_library(
+    name = "upstream",
+    srcs = ["libupstream.so"],
+    linkstatic = 0,
+)
+
+cc_binary(
     name = "libexample_lib.so",
     srcs = [
         "example_lib.cc",
         "example_lib.h",
     ],
+    deps = [":upstream"],
     linkshared = 1,
     linkstatic = 1,
 )
