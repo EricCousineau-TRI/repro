@@ -61,10 +61,19 @@ int main() {
 }
 EOF
 
-bazel run //:example_cc
-ldd bazel-bin/example_cc | grep 'not found'  # Good.
-ldd bazel-bin/example_cc.runfiles/example/example_cc | grep 'not found'  # Good.
+echo "---"
+{
+    bazel clean
+    bazel run -s //:example_cc
+    ldd bazel-bin/example_cc | grep 'not found'  # Good.
+    ldd bazel-bin/example_cc.runfiles/example/example_cc | grep 'not found'  # Good.
+} 2>&1 | tee /tmp/bazel_local.txt
 
-bazel run @example//:example_cc
-ldd bazel-bin/external/example/example_cc | grep 'not found'  # Good.
-ldd bazel-bin/external/example/example_cc.runfiles/example/example_cc | grep 'not found'  # BAD
+echo "---"
+{
+    bazel clean
+    bazel run -s @example//:example_cc
+    ldd bazel-bin/external/example/example_cc | grep 'not found'  # Good.
+    ldd bazel-bin/external/example/example_cc.runfiles/example/example_cc | grep 'not found'  # BAD
+    # ldd bazel-bin/external/example/example_cc.runfiles/example/external/example/example_cc | grep 'not found'  # GOOD
+} 2>&1 | tee /tmp/bazel_external.txt
