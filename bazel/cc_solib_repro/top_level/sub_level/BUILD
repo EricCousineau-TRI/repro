@@ -7,9 +7,9 @@ cc_binary(
     linkstatic = 1,
 )
 
-cc_import(
+cc_library(
     name = "upstream",
-    shared_library = "libupstream.so",
+    srcs = ["libupstream.so"],
 )
 
 cc_binary(
@@ -35,6 +35,7 @@ cc_binary(
         "example_lib.h",
     ],
     deps = [
+        # Cannot do transitives.
         ":example_lib",
         ":upstream",
         "@pybind11",
@@ -47,6 +48,13 @@ py_library(
     name = "example_lib_py",
     data = ["example_lib_py.so"],
     imports = ["."],
+)
+
+py_library(
+    name = "sub_level",
+    deps = [
+        ":example_lib_py",
+    ],
 )
 
 py_test(
