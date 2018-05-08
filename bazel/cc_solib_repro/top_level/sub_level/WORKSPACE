@@ -1,0 +1,4 @@
+workspace(name = "sub_level")
+
+load(":macros.bzl", "default_repositories")
+default_repositories()
