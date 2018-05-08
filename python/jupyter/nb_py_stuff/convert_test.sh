@@ -8,7 +8,7 @@ cd $(dirname $0)
 ./convert.py --from json --to py_v3 ./notebooks/test{.initial.ipynb,.final.py}
 ./convert.py --from py_v3 --to json ./notebooks/test.final{.py,.ipynb}
 
-# Convert both roundtrips.
+# Compare both roundtrips.
 (
     git diff --no-index ./notebooks/test{.initial,.final}.py
     git diff --no-index ./notebooks/test{.initial,.final}.ipynb
