@@ -7,10 +7,9 @@ cc_binary(
     linkstatic = 1,
 )
 
-cc_library(
+cc_import(
     name = "upstream",
-    srcs = ["libupstream.so"],
-    linkstatic = 0,
+    shared_library = "libupstream.so",
 )
 
 cc_binary(
@@ -24,14 +23,20 @@ cc_binary(
     linkstatic = 1,
 )
 
+cc_import(
+    name = "example_lib",
+    shared_library = "libexample_lib.so",
+)
+
 cc_binary(
     name = "example_lib_py.so",
     srcs = [
         "example_lib_py.cc",
         "example_lib.h",
-        "libexample_lib.so",
     ],
     deps = [
+        ":example_lib",
+        ":upstream",
         "@pybind11",
     ],
     linkshared = 1,
