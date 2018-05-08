@@ -1,3 +1,5 @@
+package(default_visibility = ["//visibility:public"])
+
 cc_binary(
     name = "libexample_lib.so",
     srcs = [

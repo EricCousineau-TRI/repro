@@ -1,0 +1,9 @@
+workspace(name = "top_level")
+
+local_repository(
+    name = "sub_level",
+    path = __workspace_dir__ + "/sub_level",
+)
+
+load("@sub_level//:macros.bzl", "default_repositories")
+default_repositories()
