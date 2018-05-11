@@ -19,7 +19,7 @@
 [submodule "externals/numpy"]
 	path = externals/numpy
 	url = git@github.com:EricCousineau-TRI/numpy.git
-	branch = feature/prefer_user_copyswap
+	branch = drake_tmp
 [submodule "externals/pcl"]
 	path = externals/pcl
 	url = http://github.com/pointcloudlibrary/pcl.git
