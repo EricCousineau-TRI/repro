@@ -1,0 +1,4 @@
+<launch>
+  <arg name="station" default="" />
+  <node name="my_script" pkg="simple_package" type="my_script" output="screen"/>
+</launch>
