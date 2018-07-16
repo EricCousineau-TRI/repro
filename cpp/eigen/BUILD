@@ -138,3 +138,9 @@ cc_binary(
     srcs = ["placement_new.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "linspace",
+    srcs = ["linspace.cc"],
+    deps = ["@eigen//:eigen"],
+)

@@ -400,3 +400,8 @@ cc_binary(
     name = "unique_ptr_cast",
     srcs = ["unique_ptr_cast.cc"],
 )
+
+cc_binary(
+    name = "enum_int",
+    srcs = ["enum_int.cc"],
+)
