@@ -2,7 +2,7 @@
 # This file contains rules for Bazel; see drake/doc/bazel.rst.
 
 load("//tools:python.bzl", "py_test_simple")
-load("//tools:pybind11.bzl", "pybind11_module_share")
+load("//tools:pybind11.bzl", "pybind11_module_share", "pybind11_binary")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -35,4 +35,9 @@ py_test_simple(
     name = "pymodule_test",
     size = "small",
     deps = [":pymodule"],
+)
+
+pybind11_binary(
+    name = "dict_add_test_pybind",
+    srcs = ["dict_add_test_pybind.cc"],
 )
