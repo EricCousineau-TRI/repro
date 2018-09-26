@@ -405,3 +405,8 @@ cc_binary(
     name = "enum_int",
     srcs = ["enum_int.cc"],
 )
+
+cc_binary(
+    name = "doc_struct_nest",
+    srcs = ["doc_struct_nest.cc"],
+)
