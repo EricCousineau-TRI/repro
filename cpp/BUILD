@@ -408,5 +408,8 @@ cc_binary(
 
 cc_binary(
     name = "doc_struct_nest",
-    srcs = ["doc_struct_nest.cc"],
+    srcs = [
+        "doc_struct_nest.cc",
+        "doc_struct_nest_big.h",
+    ],
 )
