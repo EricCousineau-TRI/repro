@@ -1,10 +1,14 @@
 #include <iostream>
 
-constexpr struct {
-  struct {
+struct Top {
+  struct Mid {
     const char* doc = "Value";
-  } mid;
-} top;
+  };
+  Mid mid;
+};
+
+// If this were local, no warning would be produced.
+Top top;
 
 int main() {
   auto& mid = top.mid;
