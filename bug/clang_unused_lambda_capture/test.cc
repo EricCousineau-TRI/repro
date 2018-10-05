@@ -1,20 +1,12 @@
 #include <iostream>
 
-struct Top {
-  struct Mid {
-    const char* doc = "Value";
-  };
-  Mid mid;
-};
-
-// If this were local, no warning would be produced.
-Top top;
+// Only issues warning for non-automatic storage?
+const char* top_doc = "Value";
 
 int main() {
-  auto& mid = top.mid;
-  auto bind = [&mid](auto) {
-    std::cout << "Value: " << mid.doc << std::endl;
-  };
-  bind(int{});
+  auto& doc = top_doc;
+  [&doc]() {
+    std::cout << "Value: " << doc << std::endl;
+  }();
   return 0;
 }

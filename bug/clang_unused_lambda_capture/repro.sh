@@ -2,7 +2,8 @@
 set -eux -o pipefail
 
 compile() {
-    clang++-6.0 -Wall -Werror "$@"
+    clang++-6.0 -std=c++14 -Wall -Werror "$@"
+    # g++ -std=c++14 -Wall -Werror "$@"
 }
 
 compile ./orig.cc -o ./orig
