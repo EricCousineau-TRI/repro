@@ -1,4 +1,4 @@
-[ non-auto storage: fails ]
+[ 0: static storage, with capture: fails clang ]
 test.cc
 
    #include <iostream>
@@ -14,12 +14,43 @@ test.cc
   [&doc]() { std::cout << doc << std::endl; }();
     ^
 1 error generated.
+
 + g++-5 -std=c++14 -Wall -Werror ./test.cc -o ./test
 + ./test
 Works
+---
 
 
-[ auto storage: works ]
+[ 1: static storage, w/o capture: fails gcc ]
+test.cc
+
+   #include <iostream>
+   const char top_doc[] = "Works";
+   int main() {
+     auto& doc = top_doc;
+     []() { std::cout << doc << std::endl; }();
+     return 0;
+   }
+
++ clang++-6.0 -std=c++14 -Wall -Werror ./test.cc -o ./test
++ ./test
+Works
+
++ g++-5 -std=c++14 -Wall -Werror ./test.cc -o ./test
+./test.cc: In lambda function:
+./test.cc:5:23: error: ‘doc’ is not captured
+   []() { std::cout << doc << std::endl; }();
+                       ^
+./test.cc:5:4: note: the lambda has no capture-default
+   []() { std::cout << doc << std::endl; }();
+    ^
+./test.cc:4:9: note: ‘const char (& doc)[6]’ declared here
+   auto& doc = top_doc;
+         ^
+---
+
+
+[ 2: automatic storage: works ]
 test.cc
 
    #include <iostream>
@@ -33,12 +64,14 @@ test.cc
 + clang++-6.0 -std=c++14 -Wall -Werror ./test.cc -o ./test
 + ./test
 Works
+
 + g++-5 -std=c++14 -Wall -Werror ./test.cc -o ./test
 + ./test
 Works
+---
 
 
-[ auto&: fails ]
+[ 3: auto& infer constexpr, with capture: fails clang ]
 test.cc
 
    #include <iostream>
@@ -54,12 +87,43 @@ test.cc
   [&doc]() { std::cout << doc << std::endl; }();
     ^
 1 error generated.
+
 + g++-5 -std=c++14 -Wall -Werror ./test.cc -o ./test
 + ./test
 Works
+---
 
 
-[ constexpr auto&: works ]
+[ 4: auto& infer constexpr, without capture: fails gcc ]
+test.cc
+
+   #include <iostream>
+   constexpr char top_doc[] = "Works";
+   int main() {
+     auto& doc = top_doc;
+     []() { std::cout << doc << std::endl; }();
+     return 0;
+   }
+
++ clang++-6.0 -std=c++14 -Wall -Werror ./test.cc -o ./test
++ ./test
+Works
+
++ g++-5 -std=c++14 -Wall -Werror ./test.cc -o ./test
+./test.cc: In lambda function:
+./test.cc:5:23: error: ‘doc’ is not captured
+   []() { std::cout << doc << std::endl; }();
+                       ^
+./test.cc:5:4: note: the lambda has no capture-default
+   []() { std::cout << doc << std::endl; }();
+    ^
+./test.cc:4:9: note: ‘const char (& doc)[6]’ declared here
+   auto& doc = top_doc;
+         ^
+---
+
+
+[ 5: constexpr auto&: works ]
 test.cc
 
    #include <iostream>
@@ -73,8 +137,10 @@ test.cc
 + clang++-6.0 -std=c++14 -Wall -Werror ./test.cc -o ./test
 + ./test
 Works
+
 + g++-5 -std=c++14 -Wall -Werror ./test.cc -o ./test
 + ./test
 Works
+---
 
 
