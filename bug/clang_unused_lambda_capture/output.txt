@@ -1,3 +1,16 @@
++ clang++-6.0 --version
+clang version 6.0.0-1ubuntu2~16.04.1 (tags/RELEASE_600/final)
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /usr/bin
+
++ g++-5 --version
+g++-5 (Ubuntu 5.4.0-6ubuntu1~16.04.10) 5.4.0 20160609
+Copyright (C) 2015 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
 [ 0: static storage, with capture: fails clang ]
 test.cc
 

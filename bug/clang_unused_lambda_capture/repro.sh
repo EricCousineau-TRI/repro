@@ -1,19 +1,27 @@
 #!/bin/bash
 set -u -o pipefail
 
+CLANG=clang++-6.0
+GCC=g++-5
+
 test() {
     echo "test.cc"
     echo
     cat test.cc | sed 's#^#   #g'
     echo
     args="-std=c++14 -Wall -Werror ./test.cc -o ./test"
-    (set -x; clang++-6.0 ${args}) && (set -x; ./test)
+    (set -x; ${CLANG} ${args}) && (set -x; ./test)
     echo
-    (set -x; g++-5 ${args}) && (set -x; ./test)
+    (set -x; ${GCC} ${args}) && (set -x; ./test)
     echo "---"
     echo
     echo
 }
+
+(set -x; ${CLANG} --version)
+echo
+(set -x; ${GCC} --version)
+echo
 
 echo '[ 0: static storage, with capture: fails clang ]'
 cat > test.cc <<EOF
