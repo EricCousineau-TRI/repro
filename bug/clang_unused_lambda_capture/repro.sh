@@ -93,7 +93,7 @@ constexpr struct {
 } top;
 int main() {
   constexpr auto& doc = top.mid;
-  []() { std::cout << doc.doc << std::endl; }();
+  [](auto) { std::cout << doc.doc << std::endl; }(1);
   return 0;
 }
 EOF

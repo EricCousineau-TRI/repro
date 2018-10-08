@@ -22,7 +22,7 @@ test.cc
    } top;
    int main() {
      constexpr auto& doc = top.mid;
-     []() { std::cout << doc.doc << std::endl; }();
+     [](auto) { std::cout << doc.doc << std::endl; }(1);
      return 0;
    }
 
@@ -31,8 +31,16 @@ test.cc
 Works
 
 + g++-7 -std=c++14 -Wall -Werror ./test.cc -o ./test
-+ ./test
-Works
+./test.cc: In lambda function:
+./test.cc:9:27: error: 'doc' is not captured
+   [](auto) { std::cout << doc.doc << std::endl; }(1);
+                           ^~~
+./test.cc:9:4: note: the lambda has no capture-default
+   [](auto) { std::cout << doc.doc << std::endl; }(1);
+    ^
+./test.cc:8:19: note: 'constexpr const<unnamed struct>::<unnamed struct>& doc' declared here
+   constexpr auto& doc = top.mid;
+                   ^~~
 ---
 
 
