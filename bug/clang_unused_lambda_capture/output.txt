@@ -11,18 +11,35 @@ This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 
-[ 5: constexpr auto&: works ]
+[ 0: constexpr auto& + non-generic lambda: works ]
 test.cc
 
    #include <iostream>
-   constexpr struct {
-     struct {
-       const char* doc = "Works";
-     } mid;
-   } top;
+   constexpr char top_doc[] = "Works";
    int main() {
-     constexpr auto& doc = top.mid;
-     [](auto) { std::cout << doc.doc << std::endl; }(1);
+     constexpr auto& doc = top_doc;
+     [](int) { std::cout << doc << std::endl; }(1);
+     return 0;
+   }
+
++ clang++-6.0 -std=c++14 -Wall -Werror ./test.cc -o ./test
++ ./test
+Works
+
++ g++-7 -std=c++14 -Wall -Werror ./test.cc -o ./test
++ ./test
+Works
+---
+
+
+[ 1: constexpr auto& + generic lambda: fails in gcc ]
+test.cc
+
+   #include <iostream>
+   constexpr char top_doc[] = "Works";
+   int main() {
+     constexpr auto& doc = top_doc;
+     [](auto) { std::cout << doc << std::endl; }(1);
      return 0;
    }
 
@@ -32,15 +49,83 @@ Works
 
 + g++-7 -std=c++14 -Wall -Werror ./test.cc -o ./test
 ./test.cc: In lambda function:
-./test.cc:9:27: error: 'doc' is not captured
-   [](auto) { std::cout << doc.doc << std::endl; }(1);
+./test.cc:5:27: error: 'doc' is not captured
+   [](auto) { std::cout << doc << std::endl; }(1);
                            ^~~
-./test.cc:9:4: note: the lambda has no capture-default
-   [](auto) { std::cout << doc.doc << std::endl; }(1);
+./test.cc:5:4: note: the lambda has no capture-default
+   [](auto) { std::cout << doc << std::endl; }(1);
     ^
-./test.cc:8:19: note: 'constexpr const<unnamed struct>::<unnamed struct>& doc' declared here
-   constexpr auto& doc = top.mid;
+./test.cc:4:19: note: 'constexpr const char (& doc)[6]' declared here
+   constexpr auto& doc = top_doc;
                    ^~~
+---
+
+
+[ 2: constexpr + non-generic lambda: fails in clang ]
+test.cc
+
+   #include <iostream>
+   int main() {
+     constexpr char doc[] = "Works";
+     [](int) { std::cout << doc << std::endl; }(1);
+     return 0;
+   }
+
++ clang++-6.0 -std=c++14 -Wall -Werror ./test.cc -o ./test
+./test.cc:4:26: error: variable 'doc' cannot be implicitly captured in a lambda with no capture-default specified
+  [](int) { std::cout << doc << std::endl; }(1);
+                         ^
+./test.cc:3:18: note: 'doc' declared here
+  constexpr char doc[] = "Works";
+                 ^
+./test.cc:4:3: note: lambda expression begins here
+  [](int) { std::cout << doc << std::endl; }(1);
+  ^
+1 error generated.
+
++ g++-7 -std=c++14 -Wall -Werror ./test.cc -o ./test
++ ./test
+Works
+---
+
+
+[ 3: constexpr + generic lambda: fails in clang ]
+test.cc
+
+   #include <iostream>
+   int main() {
+     constexpr char doc[] = "Works";
+     [](auto) { std::cout << doc << std::endl; }(1);
+     return 0;
+   }
+
++ clang++-6.0 -std=c++14 -Wall -Werror ./test.cc -o ./test
+./test.cc:4:27: error: variable 'doc' cannot be implicitly captured in a lambda with no capture-default specified
+  [](auto) { std::cout << doc << std::endl; }(1);
+                          ^
+./test.cc:3:18: note: 'doc' declared here
+  constexpr char doc[] = "Works";
+                 ^
+./test.cc:4:3: note: lambda expression begins here
+  [](auto) { std::cout << doc << std::endl; }(1);
+  ^
+./test.cc:4:27: error: variable 'doc' cannot be implicitly captured in a lambda with no capture-default specified
+  [](auto) { std::cout << doc << std::endl; }(1);
+                          ^
+./test.cc:4:46: note: in instantiation of function template specialization 'main()::(anonymous class)::operator()<int>' requested here
+  [](auto) { std::cout << doc << std::endl; }(1);
+                                             ^
+./test.cc:3:18: note: 'doc' declared here
+  constexpr char doc[] = "Works";
+                 ^
+./test.cc:4:3: note: lambda expression begins here
+  [](auto) { std::cout << doc << std::endl; }(1);
+  ^
+2 errors generated.
+
++ g++-7 -std=c++14 -Wall -Werror ./test.cc -o ./test
++ ./test
+Works
 ---
 
 

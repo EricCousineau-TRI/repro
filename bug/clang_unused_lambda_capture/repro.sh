@@ -23,77 +23,47 @@ echo
 (set -x; ${GCC} --version)
 echo
 
-# echo '[ 0: static storage, with capture: fails clang ]'
-# cat > test.cc <<EOF
-# #include <iostream>
-# const char top_doc[] = "Works";
-# int main() {
-#   auto& doc = top_doc;
-#   [&doc]() { std::cout << doc << std::endl; }();
-#   return 0;
-# }
-# EOF
-# test
-
-# echo '[ 1: static storage, w/o capture: fails gcc ]'
-# cat > test.cc <<EOF
-# #include <iostream>
-# const char top_doc[] = "Works";
-# int main() {
-#   auto& doc = top_doc;
-#   []() { std::cout << doc << std::endl; }();
-#   return 0;
-# }
-# EOF
-# test
-
-# echo '[ 2: automatic storage: works ]'
-# cat > test.cc <<EOF
-# #include <iostream>
-# int main() {
-#   const char top_doc[] = "Works";
-#   auto& doc = top_doc;
-#   [&doc]() { std::cout << doc << std::endl; }();
-#   return 0;
-# }
-# EOF
-# test
-
-# echo '[ 3: auto& infer constexpr, with capture: fails clang ]'
-# cat > test.cc <<EOF
-# #include <iostream>
-# constexpr char top_doc[] = "Works";
-# int main() {
-#   auto& doc = top_doc;
-#   [&doc]() { std::cout << doc << std::endl; }();
-#   return 0;
-# }
-# EOF
-# test
-
-# echo '[ 4: auto& infer constexpr, without capture: fails gcc ]'
-# cat > test.cc <<EOF
-# #include <iostream>
-# constexpr char top_doc[] = "Works";
-# int main() {
-#   auto& doc = top_doc;
-#   []() { std::cout << doc << std::endl; }();
-#   return 0;
-# }
-# EOF
-# test
-
-echo '[ 5: constexpr auto&: works ]'
+echo '[ 0: constexpr auto& + non-generic lambda: works ]'
 cat > test.cc <<EOF
 #include <iostream>
-constexpr struct {
-  struct {
-    const char* doc = "Works";
-  } mid;
-} top;
+constexpr char top_doc[] = "Works";
 int main() {
-  constexpr auto& doc = top.mid;
-  [](auto) { std::cout << doc.doc << std::endl; }(1);
+  constexpr auto& doc = top_doc;
+  [](int) { std::cout << doc << std::endl; }(1);
+  return 0;
+}
+EOF
+test
+
+echo '[ 1: constexpr auto& + generic lambda: fails in gcc ]'
+cat > test.cc <<EOF
+#include <iostream>
+constexpr char top_doc[] = "Works";
+int main() {
+  constexpr auto& doc = top_doc;
+  [](auto) { std::cout << doc << std::endl; }(1);
+  return 0;
+}
+EOF
+test
+
+echo '[ 2: constexpr + non-generic lambda: fails in clang ]'
+cat > test.cc <<EOF
+#include <iostream>
+int main() {
+  constexpr char doc[] = "Works";
+  [](int) { std::cout << doc << std::endl; }(1);
+  return 0;
+}
+EOF
+test
+
+echo '[ 3: constexpr + generic lambda: fails in clang ]'
+cat > test.cc <<EOF
+#include <iostream>
+int main() {
+  constexpr char doc[] = "Works";
+  [](auto) { std::cout << doc << std::endl; }(1);
   return 0;
 }
 EOF
