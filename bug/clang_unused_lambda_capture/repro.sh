@@ -2,7 +2,7 @@
 set -u -o pipefail
 
 CLANG=clang++-6.0
-GCC=g++-5
+GCC=g++-7
 
 test() {
     echo "test.cc"
