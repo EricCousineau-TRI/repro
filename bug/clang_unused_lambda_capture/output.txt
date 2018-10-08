@@ -11,131 +11,18 @@ This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 
-[ 0: static storage, with capture: fails clang ]
-test.cc
-
-   #include <iostream>
-   const char top_doc[] = "Works";
-   int main() {
-     auto& doc = top_doc;
-     [&doc]() { std::cout << doc << std::endl; }();
-     return 0;
-   }
-
-+ clang++-6.0 -std=c++14 -Wall -Werror ./test.cc -o ./test
-./test.cc:5:5: error: lambda capture 'doc' is not required to be captured for this use [-Werror,-Wunused-lambda-capture]
-  [&doc]() { std::cout << doc << std::endl; }();
-    ^
-1 error generated.
-
-+ g++-7 -std=c++14 -Wall -Werror ./test.cc -o ./test
-+ ./test
-Works
----
-
-
-[ 1: static storage, w/o capture: fails gcc ]
-test.cc
-
-   #include <iostream>
-   const char top_doc[] = "Works";
-   int main() {
-     auto& doc = top_doc;
-     []() { std::cout << doc << std::endl; }();
-     return 0;
-   }
-
-+ clang++-6.0 -std=c++14 -Wall -Werror ./test.cc -o ./test
-+ ./test
-Works
-
-+ g++-7 -std=c++14 -Wall -Werror ./test.cc -o ./test
-./test.cc: In lambda function:
-./test.cc:5:23: error: 'doc' is not captured
-   []() { std::cout << doc << std::endl; }();
-                       ^~~
-./test.cc:5:4: note: the lambda has no capture-default
-   []() { std::cout << doc << std::endl; }();
-    ^
-./test.cc:4:9: note: 'const char (& doc)[6]' declared here
-   auto& doc = top_doc;
-         ^~~
----
-
-
-[ 2: automatic storage: works ]
-test.cc
-
-   #include <iostream>
-   int main() {
-     const char top_doc[] = "Works";
-     auto& doc = top_doc;
-     [&doc]() { std::cout << doc << std::endl; }();
-     return 0;
-   }
-
-+ clang++-6.0 -std=c++14 -Wall -Werror ./test.cc -o ./test
-+ ./test
-Works
-
-+ g++-7 -std=c++14 -Wall -Werror ./test.cc -o ./test
-+ ./test
-Works
----
-
-
-[ 3: auto& infer constexpr, with capture: fails clang ]
-test.cc
-
-   #include <iostream>
-   constexpr char top_doc[] = "Works";
-   int main() {
-     auto& doc = top_doc;
-     [&doc]() { std::cout << doc << std::endl; }();
-     return 0;
-   }
-
-+ clang++-6.0 -std=c++14 -Wall -Werror ./test.cc -o ./test
-./test.cc:5:5: error: lambda capture 'doc' is not required to be captured for this use [-Werror,-Wunused-lambda-capture]
-  [&doc]() { std::cout << doc << std::endl; }();
-    ^
-1 error generated.
-
-+ g++-7 -std=c++14 -Wall -Werror ./test.cc -o ./test
-+ ./test
-Works
----
-
-
-[ 4: auto& infer constexpr, without capture: fails gcc ]
-test.cc
-
-   #include <iostream>
-   constexpr char top_doc[] = "Works";
-   int main() {
-     auto& doc = top_doc;
-     []() { std::cout << doc << std::endl; }();
-     return 0;
-   }
-
-+ clang++-6.0 -std=c++14 -Wall -Werror ./test.cc -o ./test
-+ ./test
-Works
-
-+ g++-7 -std=c++14 -Wall -Werror ./test.cc -o ./test
-+ ./test
-Works
----
-
-
 [ 5: constexpr auto&: works ]
 test.cc
 
    #include <iostream>
-   constexpr char top_doc[] = "Works";
+   constexpr struct {
+     struct {
+       const char* doc = "Works";
+     } mid;
+   } top;
    int main() {
-     constexpr auto& doc = top_doc;
-     []() { std::cout << doc << std::endl; }();
+     constexpr auto& doc = top.mid;
+     []() { std::cout << doc.doc << std::endl; }();
      return 0;
    }
 

@@ -23,73 +23,77 @@ echo
 (set -x; ${GCC} --version)
 echo
 
-echo '[ 0: static storage, with capture: fails clang ]'
-cat > test.cc <<EOF
-#include <iostream>
-const char top_doc[] = "Works";
-int main() {
-  auto& doc = top_doc;
-  [&doc]() { std::cout << doc << std::endl; }();
-  return 0;
-}
-EOF
-test
+# echo '[ 0: static storage, with capture: fails clang ]'
+# cat > test.cc <<EOF
+# #include <iostream>
+# const char top_doc[] = "Works";
+# int main() {
+#   auto& doc = top_doc;
+#   [&doc]() { std::cout << doc << std::endl; }();
+#   return 0;
+# }
+# EOF
+# test
 
-echo '[ 1: static storage, w/o capture: fails gcc ]'
-cat > test.cc <<EOF
-#include <iostream>
-const char top_doc[] = "Works";
-int main() {
-  auto& doc = top_doc;
-  []() { std::cout << doc << std::endl; }();
-  return 0;
-}
-EOF
-test
+# echo '[ 1: static storage, w/o capture: fails gcc ]'
+# cat > test.cc <<EOF
+# #include <iostream>
+# const char top_doc[] = "Works";
+# int main() {
+#   auto& doc = top_doc;
+#   []() { std::cout << doc << std::endl; }();
+#   return 0;
+# }
+# EOF
+# test
 
-echo '[ 2: automatic storage: works ]'
-cat > test.cc <<EOF
-#include <iostream>
-int main() {
-  const char top_doc[] = "Works";
-  auto& doc = top_doc;
-  [&doc]() { std::cout << doc << std::endl; }();
-  return 0;
-}
-EOF
-test
+# echo '[ 2: automatic storage: works ]'
+# cat > test.cc <<EOF
+# #include <iostream>
+# int main() {
+#   const char top_doc[] = "Works";
+#   auto& doc = top_doc;
+#   [&doc]() { std::cout << doc << std::endl; }();
+#   return 0;
+# }
+# EOF
+# test
 
-echo '[ 3: auto& infer constexpr, with capture: fails clang ]'
-cat > test.cc <<EOF
-#include <iostream>
-constexpr char top_doc[] = "Works";
-int main() {
-  auto& doc = top_doc;
-  [&doc]() { std::cout << doc << std::endl; }();
-  return 0;
-}
-EOF
-test
+# echo '[ 3: auto& infer constexpr, with capture: fails clang ]'
+# cat > test.cc <<EOF
+# #include <iostream>
+# constexpr char top_doc[] = "Works";
+# int main() {
+#   auto& doc = top_doc;
+#   [&doc]() { std::cout << doc << std::endl; }();
+#   return 0;
+# }
+# EOF
+# test
 
-echo '[ 4: auto& infer constexpr, without capture: fails gcc ]'
-cat > test.cc <<EOF
-#include <iostream>
-constexpr char top_doc[] = "Works";
-int main() {
-  auto& doc = top_doc;
-  []() { std::cout << doc << std::endl; }();
-  return 0;
-}
-EOF
-test
+# echo '[ 4: auto& infer constexpr, without capture: fails gcc ]'
+# cat > test.cc <<EOF
+# #include <iostream>
+# constexpr char top_doc[] = "Works";
+# int main() {
+#   auto& doc = top_doc;
+#   []() { std::cout << doc << std::endl; }();
+#   return 0;
+# }
+# EOF
+# test
 
 echo '[ 5: constexpr auto&: works ]'
 cat > test.cc <<EOF
 #include <iostream>
-constexpr char top_doc[] = "Works";
+constexpr struct {
+  struct {
+    const char* doc = "Works";
+  } mid;
+} top;
 int main() {
-  constexpr auto& doc = top_doc;
-  []() { std::cout << doc << std::endl; }();
+  constexpr auto& doc = top.mid;
+  []() { std::cout << doc.doc << std::endl; }();
   return 0;
 }
 EOF
