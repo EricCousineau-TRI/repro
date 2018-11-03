@@ -1,73 +1,99 @@
 #include <cassert>
 #include <iostream>
+#include <functional>
 #include <experimental/optional>
+#include <vector>
 
 using std::experimental::optional;
+using std::experimental::nullopt;
 
-template <typename Return>
-class value {
+template <typename T>
+class generator {
  public:
-  void operator=(Return value) {
-    value_ = std::forward<Return>(value);
-  }
-  Return&& operator*() { return std::forward<Return>(*value_); }
- private:
-  optional<Return> value_{};
-};
+  using Func = std::function<optional<T>()>;
+  generator(Func func) : func_(func) {}
 
-template <typename Func>
-class impl {
- public:
-  using Return = decltype(std::declval<Func>()(std::declval<bool&>()));
-  impl(Func&& func) : func_(std::forward<Func>(func)) {}
-
-  struct end_t {};
   class iterator {
    public:
-    iterator(impl* parent) : parent_(parent) {}
-    iterator() : parent_() {}
-    Return&& operator*() { return *parent_->value_; }
+    iterator(generator* parent) : parent_(parent) { parent_->next(); }
+    iterator() {}
+    T&& operator*() { return std::forward<T>(*parent_->value_); }
     void operator++() { parent_->next(); }
-    bool operator!=(const iterator& other) {
-      assert(other.parent_ == nullptr);
-      return !parent_->finished_;
+    bool operator==(const iterator& other) {
+      if (!other.parent_) {
+        return !parent_ || !parent_->finished_;
+      } else {
+        return this == &other;
+      }
     }
+    bool operator!=(const iterator& other) { return !(*this == other); }
    private:
-    impl* parent_{};
+    generator* parent_{};
   };
 
   iterator begin() { return iterator{this}; }
   iterator end() { return iterator{}; }
-
  private:
   friend class iterator;
   void next() {
-    assert(!finished_);
-    bool keep = false;
-    value_ = func_(keep);
-    finished_ = !keep;
+    value_ = func_();
+    finished_ = bool{value_};
   }
-
   Func func_;
-  value<Return> value_;
-  bool initialized_{};
+  optional<T> value_;
   bool finished_{};
 };
 
-template <typename Func>
-auto generator(Func&& func) {
-  return impl<Func>(std::forward<Func>(func));
+template <typename T>
+auto make_generator(const typename generator<T>::Func& func) {
+  return generator<T>(func);
 }
 
+template <typename T>
+class chain_t {
+ public:
+  chain_t(std::vector<generator<T>> g) : g_(std::move(g)) {
+    if (g_.size() > 0) {
+      iter_ = g_[0].begin();
+    }
+  }
+  optional<T> operator()() {
+    if (i_ >= g_.size()) return {};
+    while (iter_ == g_[i_].end()) {
+      ++i_;
+      if (i_ >= g_.size()) return {};
+      iter_ = g_[i_].begin();
+    }
+    optional<T> value = *iter_;
+    ++iter_;
+    return std::move(value);
+  }
+ private:
+  std::vector<generator<T>> g_;
+  typename generator<T>::iterator iter_;
+  int i_{0};
+};
+
+template <typename T>
+auto make_chain(std::vector<generator<T>> g) {
+  return make_generator<int>(chain_t<int>(std::move(g)));
+}
 
 int main() {
-  auto gen = generator([i = 0](bool& keep) mutable {
-    keep = i < 10;
-    return ++i;
-  });
-  for (int& value : gen) {
-    std::cout << value << " ";
+  auto make = []() {
+    return make_generator<int>([i = 0]() mutable -> optional<int> {
+      if (i < 10) return i++;
+      return {};
+    });
+  };
+  for (int value : make()) {
+    std::cerr << value << " ";
   }
-  std::cout << std::endl;
+  std::cerr << std::endl;
+  auto ch = make_chain<int>({make(), make()});
+  for (int value : ch) {
+    std::cerr << value << " ";
+  } 
+  std::cerr << std::endl;
   return 0;
 }
