@@ -21,7 +21,7 @@ class generator {
     void operator++() { parent_->next(); }
     bool operator==(const iterator& other) {
       if (!other.parent_) {
-        return !parent_ || !parent_->finished_;
+        return !parent_ || parent_->finished_;
       } else {
         return this == &other;
       }
@@ -37,7 +37,7 @@ class generator {
   friend class iterator;
   void next() {
     value_ = func_();
-    finished_ = bool{value_};
+    if (!value_) finished_ = true;
   }
   Func func_;
   optional<T> value_;
@@ -60,8 +60,7 @@ class chain_t {
   optional<T> operator()() {
     if (i_ >= g_.size()) return {};
     while (iter_ == g_[i_].end()) {
-      ++i_;
-      if (i_ >= g_.size()) return {};
+      if (++i_ >= g_.size()) return {};
       iter_ = g_[i_].begin();
     }
     optional<T> value = *iter_;

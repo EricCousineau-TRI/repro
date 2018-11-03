@@ -1,26 +1,28 @@
 // Purpose: Test if we can forwad-declare aliases.
 #include <iostream>
+#include <limits>
 using namespace std;
 
-class Alias;
+// class Alias;
 
-void blarg(Alias* value);
+// void blarg(Alias* value);
 
-class Stuff {
- public:
-  void things() {
-    cout << "Hello" << endl;
-  }
-};
+// class Stuff {
+//  public:
+//   void things() {
+//     cout << "Hello" << endl;
+//   }
+// };
 
-using Alias = Stuff;
+// using Alias = Stuff;
 
-void blarg(Alias* value) {
-  value->things();
-}
+// void blarg(Alias* value) {
+//   value->things();
+// }
 
 int main() {
-  Stuff x;
-  blarg(&x);
+  std::cout << std::numeric_limits<double>::epsilon();
+  // Stuff x;
+  // blarg(&x);
   return 0;
 }
