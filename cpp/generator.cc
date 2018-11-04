@@ -16,10 +16,10 @@ struct generator_value_type {
 };
 
 // Enable `unique_ptr` to be an iterated type, where `nullptr` is the stopping
-// criteria.
+// criteria. Return a reference.
 template<typename T>
 struct generator_value_type<unique_ptr<T>> {
-  using value_type = T;
+  using value_type = T&;
 };
 
 /**
