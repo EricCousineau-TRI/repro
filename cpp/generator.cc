@@ -158,6 +158,18 @@ auto make_chain(std::vector<function_generator<result_type>> list) {
       std::move(list)));
 }
 
+template <typename container>
+auto make_container_generator(container&& c) {
+  auto iter = std::begin(c);
+  using T = std::decay_t<decltype(*iter)>;
+  return make_generator(
+      [c = std::forward<container>(c), iter = std::move(iter)]()
+          mutable -> optional<T> {
+    if (iter != std::end(c)) return *(iter++);
+    return {};
+  });
+}
+
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const unique_ptr<T>& p) {
   if (p) os << "unique_ptr(" << *p << ")";
@@ -238,6 +250,9 @@ int main() {
     }
     cerr << endl;
   }
+
+  cerr << "container:" << endl;
+  print_container(make_container_generator(std::vector<int>{10, 20, 30}));
 
   cerr << "null:" << endl;
   print_container(null_generator<optional<int>>());
