@@ -36,6 +36,10 @@ template <
     typename Func = std::function<result_t()>>
 class generator_t {
  public:
+  using value_type = T;
+  using result_type = result_t;
+  using func_type = Func;
+
   generator_t(Func&& func)
       : func_(std::forward<Func>(func)) {}
 
@@ -147,9 +151,18 @@ class chain_func {
 template <
     typename T, typename result_t = optional<T>,
     typename Func = std::function<result_t()>>
-auto chain(std::vector<generator_t<T, result_t, Func>> g) {
+auto chain_list(std::vector<generator_t<T, result_t, Func>> g) {
   auto compose = chain_func<T, result_t, Func>(std::move(g));
   return generator<T, result_t, decltype(compose)>(std::move(compose));
+}
+
+template <typename First, typename ... Remaining>
+auto chain(First&& first, Remaining&&... remaining) {
+  using value_type = typename First::value_type;
+  using result_type = typename First::result_type;
+  using func_type = typename First::func_type;
+  return chain_list<value_type, result_type, func_type>(
+    {std::forward<First>(first), std::forward<Remaining>(remaining)...});
 }
 
 int visit_count = 0;
@@ -187,7 +200,7 @@ int main() {
   visit_container(generator<int>(simple_gen()));
   // Leads to more instructions.
   // visit_container(generator<int>(std::function<optional<int>()>(simple_gen())));
-  visit_container(chain<int, optional<int>, decltype(simple_gen())>(
-      {generator<int>(simple_gen()), generator<int>(simple_gen())}));
+  visit_container(chain(
+      generator<int>(simple_gen()), generator<int>(simple_gen())));
   return 0;
 }
