@@ -22,6 +22,49 @@ struct generator_value_type<unique_ptr<T>> {
   using value_type = T&;
 };
 
+template <typename generator>
+class next_iterator {
+ public:
+  using result_type = decltype(std::declval<generator>().next());
+  using value_type = typename generator_value_type<result_type>::value_type;
+
+  next_iterator() {}
+  next_iterator(generator* parent, bool finished = false)
+      : parent_(parent), finished_(finished) {
+    assert(valid());
+    if (!finished_) {
+      ++(*this);
+    }
+  }
+
+  operator bool() const {
+    return parent_ != nullptr;
+  }
+  value_type&& operator*() {
+    assert(valid());
+    return std::forward<value_type>(*result_);
+  }
+  next_iterator& operator++() {
+    assert(valid());
+    result_ = parent_->next();
+    if (!result_) {
+      finished_ = true;
+    }
+    return *this;
+  }
+  bool operator==(const next_iterator& other) {
+    // Not precise, but provides a succinct implementation to enable
+    // comparison to `end`.
+    return parent_ == other.parent_ && finished_ == other.finished_;
+  }
+  bool operator!=(const next_iterator& other) { return !(*this == other); }
+
+ private:
+  generator* parent_{};
+  bool finished_{false};
+  result_type result_;
+};
+
 /**
 Provides a make_generator class that can be iterated upon. Per iteration, this
 returns `value_type`, inferred from `result_type`, inferred from `Func`.
@@ -57,50 +100,12 @@ class generator {
  public:
   using result_type = decltype(std::declval<Func>()());
   using value_type = typename generator_value_type<result_type>::value_type;
-
+  using iterator = next_iterator<generator>;
   generator(Func&& func)
       : func_(std::forward<Func>(func)) {}
-
   template <typename OtherFunc>
   generator(generator<OtherFunc>&& other)
       : func_(std::move(other.func_)) {}
-
-  class iterator {
-   public:
-    iterator() {}
-    iterator(generator* parent, bool finished = false)
-        : parent_(parent), finished_(finished) {
-      assert(valid());
-      if (!finished_) {
-        ++(*this);
-      }
-    }
-    operator bool() const {
-      return parent_ != nullptr;
-    }
-    value_type&& operator*() {
-      assert(valid());
-      return std::forward<value_type>(*result_);
-    }
-    iterator& operator++() {
-      assert(valid());
-      result_ = parent_->next();
-      if (!result_) {
-        finished_ = true;
-      }
-      return *this;
-    }
-    bool operator==(const iterator& other) {
-      // Not precise, but provides a succinct implementation to enable
-      // comparison to `end`.
-      return parent_ == other.parent_ && finished_ == other.finished_;
-    }
-    bool operator!=(const iterator& other) { return !(*this == other); }
-   private:
-    generator* parent_{};
-    bool finished_{false};
-    result_type result_;
-  };
 
   iterator begin() { return iterator(this); }
   iterator end() { return iterator(this, true); }
