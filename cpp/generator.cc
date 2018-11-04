@@ -32,14 +32,16 @@ Imitates Python generator expressions:
 - Can only be iterated once; afterwards, it will always return
   `begin() == end()`.
  */
-template <typename Func, typename T, typename result_t = optional<T>>
+template <
+    typename T, typename result_t = optional<T>,
+    typename Func = std::function<result_t()>>
 class generator_t {
  public:
   generator_t(Func&& func)
       : func_(std::forward<Func>(func)) {}
 
   template <typename OtherFunc>
-  generator_t(generator_t<OtherFunc, T, result_t>&& other)
+  generator_t(generator_t<T, result_t, OtherFunc>&& other)
       : func_(std::move(other.func_)),
         value_(std::move(other.value_)) {}
 
@@ -101,7 +103,7 @@ template <
     typename T, typename result_t = optional<T>,
     typename Func> // = std::function<result_t()>>
 auto generator(Func&& func) {
-  return generator_t<Func, T, result_t>(std::forward<Func>(func));
+  return generator_t<T, result_t, Func>(std::forward<Func>(func));
 }
 
 template <typename T, typename result_t = optional<T>>
@@ -109,10 +111,10 @@ auto null_generator() {
   return generator<T, result_t>([]() { return result_t{}; });
 }
 
-template <typename Func, typename T, typename result_t>
+template <typename T, typename result_t, typename Func>
 class chain_func {
  public:
-  using Generator = generator_t<Func, T, result_t>;
+  using Generator = generator_t<T, result_t, Func>;
   chain_func(std::vector<Generator> g_list)
       : g_list_(std::move(g_list)) {}
 
@@ -146,8 +148,8 @@ class chain_func {
 template <
     typename T, typename result_t = optional<T>,
     typename Func = std::function<result_t()>>
-auto chain(std::vector<generator_t<Func, T, result_t>> g) {
-  auto tmp = chain_func<Func, T, result_t>(std::move(g));
+auto chain(std::vector<generator_t<T, result_t, Func>> g) {
+  auto tmp = chain_func<T, result_t, Func>(std::move(g));
   return generator<T, result_t, Func>(std::move(tmp));
 }
 
