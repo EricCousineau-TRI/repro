@@ -158,13 +158,10 @@ auto make_chain(std::vector<function_generator<result_type>> list) {
       std::move(list)));
 }
 
-// Enable perfect-captures: https://stackoverflow.com/q/26831382/7829525
-template <typename T>
-struct capture { T value; };
-
 template <typename container>
 auto make_container_generator(container&& c) {
-  capture<container> cc{std::forward<container>(c)};
+  // Enable perfect-captures: https://stackoverflow.com/q/26831382/7829525
+  struct { container value; } cc{std::forward<container>(c)};
   auto iter = std::begin(cc.value);
   using T = std::decay_t<decltype(*iter)>;
   return make_generator(
