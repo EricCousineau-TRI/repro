@@ -44,6 +44,8 @@ class generator_t {
     iterator(generator_t* parent, bool is_end) : parent_(parent) {
       assert(valid());
       if (!is_end) {
+        // Will increment `count` to 1 if it's a valid value, and thus will not
+        // equal `end()`.
         ++(*this);
       }
     }
@@ -57,7 +59,7 @@ class generator_t {
     void operator++() {
       assert(valid());
       ++count_;
-      if (!parent_->eval_next()) {
+      if (!parent_->store_next()) {
         count_ = 0;
       }
     }
@@ -75,18 +77,13 @@ class generator_t {
 
   // May invalidate iterator state; can restore iterator state with `++iter`.
   wrapper next() {
-    eval_next();
+    store_next();
     return std::move(value_);
   }
  private:
   friend class iterator;
-  bool eval_next() {
-    if (func_) {
-      value_ = func_();
-    }
-    if (!value_) {
-      func_ = {};
-    }
+  bool store_next() {
+    value_ = func_();
     return bool{value_};
   }
   Func func_;
@@ -166,6 +163,16 @@ class positive_int {
   int value_{-1};
 };
 
+class move_only_func {
+ public:
+  optional<int> operator()() {
+    if (*value_ < 5) return (*value_)++;
+    else return {};
+  }
+ private:
+  unique_ptr<int> value_{new int{0}};
+};
+
 int main() {
   auto simple_gen = []() {
     return generator<int>([i = 0]() mutable -> optional<int> {
@@ -197,5 +204,7 @@ int main() {
     if (i < 3) return unique_ptr<int>(new int{i++});
     return unique_ptr<int>();
   }));
+  cerr << "move_only:" << endl;
+  print_container(generator<int>(move_only_func{}));
   return 0;
 }
