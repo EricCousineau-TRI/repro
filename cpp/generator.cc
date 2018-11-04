@@ -19,25 +19,32 @@ template <typename T>
 using result_of_t = decltype(std::declval<T>()());
 
 /**
-Provides a make_generator class that can be iterated upon:
-@tparam T
-  Type to return when iterating
-@tparam result_t (default: optional<T>)
-  Class that must follow this contract:
-   - moveable
-   - (optional) copy constructible
-   - result_t() -> construct invalid value
-   - result_t(T&&) -> construct valid value
-   - operator* -> T&&
-      dereference to value, moveable
-   - operator bool():
-      true -> valid value, consume
-      false -> invalid value, stop iterating
-Imitates Python make_generator expressions:
-- begin() returns an iterator that has evaluated the first expression
-- end() refers to the end of iteration (no more values to consume)
-- Can only be iterated once; afterwards, it will always return
-  `begin() == end()`.
+Provides a make_generator class that can be iterated upon. Per iteration, this
+returns `value_type`, inferred from `result_type`, inferred from `Func`.
+
+See `generator_value_type<>` for how value types are extracted.
+
+@tparam Func
+  Function that returns `result_type`.
+  result_type
+    Must obey the following contract:
+     - provides `value_type`
+     - moveable
+     - (optional) copy constructible
+     - result_t() -> construct invalid value
+     - result_t(T&&) -> construct valid value
+     - operator* -> T&&
+        dereference to value, moveable
+     - operator bool():
+        true -> valid value, consume
+        false -> invalid value, stop iterating
+
+Partially imitates Python generator expressions:
+
+- begin() returns an iterator that has evaluated the first expression.
+- end() refers to the end of iteration (no more values to consume). Will be
+  triggered on the first invalid value returned.
+
  */
 template <typename Func>
 class generator_t {
@@ -50,8 +57,7 @@ class generator_t {
 
   template <typename OtherFunc>
   generator_t(generator_t<OtherFunc>&& other)
-      : func_(std::move(other.func_)),
-        value_(std::move(other.value_)) {}
+      : func_(std::move(other.func_)) {}
 
   class iterator {
    public:
@@ -60,8 +66,6 @@ class generator_t {
       assert(valid());
       if (!is_end) {
         ++(*this);
-      } else {
-        count_ = -1;
       }
     }
     bool valid() const {
@@ -69,13 +73,15 @@ class generator_t {
     }
     value_type&& operator*() {
       assert(valid());
-      return std::forward<value_type>(*parent_->value_);
+      return std::forward<value_type>(*result_);
     }
     void operator++() {
       assert(valid());
       ++count_;
-      if (!parent_->store_next()) {
-        count_ = -1;
+      result_ = parent_->next();
+      if (!result_) {
+        // Assumes overflow will not be an issue.
+        count_ = 0;
       }
     }
     bool operator==(const iterator& other) {
@@ -84,27 +90,18 @@ class generator_t {
     bool operator!=(const iterator& other) { return !(*this == other); }
    private:
     generator_t* parent_{};
-    int count_{};
+    // 0 implies `end()`.
+    int count_{0};
+    result_type result_;
   };
 
   iterator begin() { return iterator(this, false); }
   iterator end() { return iterator(this, true); }
-
-  // May invalidate iterator state; can restore iterator state with `++iter`.
-  result_type next() {
-    store_next();
-    return std::move(value_);
-  }
+  result_type next() { return func_(); }
  private:
-  friend class iterator;
   template <typename OtherFunc>
   friend class generator_t;
-  bool store_next() {
-    value_ = func_();
-    return bool{value_};
-  }
   Func func_;
-  result_type value_;
 };
 
 template <typename result_type>
@@ -129,27 +126,22 @@ class chain_func {
       : g_list_(std::move(g_list)) {}
 
   result_type operator()() {
-    if (!next()) return {};
-    return *iter_;
-  }
-
- private:
-  inline Generator& g() { return g_list_[i_]; }
-
-  inline bool next() {
-    if (i_ >= g_list_.size()) return false;
+    // Advance iterator.
+    if (i_ >= g_list_.size()) return {};
     if (!iter_.valid()) {
       iter_ = g().begin();
     } else {
       ++iter_;
     }
     while (iter_ == g().end()) {
-      if (++i_ >= g_list_.size()) return false;
+      if (++i_ >= g_list_.size()) return {};
       iter_ = g().begin();
     }
-    return true;
+    // Return value.
+    return *iter_;
   }
-
+ private:
+  inline Generator& g() { return g_list_[i_]; }
   std::vector<Generator> g_list_;
   typename Generator::iterator iter_;
   int i_{0};
