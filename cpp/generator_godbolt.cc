@@ -148,8 +148,8 @@ template <
     typename T, typename result_t = optional<T>,
     typename Func = std::function<result_t()>>
 auto chain(std::vector<generator_t<T, result_t, Func>> g) {
-  auto tmp = chain_func<T, result_t, Func>(std::move(g));
-  return generator<T, result_t, Func>(std::move(tmp));
+  auto compose = chain_func<T, result_t, Func>(std::move(g));
+  return generator<T, result_t, decltype(compose)>(std::move(compose));
 }
 
 int visit_count = 0;
@@ -185,6 +185,9 @@ int main() {
     };
   };
   visit_container(generator<int>(simple_gen()));
+  // Leads to more instructions.
   // visit_container(generator<int>(std::function<optional<int>()>(simple_gen())));
+  visit_container(chain<int, optional<int>, decltype(simple_gen())>(
+      {generator<int>(simple_gen()), generator<int>(simple_gen())}));
   return 0;
 }
