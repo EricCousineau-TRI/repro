@@ -259,7 +259,7 @@ int main() {
   cerr << "container:" << endl;
   print_container(make_container_generator(std::vector<int>{10, 20, 30}));
   {
-    std::vector<int> c{10, 20, 30};
+    const std::vector<int> c{10, 20, 30};
     print_container(make_container_generator(c));
   }
 
