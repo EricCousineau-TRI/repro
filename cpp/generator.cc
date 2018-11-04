@@ -15,8 +15,12 @@ struct generator_value_type {
   using value_type = typename T::value_type;
 };
 
-template <typename T>
-using result_of_t = decltype(std::declval<T>()());
+// Enable `unique_ptr` to be an iterated type, where `nullptr` is the stopping
+// criteria.
+template<typename T>
+struct generator_value_type<unique_ptr<T>> {
+  using value_type = T;
+};
 
 /**
 Provides a make_generator class that can be iterated upon. Per iteration, this
@@ -45,24 +49,25 @@ Partially imitates Python generator expressions:
 - end() refers to the end of iteration (no more values to consume). Will be
   triggered on the first invalid value returned.
 
+This makes no constraints on what `Func` can refer to.
  */
 template <typename Func>
-class generator_t {
+class generator {
  public:
-  using result_type = result_of_t<Func>;
+  using result_type = decltype(std::declval<Func>()());
   using value_type = typename generator_value_type<result_type>::value_type;
 
-  generator_t(Func&& func)
+  generator(Func&& func)
       : func_(std::forward<Func>(func)) {}
 
   template <typename OtherFunc>
-  generator_t(generator_t<OtherFunc>&& other)
+  generator(generator<OtherFunc>&& other)
       : func_(std::move(other.func_)) {}
 
   class iterator {
    public:
     iterator() {}
-    iterator(generator_t* parent, bool is_end) : parent_(parent) {
+    iterator(generator* parent, bool is_end) : parent_(parent) {
       assert(valid());
       if (!is_end) {
         ++(*this);
@@ -89,7 +94,7 @@ class generator_t {
     }
     bool operator!=(const iterator& other) { return !(*this == other); }
    private:
-    generator_t* parent_{};
+    generator* parent_{};
     // 0 implies `end()`.
     int count_{0};
     result_type result_;
@@ -100,16 +105,16 @@ class generator_t {
   result_type next() { return func_(); }
  private:
   template <typename OtherFunc>
-  friend class generator_t;
+  friend class generator;
   Func func_;
 };
 
 template <typename result_type>
-using function_generator = generator_t<std::function<result_type()>>;
+using function_generator = generator<std::function<result_type()>>;
 
 template <typename Func>
 auto make_generator(Func&& func) {
-  return generator_t<Func>(std::forward<Func>(func));
+  return generator<Func>(std::forward<Func>(func));
 }
 
 template <typename result_t>
@@ -147,21 +152,10 @@ class chain_func {
   int i_{0};
 };
 
-template <typename Generator>
-auto make_chain_list_raw(std::vector<Generator> g) {
-  auto compose = chain_func<Generator>(std::move(g));
-  return make_generator<decltype(compose)>(std::move(compose));
-}
-
-template <typename First, typename ... Remaining>
-auto make_chain(First&& first, Remaining&&... remaining) {
-  return make_chain_list_raw<First>({
-      std::forward<First>(first), std::forward<Remaining>(remaining)...});
-}
-
 template <typename result_type>
-auto make_chain_list(std::vector<function_generator<result_type>> list) {
-  return make_chain_list_raw<function_generator<result_type>>(std::move(list));
+auto make_chain(std::vector<function_generator<result_type>> list) {
+  return make_generator(chain_func<function_generator<result_type>>(
+      std::move(list)));
 }
 
 template <typename T>
@@ -182,13 +176,6 @@ void print_container(Container&& gen) {
   }
   cerr << endl;
 }
-
-// Enable `unique_ptr` to be an iterated type, where `nullptr` is the stopping
-// criteria.
-template<typename T>
-struct generator_value_type<unique_ptr<T>> {
-  using value_type = T;
-};
 
 class positive_int {
  public:
@@ -236,14 +223,27 @@ int main() {
   cerr << "simple:" << endl;
   print_container(optional_gen());
 
+  cerr << " - breaking iteration:" << endl;
+  {
+    auto gen = optional_gen();
+    for (int rep : {0, 1, 2}) {
+      cerr << "[ break " << rep << " ] ";
+      int count = 0;
+      for (int value : gen) {
+        cerr << value << " ";
+        if (++count >= 3)
+          break;
+      }
+      cerr << endl;
+    }
+    cerr << endl;
+  }
+
   cerr << "null:" << endl;
   print_container(null_generator<optional<int>>());
 
-  cerr << "make_chain:" << endl;
-  print_container(make_chain(optional_gen(), optional_gen()));
-
-  cerr << "make_chain list: " << endl;
-  print_container(make_chain_list<optional<int>>({
+  cerr << "chain: " << endl;
+  print_container(make_chain<optional<int>>({
       optional_gen(), null_generator<optional<int>>(), optional_gen()}));
 
   cerr << "optional<unique_ptr>:" << endl;
