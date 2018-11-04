@@ -57,10 +57,8 @@ class generator_t {
     }
     if (!value_) {
       func_ = {};
-      return false;
-    } else {
-      return true;
     }
+    return bool{value_};
   }
   Func func_;
   optional<T> value_;
@@ -72,14 +70,9 @@ auto generator(const typename generator_t<T>::Func& func) {
 }
 
 template <typename T>
-generator_t<T> null_generator() {
-  return generator_t<T>({});
-}
-
-template <typename T>
-class chain_t {
+class chain_func {
  public:
-  chain_t(std::vector<generator_t<T>> g_list): g_list_(std::move(g_list)) {}
+  chain_func(std::vector<generator_t<T>> g_list): g_list_(std::move(g_list)) {}
 
   optional<T> operator()() {
     if (!next()) return {};
@@ -110,32 +103,31 @@ class chain_t {
 
 template <typename T>
 auto chain(std::vector<generator_t<T>> g) {
-  return generator<int>(chain_t<int>(std::move(g)));
+  return generator<int>(chain_func<int>(std::move(g)));
+}
+
+template <typename T>
+void print_generator(generator_t<T>&& gen) {
+  for (int rep : {0, 1}) {
+    cerr << "[ " << rep << " ] ";
+    for (int value : gen) {
+      cerr << value << " ";
+    }
+    cerr << endl;
+  }
+  cerr << endl;
 }
 
 int main() {
-  auto make = []() {
+  auto simple_gen = []() {
     return generator<int>([i = 0]() mutable -> optional<int> {
       if (i < 10) return i++;
       return {};
     });
   };
-  auto f = make();
-  for (int rep : {0, 1}) {
-    cerr << "[ " << rep << " ] ";
-    for (int value : f) {
-      cerr << value << " ";
-    }
-    cerr << endl;
-  }
-  cerr << endl << "---" << endl;
-  auto ch = chain<int>({make(), null_generator<int>(), make()});
-  for (int rep : {0, 1}) {
-    cerr << "[ " << rep << " ] ";
-    for (int value : ch) {
-      cerr << value << " ";
-    }
-    cerr << endl;
-  }
+  cerr << "simple:" << endl;
+  print_generator(simple_gen());
+  cerr << "chain:" << endl;
+  print_generator(chain<int>({simple_gen(), generator<int>({}), simple_gen()}));
   return 0;
 }
