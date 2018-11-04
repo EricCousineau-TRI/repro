@@ -158,14 +158,18 @@ auto make_chain(std::vector<function_generator<result_type>> list) {
       std::move(list)));
 }
 
-template <typename container>
+template <typename result_type = void, typename container>
 auto make_container_generator(container&& c) {
   // Enable perfect-captures: https://stackoverflow.com/q/26831382/7829525
   struct { container value; } cc{std::forward<container>(c)};
   auto iter = std::begin(cc.value);
   using T = std::decay_t<decltype(*iter)>;
+  // Infer by default, or use specified `result_type`.
+  using result_type_final = std::conditional_t<
+      std::is_same<result_type, void>::value, optional<T>, result_type>;
   return make_generator(
-    [cc = std::move(cc), iter = std::move(iter)]() mutable -> optional<T> {
+    [cc = std::move(cc), iter = std::move(iter)]()
+    mutable -> result_type_final {
       if (iter != std::end(cc.value)) return *(iter++);
       return {};
     });
