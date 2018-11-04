@@ -78,27 +78,27 @@ generator_t<T> null_generator() {
 template <typename T>
 class chain_t {
  public:
-  chain_t(std::vector<generator_t<T>> g) : g_(std::move(g)) {
-    if (g_.size() > 0) {
-      iter_ = g_[0].begin();
-    }
-  }
+  chain_t(std::vector<generator_t<T>> g) : g_(std::move(g)) {}
   optional<T> operator()() {
-    if (i_ >= g_.size()) return {};
+    if (g_.size() == 0) return {};
+    if (i_ == -1) {
+      i_ = 0;
+      iter_ = g_[i_].begin();
+    } else {
+      ++iter_;
+    }
     while (iter_ == g_[i_].end()) {
       cerr << "chain " << i_ << endl;
       ++i_;
       if (i_ >= g_.size()) return {};
       iter_ = g_[i_].begin();
     }
-    optional<T> value = *iter_;
-    ++iter_;
-    return std::move(value);
+    return *iter_;
   }
  private:
   std::vector<generator_t<T>> g_;
   typename generator_t<T>::iterator iter_;
-  int i_{0};
+  int i_{-1};
 };
 
 template <typename T>
@@ -123,7 +123,7 @@ int main() {
     cerr << "value 2: " << value << endl;
   }
   cerr << "---" << endl;
-  auto ch = chain<int>({make()}); //, make()});
+  auto ch = chain<int>({null_generator<int>(), make()});
   for (int value : ch) {
     cerr << "value: " << value << endl;
   } 
