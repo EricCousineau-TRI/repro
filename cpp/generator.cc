@@ -190,6 +190,8 @@ int main() {
       if (i < 3) return i++;
       return -1;
     }));
+  cerr << " - implicit null sequence:" << endl;
+  print_container(generator<int, positive_int>([]() mutable { return -1; }));
   cerr << "unique_ptr:" << endl;
   print_container(generator<int, unique_ptr<int>>([i = 0]() mutable {
     if (i < 3) return unique_ptr<int>(new int{i++});
