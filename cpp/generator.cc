@@ -108,6 +108,9 @@ class generator_t {
   result_type value_;
 };
 
+template <typename result_type>
+using function_generator = generator_t<std::function<result_type()>>;
+
 template <typename Func>
 auto generator(Func&& func) {
   return generator_t<Func>(std::forward<Func>(func));
@@ -166,9 +169,8 @@ auto chain(First&& first, Remaining&&... remaining) {
 }
 
 template <typename result_type>
-auto chain_list(std::vector<generator_t<std::function<result_type()>>> list) {
-  return chain_list_raw<generator_t<std::function<result_type()>>>(
-      std::move(list));
+auto chain_list(std::vector<function_generator<result_type>> list) {
+  return chain_list_raw<function_generator<result_type>>(std::move(list));
 }
 
 template <typename T>
