@@ -75,7 +75,7 @@ class generator {
         ++(*this);
       }
     }
-    bool valid() const {
+    operator bool() const {
       return parent_ != nullptr;
     }
     value_type&& operator*() {
@@ -135,7 +135,7 @@ class chain_func {
   result_type operator()() {
     // Advance iterator.
     if (i_ >= g_list_.size()) return {};
-    if (!iter_.valid()) {
+    if (!iter_) {
       iter_ = g().begin();
     } else {
       ++iter_;
@@ -241,6 +241,16 @@ int main() {
   };
   cerr << "simple:" << endl;
   print_container(optional_gen());
+
+  {
+    cerr << " - manual while:" << endl;
+    auto gen = optional_gen();
+    while (auto result = gen.next()) {
+      auto&& value = *result;
+      cerr << value << " ";
+    }
+    cerr << endl << endl;
+  }
 
   cerr << " - breaking iteration:" << endl;
   {
