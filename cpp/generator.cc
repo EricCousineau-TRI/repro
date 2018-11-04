@@ -155,6 +155,16 @@ void print_container(Container&& gen) {
   cerr << endl;
 }
 
+class int_wrapper {
+ public:
+  int_wrapper() {}
+  int_wrapper(int value) : value_(value) {}
+  int&& operator*() { return std::move(value_); }
+  operator bool() const { return value_ >= 0; }
+ private:
+  int value_{-1};
+};
+
 int main() {
   auto simple_gen = []() {
     return generator<int>([i = 0]() mutable -> optional<int> {
@@ -163,16 +173,26 @@ int main() {
     });
   };
   cerr << "simple:" << endl;
-  auto simple = simple_gen();
-  print_container(simple);
+  print_container(simple_gen());
   cerr << "chain:" << endl;
-  auto chained = chain<int>({simple_gen(), generator<int>({}), simple_gen()});
-  print_container(chained);
-  cerr << "unique_ptr:" << endl;
-  auto unique = generator<unique_ptr<int>>([i = 0]() mutable -> optional<unique_ptr<int>> {
-    if (i < 5) return unique_ptr<int>(new int{i++});
-    return {};
-  });
+  print_container(chain<int>({simple_gen(), generator<int>({}), simple_gen()}));
+  cerr << "optional<unique_ptr>:" << endl;
+  auto unique = generator<unique_ptr<int>>(
+    [i = 0]() mutable -> optional<unique_ptr<int>> {
+      if (i < 5) return unique_ptr<int>(new int{i++});
+      return {};
+    });
   print_container(unique);
+  cerr << "int_wrapper:" << endl;
+  print_container(generator<int, int_wrapper>(
+    [i = 0]() mutable {
+      if (i < 3) return i++;
+      return -1;
+    }));
+  cerr << "unique_ptr:" << endl;
+  print_container(generator<int, unique_ptr<int>>([i = 0]() mutable {
+    if (i < 3) return unique_ptr<int>(new int{i++});
+    return unique_ptr<int>();
+  }));
   return 0;
 }
