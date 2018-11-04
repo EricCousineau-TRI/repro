@@ -19,7 +19,7 @@ template <typename T>
 using result_of_t = decltype(std::declval<T>()());
 
 /**
-Provides a generator class that can be iterated upon:
+Provides a make_generator class that can be iterated upon:
 @tparam T
   Type to return when iterating
 @tparam result_t (default: optional<T>)
@@ -33,7 +33,7 @@ Provides a generator class that can be iterated upon:
    - operator bool():
       true -> valid value, consume
       false -> invalid value, stop iterating
-Imitates Python generator expressions:
+Imitates Python make_generator expressions:
 - begin() returns an iterator that has evaluated the first expression
 - end() refers to the end of iteration (no more values to consume)
 - Can only be iterated once; afterwards, it will always return
@@ -42,12 +42,11 @@ Imitates Python generator expressions:
 template <typename Func>
 class generator_t {
  public:
-  using func_type = Func;
   using result_type = result_of_t<Func>;
   using value_type = typename generator_value_type<result_type>::value_type;
 
-  generator_t(func_type&& func)
-      : func_(std::forward<func_type>(func)) {}
+  generator_t(Func&& func)
+      : func_(std::forward<Func>(func)) {}
 
   template <typename OtherFunc>
   generator_t(generator_t<OtherFunc>&& other)
@@ -60,9 +59,9 @@ class generator_t {
     iterator(generator_t* parent, bool is_end) : parent_(parent) {
       assert(valid());
       if (!is_end) {
-        // Will increment `count` to 1 if it's a valid value, and thus will not
-        // equal `end()`.
         ++(*this);
+      } else {
+        count_ = -1;
       }
     }
     bool valid() const {
@@ -76,7 +75,7 @@ class generator_t {
       assert(valid());
       ++count_;
       if (!parent_->store_next()) {
-        count_ = 0;
+        count_ = -1;
       }
     }
     bool operator==(const iterator& other) {
@@ -85,7 +84,7 @@ class generator_t {
     bool operator!=(const iterator& other) { return !(*this == other); }
    private:
     generator_t* parent_{};
-    int count_{0};
+    int count_{};
   };
 
   iterator begin() { return iterator(this, false); }
@@ -104,7 +103,7 @@ class generator_t {
     value_ = func_();
     return bool{value_};
   }
-  func_type func_;
+  Func func_;
   result_type value_;
 };
 
@@ -112,13 +111,13 @@ template <typename result_type>
 using function_generator = generator_t<std::function<result_type()>>;
 
 template <typename Func>
-auto generator(Func&& func) {
+auto make_generator(Func&& func) {
   return generator_t<Func>(std::forward<Func>(func));
 }
 
 template <typename result_t>
 auto null_generator() {
-  return generator([]() { return result_t{}; });
+  return make_generator([]() { return result_t{}; });
 }
 
 template <typename Generator>
@@ -157,20 +156,20 @@ class chain_func {
 };
 
 template <typename Generator>
-auto chain_list_raw(std::vector<Generator> g) {
+auto make_chain_list_raw(std::vector<Generator> g) {
   auto compose = chain_func<Generator>(std::move(g));
-  return generator<decltype(compose)>(std::move(compose));
+  return make_generator<decltype(compose)>(std::move(compose));
 }
 
 template <typename First, typename ... Remaining>
-auto chain(First&& first, Remaining&&... remaining) {
-  return chain_list_raw<First>({
+auto make_chain(First&& first, Remaining&&... remaining) {
+  return make_chain_list_raw<First>({
       std::forward<First>(first), std::forward<Remaining>(remaining)...});
 }
 
 template <typename result_type>
-auto chain_list(std::vector<function_generator<result_type>> list) {
-  return chain_list_raw<function_generator<result_type>>(std::move(list));
+auto make_chain_list(std::vector<function_generator<result_type>> list) {
+  return make_chain_list_raw<function_generator<result_type>>(std::move(list));
 }
 
 template <typename T>
@@ -237,7 +236,7 @@ class ref {
 
 int main() {
   auto optional_gen = []() {
-    return generator([i = 0]() mutable -> optional<int> {
+    return make_generator([i = 0]() mutable -> optional<int> {
       if (i < 10) return i++;
       return {};
     });
@@ -248,15 +247,15 @@ int main() {
   cerr << "null:" << endl;
   print_container(null_generator<optional<int>>());
 
-  cerr << "chain:" << endl;
-  print_container(chain(optional_gen(), optional_gen()));
+  cerr << "make_chain:" << endl;
+  print_container(make_chain(optional_gen(), optional_gen()));
 
-  cerr << "chain list: " << endl;
-  print_container(chain_list<optional<int>>({
+  cerr << "make_chain list: " << endl;
+  print_container(make_chain_list<optional<int>>({
       optional_gen(), null_generator<optional<int>>(), optional_gen()}));
 
   cerr << "optional<unique_ptr>:" << endl;
-  auto unique = generator(
+  auto unique = make_generator(
     [i = 0]() mutable -> optional<unique_ptr<int>> {
       if (i < 5) return unique_ptr<int>(new int{i++});
       return {};
@@ -264,29 +263,29 @@ int main() {
   print_container(unique);
 
   cerr << "positive_int:" << endl;
-  print_container(generator(
+  print_container(make_generator(
     [i = 0]() mutable -> positive_int {
       if (i < 3) return i++;
       return -1;
     }));
 
   cerr << " - implicit null sequence:" << endl;
-  print_container(generator([]() mutable { return positive_int{}; }));
+  print_container(make_generator([]() mutable { return positive_int{}; }));
 
   cerr << "unique_ptr:" << endl;
-  print_container(generator([i = 0]() mutable {
+  print_container(make_generator([i = 0]() mutable {
     if (i < 3) return unique_ptr<int>(new int{i++});
     return unique_ptr<int>();
   }));
 
   cerr << "move-only function:" << endl;
-  print_container(generator(move_only_func{}));
+  print_container(make_generator(move_only_func{}));
 
   {
     cerr << "references:" << endl;
     int a = 0, b = 0;
     auto ref_gen = [&]() {
-      return generator([&]() -> ref<int> {
+      return make_generator([&]() -> ref<int> {
         if (a == 0) return ++a;
         else if (b == 0) return b += 3;
         else return {};
