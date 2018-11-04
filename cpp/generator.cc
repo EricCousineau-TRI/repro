@@ -4,6 +4,8 @@
 #include <experimental/optional>
 #include <vector>
 
+using std::cerr;
+using std::endl;
 using std::experimental::optional;
 using std::experimental::nullopt;
 
@@ -15,37 +17,49 @@ class generator_t {
 
   class iterator {
    public:
-    iterator(generator_t* parent) : parent_(parent) { parent_->next(); }
+    iterator(generator_t* parent) : parent_(parent) {
+      assert(parent_ != nullptr);
+      ++(*this);
+    }
     iterator() {}
-    T&& operator*() { return std::forward<T>(*parent_->value_); }
-    void operator++() { parent_->next(); }
+    T&& operator*() {
+      assert(parent_);
+      return std::forward<T>(*parent_->value_);
+    }
+    void operator++() {
+      assert(parent_);
+      ++count_;
+      if (!parent_->next()) {
+        parent_ = nullptr;
+      }
+    }
     bool operator==(const iterator& other) {
       if (!other.parent_) {
-        return !parent_ || parent_->finished_;
+        return !parent_;
       } else {
-        return this == &other;
+        return parent_ == other.parent_ && count_ == other.count_;
       }
     }
     bool operator!=(const iterator& other) { return !(*this == other); }
    private:
     generator_t* parent_{};
+    int count_{0};
   };
 
   iterator begin() { return iterator{this}; }
   iterator end() { return iterator{}; }
  private:
   friend class iterator;
-  void next() {
+  bool next() {
     value_ = func_();
-    if (!value_) finished_ = true;
+    return bool{value_};
   }
   Func func_;
   optional<T> value_;
-  bool finished_{};
 };
 
 template <typename T>
-auto chain(const typename generator_t<T>::Func& func) {
+auto generator(const typename generator_t<T>::Func& func) {
   return generator_t<T>(func);
 }
 
@@ -60,6 +74,7 @@ class chain_t {
   optional<T> operator()() {
     if (i_ >= g_.size()) return {};
     while (iter_ == g_[i_].end()) {
+      cerr << "next " << i_ << endl;
       if (++i_ >= g_.size()) return {};
       iter_ = g_[i_].begin();
     }
@@ -74,25 +89,26 @@ class chain_t {
 };
 
 template <typename T>
-auto make_chain(std::vector<generator_t<T>> g) {
-  return chain<int>(chain_t<int>(std::move(g)));
+auto chain(std::vector<generator_t<T>> g) {
+  return generator<int>(chain_t<int>(std::move(g)));
 }
 
 int main() {
   auto make = []() {
-    return chain<int>([i = 0]() mutable -> optional<int> {
+    return generator<int>([i = 0]() mutable -> optional<int> {
+      cerr << "iter " << i << endl;
       if (i < 10) return i++;
       return {};
     });
   };
   for (int value : make()) {
-    std::cerr << value << " ";
+    cerr << "value: " << value << endl;
   }
-  std::cerr << std::endl;
-  auto ch = make_chain<int>({make(), make()});
+  cerr << endl;
+  auto ch = chain<int>({make(), make()});
   for (int value : ch) {
-    std::cerr << value << " ";
+    cerr << "value: " << value << endl;
   } 
-  std::cerr << std::endl;
+  cerr << endl;
   return 0;
 }
