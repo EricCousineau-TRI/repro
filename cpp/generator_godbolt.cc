@@ -1,5 +1,14 @@
 #include <cassert>
-#include <utility>
+#include <iostream>
+#include <functional>
+#include <experimental/optional>
+#include <memory>
+#include <vector>
+
+using std::cerr;
+using std::endl;
+using std::experimental::optional;
+using std::unique_ptr;
 
 /**
 Provides a generator class that can be iterated upon:
@@ -23,8 +32,8 @@ Imitates Python generator expressions:
   `begin() == end()`.
  */
 template <
-    typename T, typename result_t,
-    typename Func>
+    typename T, typename result_t = optional<T>,
+    typename Func = std::function<result_t()>>
 class generator_t {
  public:
   generator_t(Func&& func)
@@ -90,13 +99,61 @@ class generator_t {
 };
 
 template <
-    typename T, typename result_t,
-    typename Func>
+    typename T, typename result_t = optional<T>,
+    typename Func> // = std::function<result_t()>>
 auto generator(Func&& func) {
   return generator_t<T, result_t, Func>(std::forward<Func>(func));
 }
 
+template <typename T, typename result_t = optional<T>>
+auto null_generator() {
+  return generator<T, result_t>([]() { return result_t{}; });
+}
+
+template <typename T, typename result_t, typename Func>
+class chain_func {
+ public:
+  using Generator = generator_t<T, result_t, Func>;
+  chain_func(std::vector<Generator> g_list)
+      : g_list_(std::move(g_list)) {}
+
+  result_t operator()() {
+    if (!next()) return {};
+    return *iter_;
+  }
+
+ private:
+  inline Generator& g() { return g_list_[i_]; }
+
+  inline bool next() {
+    if (i_ >= g_list_.size()) return false;
+    if (!iter_.valid()) {
+      iter_ = g().begin();
+    } else {
+      ++iter_;
+    }
+    while (iter_ == g().end()) {
+      if (++i_ >= g_list_.size()) return false;
+      iter_ = g().begin();
+    }
+    return true;
+  }
+
+  std::vector<Generator> g_list_;
+  typename Generator::iterator iter_;
+  int i_{0};
+};
+
+template <
+    typename T, typename result_t = optional<T>,
+    typename Func = std::function<result_t()>>
+auto chain(std::vector<generator_t<T, result_t, Func>> g) {
+  auto tmp = chain_func<T, result_t, Func>(std::move(g));
+  return generator<T, result_t, Func>(std::move(tmp));
+}
+
 int visit_count = 0;
+
 template <typename T>
 void visit(T&&) { ++visit_count; }
 
@@ -121,10 +178,13 @@ class positive_int {
 };
 
 int main() {
-  visit_container(generator<int, positive_int>(
-    [i = 0]() mutable {
+  auto simple_gen = []() {
+    return [i = 0]() mutable -> optional<int> {
       if (i < 3) return i++;
-      return -1;
-    }));
+      return {};
+    };
+  };
+  visit_container(generator<int>(simple_gen()));
+  // visit_container(generator<int>(std::function<optional<int>()>(simple_gen())));
   return 0;
 }
