@@ -17,28 +17,29 @@ class generator_t {
 
   class iterator {
    public:
-    iterator(generator_t* parent) : parent_(parent) {
-      assert(parent_ != nullptr);
-      ++(*this);
-    }
     iterator() {}
+    iterator(generator_t* parent, bool is_end) : parent_(parent) {
+      assert(valid());
+      if (!is_end) {
+        ++(*this);
+      }
+    }
+    bool valid() const {
+      return parent_ != nullptr;
+    }
     T&& operator*() {
-      assert(parent_);
+      assert(valid());
       return std::forward<T>(*parent_->value_);
     }
     void operator++() {
-      assert(parent_);
+      assert(valid());
       ++count_;
       if (!parent_->next()) {
-        parent_ = nullptr;
+        count_ = 0;
       }
     }
     bool operator==(const iterator& other) {
-      if (!other.parent_) {
-        return !parent_;
-      } else {
-        return parent_ == other.parent_ && count_ == other.count_;
-      }
+      return parent_ == other.parent_ && count_ == other.count_;
     }
     bool operator!=(const iterator& other) { return !(*this == other); }
    private:
@@ -46,8 +47,8 @@ class generator_t {
     int count_{0};
   };
 
-  iterator begin() { return iterator{this}; }
-  iterator end() { return iterator{}; }
+  iterator begin() { return iterator(this, false); }
+  iterator end() { return iterator(this, true); }
  private:
   friend class iterator;
   bool next() {
@@ -78,27 +79,33 @@ generator_t<T> null_generator() {
 template <typename T>
 class chain_t {
  public:
-  chain_t(std::vector<generator_t<T>> g) : g_(std::move(g)) {}
+  chain_t(std::vector<generator_t<T>> g_list): g_list_(std::move(g_list)) {}
+
   optional<T> operator()() {
-    if (g_.size() == 0) return {};
-    if (i_ == -1) {
-      i_ = 0;
-      iter_ = g_[i_].begin();
+    if (!next()) return {};
+    return *iter_;
+  }
+
+ private:
+  inline generator_t<T>& g() { return g_list_[i_]; }
+
+  inline bool next() {
+    if (i_ >= g_list_.size()) return false;
+    if (!iter_.valid()) {
+      iter_ = g().begin();
     } else {
       ++iter_;
     }
-    while (iter_ == g_[i_].end()) {
-      cerr << "chain " << i_ << endl;
-      ++i_;
-      if (i_ >= g_.size()) return {};
-      iter_ = g_[i_].begin();
+    while (iter_ == g().end()) {
+      if (++i_ >= g_list_.size()) return false;
+      iter_ = g().begin();
     }
-    return *iter_;
+    return true;
   }
- private:
-  std::vector<generator_t<T>> g_;
+
+  std::vector<generator_t<T>> g_list_;
   typename generator_t<T>::iterator iter_;
-  int i_{-1};
+  int i_{0};
 };
 
 template <typename T>
@@ -109,24 +116,26 @@ auto chain(std::vector<generator_t<T>> g) {
 int main() {
   auto make = []() {
     return generator<int>([i = 0]() mutable -> optional<int> {
-      cerr << "gen " << i << endl;
       if (i < 10) return i++;
       return {};
     });
   };
   auto f = make();
-  for (int value : f) {
-    cerr << "value: " << value << endl;
+  for (int rep : {0, 1}) {
+    cerr << "[ " << rep << " ] ";
+    for (int value : f) {
+      cerr << value << " ";
+    }
+    cerr << endl;
   }
-  cerr << "[ again ]" << endl;
-  for (int value : f) {
-    cerr << "value 2: " << value << endl;
+  cerr << endl << "---" << endl;
+  auto ch = chain<int>({make(), null_generator<int>(), make()});
+  for (int rep : {0, 1}) {
+    cerr << "[ " << rep << " ] ";
+    for (int value : ch) {
+      cerr << value << " ";
+    }
+    cerr << endl;
   }
-  cerr << "---" << endl;
-  auto ch = chain<int>({null_generator<int>(), make()});
-  for (int value : ch) {
-    cerr << "value: " << value << endl;
-  } 
-  cerr << endl;
   return 0;
 }
