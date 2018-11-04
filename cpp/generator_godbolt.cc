@@ -1,8 +1,5 @@
 #include <cassert>
-#include <functional>
-#include <experimental/optional>
-
-using std::experimental::optional;
+#include <utility>
 
 /**
 Provides a generator class that can be iterated upon:
@@ -26,8 +23,8 @@ Imitates Python generator expressions:
   `begin() == end()`.
  */
 template <
-    typename T, typename result_t = optional<T>,
-    typename Func = std::function<result_t()>>
+    typename T, typename result_t,
+    typename Func>
 class generator_t {
  public:
   generator_t(Func&& func)
@@ -93,15 +90,10 @@ class generator_t {
 };
 
 template <
-    typename T, typename result_t = optional<T>,
+    typename T, typename result_t,
     typename Func>
 auto generator(Func&& func) {
   return generator_t<T, result_t, Func>(std::forward<Func>(func));
-}
-
-template <typename T, typename result_t = optional<T>>
-auto null_generator() {
-  return generator<T, result_t>([]() { return result_t{}; });
 }
 
 int visit_count = 0;
@@ -117,14 +109,22 @@ void visit_container(Container&& gen) {
   }
 }
 
+class positive_int {
+ public:
+  positive_int() {}
+  positive_int(int value) : value_(value) {}
+  // N.B. Seems to be *very* picky about using `move` and `T&&` here.
+  int&& operator*() { return std::move(value_); }
+  operator bool() const { return value_ >= 0; }
+ private:
+  int value_{-1};
+};
+
 int main() {
-  auto simple_gen = []() {
-    return generator<int>([i = 0]() mutable -> optional<int> {
-      if (i < 10) return i++;
-      return {};
-    });
-  };
-  visit_container(simple_gen());
-  visit_container(null_generator<int>());
+  visit_container(generator<int, positive_int>(
+    [i = 0]() mutable {
+      if (i < 3) return i++;
+      return -1;
+    }));
   return 0;
 }
