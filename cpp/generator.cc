@@ -155,10 +155,11 @@ void print_container(Container&& gen) {
   cerr << endl;
 }
 
-class int_wrapper {
+class positive_int {
  public:
-  int_wrapper() {}
-  int_wrapper(int value) : value_(value) {}
+  positive_int() {}
+  positive_int(int value) : value_(value) {}
+  // N.B. Seems to be *very* picky about using `move` and `T&&` here.
   int&& operator*() { return std::move(value_); }
   operator bool() const { return value_ >= 0; }
  private:
@@ -183,8 +184,8 @@ int main() {
       return {};
     });
   print_container(unique);
-  cerr << "int_wrapper:" << endl;
-  print_container(generator<int, int_wrapper>(
+  cerr << "positive_int:" << endl;
+  print_container(generator<int, positive_int>(
     [i = 0]() mutable {
       if (i < 3) return i++;
       return -1;
