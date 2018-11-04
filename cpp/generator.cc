@@ -192,6 +192,17 @@ class move_only_func {
   unique_ptr<int> value_{new int{0}};
 };
 
+template <typename T>
+class ref {
+ public:
+  ref() {}
+  ref(T& value) : ptr_(&value) {}
+  T& operator*() { return *ptr_; }
+  operator bool() const { return ptr_ != nullptr; }
+ private:
+  T* ptr_{};
+};
+
 int main() {
   auto simple_gen = []() {
     return generator<int>([i = 0]() mutable -> optional<int> {
@@ -226,5 +237,22 @@ int main() {
   }));
   cerr << "move_only:" << endl;
   print_container(generator<int>(move_only_func{}));
+  {
+    cerr << "references:" << endl;
+    int a = 0, b = 0;
+    auto ref_gen = [&]() {
+      return generator<int&, ref<int>>([&]() -> ref<int> {
+        if (a == 0) return ++a;
+        else if (b == 0) return b += 3;
+        else return {};
+      });
+    };
+    for (auto& cur : ref_gen()) {
+      auto before = cur;
+      cur *= 100;
+      cerr << "before: " << before << ", cur: " << cur << endl;
+    }
+    cerr << "a: " << a << ", b: " << b << endl;
+  }
   return 0;
 }
