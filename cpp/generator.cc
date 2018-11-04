@@ -31,21 +31,20 @@ class next_iterator {
   next_iterator() {}
   next_iterator(generator* parent, bool finished = false)
       : parent_(parent), finished_(finished) {
-    assert(valid());
+    assert(parent_);
     if (!finished_) {
       ++(*this);
     }
   }
-
   operator bool() const {
     return parent_ != nullptr;
   }
   value_type&& operator*() {
-    assert(valid());
+    assert(parent_);
     return std::forward<value_type>(*result_);
   }
   next_iterator& operator++() {
-    assert(valid());
+    assert(parent_);
     result_ = parent_->next();
     if (!result_) {
       finished_ = true;
@@ -101,15 +100,16 @@ class generator {
   using result_type = decltype(std::declval<Func>()());
   using value_type = typename generator_value_type<result_type>::value_type;
   using iterator = next_iterator<generator>;
+
   generator(Func&& func)
       : func_(std::forward<Func>(func)) {}
   template <typename OtherFunc>
   generator(generator<OtherFunc>&& other)
       : func_(std::move(other.func_)) {}
 
+  result_type next() { return func_(); }
   iterator begin() { return iterator(this); }
   iterator end() { return iterator(this, true); }
-  result_type next() { return func_(); }
  private:
   template <typename OtherFunc>
   friend class generator;
