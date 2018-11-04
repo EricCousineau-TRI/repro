@@ -163,7 +163,7 @@ auto make_container_generator(container&& c) {
   auto iter = std::begin(c);
   using T = std::decay_t<decltype(*iter)>;
   return make_generator(
-      [c = std::forward<container>(c), iter = std::move(iter)]()
+      [container&& c = std::forward<container>(c), iter = std::move(iter)]()
           mutable -> optional<T> {
     if (iter != std::end(c)) return *(iter++);
     return {};
@@ -253,6 +253,10 @@ int main() {
 
   cerr << "container:" << endl;
   print_container(make_container_generator(std::vector<int>{10, 20, 30}));
+  {
+    std::vector<int> c{10, 20, 30};
+    print_container(make_container_generator(c));
+  }
 
   cerr << "null:" << endl;
   print_container(null_generator<optional<int>>());
