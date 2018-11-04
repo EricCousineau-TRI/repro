@@ -11,10 +11,31 @@ using std::experimental::optional;
 using std::experimental::nullopt;
 using std::unique_ptr;
 
-template <typename T>
+/**
+Provides a generator class that can be iterated upon:
+@tparam T
+  Type to return when iterating
+@tparam wrapper (default: optional<T>)
+  Class that must follow this contract:
+   - moveable
+   - (optional) copy constructible
+   - wrapper() -> construct invalid value
+   - wrapper(T&&) -> construct valid value
+   - operator* -> T&&
+      dereference to value, moveable
+   - operator bool():
+      true -> valid value, consume
+      false -> invalid value, stop iterating
+Imitates Python generator expressions:
+- begin() returns an iterator that has evaluated the first expression
+- end() refers to the end of iteration (no more values to consume)
+- Can only be iterated once; afterwards, it will always return
+  `begin() == end()`.
+ */
+template <typename T, typename wrapper = optional<T>>
 class generator_t {
  public:
-  using Func = std::function<optional<T>()>;
+  using Func = std::function<wrapper()>;
   generator_t(Func func) : func_(func) {}
 
   class iterator {
@@ -36,7 +57,7 @@ class generator_t {
     void operator++() {
       assert(valid());
       ++count_;
-      if (!parent_->next()) {
+      if (!parent_->eval_next()) {
         count_ = 0;
       }
     }
@@ -51,9 +72,15 @@ class generator_t {
 
   iterator begin() { return iterator(this, false); }
   iterator end() { return iterator(this, true); }
+
+  // May invalidate iterator state; can restore iterator state with `++iter`.
+  wrapper next() {
+    eval_next();
+    return std::move(value_);
+  }
  private:
   friend class iterator;
-  bool next() {
+  bool eval_next() {
     if (func_) {
       value_ = func_();
     }
@@ -63,20 +90,21 @@ class generator_t {
     return bool{value_};
   }
   Func func_;
-  optional<T> value_;
+  wrapper value_;
 };
 
-template <typename T>
-auto generator(const typename generator_t<T>::Func& func) {
-  return generator_t<T>(func);
+template <typename T, typename wrapper = optional<T>>
+auto generator(const typename generator_t<T, wrapper>::Func& func) {
+  return generator_t<T, wrapper>(func);
 }
 
-template <typename T>
+template <typename T, typename wrapper>
 class chain_func {
  public:
-  chain_func(std::vector<generator_t<T>> g_list): g_list_(std::move(g_list)) {}
+  chain_func(std::vector<generator_t<T, wrapper>> g_list)
+      : g_list_(std::move(g_list)) {}
 
-  optional<T> operator()() {
+  wrapper operator()() {
     if (!next()) return {};
     return *iter_;
   }
@@ -103,9 +131,9 @@ class chain_func {
   int i_{0};
 };
 
-template <typename T>
-auto chain(std::vector<generator_t<T>> g) {
-  return generator<int>(chain_func<int>(std::move(g)));
+template <typename T, typename wrapper = optional<T>>
+auto chain(std::vector<generator_t<T, wrapper>> g) {
+  return generator<int, wrapper>(chain_func<int, wrapper>(std::move(g)));
 }
 
 template <typename T>
@@ -115,8 +143,8 @@ std::ostream& operator<<(std::ostream& os, const unique_ptr<T>& p) {
   return os;
 }
 
-template <typename T>
-void print_generator(generator_t<T>& gen) {
+template <typename Container>
+void print_container(Container&& gen) {
   for (int rep : {0, 1}) {
     cerr << "[ " << rep << " ] ";
     for (auto&& value : gen) {
@@ -136,15 +164,15 @@ int main() {
   };
   cerr << "simple:" << endl;
   auto simple = simple_gen();
-  print_generator(simple);
+  print_container(simple);
   cerr << "chain:" << endl;
   auto chained = chain<int>({simple_gen(), generator<int>({}), simple_gen()});
-  print_generator(chained);
+  print_container(chained);
   cerr << "unique_ptr:" << endl;
   auto unique = generator<unique_ptr<int>>([i = 0]() mutable -> optional<unique_ptr<int>> {
     if (i < 5) return unique_ptr<int>(new int{i++});
     return {};
   });
-  print_generator(unique);
+  print_container(unique);
   return 0;
 }
