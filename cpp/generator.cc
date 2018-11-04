@@ -10,6 +10,11 @@ using std::endl;
 using std::experimental::optional;
 using std::unique_ptr;
 
+template <typename T, typename SFINAE = void>
+struct generator_value_type {
+  using value_type = typename T::value_type;
+};
+
 /**
 Provides a generator class that can be iterated upon:
 @tparam T
@@ -32,15 +37,19 @@ Imitates Python generator expressions:
   `begin() == end()`.
  */
 template <
-    typename T, typename result_t = optional<T>,
+    typename result_t,
     typename Func = std::function<result_t()>>
 class generator_t {
  public:
+  using value_type = typename generator_value_type<result_t>::value_type;
+  using result_type = result_t;
+  using func_type = Func;
+
   generator_t(Func&& func)
       : func_(std::forward<Func>(func)) {}
 
   template <typename OtherFunc>
-  generator_t(generator_t<T, result_t, OtherFunc>&& other)
+  generator_t(generator_t<result_t, OtherFunc>&& other)
       : func_(std::move(other.func_)),
         value_(std::move(other.value_)) {}
 
@@ -58,9 +67,9 @@ class generator_t {
     bool valid() const {
       return parent_ != nullptr;
     }
-    T&& operator*() {
+    value_type&& operator*() {
       assert(valid());
-      return std::forward<T>(*parent_->value_);
+      return std::forward<value_type>(*parent_->value_);
     }
     void operator++() {
       assert(valid());
@@ -88,7 +97,7 @@ class generator_t {
   }
  private:
   friend class iterator;
-  template <typename A, typename B, typename C>
+  template <typename A, typename B>
   friend class generator_t;
   bool store_next() {
     value_ = func_();
@@ -98,22 +107,20 @@ class generator_t {
   result_t value_;
 };
 
-template <
-    typename T, typename result_t = optional<T>,
-    typename Func> // = std::function<result_t()>>
+template <typename result_t, typename Func>
 auto generator(Func&& func) {
-  return generator_t<T, result_t, Func>(std::forward<Func>(func));
+  return generator_t<result_t, Func>(std::forward<Func>(func));
 }
 
-template <typename T, typename result_t = optional<T>>
+template <typename result_t>
 auto null_generator() {
-  return generator<T, result_t>([]() { return result_t{}; });
+  return generator<result_t>([]() { return result_t{}; });
 }
 
-template <typename T, typename result_t, typename Func>
+template <typename result_t, typename Func>
 class chain_func {
  public:
-  using Generator = generator_t<T, result_t, Func>;
+  using Generator = generator_t<result_t, Func>;
   chain_func(std::vector<Generator> g_list)
       : g_list_(std::move(g_list)) {}
 
@@ -145,11 +152,11 @@ class chain_func {
 };
 
 template <
-    typename T, typename result_t = optional<T>,
+    typename result_t,
     typename Func = std::function<result_t()>>
-auto chain(std::vector<generator_t<T, result_t, Func>> g) {
-  auto tmp = chain_func<T, result_t, Func>(std::move(g));
-  return generator<T, result_t, Func>(std::move(tmp));
+auto chain(std::vector<generator_t<result_t, Func>> g) {
+  auto tmp = chain_func<result_t, Func>(std::move(g));
+  return generator<result_t, Func>(std::move(tmp));
 }
 
 template <typename T>
@@ -171,8 +178,17 @@ void print_container(Container&& gen) {
   cerr << endl;
 }
 
+// Enable `unique_ptr` to be an iterated type, where `nullptr` is the stopping
+// criteria.
+template<typename T>
+struct generator_value_type<unique_ptr<T>> {
+  using value_type = T;
+};
+
 class positive_int {
  public:
+  using value_type = int;
+
   positive_int() {}
   positive_int(int value) : value_(value) {}
   // N.B. Seems to be *very* picky about using `move` and `T&&` here.
@@ -195,6 +211,8 @@ class move_only_func {
 template <typename T>
 class ref {
  public:
+  using value_type = T&;
+
   ref() {}
   ref(T& value) : ptr_(&value) {}
   T& operator*() { return *ptr_; }
@@ -205,43 +223,53 @@ class ref {
 
 int main() {
   auto simple_gen = []() {
-    return generator<int>([i = 0]() mutable -> optional<int> {
+    return generator<optional<int>>([i = 0]() mutable -> optional<int> {
       if (i < 10) return i++;
       return {};
     });
   };
   cerr << "simple:" << endl;
   print_container(simple_gen());
+
+  cerr << "null:" << endl;
+  print_container(null_generator<optional<int>>());
+
   cerr << "chain:" << endl;
-  print_container(chain<int>({
-      simple_gen(), null_generator<int>(), simple_gen()}));
+  print_container(chain<optional<int>>({
+      simple_gen(), null_generator<optional<int>>(), simple_gen()}));
+
   cerr << "optional<unique_ptr>:" << endl;
-  auto unique = generator<unique_ptr<int>>(
+  auto unique = generator<optional<unique_ptr<int>>>(
     [i = 0]() mutable -> optional<unique_ptr<int>> {
       if (i < 5) return unique_ptr<int>(new int{i++});
       return {};
     });
   print_container(unique);
+
   cerr << "positive_int:" << endl;
-  print_container(generator<int, positive_int>(
+  print_container(generator<positive_int>(
     [i = 0]() mutable {
       if (i < 3) return i++;
       return -1;
     }));
+
   cerr << " - implicit null sequence:" << endl;
-  print_container(generator<int, positive_int>([]() mutable { return -1; }));
+  print_container(generator<positive_int>([]() mutable { return -1; }));
+
   cerr << "unique_ptr:" << endl;
-  print_container(generator<int, unique_ptr<int>>([i = 0]() mutable {
+  print_container(generator<unique_ptr<int>>([i = 0]() mutable {
     if (i < 3) return unique_ptr<int>(new int{i++});
     return unique_ptr<int>();
   }));
-  cerr << "move_only:" << endl;
-  print_container(generator<int>(move_only_func{}));
+
+  cerr << "move-only function:" << endl;
+  print_container(generator<optional<int>>(move_only_func{}));
+
   {
     cerr << "references:" << endl;
     int a = 0, b = 0;
     auto ref_gen = [&]() {
-      return generator<int&, ref<int>>([&]() -> ref<int> {
+      return generator<ref<int>>([&]() -> ref<int> {
         if (a == 0) return ++a;
         else if (b == 0) return b += 3;
         else return {};
@@ -254,5 +282,6 @@ int main() {
     }
     cerr << "a: " << a << ", b: " << b << endl;
   }
+
   return 0;
 }
