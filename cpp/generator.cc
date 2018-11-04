@@ -2,12 +2,14 @@
 #include <iostream>
 #include <functional>
 #include <experimental/optional>
+#include <memory>
 #include <vector>
 
 using std::cerr;
 using std::endl;
 using std::experimental::optional;
 using std::experimental::nullopt;
+using std::unique_ptr;
 
 template <typename T>
 class generator_t {
@@ -107,10 +109,17 @@ auto chain(std::vector<generator_t<T>> g) {
 }
 
 template <typename T>
-void print_generator(generator_t<T>&& gen) {
+std::ostream& operator<<(std::ostream& os, const unique_ptr<T>& p) {
+  if (p) os << "unique_ptr(" << *p << ")";
+  else os << "unique_ptr(nullptr)";
+  return os;
+}
+
+template <typename T>
+void print_generator(generator_t<T>& gen) {
   for (int rep : {0, 1}) {
     cerr << "[ " << rep << " ] ";
-    for (int value : gen) {
+    for (auto&& value : gen) {
       cerr << value << " ";
     }
     cerr << endl;
@@ -126,8 +135,16 @@ int main() {
     });
   };
   cerr << "simple:" << endl;
-  print_generator(simple_gen());
+  auto simple = simple_gen();
+  print_generator(simple);
   cerr << "chain:" << endl;
-  print_generator(chain<int>({simple_gen(), generator<int>({}), simple_gen()}));
+  auto chained = chain<int>({simple_gen(), generator<int>({}), simple_gen()});
+  print_generator(chained);
+  cerr << "unique_ptr:" << endl;
+  auto unique = generator<unique_ptr<int>>([i = 0]() mutable -> optional<unique_ptr<int>> {
+    if (i < 5) return unique_ptr<int>(new int{i++});
+    return {};
+  });
+  print_generator(unique);
   return 0;
 }
