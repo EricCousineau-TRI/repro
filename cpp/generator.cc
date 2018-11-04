@@ -38,7 +38,8 @@ See `generator_value_type<>` for how value types are extracted.
      - result_t() -> construct invalid value
      - result_t(T&&) -> construct valid value
      - operator* -> T&&
-        dereference to value, moveable
+        dereference to value. First dereferences for a moveable type may
+        invalidate future dereferences.
      - operator bool():
         true -> valid value, consume
         false -> invalid value, stop iterating
@@ -67,9 +68,10 @@ class generator {
   class iterator {
    public:
     iterator() {}
-    iterator(generator* parent, bool is_end) : parent_(parent) {
+    iterator(generator* parent, bool finished = false)
+        : parent_(parent), finished_(finished) {
       assert(valid());
-      if (!is_end) {
+      if (!finished_) {
         ++(*this);
       }
     }
@@ -80,27 +82,27 @@ class generator {
       assert(valid());
       return std::forward<value_type>(*result_);
     }
-    void operator++() {
+    iterator& operator++() {
       assert(valid());
-      ++count_;
       result_ = parent_->next();
       if (!result_) {
-        // Assumes overflow will not be an issue.
-        count_ = 0;
+        finished_ = true;
       }
+      return *this;
     }
     bool operator==(const iterator& other) {
-      return parent_ == other.parent_ && count_ == other.count_;
+      // Not precise, but provides a succinct implementation to enable
+      // comparison to `end`.
+      return parent_ == other.parent_ && finished_ == other.finished_;
     }
     bool operator!=(const iterator& other) { return !(*this == other); }
    private:
     generator* parent_{};
-    // 0 implies `end()`.
-    int count_{0};
+    bool finished_{false};
     result_type result_;
   };
 
-  iterator begin() { return iterator(this, false); }
+  iterator begin() { return iterator(this); }
   iterator end() { return iterator(this, true); }
   result_type next() { return func_(); }
  private:
