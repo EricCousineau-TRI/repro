@@ -3,3 +3,6 @@ py_binary(
     srcs = ["dumb_generator.py"],
     visibility = ["//visibility:public"],
 )
+
+# For workaround.
+exports_files(["dumb_generator.py"])

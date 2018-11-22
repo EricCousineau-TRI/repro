@@ -17,8 +17,8 @@ filegroup(
     srcs = [
         "input.yaml",
         "input_extra.yaml",
-        "input_gen.yaml",
+        "input_gen.yaml",  # Generated.
         "input_using_gen.yaml",
-        "input_gen_using_gen.yaml",
+        "input_gen_using_gen.yaml",  # Generated, depends on `input_gen.yaml`.
     ],
 )
