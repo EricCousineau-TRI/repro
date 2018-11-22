@@ -1,0 +1,2 @@
+value_with_gen: input_with_gen
+include_file: data/input_gen.yaml
