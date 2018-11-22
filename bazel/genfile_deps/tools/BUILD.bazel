@@ -1,2 +1,5 @@
-
-
+py_binary(
+    name = "dumb_generator",
+    srcs = ["dumb_generator.py"],
+    visibility = ["//visibility:public"],
+)

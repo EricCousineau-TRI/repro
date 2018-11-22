@@ -17,6 +17,8 @@ Generated output:
 """
 
 import argparse
+from os.path import basename
+from subprocess import check_output
 import sys
 
 import yaml
@@ -25,6 +27,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--input", type=str, required=True)
 parser.add_argument("--output", type=str, required=True)
 args = parser.parse_args()
+
+print([basename(__file__)] + sys.argv[1:])
+files = check_output(["find", "."])
+for line in files.split("\n"):
+    print("    " + line)
 
 with open(args.input) as f:
     data = yaml.load(f)

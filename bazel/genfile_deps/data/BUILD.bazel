@@ -1,0 +1,24 @@
+load(":macros.bzl", "dumb_generator")
+
+dumb_generator(
+    name = "input_gen.yaml",
+    src = "input.yaml",
+    data = ["input_extra.yaml"],
+)
+
+dumb_generator(
+    name = "input_gen_using_gen.yaml",
+    src = "input_using_gen.yaml",
+    data = ["input_gen.yaml"],
+)
+
+filegroup(
+    name = "data",
+    srcs = [
+        "input.yaml",
+        "input_extra.yaml",
+        "input_gen.yaml",
+        "input_using_gen.yaml",
+        "input_gen_using_gen.yaml",
+    ],
+)
