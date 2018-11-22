@@ -1,4 +1,4 @@
-load(":macros.bzl", "dumb_generator")
+load("//tools:dumb_generator.bzl", "dumb_generator")
 
 dumb_generator(
     name = "input_gen.yaml",

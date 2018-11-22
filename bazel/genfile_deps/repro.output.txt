@@ -1,0 +1,138 @@
+++ dirname ./repro.sh
++ cd .
++ echo '[ USE_WORKAROUND = False ]'
+[ USE_WORKAROUND = False ]
++ sed -i 's#^USE_WORKAROUND = .*$#USE_WORKAROUND = False#' tools/dumb_generator.bzl
++ bazel clean
+INFO: Starting clean (this may take a while). Consider using --async if the clean takes more than several minutes.
++ bazel build //data:data
+Loading: 
+Loading: 0 packages loaded
+INFO: Analysed target //data:data (17 packages loaded).
+INFO: Found 1 target...
+[0 / 3] [-----] BazelWorkspaceStatusAction stable-status.txt
+INFO: From Executing genrule //data:input_gen.yaml_gen_simple:
+['dumb_generator.py', '--input', 'data/input.yaml', '--output', 'bazel-out/k8-fastbuild/genfiles/data/input_gen.yaml']
+    .
+    ./bazel-out
+    ./bazel-out/host
+    ./bazel-out/host/bin
+    ./bazel-out/host/bin/tools
+    ./bazel-out/host/bin/tools/dumb_generator
+    ./bazel-out/host/bin/tools/dumb_generator.runfiles
+    ./bazel-out/host/bin/tools/dumb_generator.runfiles/genfile_deps
+    ./bazel-out/host/bin/tools/dumb_generator.runfiles/genfile_deps/tools
+    ./bazel-out/host/bin/tools/dumb_generator.runfiles/genfile_deps/tools/dumb_generator
+    ./bazel-out/host/bin/tools/dumb_generator.runfiles/genfile_deps/tools/__init__.py
+    ./bazel-out/host/bin/tools/dumb_generator.runfiles/genfile_deps/tools/dumb_generator.py
+    ./bazel-out/k8-fastbuild
+    ./bazel-out/k8-fastbuild/genfiles
+    ./bazel-out/k8-fastbuild/genfiles/data
+    ./data
+    ./data/input.yaml
+    ./data/input_extra.yaml
+    ./external
+    ./external/bazel_tools
+    ./external/bazel_tools/tools
+    ./external/bazel_tools/tools/genrule
+    ./external/bazel_tools/tools/genrule/genrule-setup.sh
+    ./tools
+    ./tools/dumb_generator.py
+    
+ERROR: .../genfile_deps/data/BUILD.bazel:9:1: Executing genrule //data:input_gen_using_gen.yaml_gen_simple failed (Exit 1)
+Traceback (most recent call last):
+  File ".../execroot/genfile_deps/bazel-out/host/bin/tools/dumb_generator.runfiles/genfile_deps/tools/dumb_generator.py", line 53, in <module>
+    with open(include_file) as f:
+IOError: [Errno 2] No such file or directory: 'data/input_gen.yaml'
+['dumb_generator.py', '--input', 'data/input_using_gen.yaml', '--output', 'bazel-out/k8-fastbuild/genfiles/data/input_gen_using_gen.yaml']
+    .
+    ./bazel-out
+    ./bazel-out/host
+    ./bazel-out/host/bin
+    ./bazel-out/host/bin/tools
+    ./bazel-out/host/bin/tools/dumb_generator
+    ./bazel-out/host/bin/tools/dumb_generator.runfiles
+    ./bazel-out/host/bin/tools/dumb_generator.runfiles/genfile_deps
+    ./bazel-out/host/bin/tools/dumb_generator.runfiles/genfile_deps/tools
+    ./bazel-out/host/bin/tools/dumb_generator.runfiles/genfile_deps/tools/dumb_generator
+    ./bazel-out/host/bin/tools/dumb_generator.runfiles/genfile_deps/tools/__init__.py
+    ./bazel-out/host/bin/tools/dumb_generator.runfiles/genfile_deps/tools/dumb_generator.py
+    ./bazel-out/k8-fastbuild
+    ./bazel-out/k8-fastbuild/genfiles
+    ./bazel-out/k8-fastbuild/genfiles/data
+    ./bazel-out/k8-fastbuild/genfiles/data/input_gen.yaml
+    ./data
+    ./data/input_using_gen.yaml
+    ./external
+    ./external/bazel_tools
+    ./external/bazel_tools/tools
+    ./external/bazel_tools/tools/genrule
+    ./external/bazel_tools/tools/genrule/genrule-setup.sh
+    ./tools
+    ./tools/dumb_generator.py
+    
+Target //data:data failed to build
+Use --verbose_failures to see the command lines of failed build steps.
+INFO: Elapsed time: 0.757s, Critical Path: 0.24s
+INFO: 1 process: 1 remote cache hit.
+FAILED: Build did NOT complete successfully
+FAILED: Build did NOT complete successfully
++ echo -e '\n\n\n'
+
+
+
+
++ echo '[ USE_WORKAROUND = False ]'
+[ USE_WORKAROUND = False ]
++ sed -i 's#^USE_WORKAROUND = .*$#USE_WORKAROUND = True#' tools/dumb_generator.bzl
++ bazel clean
+INFO: Starting clean (this may take a while). Consider using --async if the clean takes more than several minutes.
++ bazel build //data:data
+Loading: 
+Loading: 0 packages loaded
+INFO: Analysed target //data:data (17 packages loaded).
+INFO: Found 1 target...
+[0 / 3] [-----] BazelWorkspaceStatusAction stable-status.txt
+INFO: From Executing genrule //data:input_gen.yaml_gen_workaround:
+['dumb_generator.py', '--use_workaround', '--input', 'data/input.yaml', '--output', 'bazel-out/k8-fastbuild/genfiles/data/input_gen.yaml']
+    .
+    ./data
+    ./data/input.yaml
+    ./data/input_gen.yaml_gen_tool
+    ./data/input_extra.yaml
+    ./tools
+    ./tools/dumb_generator
+    ./tools/__init__.py
+    ./tools/dumb_generator.py
+    
+INFO: From Executing genrule //data:input_gen.yaml_gen_workaround [for host]:
+['dumb_generator.py', '--use_workaround', '--input', 'data/input.yaml', '--output', 'bazel-out/host/genfiles/data/input_gen.yaml']
+    .
+    ./data
+    ./data/input.yaml
+    ./data/input_gen.yaml_gen_tool
+    ./data/input_extra.yaml
+    ./tools
+    ./tools/dumb_generator
+    ./tools/__init__.py
+    ./tools/dumb_generator.py
+    
+INFO: From Executing genrule //data:input_gen_using_gen.yaml_gen_workaround:
+['dumb_generator.py', '--use_workaround', '--input', 'data/input_using_gen.yaml', '--output', 'bazel-out/k8-fastbuild/genfiles/data/input_gen_using_gen.yaml']
+    .
+    ./data
+    ./data/input_gen_using_gen.yaml_gen_tool
+    ./data/input_using_gen.yaml
+    ./data/input_gen.yaml
+    ./tools
+    ./tools/dumb_generator
+    ./tools/__init__.py
+    ./tools/dumb_generator.py
+    
+Target //data:data up-to-date:
+  bazel-genfiles/data/input_gen.yaml
+  bazel-genfiles/data/input_gen_using_gen.yaml
+INFO: Elapsed time: 0.475s, Critical Path: 0.02s
+INFO: 3 processes: 3 remote cache hit.
+INFO: Build completed successfully, 11 total actions
+INFO: Build completed successfully, 11 total actions
