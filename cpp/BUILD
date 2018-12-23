@@ -423,3 +423,8 @@ cc_binary(
         "doc_struct_nest_big.h",
     ],
 )
+
+cc_binary(
+    name = "move_check",
+    srcs = ["move_check.cc"],
+)
