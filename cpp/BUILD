@@ -428,3 +428,9 @@ cc_binary(
     name = "move_check",
     srcs = ["move_check.cc"],
 )
+
+cc_binary(
+    name = "scalar_functor_set",
+    srcs = ["scalar_functor_set.cc"],
+    copts = ["-std=c++14"],
+)
