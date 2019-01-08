@@ -434,3 +434,9 @@ cc_binary(
     srcs = ["scalar_functor_set.cc"],
     copts = ["-std=c++14"],
 )
+
+cc_binary(
+    name = "lambda_recursive",
+    srcs = ["lambda_recursive.cc"],
+    copts = ["-std=c++14"],
+)
