@@ -3,12 +3,14 @@
 # run --incompatible_disallow_set_constructor=false
 # test --incompatible_disallow_set_constructor=false
 
+import %workspace%/tools/cc_toolchain.bazelrc
+
 # Default to an optimized build.
 build -c opt
 
 # Default build options.
 build --strip=never
-build --crosstool_top=//tools:default-toolchain
+# build --crosstool_top=//tools:default-toolchain
 # Only show warnings from Drake, not from externals.
 build --output_filter="^//"
 
