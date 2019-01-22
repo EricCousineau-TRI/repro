@@ -1,12 +1,12 @@
 #!/bin/bash
 
 _env_dir=$(cd $(dirname ${BASH_SOURCE}) && pwd)/virtualenv
-if [[ ! -f ${_env_dir}/bin/python3 ]]; then
+_python_bin=$(which python2)
+if [[ ! -f ${_env_dir}/bin/python2 ]]; then
 (
     set -eux
     cd $(dirname ${_env_dir})
-    python3_bin=$(which python3)
-    ${python3_bin} -m virtualenv --python ${python3_bin} ${_env_dir}
+    ${_python_bin} -m virtualenv --python ${_python_bin} ${_env_dir}
     set +eux
     source ${_env_dir}/bin/activate
     # Install some (if not all) needed dependencies.
@@ -16,4 +16,4 @@ if [[ ! -f ${_env_dir}/bin/python3 ]]; then
 fi
 
 source ${_env_dir}/bin/activate
-unset _env_dir
+unset _env_dir _python_bin
