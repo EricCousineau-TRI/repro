@@ -440,3 +440,9 @@ cc_binary(
     srcs = ["lambda_recursive.cc"],
     copts = ["-std=c++14"],
 )
+
+cc_binary(
+    name = "function_or_method",
+    srcs = ["function_or_method.cc"],
+    copts = ["-std=c++14"],
+)
