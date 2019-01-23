@@ -1,3 +1,14 @@
+# https://stackoverflow.com/questions/17053671/python-how-do-you-stop-numpy-from-multithreading
+# Necessary for multiprocess :(
+import os
+os.environ.update(
+    OMP_NUM_THREADS = '1',
+    OPENBLAS_NUM_THREADS = '1',
+    NUMEXPR_NUM_THREADS = '1',
+    MKL_NUM_THREADS = '1',
+)
+
+
 from functools import partial
 import numpy as np
 
