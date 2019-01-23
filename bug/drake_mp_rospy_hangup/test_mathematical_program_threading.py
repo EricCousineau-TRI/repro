@@ -1,3 +1,4 @@
+from functools import partial
 import numpy as np
 
 from threading import Thread
@@ -30,7 +31,7 @@ def run_complex_mathematical_program():
     mp = MathematicalProgram()
     x = mp.NewContinuousVariables(1, 'x')
     mp.AddCost(cost, x)
-    mp.AddConstraint(quad_constraint, [1.0], [2.0], x)
+    # mp.AddConstraint(quad_constraint, [1.0], [2.0], x)
     mp.SetInitialGuess(x, [1.1])
     print mp.Solve()
     res = mp.GetSolution(x)
@@ -39,19 +40,26 @@ def run_complex_mathematical_program():
     print "(finished) complex mathematical program"
 
 
+def traced(f):
+    import sys, trace
+    sys.stdout = sys.stderr
+    tracer = trace.Trace(trace=1, count=0, ignoredirs=["/usr", sys.prefix])
+    return partial(tracer.runfunc, f)
+
+
 def run_mathematical_program_in_thread():
-    t = Thread(target=run_simple_mathematical_program)
+    t = Thread(target=traced(run_simple_mathematical_program))
     t.start()
     t.join()
 
     # doesn't work inside ROS callback
-    t = Thread(target=run_complex_mathematical_program)
+    t = Thread(target=traced(run_complex_mathematical_program))
     t.start()
     t.join()
 
 
 if __name__ == "__main__":
-
-    run_mathematical_program_in_thread()
+    # traced(run_complex_mathematical_program)()
+    traced(run_mathematical_program_in_thread)()
 
 print "finished cleanly"
