@@ -1,0 +1,18 @@
+py_library(
+    name = "module_py",
+    srcs = ["__init__.py"],
+    visibility = ["//visibility:public"],
+)
+
+# Roll-up.
+py_library(
+    name = "bazel_py_example",
+    # N.B. You can decide how much you want to expose as the roll-up.
+    # Really, this is only necessary if this Bazel project will be consumed
+    # by another project.
+    deps = [
+        "//mid",
+        "//mid/bottom",
+    ],
+    visibility = ["//visibility:public"],
+)

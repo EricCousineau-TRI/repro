@@ -1,0 +1,20 @@
+py_library(
+    name = "module_py",
+    srcs = ["__init__.py"],
+    deps = ["//:module_py"],
+    visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "library1_py",
+    srcs = ["library1.py"],
+    deps = [":module_py"],
+    visibility = ["//visibility:public"],
+)
+
+# Roll-up.
+py_library(
+    name = "mid",
+    deps = [":library1_py"],
+    visibility = ["//visibility:public"],
+)
