@@ -15,6 +15,9 @@ ERROR: Timeout
 ['stdbuf', '--output=0', 'python2', 'sub.py']
 Success: ['0', '1', '2']
 
++ python2 ./top.py -- python2 -u sub.py
+['python2', '-u', 'sub.py']
+Success: ['0', '1', '2']
 
 
 -- python 3 --
@@ -40,6 +43,10 @@ Success: ['0', '1', '2']
 
 + python3 ./top.py -- env PYTHONUNBUFFERED=1 python3 sub.py
 ['env', 'PYTHONUNBUFFERED=1', 'python3', 'sub.py']
+Success: ['0', '1', '2']
+
++ python3 ./top.py -- python3 -u sub.py
+['python3', '-u', 'sub.py']
 Success: ['0', '1', '2']
 
 Done

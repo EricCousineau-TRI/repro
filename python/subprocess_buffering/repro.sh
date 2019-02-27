@@ -5,16 +5,18 @@ run() { (set -x; "$@"; ); echo; }
 
 echo -e "-- python 2 --\n"
 run python2 --version
-# Works fine.
+# Works.
 run python2 ./top.py -- bash ./sub.sh
 # Fails.
 ! run python2 ./top.py -- python2 sub.py
-# Works fine. (Needs `stdbuf`).
+# Works.
 run python2 ./top.py -- stdbuf --output=0 python2 sub.py
+# Works.
+run python2 ./top.py -- python2 -u sub.py
 
-echo -e "\n\n-- python 3 --\n"
+echo -e "\n-- python 3 --\n"
 run python3 --version
-# Works fine.
+# Works.
 run python3 ./top.py -- bash ./sub.sh
 # Fails.
 ! run python3 ./top.py -- python3 sub.py
@@ -22,7 +24,9 @@ run python3 ./top.py -- bash ./sub.sh
 ! run python3 ./top.py -- stdbuf --output=0 python3 sub.py
 # Works.
 run env PYTHONUNBUFFERED=1 python3 ./top.py -- python3 sub.py
-# Works???
+# Works.
 run python3 ./top.py -- env PYTHONUNBUFFERED=1 python3 sub.py
+# Works.
+run python3 ./top.py -- python3 -u sub.py
 
 echo "Done"
