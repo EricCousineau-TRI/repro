@@ -1,32 +1,31 @@
 import sys
 import trace
+import unittest
 
 import vtk
 
-import vtk_pybind as m
+# Module under test.
+import vtk_pybind as mut
 
 
-def info(x):
-    return "<{} at {}>".format(type(x).__name__, id(x))
+class TestVtkPybind(unittest.TestCase):
+    def check_poly(self, poly):
+        self.assertIsInstance(poly, vtk.vtkPolyData)
 
+    def test_pure_py(self):
+        self.check_poly(vtk.vtkPolyData())
 
-def check_poly(x):
-    print(info(x))
-    assert isinstance(x, vtk.vtkPolyData)
-
-
-def main():
-    print("Hello")
-    poly_py = vtk.vtkPolyData()
-    check_poly(poly_py)
-    poly_cc_owned = m.Test().get_poly()
-    check_poly(poly_cc_owned)
-    poly_cc_transfer = m.make_poly()  # Segfault...
-    check_poly(poly_cc_transfer)
+    def test_cpp_to_py(self):
+        # Owned by C++.
+        obj = mut.CppOwned()
+        self.check_poly(obj.poly)  # vtkNew<T>
+        self.check_poly(obj.get_poly_ptr())
+        # Ownership transferred from C++ to Python.
+        self.check_poly(mut.make_poly_smart_ptr())
 
 
 if __name__ == "__main__":
     sys.stdout = sys.stderr
     tracer = trace.Trace(
         trace=1, count=0, ignoredirs=["/usr", sys.prefix])
-    tracer.runfunc(main)
+    tracer.runfunc(unittest.main)
