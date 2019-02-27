@@ -11,19 +11,15 @@ def on_context_exit(f):
         f()
 
 
-def read_available(f, timeout=0.0, chunk_size=1024, empty=None):
+def read_available(f, timeout=0.0, chunk_size=1024):
     """
     Reads all available data on a given file. Useful for using PIPE with Popen.
 
     @param timeout Timeout for `select`.
     @param chunk_size How much to try and read.
-    @param empty Starting point / empty value. Default value is empty byte
-    array.
     """
     readable, _, _ = select.select([f], [], [f], timeout)
-    if empty is None:
-        empty = bytes()
-    out = empty
+    out = bytes()
     if f in readable:
         while True:
             cur = os.read(f.fileno(), chunk_size)

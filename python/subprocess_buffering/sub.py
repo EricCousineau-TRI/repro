@@ -5,7 +5,7 @@ def main():
     count = 0
     while True:
         print(count)
-        time.sleep(0.1)
+        time.sleep(0.05)
         count += 1
 
 

@@ -1,0 +1,45 @@
+-- python 2 --
+
++ python2 --version
+Python 2.7.15rc1
+
++ python2 ./top.py -- bash ./sub.sh
+['bash', './sub.sh']
+Success: ['0', '1', '2']
+
++ python2 ./top.py -- python2 sub.py
+['python2', 'sub.py']
+ERROR: Timeout
+
++ python2 ./top.py -- stdbuf --output=0 python2 sub.py
+['stdbuf', '--output=0', 'python2', 'sub.py']
+Success: ['0', '1', '2']
+
+
+
+-- python 3 --
+
++ python3 --version
+Python 3.6.7
+
++ python3 ./top.py -- bash ./sub.sh
+['bash', './sub.sh']
+Success: ['0', '1', '2']
+
++ python3 ./top.py -- python3 sub.py
+['python3', 'sub.py']
+ERROR: Timeout
+
++ python3 ./top.py -- stdbuf --output=0 python3 sub.py
+['stdbuf', '--output=0', 'python3', 'sub.py']
+ERROR: Timeout
+
++ env PYTHONUNBUFFERED=1 python3 ./top.py -- python3 sub.py
+['python3', 'sub.py']
+Success: ['0', '1', '2']
+
++ python3 ./top.py -- env PYTHONUNBUFFERED=1 python3 sub.py
+['env', 'PYTHONUNBUFFERED=1', 'python3', 'sub.py']
+Success: ['0', '1', '2']
+
+Done
