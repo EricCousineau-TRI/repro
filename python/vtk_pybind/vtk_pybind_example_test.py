@@ -5,7 +5,7 @@ import unittest
 import vtk
 
 # Module under test.
-import vtk_pybind as mut
+import vtk_pybind_example as mut
 
 
 class TestVtkPybind(unittest.TestCase):

@@ -1,7 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <vtkPolyData.h>
 
-#include "third_party/vtk_pybind_conversion.h"
+#include "vtk_pybind.h"
 
 namespace py = pybind11;
 using rvp = py::return_value_policy;
@@ -13,7 +13,7 @@ struct CppOwned {
   vtkPolyData& get_poly_ref() { return *poly; }
 };
 
-PYBIND11_MODULE(vtk_pybind, m) {
+PYBIND11_MODULE(vtk_pybind_example, m) {
   // Use a class to control the lifetime of a VTK object.
   py::class_<CppOwned>(m, "CppOwned")
     .def(py::init())
