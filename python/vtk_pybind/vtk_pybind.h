@@ -1,13 +1,15 @@
-// Based on: https://gitlab.kitware.com/cmb/smtk/blob/9bf5b4f9/smtk/extension/vtk/pybind11/PybindVTKTypeCaster.h
-// Except for portions otherwise denoted.
-
 #pragma once
 
-#include <pybind11/cast.h>
-#include <pybind11/pybind11.h>
+/// @file
+/// Generic VTK class + smart pointer casters.
+/// Based on: https://gitlab.kitware.com/cmb/smtk/blob/9bf5b4f9/smtk/extension/vtk/pybind11/PybindVTKTypeCaster.h
+/// which uses the SMTK License Version 1.0 (similar to BSD 3-Clause?).
+/// @authors Kitware, Inc; Eric Cousineau
 
 #include <type_traits>
 
+#include <pybind11/cast.h>
+#include <pybind11/pybind11.h>
 #include <vtkObjectBase.h>
 #include <vtkPythonUtil.h>
 #include <vtkSmartPointer.h>
@@ -15,7 +17,7 @@
 namespace pybind11 {
 namespace detail {
 
-// Direct access to VTK class.
+/// Direct access to VTK class.
 template <typename Class>
 struct type_caster<
     Class,
@@ -26,8 +28,10 @@ struct type_caster<
  public:
   static constexpr auto name = _<Class>();
 
-  static handle cast(Class *src, return_value_policy policy, handle parent) {
-    if (!src) return none().release();
+  static handle cast(
+      const Class *src, return_value_policy policy, handle parent) {
+    if (!src)
+      return none().release();
     if (policy == return_value_policy::take_ownership) {
       throw cast_error(
           "vtk_pybind: `take_ownership` does not make sense in VTK?");
@@ -36,15 +40,17 @@ struct type_caster<
       throw cast_error(
           "vtk_pybind: `copy` does not make sense in VTK?");
     }
-    return vtkPythonUtil::GetObjectFromPointer(src);
+    return vtkPythonUtil::GetObjectFromPointer(const_cast<Class*>(src));
   }
 
-  static handle cast(Class& src, return_value_policy policy, handle parent) {
+  static handle cast(
+      const Class& src, return_value_policy policy, handle parent) {
     return cast(&src, policy, parent);
   }
 
   operator Class*() { return value; }
   operator Class&() { return *value; }
+  // Does this even make sense in VTK?
   operator Class&&() && { return std::move(*value); }
 
   template <typename T_>
@@ -58,7 +64,7 @@ struct type_caster<
   }
 };
 
-// VTK Pointer-like object - may be non-copyable.
+/// VTK Pointer-like object - may be non-copyable.
 template <typename Ptr>
 struct vtk_ptr_cast_only {
  protected:
@@ -72,7 +78,7 @@ struct vtk_ptr_cast_only {
   }
 };
 
-// VTK Pointer-like object - copyable / movable.
+/// VTK Pointer-like object - copyable / movable.
 template <typename Ptr>
 struct vtk_ptr_cast_and_load : public vtk_ptr_cast_only<Ptr> {
  private:
@@ -81,7 +87,12 @@ struct vtk_ptr_cast_and_load : public vtk_ptr_cast_only<Ptr> {
   using Class = intrinsic_t<decltype(*std::declval<Ptr>())>;
   using value_caster_type = type_caster<Class>;
  public:
+  operator Ptr&() { return value; }
+  // Does this even make sense in VTK?
   operator Ptr&&() && { return std::move(value); }
+
+  template <typename T_>
+  using cast_op_type = pybind11::detail::movable_cast_op_type<T_>;
 
   bool load(handle src, bool convert) {
     value_caster_type value_caster;

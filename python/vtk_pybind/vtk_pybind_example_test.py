@@ -20,8 +20,23 @@ class TestVtkPybind(unittest.TestCase):
         obj = mut.CppOwned()
         self.check_poly(obj.poly)  # vtkNew<T>
         self.check_poly(obj.get_poly_ptr())
+        self.check_poly(obj.get_poly_cptr())
+        self.check_poly(obj.get_poly_ref())
+        self.check_poly(obj.get_poly_cref())
         # Ownership transferred from C++ to Python.
         self.check_poly(mut.make_poly_smart_ptr())
+
+    def test_py_to_cpp(self):
+        poly = vtk.vtkPolyData()
+
+        def check_take(f):
+            self.assertEqual(f(poly), "vtkPolyData")
+
+        check_take(mut.take_poly_smart_ptr)
+        check_take(mut.take_poly_ptr)
+        check_take(mut.take_poly_cptr)
+        check_take(mut.take_poly_ref)
+        check_take(mut.take_poly_cref)
 
 
 if __name__ == "__main__":

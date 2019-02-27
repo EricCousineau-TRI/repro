@@ -8,11 +8,11 @@ find_package(pybind11 CONFIG REQUIRED)
 include(CTest)
 include(pybind11Tools)
 
-pybind11_add_module(vtk_pybind_example vtk_pybind_example.cpp)
+pybind11_add_module(vtk_pybind_example vtk_pybind_example_py.cpp)
 target_include_directories(vtk_pybind_example PRIVATE ${VTK_INCLUDE_DIRS})
 target_link_libraries(vtk_pybind_example PUBLIC ${VTK_LIBRARIES})
 
-# N.B. This is NOT generic! Dunno how to simplify...
+# TODO(eric.cousineau): Figure out more elegant generalization.
 set(vtk_python_dir ${VTK_DIR}/../../python3.6/site-packages)
 set(vtk_lib_dir ${VTK_DIR}/../..)
 
