@@ -1,0 +1,10 @@
+sh_binary(
+    name = "repro",
+    srcs = ["repro.sh"],
+    data = [
+        "process_util.py",
+        "sub.sh",
+        "sub.py",
+        "top.py",
+    ],
+)
