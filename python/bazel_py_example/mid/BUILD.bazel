@@ -12,6 +12,21 @@ py_library(
     visibility = ["//visibility:public"],
 )
 
+# Example of manually dispatching to different Python interpreter.
+# TODO(eric): Replace with example of using actual interpreter from Bazel's
+# options.
+py_binary(
+    name = "py3_bin",
+    main = "py3_bin_wrapper.py",
+    srcs = [
+        "py3_bin.py",
+        "py3_bin_wrapper.py",
+    ],
+    deps = [
+        ":mid",
+    ],
+)
+
 # Roll-up.
 py_library(
     name = "mid",
