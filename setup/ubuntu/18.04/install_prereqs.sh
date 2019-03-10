@@ -13,11 +13,13 @@ apt install --no-install-recommends $(echo "
     gnupg
     make
     pkg-config
+    python
     python3-dev
     python3-numpy
     unzip
     wget
     zip
+    zlib1g-dev
     ")
 
 dpkg_install_from_wget() {
