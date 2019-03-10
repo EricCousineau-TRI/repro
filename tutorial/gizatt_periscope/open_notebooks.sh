@@ -9,7 +9,7 @@ if [[ ! -d build ]]; then
 fi
 
 set +e +u
-source ${PWD}/build/pip_deps/bin/activate
+source ${PWD}/build/venv/bin/activate
 set -eu
 
 drake_install=${PWD}/build/drake
