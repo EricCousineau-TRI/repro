@@ -64,3 +64,5 @@ def bitbucket_archive(
         **kwargs)
     print(x)
     print(dir(x))
+    print(x.name())
+    print(x.label())
