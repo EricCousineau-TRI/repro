@@ -15,18 +15,13 @@ bitbucket_archive(
 load("//tools:python.bzl", "python_repository")
 python_repository(
     name = "python",
-    version = "2.7",
-)
-
-python_repository(
-    name = "python3",
-    version = "3.5",
+    version = "3.6",
 )
 
 load("//tools:numpy.bzl", "numpy_repository")
 numpy_repository(
     name = "numpy",
-    python_version = "2.7",
+    python_version = "3.6",
 )
 
 new_local_repository(
