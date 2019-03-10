@@ -10,7 +10,6 @@ def bitbucket_archive(
         strip_prefix = None,
         build_file = None,
         **kwargs):
-    print("HAI")
     """A macro to be called in the WORKSPACE that adds an external from
     bitbucket using a workspace rule.
 
@@ -60,9 +59,6 @@ def bitbucket_archive(
         name = name,
         urls = urls,
         sha256 = sha256,
+        build_file=build_file,
         strip_prefix = strip_prefix,
         **kwargs)
-    print(x)
-    print(dir(x))
-    print(x.name())
-    print(x.label())

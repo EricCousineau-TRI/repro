@@ -71,4 +71,5 @@ def github_archive(
         urls=urls,
         sha256=sha256,
         strip_prefix=strip_prefix,
+        build_file=build_file,
         **kwargs)
