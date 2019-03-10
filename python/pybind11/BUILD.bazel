@@ -74,6 +74,12 @@ cc_binary(
 )
 
 cc_binary(
+    name = "test_poly_gitter",
+    srcs = ["custom_tests/test_poly_gitter.cc"],
+    deps = [":include"],
+)
+
+cc_binary(
     name = "test_unique_ptr_stuff",
     srcs = ["custom_tests/test_unique_ptr_stuff.cc"],
     deps = [":include"],
