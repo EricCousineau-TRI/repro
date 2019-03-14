@@ -1,0 +1,3 @@
+import %workspace%/tools/bazel.rc
+
+build --python_path=/usr/bin/python3

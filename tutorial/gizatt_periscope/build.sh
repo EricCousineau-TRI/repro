@@ -14,8 +14,8 @@ tar xfz ${drake_path}
 
 git clone https://github.com/RussTedrake/underactuated
 
-mkdir pip_deps
-cd pip_deps
+mkdir venv
+cd venv
 python -m virtualenv .
 
 set +e +u

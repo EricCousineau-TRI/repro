@@ -1,7 +1,3 @@
-[submodule "externals/Super4PCS"]
-	path = externals/Super4PCS
-	url = https://github.com/nmellado/Super4PCS.git
-	branch = master
 [submodule "externals/benchmark"]
 	path = externals/benchmark
 	url = git@github.com:EricCousineau-TRI/benchmark.git
@@ -9,13 +5,6 @@
 	path = externals/eigen
 	url = hg::https://bitbucket.org/eigen/eigen
 	branch = tmp
-[submodule "externals/flann"]
-	path = externals/flann
-	url = git://github.com/mariusmuja/flann.git
-	branch = master
-[submodule "externals/kythe"]
-	path = externals/kythe
-	url = https://github.com/EricCousineau-TRI/kythe/
 [submodule "externals/numpy"]
 	path = externals/numpy
 	url = git@github.com:EricCousineau-TRI/numpy.git

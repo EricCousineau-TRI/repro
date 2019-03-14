@@ -21,6 +21,6 @@ cc_library(
 pkg_tar(
     name = "license",
     extension = "tar.gz",
-    files = glob(["COPYING.*"]),
+    srcs = glob(["COPYING.*"]),
     package_dir = "eigen",
 )
