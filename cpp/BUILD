@@ -446,3 +446,9 @@ cc_binary(
     srcs = ["function_or_method.cc"],
     copts = ["-std=c++14"],
 )
+
+cc_binary(
+    name = "map_unique_ptr",
+    srcs = ["map_unique_ptr.cc"],
+    copts = ["-std=c++14"],
+)
