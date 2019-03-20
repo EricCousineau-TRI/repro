@@ -86,6 +86,12 @@ cc_binary(
 )
 
 cc_binary(
+    name = "test_pybind_issue_repro",
+    srcs = ["custom_tests/test_pybind_issue_repro.cc"],
+    deps = [":include"],
+)
+
+cc_binary(
     name = "test_unique_ptr_stuff",
     srcs = ["custom_tests/test_unique_ptr_stuff.cc"],
     deps = [":include"],
