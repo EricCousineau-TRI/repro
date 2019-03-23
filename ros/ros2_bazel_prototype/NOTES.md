@@ -35,3 +35,34 @@ TODO:
 w/ Bazel)
     * Meh for now. Slightly related (but for Mac SIP stuff):
     [ros2#457](https://github.com/ros2/ros2/issues/457)
+    * Tried using [kitware wiki RPATH](https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/RPATH-handling), but as flags:
+
+```sh
+env \
+    LD_LIBRARY_PATH=${_ros}/lib \
+    PYTHONPATH=${_ros}/lib/python${_py}/site-packages \
+    cmake .. \
+        -DCMAKE_PREFIX_PATH=${_ros} \
+        -DCMAKE_INSTALL_PREFIX=./install \
+        -DCMAKE_SKIP_BUILD_RPATH=FALSE \
+        -DCMAKE_BUILD_WITH_INSTALL_RPATH=False \
+        -DCMAKE_INSTALL_RPATH="./install/lib;${_ros}/lib" \
+        -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=TRUE
+make -j install
+ldd install/lib/examples_rclcpp_minimal_publisher/publisher_lambda | grep 'not found'
+<<EOF
+    librcl_interfaces__rosidl_typesupport_cpp.so => not found
+    librmw_implementation.so => not found
+    librmw.so => not found
+    librcl_yaml_param_parser.so => not found
+    librosgraph_msgs__rosidl_typesupport_cpp.so => not found
+    librcl_interfaces__rosidl_typesupport_c.so => not found
+    librcl_interfaces__rosidl_generator_c.so => not found
+    librmw_implementation.so => not found
+    librmw.so => not found
+    librosidl_generator_c.so => not found
+    librcl_logging_noop.so => not found
+    librosidl_typesupport_cpp.so => not found
+EOF
+# But finds other libraries... Why???
+```
