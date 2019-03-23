@@ -29,21 +29,19 @@ def template(src, dest, subs):
 def add_transitives_libs(libs, libdirs):
     # This is dumb, but we gotta find 'em all.
     ldd_env = dict(LD_LIBRARY_PATH=":".join(libdirs))
-    for lib in list(libs):
-        if dirname(lib) not in libdirs:
+    check_libs = [lib for lib in libs if dirname(lib) in libdirs]
+    lines = run(
+        ["ldd"] + check_libs, env=ldd_env, check=True,
+        stdout=PIPE, encoding="utf8").stdout.strip().split("\n")
+    for line in lines:
+        line = line.strip()
+        if " => " not in line:
             continue
-        lines = run(
-            ["ldd", lib], env=ldd_env, check=True,
-            stdout=PIPE, encoding="utf8").stdout
-        for line in lines.strip().split("\n"):
-            line = line.strip()
-            if " => " not in line:
-                continue
-            file, _, path, _ = line.split()
-            libdir = dirname(path)
-            if path not in libs and libdir in libdirs:
-                print("Hidden: {}".format(path))
-                libs.append(path)
+        _, _, lib, _ = line.split()
+        libdir = dirname(lib)
+        if libdir in libdirs and lib not in libs:
+            print("Hidden: {}".format(lib))
+            libs.append(lib)
 
 
 def configure():
