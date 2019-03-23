@@ -72,7 +72,10 @@ def _impl(repo_ctx):  # repository_ctx
         includes.append(include)
     linkopts = props["LINK_FLAGS"]
     linkopts += ["-L{}".format(x) for x in props["LINK_DIRECTORIES"]]
-    linkopts += ["-l{}".format(x) for x in props["LINK_LIBRARIES"]]
+    for lib in props["LINK_LIBRARIES"]:
+        index = lib.rfind("/")
+        libdir = lib[:index]
+        linkopts += ["-Wl,-rpath " + libdir, "-l{}".format(lib)]
     repo_ctx.template(
         "BUILD.bazel",
         _label("cmake_cc.BUILD.tpl"),
