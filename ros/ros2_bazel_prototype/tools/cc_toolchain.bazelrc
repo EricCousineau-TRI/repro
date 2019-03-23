@@ -1,0 +1,6 @@
+# Disable ccache due to incompatibility with Bazel.
+build --action_env=CCACHE_DISABLE=1
+
+# Add C++14 compiler flags.
+build --cxxopt=-std=c++14
+build --host_cxxopt=-std=c++14

@@ -1,0 +1,25 @@
+load("@rules_foreign_cc//tools/build_defs:cmake.bzl", "cmake_external")
+
+_ros = "/opt/ros/crystal"
+_py = "3.6"
+
+filegroup(
+    name = "lib_source",
+    srcs = [
+        "CMakeLists.txt",
+        "empty.cc",
+    ],
+)
+
+cmake_external(
+    name = "ros2_cc_deps",
+    cache_entries = dict(
+        CMAKE_PREFIX_PATH = _ros,
+    ),
+    env_vars = dict(
+        PYTHONPATH = "{}/lib/python{}/site-packages".format(_ros, _py),
+    ),
+    lib_source = ":lib_source",
+    shared_libraries = ["libros2_cc_deps.so"],
+    visibility = ["//visibility:public"],
+)
