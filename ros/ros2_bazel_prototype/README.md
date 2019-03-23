@@ -35,3 +35,5 @@ write some config files, and then have Bazel scoop those up in a
 Could maybe use [bazelbuild/rules_foreign_cc](https://github.com/bazelbuild/rules_foreign_cc)
 to dispatch to CMake; however, I'm not sure how it permits consuming the
 artifacts.
+
+See [NOTES.md](./NOTES.md) for random exploration stuff.
