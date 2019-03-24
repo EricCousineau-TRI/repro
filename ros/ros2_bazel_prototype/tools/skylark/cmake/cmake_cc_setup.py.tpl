@@ -2,7 +2,7 @@
 
 import os
 from os import unlink, mkdir, symlink
-from os.path import dirname, isabs, join
+from os.path import basename, dirname, isabs, join
 from subprocess import run, PIPE
 from shutil import rmtree
 
@@ -27,21 +27,27 @@ def template(src, dest, subs):
 
 
 def add_transitives_libs(libs, libdirs):
-    # This is dumb, but we gotta find 'em all for Bazel...
+    # Adds transitive libs directly to `libs`.
+    # (kinda dumb that Bazel / CMake doesn't figure this out, but meh...)
     ldd_env = dict(LD_LIBRARY_PATH=":".join(libdirs))
     check_libs = [lib for lib in libs if dirname(lib) in libdirs]
     lines = run(
         ["ldd"] + check_libs, env=ldd_env, check=True,
         stdout=PIPE, encoding="utf8").stdout.strip().split("\n")
+    # Use libnames to permit shadowing (when useful).
+    libnames = [basename(lib) for lib in libs]
     for line in lines:
         line = line.strip()
         if " => " not in line:
             continue
         _, _, lib, _ = line.split()
         libdir = dirname(lib)
-        if libdir in libdirs and lib not in libs:
+        libname = basename(lib)
+        if libdir in libdirs and libname not in libnames:
             print("Transitive: {}".format(lib))
+            assert lib not in libs
             libs.append(lib)
+            libnames.append(libname)
 
 
 def configure():
@@ -77,12 +83,15 @@ def configure():
         symlink(include_path, include)
         includes.append(include)
     linkopts = list(props["LINK_FLAGS"])
-    libdirs = set(props["LINK_DIRECTORIES"])
+    libdirs = list(props["LINK_DIRECTORIES"])
     libs = list(props["LINK_LIBRARIES"])
+    print("\n".join(libs))
+    libdirs_ignore = {"/usr/lib", "/usr/lib/x86_64-linux-gnu"}
     for lib in libs:
         if isabs(lib):
-            libdirs.add(dirname(lib))
-    libdirs -= {"/usr/lib", "/usr/lib/x86_64-linux-gnu"}
+            libdir = dirname(lib)
+            if libdir not in libdirs and libdir not in libdirs_ignore:
+                libdirs.append(libdir)
     for libdir in libdirs:
         linkopts += ["-L" + libdir, "-Wl,-rpath " + libdir]
     add_transitives_libs(libs, set(libdirs))
