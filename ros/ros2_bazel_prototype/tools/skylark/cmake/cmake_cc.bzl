@@ -12,6 +12,7 @@ def _impl(repo_ctx):  # repository_ctx
         env_vars=repo_ctx.attr.env_vars,
         cache_entries=repo_ctx.attr.cache_entries,
         deps=repo_ctx.attr.deps,
+        libdir_order_preference=repo_ctx.attr.libdir_order_preference,
     )
     repo_ctx.template(
         "build.py",
@@ -29,6 +30,8 @@ cmake_cc_repository = repository_rule(
         cache_entries = attr.string_dict(),
         env_vars = attr.string_dict(),
         deps = attr.label_list(),
+        # For hacking with overlays...
+        libdir_order_preference = attr.string_list(),
     ),
     local = True,
     implementation = _impl,

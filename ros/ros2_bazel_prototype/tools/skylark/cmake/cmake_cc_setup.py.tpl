@@ -50,6 +50,20 @@ def add_transitives_libs(libs, libdirs):
             libnames.append(libname)
 
 
+def libdir_order_preference_sort(xs):
+    # Go through and bubble up each thing.
+    xs = list(xs)
+    out = []
+    for pref in CONFIG["libdir_order_preference"]:
+        prefix = pref + "/"
+        for x in list(xs):
+            if x.startswith(prefix):
+                out.append(x)
+                xs.remove(x)
+    # Add remaining.
+    out += xs
+    return out
+
 def configure():
     template("CMakeLists.txt.in", "CMakeLists.txt", {
         "@NAME@": CONFIG["name"],
@@ -85,13 +99,15 @@ def configure():
     linkopts = list(props["LINK_FLAGS"])
     libdirs = list(props["LINK_DIRECTORIES"])
     libs = list(props["LINK_LIBRARIES"])
-    print("\n".join(libs))
     libdirs_ignore = {"/usr/lib", "/usr/lib/x86_64-linux-gnu"}
     for lib in libs:
         if isabs(lib):
             libdir = dirname(lib)
             if libdir not in libdirs and libdir not in libdirs_ignore:
                 libdirs.append(libdir)
+    libdirs = libdir_order_preference_sort(libdirs)
+    libs = libdir_order_preference_sort(libs)
+    print("\n".join(libs))
     for libdir in libdirs:
         linkopts += ["-L" + libdir, "-Wl,-rpath " + libdir]
     add_transitives_libs(libs, set(libdirs))
