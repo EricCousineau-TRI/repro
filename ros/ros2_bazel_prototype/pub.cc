@@ -15,7 +15,7 @@ class Pub : public rclcpp::Node {
       std_msgs::msg::String message;
       message.data = "Hello, world! " + std::to_string(count_);
       count_ += 1;
-      std::cout << "Pub: " << message.data;
+      std::cout << "Pub: " << message.data << "\n";
       publisher->publish(message);
     };
     timer_ = this->create_wall_timer(500ms, callback);
