@@ -12,6 +12,25 @@ Simplifying `ldd` output:
 
     alias ldd-output-fix="sort | cut -f 1 -d ' ' | sed 's#^\s*##'"
 
+## Bazel Build
+
+Trying to figure out why RMW implementation is so picky for `LD_LIBRARY_PATH`.
+
+See below for doing an overlay with CMake; seems to work fine.
+
+Trying the effectively same thing in Bazel, but without `LD_LIBRARY_PATH`,
+yields failures like:
+
+    $ bazel run //:pub_cc
+    rmw_fastrtps_cpp
+    Failed to find library 'rcl_interfaces__rosidl_typesupport_fastrtps_c'
+    terminate called after throwing an instance of 'rclcpp::exceptions::RCLError'
+      what():  failed to initialize rcl node: type support not from this implementation, at /tmp/binarydeb/ros-crystal-rmw-fastrtps-cpp-0.6.1/src/rmw_publisher.cpp:81, at /tmp/binarydeb/ros-crystal-rcl-0.6.5/src/rcl/publisher.c:173
+    Aborted (core dumped)
+
+Dunno what `not from this implementation` means, as I'm not changing the
+implementation, just the library dispatch???
+
 ## C++ CMake Build
 
 Contained hermitic-ish build for
@@ -22,16 +41,74 @@ Contained hermitic-ish build for
 bash-isolate
 cd $(mktemp -d)
 pwd
+
+_ros=/opt/ros/crystal
+_ros_pylib=${_ros}/lib/python3.6/site-packages
+
+_overlay=${PWD}/hack_overlay
+mkdir ${_overlay}
+
+git clone https://github.com/ros2/rmw_implementation -b crystal
+(
+    cd rmw_implementation
+    git apply - <<EOF
+diff --git a/rmw_implementation/CMakeLists.txt b/rmw_implementation/CMakeLists.txt
+index c23861e..784ddb5 100644
+--- a/rmw_implementation/CMakeLists.txt
++++ b/rmw_implementation/CMakeLists.txt
+@@ -40,7 +40,7 @@ message(STATUS "")
+ 
+ # if only a single rmw impl. is available or poco is not available
+ # this package will directly reference the default rmw impl.
+-if(NOT RMW_IMPLEMENTATIONS MATCHES ";" OR NOT Poco_FOUND)
++if(FALSE)  #NOT RMW_IMPLEMENTATIONS MATCHES ";" OR NOT Poco_FOUND)
+   set(RMW_IMPLEMENTATION_SUPPORTS_POCO FALSE)
+ 
+ else()
+diff --git a/rmw_implementation/src/functions.cpp b/rmw_implementation/src/functions.cpp
+index 45c4137..81adb1b 100644
+--- a/rmw_implementation/src/functions.cpp
++++ b/rmw_implementation/src/functions.cpp
+@@ -18,6 +18,7 @@
+ 
+ #include <list>
+ #include <string>
++#include <iostream>
+ 
+ #include <fstream>
+ #include <sstream>
+@@ -124,6 +125,8 @@ get_library()
+       env_var = STRINGIFY(DEFAULT_RMW_IMPLEMENTATION);
+     }
+     std::string library_path = find_library_path(env_var);
++    // std::string library_path = "/opt/ros/crystal/lib/librmw_fastrtps_cpp.so";
++    std::cout << "shared lib" << library_path << "\n";
+     if (library_path.empty()) {
+       RMW_SET_ERROR_MSG(
+         ("failed to find shared library of rmw implementation. Searched " + env_var).c_str());
+EOF
+    cd rmw_implementation
+    mkdir build && cd build
+    # TODO: Dunno which variables matter here...
+    # env PYTHONPATH=${_ros_pylib} RMW_IMPLEMENTATION=rmw_fastrtps_cpp \
+    #     cmake .. \
+    #         -DCMAKE_PREFIX_PATH=${_ros} \
+    #         -DCMAKE_INSTALL_PREFIX=${_overlay}
+    source ${_ros}/setup.bash
+    cmake .. \
+        -DCMAKE_PREFIX_PATH=${_ros} \
+        -DCMAKE_INSTALL_PREFIX=${_overlay}
+    make install
+)
+
 git clone https://github.com/ros2/examples
 cd examples
 git checkout 2dbcf9f
 cd rclcpp/minimal_publisher
-rm -rf build && mkdir build && cd build
-_ros=/opt/ros/crystal
-_py=3.6
-env PYTHONPATH=${_ros}/lib/python${_py}/site-packages \
-    cmake .. -DCMAKE_PREFIX_PATH=${_ros}
-make
+mkdir build && cd build
+env PYTHONPATH=${_ros_pylib} \
+    cmake .. -DCMAKE_PREFIX_PATH="${_overlay};${_ros}"
+make publisher_lambda
 # Er... Some things specify RPATH...
 ldd ./publisher_lambda | grep ${_ros} | ldd-output-fix
 <<EOF
@@ -57,7 +134,7 @@ librosidl_generator_c.so
 librosidl_typesupport_cpp.so
 EOF
 # The following of course works.
-env LD_LIBRARY_PATH=${_ros}/lib ldd ./publisher_lambda | grep ${_ros} | ldd-output-fix
+env LD_LIBRARY_PATH=${_overlay}/lib:${_ros}/lib ldd ./publisher_lambda | grep ${_ros} | ldd-output-fix
 <<EOF
 libbuiltin_interfaces__rosidl_generator_c.so
 librclcpp.so
@@ -78,7 +155,7 @@ libstd_msgs__rosidl_typesupport_cpp.so
 libyaml.so
 EOF
 # Executing:
-env LD_LIBRARY_PATH=${_ros}/lib ./publisher_lambda
+env LD_LIBRARY_PATH=${_overlay}/lib:${_ros}/lib ./publisher_lambda
 ```
 
 ### Try RPATH specification
