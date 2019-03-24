@@ -6,7 +6,11 @@ _py = "3.6"
 def ros2_cc_deps_repository(name):
     cmake_cc_repository(
         name = name,
-        packages = ["rclcpp", "std_msgs"],
+        packages = [
+            "rclcpp",
+            "std_msgs",
+            "rmw_fastrtps_cpp",  # Specify RMW implementation.
+        ],
         cache_entries = dict(
             CMAKE_PREFIX_PATH = _ros,
         ),

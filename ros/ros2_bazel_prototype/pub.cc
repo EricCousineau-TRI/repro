@@ -30,6 +30,7 @@ class Pub : public rclcpp::Node {
 
 int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
+  std::cout << rmw_get_implementation_identifier() << std::endl;
   rclcpp::spin(std::make_shared<Pub>());
   rclcpp::shutdown();
   return 0;

@@ -27,7 +27,7 @@ def template(src, dest, subs):
 
 
 def add_transitives_libs(libs, libdirs):
-    # This is dumb, but we gotta find 'em all.
+    # This is dumb, but we gotta find 'em all for Bazel...
     ldd_env = dict(LD_LIBRARY_PATH=":".join(libdirs))
     check_libs = [lib for lib in libs if dirname(lib) in libdirs]
     lines = run(
@@ -40,7 +40,7 @@ def add_transitives_libs(libs, libdirs):
         _, _, lib, _ = line.split()
         libdir = dirname(lib)
         if libdir in libdirs and lib not in libs:
-            print("Hidden: {}".format(lib))
+            print("Transitive: {}".format(lib))
             libs.append(lib)
 
 
@@ -59,7 +59,6 @@ def configure():
         for k, v in CONFIG["cache_entries"].items()]
     cmake_env = dict(CONFIG["env_vars"])
     cmake_env.update(
-        HOME=os.environ["HOME"],
         PATH="/usr/local/bin:/usr/bin:/bin",
     )
     run(["cmake", ".."] + cmake_flags, check=True, cwd="build", env=cmake_env)
@@ -81,8 +80,8 @@ def configure():
     libdirs = set(props["LINK_DIRECTORIES"])
     libs = list(props["LINK_LIBRARIES"])
     for lib in libs:
-        assert isabs(lib), lib
-        libdirs.add(dirname(lib))
+        if isabs(lib):
+            libdirs.add(dirname(lib))
     libdirs -= {"/usr/lib", "/usr/lib/x86_64-linux-gnu"}
     for libdir in libdirs:
         linkopts += ["-L" + libdir, "-Wl,-rpath " + libdir]
