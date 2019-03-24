@@ -37,19 +37,27 @@ Contained hermitic-ish build for
 [ros2/examples@2dbcf9f](https://github.com/ros2/examples/tree/2dbcf9f)
 (without `setup.bash` - which is really slow???):
 
+**WARNING**: Yeah, this looks real dumb compared to `colcon`. Just trying to see
+what's necessary for the Bazel-ness to be happy. You prolly won't ever want
+this workflow yourself.
+
 ```sh
 bash-isolate
-cd $(mktemp -d)
+cd ros2_bazel_protoype  # This repo
+
+rm -rf build && mkdir build && cd build
+
 pwd
 
 _ros=/opt/ros/crystal
 _ros_pylib=${_ros}/lib/python3.6/site-packages
-
 _overlay=${PWD}/hack_overlay
+
 mkdir ${_overlay}
 
 git clone https://github.com/ros2/rmw_implementation -b crystal
 (
+    set -eux
     cd rmw_implementation
     git apply - <<EOF
 diff --git a/rmw_implementation/CMakeLists.txt b/rmw_implementation/CMakeLists.txt
@@ -94,17 +102,17 @@ EOF
     #     cmake .. \
     #         -DCMAKE_PREFIX_PATH=${_ros} \
     #         -DCMAKE_INSTALL_PREFIX=${_overlay}
-    source ${_ros}/setup.bash
+    set +eux
+    source ${_ros}/setup.bash  # :(
+    set -eux
     cmake .. \
         -DCMAKE_PREFIX_PATH=${_ros} \
         -DCMAKE_INSTALL_PREFIX=${_overlay}
     make install
 )
 
-git clone https://github.com/ros2/examples
-cd examples
-git checkout 2dbcf9f
-cd rclcpp/minimal_publisher
+git clone https://github.com/ros2/examples -b 0.6.2
+cd examples/rclcpp/minimal_publisher
 mkdir build && cd build
 env PYTHONPATH=${_ros_pylib} \
     cmake .. -DCMAKE_PREFIX_PATH="${_overlay};${_ros}"
@@ -172,7 +180,7 @@ Try using [kitware wiki RPATH](https://gitlab.kitware.com/cmake/community/wikis/
 cd build && rm -rf ./*
 env \
     LD_LIBRARY_PATH=${_ros}/lib \
-    PYTHONPATH=${_ros}/lib/python${_py}/site-packages \
+    PYTHONPATH=${_ros_pylib} \
     cmake .. \
         -DCMAKE_PREFIX_PATH=${_ros} \
         -DCMAKE_INSTALL_PREFIX=./install \
@@ -216,7 +224,7 @@ EOF
 )
 
 env \
-    PYTHONPATH=${_ros}/lib/python${_py}/site-packages \
+    PYTHONPATH=${_ros_pylib} \
     cmake .. \
         -DCMAKE_PREFIX_PATH=${_ros} \
         -DCMAKE_INSTALL_PREFIX=./install
