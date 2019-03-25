@@ -5,7 +5,7 @@ from Bazel.
 
 ## Status
 
-**Work In Progress** - ain't nothing useful been done yet
+**Working** - can use RPATH linked stuff (with some overlays)
 
 ## Motivation
 
@@ -26,17 +26,30 @@ packages.
 * Not to provide Bazel / Skylark rules to emit artifacts for other build
 systems to use.
 
-## Proposal
+## This Stuff
 
-For now, probably just run `cmake` w/ some `colcon` / `ament` instrumentation,
-write some config files, and then have Bazel scoop those up in a
-`repository_rule`.
+This makes a `repository_rule` that permits extracting parameters from CMake
+target (with the option for overlays).
 
-Could maybe use [bazelbuild/rules_foreign_cc](https://github.com/bazelbuild/rules_foreign_cc)
-to dispatch to CMake; however, I'm not sure how it permits consuming the
-artifacts.
+UPDATE: `rules_foreign_cc` would be uber nice to use, but I dunno how to
+consume modern CMake interface targets, or rather get the headers and libs. For
+this reason, I kludged `cmake_cc.bzl`.
 
-UPDATE: `rules_foreign_cc` is uber nice, but I dunno how to consume modern
-CMake interface targets. For this reason, I kludged `cmake_cc.bzl`.
+## Example Usage
 
-See [NOTES.md](./NOTES.md) for random exploration stuff.
+Install ROS Crystal base stuff:
+https://index.ros.org/doc/ros2/Installation/Linux-Install-Debians/
+
+Then run:
+
+```sh
+# Build overlay necessary for RPATH stuff
+./external/docker/build_overlay_archive.py
+# Run a publisher
+bazel run //:pub_cc
+```
+
+## Relevant Issues
+
+*   https://github.com/ros2/rcutils/issues/143
+*   https://github.com/ros2/rmw_implementation/issues/58
