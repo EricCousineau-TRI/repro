@@ -5,10 +5,10 @@ _ros_pylib = _ros + "/lib/python3.6/site-packages"
 
 
 def ros2_cc_deps_repository(name, hack_workspace_dir):
-    # For hacking.
-    hack_overlay = hack_workspace_dir + "/external/overlay_ws/install"
+    # For hacking / overlaying.
+    overlay_archive = "file://" + hack_workspace_dir + "/external/docker/overlay.tar.bz2"
     workspaces = [
-        hack_overlay,
+        "./overlay",
         _ros,
     ]
     cmake_cc_repository(
@@ -25,4 +25,7 @@ def ros2_cc_deps_repository(name, hack_workspace_dir):
             PYTHONPATH = _ros_pylib,
         ),
         libdir_order_preference = workspaces,
+        archives = {
+            "./overlay": overlay_archive,
+        },
     )

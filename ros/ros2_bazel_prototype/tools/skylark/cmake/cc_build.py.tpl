@@ -2,7 +2,7 @@
 
 import os
 from os import unlink, mkdir, symlink
-from os.path import basename, dirname, isabs, join
+from os.path import abspath, basename, dirname, isabs, join
 from subprocess import run, PIPE
 from shutil import rmtree
 
@@ -55,7 +55,7 @@ def libdir_order_preference_sort(xs):
     xs = list(xs)
     out = []
     for pref in CONFIG["libdir_order_preference"]:
-        prefix = pref + "/"
+        prefix = abspath(pref) + "/"
         for x in list(xs):
             if x.startswith(prefix):
                 out.append(x)
