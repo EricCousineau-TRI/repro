@@ -6,7 +6,7 @@ _ros_pylib = _ros + "/lib/python3.6/site-packages"
 
 def ros2_cc_deps_repository(name, hack_workspace_dir):
     # For hacking.
-    hack_overlay = hack_workspace_dir + "/build/hack_overlay"
+    hack_overlay = hack_workspace_dir + "/external/overlay_ws/install"
     workspaces = [
         hack_overlay,
         _ros,

@@ -102,82 +102,17 @@ this workflow yourself.
 
 ```sh
 bash-isolate
-cd ros2_bazel_protoype  # This repo
+cd ros2_bazel_protoype/external  # This repo
 
-rm -rf build && mkdir build && cd build
-
+# Clear out old stuff.
 pwd
+rm -rf examples_ws overlay_ws
 
-_ros=/opt/ros/crystal
-_ros_pylib=${_ros}/lib/python3.6/site-packages
-_overlay=${PWD}/hack_overlay
+source ./vars.sh
+./clone_and_build.sh
 
-mkdir ${_overlay}
-
-git clone https://github.com/ros2/rmw_implementation -b crystal
-(
-    set -eux
-    cd rmw_implementation
-    git apply - <<EOF
-diff --git a/rmw_implementation/CMakeLists.txt b/rmw_implementation/CMakeLists.txt
-index c23861e..784ddb5 100644
---- a/rmw_implementation/CMakeLists.txt
-+++ b/rmw_implementation/CMakeLists.txt
-@@ -40,7 +40,7 @@ message(STATUS "")
- 
- # if only a single rmw impl. is available or poco is not available
- # this package will directly reference the default rmw impl.
--if(NOT RMW_IMPLEMENTATIONS MATCHES ";" OR NOT Poco_FOUND)
-+if(FALSE)  #NOT RMW_IMPLEMENTATIONS MATCHES ";" OR NOT Poco_FOUND)
-   set(RMW_IMPLEMENTATION_SUPPORTS_POCO FALSE)
- 
- else()
-diff --git a/rmw_implementation/src/functions.cpp b/rmw_implementation/src/functions.cpp
-index 45c4137..81adb1b 100644
---- a/rmw_implementation/src/functions.cpp
-+++ b/rmw_implementation/src/functions.cpp
-@@ -18,6 +18,7 @@
- 
- #include <list>
- #include <string>
-+#include <iostream>
- 
- #include <fstream>
- #include <sstream>
-@@ -124,6 +125,8 @@ get_library()
-       env_var = STRINGIFY(DEFAULT_RMW_IMPLEMENTATION);
-     }
-     std::string library_path = find_library_path(env_var);
-+    // std::string library_path = "/opt/ros/crystal/lib/librmw_fastrtps_cpp.so";
-+    std::cout << "shared lib" << library_path << "\n";
-     if (library_path.empty()) {
-       RMW_SET_ERROR_MSG(
-         ("failed to find shared library of rmw implementation. Searched " + env_var).c_str());
-EOF
-    cd rmw_implementation
-    mkdir build && cd build
-    # TODO: Dunno which variables matter here...
-    # env PYTHONPATH=${_ros_pylib} RMW_IMPLEMENTATION=rmw_fastrtps_cpp \
-    #     cmake .. \
-    #         -DCMAKE_PREFIX_PATH=${_ros} \
-    #         -DCMAKE_INSTALL_PREFIX=${_overlay}
-    set +eux
-    source ${_ros}/setup.bash  # :(
-    set -eux
-    cmake .. \
-        -DCMAKE_PREFIX_PATH=${_ros} \
-        -DCMAKE_INSTALL_PREFIX=${_overlay}
-    make install
-)
-
-git clone https://github.com/ros2/examples -b 0.6.2
-cd examples/rclcpp/minimal_publisher
-mkdir build && cd build
-env PYTHONPATH=${_ros_pylib} \
-    cmake .. -DCMAKE_PREFIX_PATH="${_overlay};${_ros}"
-make publisher_lambda
 # Er... Some things specify RPATH...
-ldd ./publisher_lambda | grep ${_ros} | ldd-output-fix
+ldd ./examples_ws/build/publisher_lambda | grep ${_ros} | ldd-output-fix
 <<EOF
 librclcpp.so
 librcl.so
@@ -185,7 +120,7 @@ librcutils.so
 libstd_msgs__rosidl_typesupport_cpp.so
 EOF
 # ... But others do not?
-ldd ./publisher_lambda | grep 'not found' | ldd-output-fix
+ldd ./examples_ws/build/publisher_lambda | grep 'not found' | ldd-output-fix
 <<EOF
 librcl_interfaces__rosidl_generator_c.so
 librcl_interfaces__rosidl_typesupport_cpp.so
@@ -201,7 +136,7 @@ librosidl_generator_c.so
 librosidl_typesupport_cpp.so
 EOF
 # The following of course works.
-env LD_LIBRARY_PATH=${_overlay}/lib:${_ros}/lib ldd ./publisher_lambda | grep ${_ros} | ldd-output-fix
+env LD_LIBRARY_PATH=${_libs} ldd ./examples_ws/build/publisher_lambda | grep ${_ros} | ldd-output-fix
 <<EOF
 libbuiltin_interfaces__rosidl_generator_c.so
 librclcpp.so
