@@ -64,6 +64,7 @@ def libdir_order_preference_sort(xs):
     out += xs
     return out
 
+
 def configure():
     template("CMakeLists.txt.in", "CMakeLists.txt", {
         "@NAME@": CONFIG["name"],
@@ -119,6 +120,8 @@ def configure():
         "%{linkopts}": repr(linkopts),
         "%{deps}": repr(CONFIG["deps"]),
     })
+    # TODO(eric.cousineau): How do we strip out unused shared libraries like
+    # CMake does???
     unlink("BUILD.tpl")
 
 
