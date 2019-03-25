@@ -4,37 +4,41 @@ set -eux -o pipefail
 cd $(dirname $BASH_SOURCE)
 source ./vars.sh
 
+rmkcd() { rm -rf ${1} && mkdir -p ${1} && cd ${1}; }
+
 # To hack with stuff.
 do-overlay() { (
-    mkcd -p overlay_ws/src
+    rmkcd overlay_ws
+    rmkcd src
 
+    git clone https://github.com/ros2/rmw_implementation -b crystal
     (
-        git clone https://github.com/ros2/rmw_implementation -b crystal && cd rmw_implementation
-        git apply < ${_cur}/patches/rmw_hack_discovery.patch
+        cd rmw_implementation && git apply < ${_cur}/patches/rmw_hack_discovery.patch
     )
 
-    mkcd -p ../build
+    git clone https://github.com/ros2/rmw_fastrtps -b crystal
+
+    cd ..
     # TODO: Dunno which variables matter here...
     # env PYTHONPATH=${_ros_pylib} RMW_IMPLEMENTATION=rmw_fastrtps_cpp \
-    #     cmake .. \
+    #     cmake <dir> \
     #         -DCMAKE_PREFIX_PATH=${_ros} \
     #         -DCMAKE_INSTALL_PREFIX=${_overlay}
     set +eux
     source ${_ros}/setup.bash  # :(
     set -eux
-    cmake ../src/rmw_implementation/rmw_implementation \
-        -DCMAKE_PREFIX_PATH=${_ros} \
-        -DCMAKE_INSTALL_PREFIX=${_overlay}
-    make install
+
+    colcon build --merge-install --symlink-install
 ) }
 
 # To anchor usages.
 do-examples() { (
-    mkcd -p examples_ws/src
+    rmkcd examples_ws
+    rmkcd src
 
     git clone https://github.com/ros2/examples -b 0.6.2
 
-    mkcd -p ../build
+    rmkcd ../build
     env PYTHONPATH=${_ros_pylib} \
         cmake ../src/examples/rclcpp/minimal_publisher \
             -DCMAKE_PREFIX_PATH="${_overlay};${_ros}" \
