@@ -36,4 +36,7 @@ Could maybe use [bazelbuild/rules_foreign_cc](https://github.com/bazelbuild/rule
 to dispatch to CMake; however, I'm not sure how it permits consuming the
 artifacts.
 
+UPDATE: `rules_foreign_cc` is uber nice, but I dunno how to consume modern
+CMake interface targets. For this reason, I kludged `cmake_cc.bzl`.
+
 See [NOTES.md](./NOTES.md) for random exploration stuff.

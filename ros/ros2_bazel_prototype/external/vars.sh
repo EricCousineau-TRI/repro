@@ -13,4 +13,5 @@ _ros_pylib=${_ros}/lib/python3.6/site-packages
 _cur=$(cd $(dirname ${BASH_SOURCE}) && pwd)
 _overlay=${_cur}/overlay_ws/install
 
-_libs=${_overlay}/lib:${_ros}/lib
+_overlay_libdirs=${_overlay}/lib:${_ros}/lib
+_ex_bindir=${_cur}/examples_ws/install/lib/examples_rclcpp_minimal_publisher

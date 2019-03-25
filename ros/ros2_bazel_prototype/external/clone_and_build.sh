@@ -37,8 +37,9 @@ do-examples() { (
     mkcd -p ../build
     env PYTHONPATH=${_ros_pylib} \
         cmake ../src/examples/rclcpp/minimal_publisher \
-            -DCMAKE_PREFIX_PATH="${_overlay};${_ros}"
-    make publisher_lambda
+            -DCMAKE_PREFIX_PATH="${_overlay};${_ros}" \
+            -DCMAKE_INSTALL_PREFIX=../install
+    make install
 ) }
 
 do-overlay
