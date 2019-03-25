@@ -7,6 +7,7 @@ source ./vars.sh
 # To hack with stuff.
 do-overlay() { (
     # See: https://github.com/ros2/rcpputils/issues/3
+    cd overlay_ws/src
     ( set +e; cd rmw_implementation && git apply < ${_cur}/patches/rmw_hack_discovery.patch )
 
     cd ..
