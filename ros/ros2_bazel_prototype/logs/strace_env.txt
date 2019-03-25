@@ -1,0 +1,21 @@
+...
+execve("./bazel-bin/pub_cc", ["./bazel-bin/pub_cc"], 0x7ffd7e402c30 /* 76 vars */) = 0
+brk(NULL)                               = 0x55f9a1aa6000
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f25ba546000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/ros/crystal/lib/tls/haswell/x86_64/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/ros/crystal/lib/tls/haswell/x86_64", 0x7ffeb1c60560) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/ros/crystal/lib/tls/haswell/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/ros/crystal/lib/tls/haswell", 0x7ffeb1c60560) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/ros/crystal/lib/tls/x86_64/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/ros/crystal/lib/tls/x86_64", 0x7ffeb1c60560) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/ros/crystal/lib/tls/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/ros/crystal/lib/tls", 0x7ffeb1c60560) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/ros/crystal/lib/haswell/x86_64/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/ros/crystal/lib/haswell/x86_64", 0x7ffeb1c60560) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/ros/crystal/lib/haswell/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/ros/crystal/lib/haswell", 0x7ffeb1c60560) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/ros/crystal/lib/x86_64/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+stat("/opt/ros/crystal/lib/x86_64", 0x7ffeb1c60560) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/opt/ros/crystal/lib/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = 3

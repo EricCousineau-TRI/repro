@@ -35,59 +35,23 @@ UPDATE: Running prefixed with `strace -s 256`, looks like it checks using the
 path of `librmw_impelementation.so`, rather than just checking to see if the
 library has already been loaded???
 
-### Trying with direct paths
+### Odd RMW loading behavior
+
+Without `LD_LIBRARY_PATH`:
 
 ```
 $ strace -s 256 ./bazel-bin/pub_cc 2>&1
-execve("./bazel-bin/pub_cc", ["./bazel-bin/pub_cc"], 0x7ffdfb0d4670 /* 75 vars */) = 0
-brk(NULL)                               = 0x557e13706000
-access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
-access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, ".../ros2_bazel_prototype/build/hack_overlay/lib/tls/haswell/x86_64/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-stat(".../ros2_bazel_prototype/build/hack_overlay/lib/tls/haswell/x86_64", 0x7ffe70a15830) = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, ".../ros2_bazel_prototype/build/hack_overlay/lib/tls/haswell/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-stat(".../ros2_bazel_prototype/build/hack_overlay/lib/tls/haswell", 0x7ffe70a15830) = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, ".../ros2_bazel_prototype/build/hack_overlay/lib/tls/x86_64/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-stat(".../ros2_bazel_prototype/build/hack_overlay/lib/tls/x86_64", 0x7ffe70a15830) = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, ".../ros2_bazel_prototype/build/hack_overlay/lib/tls/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-stat(".../ros2_bazel_prototype/build/hack_overlay/lib/tls", 0x7ffe70a15830) = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, ".../ros2_bazel_prototype/build/hack_overlay/lib/haswell/x86_64/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-stat(".../ros2_bazel_prototype/build/hack_overlay/lib/haswell/x86_64", 0x7ffe70a15830) = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, ".../ros2_bazel_prototype/build/hack_overlay/lib/haswell/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-stat(".../ros2_bazel_prototype/build/hack_overlay/lib/haswell", 0x7ffe70a15830) = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, ".../ros2_bazel_prototype/build/hack_overlay/lib/x86_64/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-stat(".../ros2_bazel_prototype/build/hack_overlay/lib/x86_64", 0x7ffe70a15830) = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, ".../ros2_bazel_prototype/build/hack_overlay/lib/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = 3
+# See ./logs/strace_no_env.txt
 ```
 
 Is it possible for it to just check for the lib via `ld`, rather than searching
 all over the place? ...
 
-### Trying with env paths
+With it:
 
 ```
-$ env LD_LIBRARY_PATH=${_ros}/lib strace -s 256 ./bazel-bin/pub_cc
-...
-execve("./bazel-bin/pub_cc", ["./bazel-bin/pub_cc"], 0x7ffd7e402c30 /* 76 vars */) = 0
-brk(NULL)                               = 0x55f9a1aa6000
-access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
-mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f25ba546000
-access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, "/opt/ros/crystal/lib/tls/haswell/x86_64/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-stat("/opt/ros/crystal/lib/tls/haswell/x86_64", 0x7ffeb1c60560) = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, "/opt/ros/crystal/lib/tls/haswell/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-stat("/opt/ros/crystal/lib/tls/haswell", 0x7ffeb1c60560) = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, "/opt/ros/crystal/lib/tls/x86_64/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-stat("/opt/ros/crystal/lib/tls/x86_64", 0x7ffeb1c60560) = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, "/opt/ros/crystal/lib/tls/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-stat("/opt/ros/crystal/lib/tls", 0x7ffeb1c60560) = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, "/opt/ros/crystal/lib/haswell/x86_64/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-stat("/opt/ros/crystal/lib/haswell/x86_64", 0x7ffeb1c60560) = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, "/opt/ros/crystal/lib/haswell/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-stat("/opt/ros/crystal/lib/haswell", 0x7ffeb1c60560) = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, "/opt/ros/crystal/lib/x86_64/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
-stat("/opt/ros/crystal/lib/x86_64", 0x7ffeb1c60560) = -1 ENOENT (No such file or directory)
-openat(AT_FDCWD, "/opt/ros/crystal/lib/librmw_implementation.so", O_RDONLY|O_CLOEXEC) = 3
+$ env LD_LIBRARY_PATH=${_overlay_libdirs} strace -s 256 ./bazel-bin/pub_cc
+# See ./logs/strace_env.txt
 ```
 
 ## C++ CMake Build
