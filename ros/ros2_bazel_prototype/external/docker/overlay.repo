@@ -1,13 +1,13 @@
 repositories:
   rcpputils:
     type: git
-    url: git@github.com:EricCousineau-TRI/rcpputils.git
+    url: https://github.com/EricCousineau-TRI/rcpputils.git
     version: issue/rcutils_142-wip
   rmw_implementation:
     type: git
-    url: git@github.com:EricCousineau-TRI/rmw_implementation.git
+    url: https://github.com/EricCousineau-TRI/rmw_implementation.git
     version: issue/58-hack
   rosidl_typesupport:
     type: git
-    url: git@github.com:EricCousineau-TRI/rosidl_typesupport.git
+    url: https://github.com/EricCousineau-TRI/rosidl_typesupport.git
     version: issue/rcpputils_3
