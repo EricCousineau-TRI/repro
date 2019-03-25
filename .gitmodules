@@ -19,4 +19,15 @@
 [submodule "externals/vtk"]
 	path = externals/vtk
 	url = git://vtk.org/VTK.git
-	branch = master
+[submodule "ros/ros2_bazel_prototype/external/overlay_ws/src/rcpputils"]
+	path = ros/ros2_bazel_prototype/external/overlay_ws/src/rcpputils
+	url = git@github.com:EricCousineau-TRI/rcpputils.git
+	branch = issue/3
+[submodule "ros/ros2_bazel_prototype/external/overlay_ws/src/rmw_implementation"]
+	path = ros/ros2_bazel_prototype/external/overlay_ws/src/rmw_implementation
+	url = git@github.com:EricCousineau-TRI/rmw_implementation.git
+	branch = issue/rcpputils_3
+[submodule "ros/ros2_bazel_prototype/external/overlay_ws/src/rosidl_typesupport"]
+	path = ros/ros2_bazel_prototype/external/overlay_ws/src/rosidl_typesupport
+	url = git@github.com:EricCousineau-TRI/rosidl_typesupport.git
+	branch = issue/rcpputils_3

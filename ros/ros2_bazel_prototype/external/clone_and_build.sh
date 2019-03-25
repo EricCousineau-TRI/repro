@@ -4,19 +4,10 @@ set -eux -o pipefail
 cd $(dirname $BASH_SOURCE)
 source ./vars.sh
 
-rmkcd() { rm -rf ${1} && mkdir -p ${1} && cd ${1}; }
-
 # To hack with stuff.
 do-overlay() { (
-    rmkcd overlay_ws
-    rmkcd src
-
-    git clone https://github.com/ros2/rmw_implementation -b crystal
-    (
-        cd rmw_implementation && git apply < ${_cur}/patches/rmw_hack_discovery.patch
-    )
-
-    git clone https://github.com/ros2/rmw_fastrtps -b crystal
+    # See: https://github.com/ros2/rcpputils/issues/3
+    ( set +e; cd rmw_implementation && git apply < ${_cur}/patches/rmw_hack_discovery.patch )
 
     cd ..
     # TODO: Dunno which variables matter here...
@@ -28,17 +19,17 @@ do-overlay() { (
     source ${_ros}/setup.bash  # :(
     set -eux
 
-    colcon build --merge-install --symlink-install
+    colcon build --merge-install --symlink-install \
+        --cmake-args -DBUILD_TESTING=OFF
 ) }
 
 # To anchor usages.
 do-examples() { (
-    rmkcd examples_ws
-    rmkcd src
+    mkcd -p examples_ws/src
 
     git clone https://github.com/ros2/examples -b 0.6.2
 
-    rmkcd ../build
+    mkcd ../build
     env PYTHONPATH=${_ros_pylib} \
         cmake ../src/examples/rclcpp/minimal_publisher \
             -DCMAKE_PREFIX_PATH="${_overlay};${_ros}" \
