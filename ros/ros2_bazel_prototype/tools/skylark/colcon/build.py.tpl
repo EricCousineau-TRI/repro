@@ -74,10 +74,6 @@ def py_imports_sys():
     return [join(x, pylib_relpath) for x in WORKSPACES]
 
 
-def cc_libdirs_sys():
-    return 
-
-
 def cc_configure():
     template("CMakeLists.txt.in", "CMakeLists.txt", {
         "@NAME@": CONFIG["name"],
@@ -155,8 +151,8 @@ def main():
     vars = {}
     vars.update(cc_configure())
     vars.update(py_configure())
-    template("BUILD.tpl", "BUILD.bazel", vars)
-    unlink("BUILD.tpl")
+    template("BUILD.bazel.tpl", "BUILD.bazel", vars)
+    unlink("BUILD.bazel.tpl")
 
 
 if __name__ == "__main__":

@@ -1,9 +1,7 @@
-load("//tools/skylark/cmake:cmake_cc.bzl", "cmake_cc_repository")
+load("//tools/skylark/colcon:colcon.bzl", "colcon_repository")
 
-
-def ros2_cc_deps_repository(name, hack_workspace_dir):
-    # For hacking / overlaying.
-    cmake_cc_repository(
+def ros2_repository(name, hack_workspace_dir):
+    colcon_repository(
         name = name,
         workspaces = [
             "./overlay",

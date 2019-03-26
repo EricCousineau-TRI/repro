@@ -45,8 +45,10 @@ Then run:
 ```sh
 # Build overlay necessary for RPATH stuff
 ./external/docker/build_overlay_archive.py
-# Run a publisher
+# Run a C++ publisher
 bazel run //:pub_cc
+# Run a Python publisher
+bazel run //:pub_py
 ```
 
 ## Relevant Issues

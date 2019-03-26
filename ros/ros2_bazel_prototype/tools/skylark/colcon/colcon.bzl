@@ -1,11 +1,11 @@
 load("//tools/skylark:execute.bzl", "execute_or_fail")
 
 def _label(relpath):
-    return Label("@ros2_bazel_prototype//tools/skylark/cmake:" + relpath)
+    return Label("@ros2_bazel_prototype//tools/skylark/colcon:" + relpath)
 
 def _impl(repo_ctx):
     repo_ctx.symlink(_label("cc_ament_CMakeLists.txt.in"), "CMakeLists.txt.in")
-    repo_ctx.symlink(_label("cc_BUILD.tpl"), "BUILD.tpl")
+    repo_ctx.symlink(_label("BUILD.bazel.tpl"), "BUILD.bazel.tpl")
     config = dict(
         name=repo_ctx.name,
         workspaces=repo_ctx.attr.workspaces,
@@ -20,36 +20,26 @@ def _impl(repo_ctx):
         repo_ctx.download_and_extract(archive, output=prefix)
     repo_ctx.template(
         "build.py",
-        _label("cc_build.py.tpl"),
+        _label("build.py.tpl"),
         substitutions = {
             "%{config}": repr(config),
         },
     )
     execute_or_fail(repo_ctx, ["./build.py"], quiet=False)
 
-python_packages_repository = repository_rule(
-    attrs = {
-        "path": attr.string(mandatory = True),
-        "modules": attr.string_list(mandatory = True),
-        "modules_exclude": attr.string_list(),
-        "deps": attr.string_list(),
-    },
-    local = True,
-    implementation = _impl,
-)
-
 """
-Extracts relevant properties from CMake and Python stuff.
-
-Unfortunately, I (Eric) dunno how to make `rules_foreign_cc` tell more about
-the transitive deps, like headers and other libs. Geared towards usage with
-`ament` (ROS2).
-
-Borrows some args from `cmake_external` (rules_foreign_cc).
+Extracts relevant properties from CMake and Python stuff for colcon install
+trees. Uses `ament` for C++ (CMake), and generic Python stuff for Python.
 """
 
+# Unfortunately, I (Eric) dunno how to make `rules_foreign_cc` tell more about
+# the transitive deps, like headers and other libs. Geared towards usage with
+# `ament` (ROS2).
+
+# TODO(eric): How to granularize dependency grouping? (e.g. only take msggen
+# bits for translators, but take all RMW for other stuff?)
 # TODO(eric): How to handle licenses?
-cmake_cc_repository = repository_rule(
+colcon_repository = repository_rule(
     attrs = dict(
         # Workspaces
         # - FHS install trees (incl. ABI compatible overlays).

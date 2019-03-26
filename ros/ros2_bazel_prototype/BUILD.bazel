@@ -1,12 +1,12 @@
 cc_binary(
     name = "pub_cc",
     srcs = ["pub.cc"],
-    deps = ["@ros2_cc_deps//:cc"],
+    deps = ["@ros2//:cc"],
 )
 
 py_binary(
     name = "pub_py",
     srcs = ["pub.py"],
     main = "pub.py",
-    deps = ["@ros2_cc_deps//:py"],
+    deps = ["@ros2//:py"],
 )

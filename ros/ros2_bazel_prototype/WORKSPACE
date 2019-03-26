@@ -1,5 +1,8 @@
 workspace(name = "ros2_bazel_prototype")
 
-load("//tools/workspace/ros2_cc_deps:repository.bzl", "ros2_cc_deps_repository")
+load("//tools/workspace/ros2:repository.bzl", "ros2_repository")
 
-ros2_cc_deps_repository(name = "ros2_cc_deps", hack_workspace_dir = __workspace_dir__)
+ros2_repository(
+    name = "ros2",
+    hack_workspace_dir = __workspace_dir__,
+)
