@@ -122,14 +122,15 @@ def cc_configure():
     libdirs = cc_libdir_order_preference_sort(libdirs)
     libs = cc_libdir_order_preference_sort(libs)
     print("\n".join(libs))
+    # TODO(eric): Figure out how to handle relative paths for overlay stuff.
+    # Don't break sandboxing.
     for libdir in libdirs:
         linkopts += ["-L" + libdir, "-Wl,-rpath " + libdir]
     libs += cc_get_transitives_libs(
         libs, libdirs, check=lambda lib: dirname(lib) in libdirs)
     for lib in libs:
         linkopts += ["-l" + lib]
-    # TODO(eric.cousineau): How do we strip out unused shared libraries like
-    # CMake does???
+    # TODO(eric.cousineau): Don't do `DT_NEEDED`...
     return {
         "%{cc_includes}": repr(includes),
         "%{cc_linkopts}": repr(linkopts),
@@ -137,85 +138,33 @@ def cc_configure():
     }, libdirs
 
 
-def py_generate_lib_dep_manifest(out_dir, libdirs):
-    # This may be dumb. Meh.
-
-    def check(lib):
-        cur = dirname(lib) + "/"
-        for libdir in libdirs:
-            if cur.startswith(libdir + "/"):
-                return True
-        return False
-
-    lib_dep_manifest = {}
-    for pkg in CONFIG["py_packages"]:
-        # Find the appropriate import.
-        for import_sys in py_imports_sys():
-            pkg_dir = join(import_sys, pkg)
-            if isfile(join(pkg_dir, "__init__.py")):
-                break
-        else:
-            print("Could not find py pkg dir for '{}'".format(pkg))
-            sys.exit(1)
-        pkg_libs = glob(join(pkg_dir, "**/*.so"), recursive=True)
-        lib_deps = []
-        for lib in pkg_libs:
-            # May be hard to combine leaf these togethre... Meh for now.
-            lib_deps += [lib] + cc_get_transitives_libs([lib], libdirs, check)
-        lib_dep_manifest[pkg] = list(reversed(lib_deps))
-    hack_file = join(
-        out_dir, "_{}_bazel_lib_dep_manifest.py".format(CONFIG["name"]))
-    with open(hack_file, "w") as f:
-        f.write(r'''"""
-Hacky auto-generated manifest loading.
-"""
-import ctypes
-
-_lib_dep_manifest = %{lib_dep_manifest}
-
-def preload(pkg_list):
-    """
-    Hack to awkwardly permit RPATH-like behavior... from python... yeah...
-    """
-    libs_loaded = set()
-    for pkg in pkg_list:
-        for lib_dep in _lib_dep_manifest[pkg]:
-            if lib_dep in libs_loaded:
-                continue
-            print("load ", lib_dep)
-            ctypes.cdll.LoadLibrary(lib_dep)
-            libs_loaded.add(lib_dep)
-'''.replace("%{lib_dep_manifest}", repr(lib_dep_manifest)))
-
-
 def py_configure(libdirs):
-    # Just symlink for now.
-    os.mkdir("py")
-    imports = []
     # Add existing system imports.
-    for import_sys in py_imports_sys():
-        import_ = join("py", import_sys.replace("/", "_"))
-        symlink(import_sys, import_)
-        imports.append(import_)
-    # Generate hack manifest.
-    gen_import = "py/gen"
-    os.mkdir(gen_import)
-    py_generate_lib_dep_manifest(gen_import, libdirs)
-    imports.append(gen_import)
-    # Done.
+    imports_sys = py_imports_sys()
+    # TODO(eric): Split between local overlay and other stuff. Presently breaks
+    # sandboxing.
     return {
-        "%{py_imports}": repr(imports),
+        # For now, just rely on system stuff...
+        "%{py_imports}": repr([]),
         "%{py_deps}": repr(CONFIG["py_deps"]),
-    }
+    }, imports_sys
 
 
 def main():
     vars = {}
     cc_vars, libdirs = cc_configure()
     vars.update(cc_vars)
-    vars.update(py_configure(libdirs))
+    py_vars, imports = py_configure(libdirs)
+    vars.update(py_vars)
     template("BUILD.bazel.tpl", "BUILD.bazel", vars)
     unlink("BUILD.bazel.tpl")
+    with open("env.bzl", "w") as f:
+        f.write("""
+# For now, includes local overlays.
+LD_LIBRARY_PATH = {}
+# System-only.
+PYTHONPATH = {}
+""".format(repr(libdirs), repr(imports)))
 
 
 if __name__ == "__main__":

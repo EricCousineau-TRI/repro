@@ -1,10 +1,12 @@
+load("//tools/workspace/ros2:ros2_py.bzl", "ros2_py_binary")
+
 cc_binary(
     name = "pub_cc",
     srcs = ["pub.cc"],
     deps = ["@ros2//:cc"],
 )
 
-py_binary(
+ros2_py_binary(
     name = "pub_py",
     srcs = ["pub.py"],
     main = "pub.py",
