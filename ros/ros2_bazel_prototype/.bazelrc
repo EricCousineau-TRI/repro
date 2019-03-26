@@ -1,1 +1,1 @@
-import %workspace%/tools/cc_toolchain.bazelrc
+import %workspace%/tools/bazel.rc

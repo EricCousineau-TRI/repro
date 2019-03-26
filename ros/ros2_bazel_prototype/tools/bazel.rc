@@ -8,3 +8,6 @@ build --action_env=LD_LIBRARY_PATH=
 # Add C++14 compiler flags.
 build --cxxopt=-std=c++14
 build --host_cxxopt=-std=c++14
+
+# Use Python3 only.
+build --python_path=/usr/bin/python3

@@ -5,11 +5,13 @@ from os import unlink, mkdir, symlink
 from os.path import abspath, basename, dirname, isabs, join
 from subprocess import run, PIPE
 from shutil import rmtree
+import sys
 
 # Configured by Bazel.
 CONFIG = %{config}
+WORKSPACES = [abspath(x) for x in CONFIG["workspaces"]]
 
-PROPERTIES = [
+CC_PROPERTIES = [
     "INCLUDE_DIRECTORIES",
     "LINK_FLAGS",
     "LINK_DIRECTORIES",
@@ -26,7 +28,7 @@ def template(src, dest, subs):
         f.write(text)
 
 
-def add_transitives_libs(libs, libdirs):
+def cc_add_transitives_libs(libs, libdirs):
     # Adds transitive libs directly to `libs`.
     # (kinda dumb that Bazel / CMake doesn't figure this out, but meh...)
     ldd_env = dict(LD_LIBRARY_PATH=":".join(libdirs))
@@ -50,11 +52,11 @@ def add_transitives_libs(libs, libdirs):
             libnames.append(libname)
 
 
-def libdir_order_preference_sort(xs):
+def cc_libdir_order_preference_sort(xs):
     # Go through and bubble up each thing.
     xs = list(xs)
     out = []
-    for pref in CONFIG["libdir_order_preference"]:
+    for pref in WORKSPACES:
         prefix = abspath(pref) + "/"
         for x in list(xs):
             if x.startswith(prefix):
@@ -65,23 +67,35 @@ def libdir_order_preference_sort(xs):
     return out
 
 
-def configure():
+def py_imports_sys():
+    v = sys.version_info
+    # dist-packages?
+    pylib_relpath = "lib/python{}.{}/site-packages".format(v.major, v.minor)
+    return [join(x, pylib_relpath) for x in WORKSPACES]
+
+
+def cc_libdirs_sys():
+    return 
+
+
+def cc_configure():
     template("CMakeLists.txt.in", "CMakeLists.txt", {
         "@NAME@": CONFIG["name"],
-        "@PACKAGES@": " ".join(CONFIG["packages"]),
-        "@PROPERTIES@": " ".join(PROPERTIES),
+        "@PACKAGES@": " ".join(CONFIG["cc_packages"]),
+        "@PROPERTIES@": " ".join(CC_PROPERTIES),
     })
     unlink("CMakeLists.txt.in")
     with open("empty.cc", "w") as f:
         f.write("")
     mkdir("build")
-    cmake_flags = [
-        "-D{}={}".format(k, v)
-        for k, v in CONFIG["cache_entries"].items()]
-    cmake_env = dict(CONFIG["env_vars"])
-    cmake_env.update(
-        PATH="/usr/local/bin:/usr/bin:/bin",
-    )
+    cache_entries = dict(CONFIG["cc_cache_entries"])
+    assert "CMAKE_PREFIX_PATH"  not in cache_entries
+    cache_entries.update({"CMAKE_PREFIX_PATH": ";".join(WORKSPACES)})
+    cmake_flags = ["-D{}={}".format(k, v) for k, v in cache_entries.items()]
+    cmake_env = {
+        "PATH": "/usr/local/bin:/usr/bin:/bin",
+        "PYTHONPATH": ":".join(py_imports_sys()),
+    }
     run(["cmake", ".."] + cmake_flags, check=True, cwd="build", env=cmake_env)
     unlink("empty.cc")
     props = dict()
@@ -92,10 +106,10 @@ def configure():
     rmtree("build")
     mkdir("include")
     includes = []
-    for include_path in props["INCLUDE_DIRECTORIES"]:
-        assert isabs(include_path), include_path
-        include = join("include", include_path.replace("/", "_"))
-        symlink(include_path, include)
+    for include_sys in props["INCLUDE_DIRECTORIES"]:
+        assert isabs(include_sys), include_sys
+        include = join("include", include_sys.replace("/", "_"))
+        symlink(include_sys, include)
         includes.append(include)
     linkopts = list(props["LINK_FLAGS"])
     libdirs = list(props["LINK_DIRECTORIES"])
@@ -106,27 +120,43 @@ def configure():
             libdir = dirname(lib)
             if libdir not in libdirs and libdir not in libdirs_ignore:
                 libdirs.append(libdir)
-    libdirs = libdir_order_preference_sort(libdirs)
-    libs = libdir_order_preference_sort(libs)
+    libdirs = cc_libdir_order_preference_sort(libdirs)
+    libs = cc_libdir_order_preference_sort(libs)
     print("\n".join(libs))
     for libdir in libdirs:
         linkopts += ["-L" + libdir, "-Wl,-rpath " + libdir]
-    add_transitives_libs(libs, set(libdirs))
+    cc_add_transitives_libs(libs, libdirs)
     for lib in libs:
         linkopts += ["-l" + lib]
-    template("BUILD.tpl", "BUILD.bazel", {
-        "%{name}": repr(CONFIG["name"]),
-        "%{includes}": repr(includes),
-        "%{linkopts}": repr(linkopts),
-        "%{deps}": repr(CONFIG["deps"]),
-    })
     # TODO(eric.cousineau): How do we strip out unused shared libraries like
     # CMake does???
-    unlink("BUILD.tpl")
+    return {
+        "%{cc_includes}": repr(includes),
+        "%{cc_linkopts}": repr(linkopts),
+        "%{cc_deps}": repr(CONFIG["cc_deps"]),
+    }
+
+
+def py_configure():
+    # Just symlink for now.
+    os.mkdir("py")
+    imports = []
+    for import_sys in py_imports_sys():
+        import_ = join("py", import_sys.replace("/", "_"))
+        symlink(import_sys, import_)
+        imports.append(import_)
+    return {
+        "%{py_imports}": repr(imports),
+        "%{py_deps}": repr(CONFIG["py_deps"]),
+    }
 
 
 def main():
-    configure()
+    vars = {}
+    vars.update(cc_configure())
+    vars.update(py_configure())
+    template("BUILD.tpl", "BUILD.bazel", vars)
+    unlink("BUILD.tpl")
 
 
 if __name__ == "__main__":
