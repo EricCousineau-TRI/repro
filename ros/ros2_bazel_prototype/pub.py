@@ -1,5 +1,9 @@
 # Based on `examples/rclcpp/minimal_publisher` @ 2dbcf9f
 
+# :(
+from _ros2_bazel_lib_dep_manifest import preload as _preload
+_preload(["rclpy"])
+
 import rclpy
 
 from std_msgs.msg import String

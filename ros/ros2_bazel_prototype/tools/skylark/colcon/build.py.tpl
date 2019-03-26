@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
+from glob import glob
 import os
 from os import unlink, mkdir, symlink
-from os.path import abspath, basename, dirname, isabs, join
+from os.path import abspath, basename, dirname, isabs, isfile, join
 from subprocess import run, PIPE
 from shutil import rmtree
 import sys
@@ -28,28 +29,30 @@ def template(src, dest, subs):
         f.write(text)
 
 
-def cc_add_transitives_libs(libs, libdirs):
-    # Adds transitive libs directly to `libs`.
+def cc_get_transitives_libs(libs, libdirs, check=None):
+    # Gets transitive deps of `libs` that aren't already in there.
     # (kinda dumb that Bazel / CMake doesn't figure this out, but meh...)
+    # May be sketchy w.r.t. ordering...
     ldd_env = dict(LD_LIBRARY_PATH=":".join(libdirs))
-    check_libs = [lib for lib in libs if dirname(lib) in libdirs]
+    check_libs = [lib for lib in libs if check(lib)]
     lines = run(
         ["ldd"] + check_libs, env=ldd_env, check=True,
         stdout=PIPE, encoding="utf8").stdout.strip().split("\n")
     # Use libnames to permit shadowing (when useful).
     libnames = [basename(lib) for lib in libs]
+    new_libs = []
     for line in lines:
         line = line.strip()
         if " => " not in line:
             continue
         _, _, lib, _ = line.split()
-        libdir = dirname(lib)
         libname = basename(lib)
-        if libdir in libdirs and libname not in libnames:
+        if check(lib) and libname not in libnames:
             print("Transitive: {}".format(lib))
-            assert lib not in libs
-            libs.append(lib)
+            assert lib not in libs and lib not in new_libs
+            new_libs.append(lib)
             libnames.append(libname)
+    return new_libs
 
 
 def cc_libdir_order_preference_sort(xs):
@@ -121,7 +124,8 @@ def cc_configure():
     print("\n".join(libs))
     for libdir in libdirs:
         linkopts += ["-L" + libdir, "-Wl,-rpath " + libdir]
-    cc_add_transitives_libs(libs, libdirs)
+    libs += cc_get_transitives_libs(
+        libs, libdirs, check=lambda lib: dirname(lib) in libdirs)
     for lib in libs:
         linkopts += ["-l" + lib]
     # TODO(eric.cousineau): How do we strip out unused shared libraries like
@@ -130,17 +134,75 @@ def cc_configure():
         "%{cc_includes}": repr(includes),
         "%{cc_linkopts}": repr(linkopts),
         "%{cc_deps}": repr(CONFIG["cc_deps"]),
-    }
+    }, libdirs
 
 
-def py_configure():
+def py_generate_lib_dep_manifest(out_dir, libdirs):
+    # This may be dumb. Meh.
+
+    def check(lib):
+        cur = dirname(lib) + "/"
+        for libdir in libdirs:
+            if cur.startswith(libdir + "/"):
+                return True
+        return False
+
+    lib_dep_manifest = {}
+    for pkg in CONFIG["py_packages"]:
+        # Find the appropriate import.
+        for import_sys in py_imports_sys():
+            pkg_dir = join(import_sys, pkg)
+            if isfile(join(pkg_dir, "__init__.py")):
+                break
+        else:
+            print("Could not find py pkg dir for '{}'".format(pkg))
+            sys.exit(1)
+        pkg_libs = glob(join(pkg_dir, "**/*.so"), recursive=True)
+        lib_deps = []
+        for lib in pkg_libs:
+            # May be hard to combine leaf these togethre... Meh for now.
+            lib_deps += [lib] + cc_get_transitives_libs([lib], libdirs, check)
+        lib_dep_manifest[pkg] = list(reversed(lib_deps))
+    hack_file = join(
+        out_dir, "_{}_bazel_lib_dep_manifest.py".format(CONFIG["name"]))
+    with open(hack_file, "w") as f:
+        f.write(r'''"""
+Hacky auto-generated manifest loading.
+"""
+import ctypes
+
+_lib_dep_manifest = %{lib_dep_manifest}
+
+def preload(pkg_list):
+    """
+    Hack to awkwardly permit RPATH-like behavior... from python... yeah...
+    """
+    libs_loaded = set()
+    for pkg in pkg_list:
+        for lib_dep in _lib_dep_manifest[pkg]:
+            if lib_dep in libs_loaded:
+                continue
+            print("load ", lib_dep)
+            ctypes.cdll.LoadLibrary(lib_dep)
+            libs_loaded.add(lib_dep)
+'''.replace("%{lib_dep_manifest}", repr(lib_dep_manifest)))
+
+
+def py_configure(libdirs):
     # Just symlink for now.
     os.mkdir("py")
     imports = []
+    # Add existing system imports.
     for import_sys in py_imports_sys():
         import_ = join("py", import_sys.replace("/", "_"))
         symlink(import_sys, import_)
         imports.append(import_)
+    # Generate hack manifest.
+    gen_import = "py/gen"
+    os.mkdir(gen_import)
+    py_generate_lib_dep_manifest(gen_import, libdirs)
+    imports.append(gen_import)
+    # Done.
     return {
         "%{py_imports}": repr(imports),
         "%{py_deps}": repr(CONFIG["py_deps"]),
@@ -149,8 +211,9 @@ def py_configure():
 
 def main():
     vars = {}
-    vars.update(cc_configure())
-    vars.update(py_configure())
+    cc_vars, libdirs = cc_configure()
+    vars.update(cc_vars)
+    vars.update(py_configure(libdirs))
     template("BUILD.bazel.tpl", "BUILD.bazel", vars)
     unlink("BUILD.bazel.tpl")
 
