@@ -2,7 +2,9 @@
 #include <chrono>
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
+#define STRINGIFY(x) #x
+#define POODLE(PKG, MSG) STRINGIFY(PKG/msg/MSG.hpp)
+#include POODLE(std_msgs, string)
 
 namespace {
 
