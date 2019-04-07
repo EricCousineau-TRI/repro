@@ -80,6 +80,13 @@ cc_binary(
 )
 
 cc_binary(
+    name = "test_instance_check",
+    srcs = ["custom_tests/test_instance_check.cc"],
+    data = ["custom_tests/test_instance_check_util.py"],
+    deps = [":include"],
+)
+
+cc_binary(
     name = "test_gil_issue1723",
     srcs = ["custom_tests/test_gil_issue1723.cc"],
     deps = [":include"],
