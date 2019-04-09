@@ -4,6 +4,7 @@
 # Borrowing from: https://github.com/WPI-ARC/teleop_examples/blob/f4fad4c/hubo_marker_teleop/src/hubo_marker_teleop/gt_hubo_marker_teleop.py
 
 import copy
+from functools import partial
 import math
 import time
 
@@ -17,12 +18,12 @@ DT_DOUBLE_CLICK = 0.25
 
 
 def assign(obj=None, **kwargs):
+    # Assign non-default values, possibly in hierarchical fashion.
     if obj is None:
-        # Consider returning functor.
-        return dict(kwargs)
+        return partial(assign, **kwargs)
     for prop, value in kwargs.items():
-        if isinstance(value, dict):
-            assign(getattr(obj, prop), **value)
+        if callable(value):
+            value(getattr(obj, prop))
         else:
             setattr(obj, prop, value)
     return obj
@@ -79,7 +80,8 @@ class SimpleInteractiveMarker(object):
         template.controls.append(viz)
         self._template = template
         # Initialize.
-        self.reset()
+        self._edit = False
+        self._update()
 
     def get_pose(self):
         return self._X_WM
@@ -89,11 +91,8 @@ class SimpleInteractiveMarker(object):
         self._server.setPose(self.name, self._X_WM)
         self._server.applyChanges()
 
-    def reset(self):
-        self._edit = False
-        self._update()
-
-    def clear(self):
+    def delete(self):
+        self._X_WM = None
         self._server.erase(self.name)
         self._server.applyChanges()
 
@@ -129,7 +128,7 @@ class SimpleInteractiveMarker(object):
         self._update()
 
     def _delete_callback(self, _):
-        self.clear()
+        self.delete()
 
 
 def main():
@@ -154,8 +153,8 @@ def main():
     b.set_pose(assign(Pose(), position=assign(x=-1)))
     X_WC = Pose()
     c = SimpleInteractiveMarker(server, "c", X_WC, [sphere])
-    a.clear()
-    a.reset()
+    c.delete()
+    c.delete()
     rospy.spin()
 
 
