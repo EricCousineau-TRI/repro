@@ -1,5 +1,6 @@
 # Alternative impl, motivated by: https://bitbucket.org/ericvsmith/namedlist
 from collections import namedtuple
+import ctypes
 
 import numpy as np
 
@@ -40,6 +41,9 @@ def namedview(name, fields):
         def __iter__(self):
             return self._obj.__iter__()
 
+        def __array__(self):
+            return np.asarray(self._obj)
+
         def __repr__(self):
             values = [
                 "{}={}".format(field, repr(self[i]))
@@ -50,6 +54,11 @@ def namedview(name, fields):
     for i, field in enumerate(fields):
         setattr(NamedView, field, _item_property(NamedView, i))
     return NamedView
+
+
+def is_same_array(a, b):
+    # https://stackoverflow.com/questions/43885090/comparing-numpy-object-references
+    return (a.shape == b.shape) and (a == b).all() and a.ctypes.data == b.ctypes.data
 
 
 def test_main():
@@ -85,6 +94,12 @@ def test_main():
     except AttributeError:
         pass
 
+    # Ensure compatibility with `np.array`, with minimal copying.
+    X = np.asarray(view)
+    print(repr(X))
+    assert isinstance(X, np.ndarray)
+    assert X.shape == (3,)
+
     print("[ Array 1D ]")
     array = np.array([4, 5, 6])
     aview = MyView(array)
@@ -92,6 +107,9 @@ def test_main():
     aview[[1, 2]] = [50, 60]
     print(array)
     print(aview)
+    # - Ensure minimal copying.
+    assert is_same_array(array, np.asarray(aview))
+    assert not is_same_array(array, np.array([4, 5, 6]))
 
     # Maybe not useful, but meh.
     print("[ Array 2D ]")
@@ -121,6 +139,7 @@ MyView(a=10, b=-100, c=1000)
 [10, -100, 1000]
 MyView(a=111, b=222, c=333)
 [111, 222, 333]
+array([111, 222, 333])
 [ Array 1D ]
 4
 [ 4 50 60]
