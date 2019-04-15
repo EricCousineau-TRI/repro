@@ -45,23 +45,18 @@ class NamedViewBase(object):
             value_strs.append("{}={}".format(field, repr(self._obj[i])))
         return "{}({})".format(self.__class__.__name__, ", ".join(value_strs))
 
-    @classmethod
-    def _field_as_property(cls, index):
+    @staticmethod
+    def _item_property(index):
         return property(
-            fget=lambda self: cls.__getitem__(self, index),
-            fset=lambda self, value: cls.__setitem__(self, index, value))
+            fget=lambda self: self.__getitem__(index),
+            fset=lambda self, value: self.__setitem__(index, value))
 
 
 def namedview(name, fields):
-    # Prevent mutation.
-    fields = tuple(fields)
-
-    class cls(NamedViewBase):
-        _fields = fields
-
-    cls.__name__ = cls.__qualname__ = name
+    type_dict = dict(_fields=tuple(fields))
     for i, field in enumerate(fields):
-        setattr(cls, field, cls._field_as_property(i))
+        type_dict[field] = NamedViewBase._item_property(i)
+    cls = type(name, (NamedViewBase,), type_dict)
     return cls
 
 
