@@ -102,6 +102,7 @@ cc_binary(
     name = "test_pybind_issue_repro",
     srcs = ["custom_tests/test_pybind_issue_repro.cc"],
     deps = [":include"],
+    copts = ["-std=c++17"],
 )
 
 cc_binary(
