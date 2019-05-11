@@ -27,8 +27,9 @@ struct type_caster<float128> {
     if (!convert && !isinstance<my_array>(src))
       return false;
     my_array tmp = my_array::ensure(src);
-    if (tmp) {
+    if (tmp && tmp.size() == 1 && tmp.ndim() == 0) {
       this->value = *tmp.data();
+      return true;
     }
     return false;
   }
@@ -55,6 +56,10 @@ void init_module(py::module m) {
   m.def("sum_array", [](Vector<float128, -1> x) {
     return x.array().sum();
   });
+  m.def("incr_scalar", [](float128 x) {
+    // TODO: Remove upcast once scalar resolution works?
+    return double(x + 1.);
+  });
 }
 
 int main(int, char**) {
@@ -69,6 +74,7 @@ int main(int, char**) {
 import numpy as np
 
 def main():
+    print(repr(m.incr_scalar(1.)))
     x = np.array([1, 2], dtype=np.float128)
     print(repr(m.sum_array(x)))
     print(repr(m.make_array()))
