@@ -99,6 +99,12 @@ cc_binary(
 )
 
 cc_binary(
+    name = "test_numpy_issue1785",
+    srcs = ["custom_tests/test_numpy_issue1785.cc"],
+    deps = [":include"],
+)
+
+cc_binary(
     name = "test_pybind_issue_repro",
     srcs = ["custom_tests/test_pybind_issue_repro.cc"],
     deps = [":include"],
