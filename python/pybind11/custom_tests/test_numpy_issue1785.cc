@@ -18,16 +18,17 @@ using Vector = Eigen::Matrix<T, Dim, 1>;
 
 namespace pybind11 { namespace detail {
 
-template <>
-struct type_caster<float128> {
-  PYBIND11_TYPE_CASTER(float128, _("float128"));
-  using arr_t = array_t<float128>;
+template <typename T>
+struct npy_scalar_caster {
+  PYBIND11_TYPE_CASTER(T, _("PleaseOverride"));
+  using Array = array_t<T>;
 
   bool load(handle src, bool convert) {
-    // Taken from Eigen casters.
-    if (!convert && !isinstance<arr_t>(src))
+    // Taken from Eigen casters. Permits either scalar dtype or scalar array.
+    handle type = dtype::of<T>().attr("type");  // Could make more efficient.
+    if (!convert && !isinstance<Array>(src) && !isinstance(src, type))
       return false;
-    arr_t tmp = arr_t::ensure(src);
+    Array tmp = Array::ensure(src);
     if (tmp && tmp.size() == 1 && tmp.ndim() == 0) {
       this->value = *tmp.data();
       return true;
@@ -35,14 +36,19 @@ struct type_caster<float128> {
     return false;
   }
 
-  static handle cast(float128 src, return_value_policy, handle) {
-    arr_t tmp({1});
+  static handle cast(T src, return_value_policy, handle) {
+    Array tmp({1});
     tmp.mutable_at(0) = src;
     tmp.resize({});
     // You could also just return the array if you want a scalar array.
     object scalar = tmp[py::tuple()];
     return scalar.release();
   }
+};
+
+template <>
+struct type_caster<float128> : npy_scalar_caster<float128> {
+  static constexpr auto name = _("float128");
 };
 
 }}  // namespace pybind11::detail
@@ -55,6 +61,11 @@ void init_module(py::module m) {
     return x.array().sum();
   });
   m.def("incr_scalar", [](float128 x) { return x + 1.; });
+
+  // Check overloads
+  m.def("overload", [](float128 x) { return "float128"; });
+  m.def("overload", [](Vector<float128, 1> x) { return "ndarray[float128, 1]"; });
+  m.def("overload", [](int x) { return "int"; });  // Put at end, due to things like pybind11#1392 ???
 }
 
 int main(int, char**) {
@@ -71,11 +82,18 @@ import numpy as np
 def info(x):
     print(repr(x), type(x))
 
+def check(a, b):
+    assert a == b, (a, b)
+
 def main():
     info(m.incr_scalar(1.))
-    x = np.array([1, 2], dtype=np.float128)
+    x = np.array([1, 2, 3], dtype=np.float128)
     info(m.sum_array(x))
     info(m.make_array())
+
+    check(m.overload(1), "int")
+    check(m.overload(np.float128(1.)), "float128")
+    check(m.overload(np.array([1], np.float128)), "ndarray[float128, 1]")
 
 main()
 )""");
@@ -88,7 +106,7 @@ main()
 /* Output:
 
 2.0 <class 'numpy.float128'>
-3.0 <class 'numpy.float128'>
+6.0 <class 'numpy.float128'>
 array([ 1.0,  2.0,  3.0], dtype=float128) <class 'numpy.ndarray'>
 
 */
