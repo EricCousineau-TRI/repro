@@ -21,12 +21,13 @@ namespace pybind11 { namespace detail {
 template <>
 struct type_caster<float128> {
   PYBIND11_TYPE_CASTER(float128, _("float128"));
-  using my_array = array_t<float128>;
+  using arr_t = array_t<float128>;
 
   bool load(handle src, bool convert) {
-    if (!convert && !isinstance<my_array>(src))
+    // Taken from Eigen casters.
+    if (!convert && !isinstance<arr_t>(src))
       return false;
-    my_array tmp = my_array::ensure(src);
+    arr_t tmp = arr_t::ensure(src);
     if (tmp && tmp.size() == 1 && tmp.ndim() == 0) {
       this->value = *tmp.data();
       return true;
@@ -35,15 +36,12 @@ struct type_caster<float128> {
   }
 
   static handle cast(float128 src, return_value_policy, handle) {
-    // // This causes a segfault:
-    // using Wrapped = Vector<float128, 1>;
-    // using wrap_caster = type_caster<Wrapped>;
-    // return wrap_caster::cast(
-    //     Wrapped(src), return_value_policy::move, handle()))
-    //     .attr("reshape")(py::make_tuple());
-
-    // This does not work (circular 'base')
-    return array_t<float128>({1}, {1}, &src, handle());
+    arr_t tmp({1});
+    tmp.mutable_at(0) = src;
+    tmp.resize({});
+    // You could also just return the array if you want a scalar array.
+    object scalar = tmp[py::tuple()];
+    return scalar.release();
   }
 };
 
@@ -56,10 +54,7 @@ void init_module(py::module m) {
   m.def("sum_array", [](Vector<float128, -1> x) {
     return x.array().sum();
   });
-  m.def("incr_scalar", [](float128 x) {
-    // TODO: Remove upcast once scalar resolution works?
-    return double(x + 1.);
-  });
+  m.def("incr_scalar", [](float128 x) { return x + 1.; });
 }
 
 int main(int, char**) {
@@ -73,11 +68,14 @@ int main(int, char**) {
   py::exec(R"""(
 import numpy as np
 
+def info(x):
+    print(repr(x), type(x))
+
 def main():
-    print(repr(m.incr_scalar(1.)))
+    info(m.incr_scalar(1.))
     x = np.array([1, 2], dtype=np.float128)
-    print(repr(m.sum_array(x)))
-    print(repr(m.make_array()))
+    info(m.sum_array(x))
+    info(m.make_array())
 
 main()
 )""");
@@ -89,9 +87,8 @@ main()
 
 /* Output:
 
-[ Eval ]
-array([ 3.0], dtype=float128)
-array([ 1.0,  2.0,  3.0], dtype=float128)
-[ Done ]
+2.0 <class 'numpy.float128'>
+3.0 <class 'numpy.float128'>
+array([ 1.0,  2.0,  3.0], dtype=float128) <class 'numpy.ndarray'>
 
 */
