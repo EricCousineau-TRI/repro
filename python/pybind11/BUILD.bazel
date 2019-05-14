@@ -125,6 +125,7 @@ cc_binary(
     deps = [
         ":include",
         ":half",
+        ":pybind11_numpy_scalar",
     ],
 )
 
