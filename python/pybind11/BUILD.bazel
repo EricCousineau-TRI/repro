@@ -104,6 +104,21 @@ cc_binary(
     deps = [":include"],
 )
 
+cc_library(
+    name = "half",
+    hdrs = ["third/half.h"],
+    includes = ["third"],
+)
+
+cc_binary(
+    name = "test_numpy_issue1776",
+    srcs = ["custom_tests/test_numpy_issue1776.cc"],
+    deps = [
+        ":include",
+        ":half",
+    ],
+)
+
 cc_binary(
     name = "test_pybind_issue_repro",
     srcs = ["custom_tests/test_pybind_issue_repro.cc"],
