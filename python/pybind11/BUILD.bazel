@@ -98,10 +98,19 @@ cc_binary(
     deps = [":include"],
 )
 
+cc_library(
+    name = "pybind11_numpy_scalar",
+    hdrs = ["custom_tests/pybind11_numpy_scalar.h"],
+    includes = ["custom_tests"],
+)
+
 cc_binary(
     name = "test_numpy_issue1785",
     srcs = ["custom_tests/test_numpy_issue1785.cc"],
-    deps = [":include"],
+    deps = [
+        ":include",
+        ":pybind11_numpy_scalar",
+    ],
 )
 
 cc_library(
