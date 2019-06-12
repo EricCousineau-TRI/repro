@@ -68,6 +68,12 @@ cc_binary(
 )
 
 cc_binary(
+    name = "test_tmp",
+    srcs = ["custom_tests/test_tmp.cc"],
+    deps = [":include"],
+)
+
+cc_binary(
     name = "test_poly",
     srcs = ["custom_tests/test_poly.cc"],
     deps = [":include"],
