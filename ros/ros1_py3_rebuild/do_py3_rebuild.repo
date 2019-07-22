@@ -1,0 +1,10 @@
+# For use with `vcstool`.
+repositories:
+  vision_opencv:
+    type: git
+    url: https://github.com/ros-perception/vision_opencv.git
+    version: 1.13.0  # branch: melodic
+  geometry2:
+    type: git
+    url: https://github.com/ros/geometry2
+    version: c4a64e0  # branch: melodic-devel
