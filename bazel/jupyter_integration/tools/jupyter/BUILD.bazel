@@ -1,0 +1,36 @@
+# -*- mode: python -*-
+# vi: set ft=python :
+
+load(
+    ":jupyter_py.bzl",
+    "jupyter_py_binary",
+)
+
+py_library(
+    name = "jupyter_bazel_py",
+    srcs = ["jupyter_bazel.py"],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+    # N.B. Implicit system dep on Jupyter. Can make this explicit if you care.
+)
+
+py_binary(
+    name = "jupyter",
+    # N.B. Do not name this `jupyter` as it may create a shadowing issue.
+    srcs = ["jupyter_bin.py"],
+    main = "jupyter_bin.py",
+    deps = [":jupyter_bazel_py"],
+)
+
+# Example + test.
+py_library(
+    name = "example_library",
+    srcs = ["example_library.py"],
+    imports = ["."],
+)
+
+jupyter_py_binary(
+    name = "example",
+    deps = [":example_library"],
+    add_test_rule = 1,
+)
