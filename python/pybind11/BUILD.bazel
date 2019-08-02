@@ -68,6 +68,12 @@ cc_binary(
 )
 
 cc_binary(
+    name = "test_tmp",
+    srcs = ["custom_tests/test_tmp.cc"],
+    deps = [":include"],
+)
+
+cc_binary(
     name = "test_poly",
     srcs = ["custom_tests/test_poly.cc"],
     deps = [":include"],
@@ -96,6 +102,37 @@ cc_binary(
     name = "test_numpy_issue1773",
     srcs = ["custom_tests/test_numpy_issue1773.cc"],
     deps = [":include"],
+)
+
+cc_library(
+    name = "pybind11_numpy_scalar",
+    hdrs = ["custom_tests/pybind11_numpy_scalar.h"],
+    includes = ["custom_tests"],
+)
+
+cc_binary(
+    name = "test_numpy_issue1785",
+    srcs = ["custom_tests/test_numpy_issue1785.cc"],
+    deps = [
+        ":include",
+        ":pybind11_numpy_scalar",
+    ],
+)
+
+cc_library(
+    name = "half",
+    hdrs = ["third/half.h"],
+    includes = ["third"],
+)
+
+cc_binary(
+    name = "test_numpy_issue1776",
+    srcs = ["custom_tests/test_numpy_issue1776.cc"],
+    deps = [
+        ":include",
+        ":half",
+        ":pybind11_numpy_scalar",
+    ],
 )
 
 cc_binary(
