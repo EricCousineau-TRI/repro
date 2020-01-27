@@ -32,8 +32,8 @@ def check(f):
     print(f"{f} - 0, 2")
     f(np.zeros((0, 2)))
 
-check(m.pass_through)
-check(m.pass_through_ref)
+check(m.pass_through)  # Works
+check(m.pass_through_ref)  # Fails on (0, 2)
 )""");
 
   py::print("[ Done ]");
