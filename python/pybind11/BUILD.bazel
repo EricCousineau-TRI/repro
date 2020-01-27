@@ -93,6 +93,12 @@ cc_binary(
 )
 
 cc_binary(
+    name = "test_eigen_drake_issue12633",
+    srcs = ["custom_tests/test_eigen_drake_issue12633.cc"],
+    deps = [":include"],
+)
+
+cc_binary(
     name = "test_gil_issue1723",
     srcs = ["custom_tests/test_gil_issue1723.cc"],
     deps = [":include"],
