@@ -20,7 +20,7 @@ This is a super hacky thing, but it's minimal, and adds stuff in `./venv`.
 
 ## Demo
 
-Then to run, launch both Drake Visualizer and RViz:
+Then to run, launch both Drake Visualizer and Rviz:
 
     # Terminal 1
     ./venv/bin/drake-visualizer
@@ -29,8 +29,8 @@ Then to run, launch both Drake Visualizer and RViz:
     ./setup.sh roscore
 
     # Terminal 2
-    ./setup.sh rviz -d ./demo.rviz
+    ./setup.sh rviz -d ./rviz_demo.rviz
 
 Then run the demo:
 
-    ./setup.sh python3 ./demo.py
+    ./setup.sh python3 ./rviz_demo.py

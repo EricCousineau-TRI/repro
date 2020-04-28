@@ -11,6 +11,7 @@ import numpy as np
 import rospy
 
 from pydrake.common import FindResourceOrThrow
+from pydrake.math import RigidTransform
 from pydrake.systems.framework import DiagramBuilder
 from pydrake.geometry import ConnectDrakeVisualizer
 from pydrake.multibody.parsing import Parser
@@ -44,7 +45,8 @@ def main():
         # TODO: Test multiple IIWAs.
         model = parser.AddModelFromFile(sdf_file, model_name)
         models.append(model)
-        base_frame = plant.GetFrameByName("iiwa_link_0")
+        base_frame = plant.GetFrameByName("iiwa_link_0", model)
+        # Translate along x-axis by 1m to separate.
         X_WB = RigidTransform([i, 0, 0])
         plant.WeldFrames(plant.world_frame(), base_frame, X_WB)
     plant.Finalize()
