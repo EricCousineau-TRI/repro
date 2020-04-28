@@ -1,8 +1,9 @@
 #!/bin/bash
 
-_venv_dir=$(cd $(dirname ${BASH_SOURCE}) && pwd)/venv
+_cur_dir=$(cd $(dirname ${BASH_SOURCE}) && pwd)
+_venv_dir=${_cur_dir}/venv
 (
-    set -eux
+    set -eu
     if [[ ! -f ${_venv_dir}/bin/activate ]]; then
         mkdir -p ${_venv_dir}
         cd ${_venv_dir}
@@ -11,8 +12,19 @@ _venv_dir=$(cd $(dirname ${BASH_SOURCE}) && pwd)/venv
         # https://drake.mit.edu/python_bindings.html#inside-virtualenv
         tar xfz ${file} -C ${_venv_dir} --strip-components=1
         python3 -m virtualenv -p python3 --system-site-packages ${_venv_dir}
+
+        # If this fails, we should fail fast...
+        test -d ${_venv_dir}/lib/python3.6
+
+        py3_rebuild_dir=$(dirname ${_cur_dir})/ros1_py3_rebuild
+        py3_rebuild_tar=${py3_rebuild_dir}/py3_rebuild.tar.gz
+        if [[ ! -f ${py3_rebuild_tar} ]]; then
+            ${py3_rebuild_dir}/do_py3_rebuild.py
+        fi
+        tar xfz ${py3_rebuild_tar} -C ${_venv_dir}/lib/python3.6/site-packages/
     fi
 )
 
 source /opt/ros/melodic/setup.bash
-source ${_venv_dir}/bin/activate
+# source ${_venv_dir}/bin/activate
+export PYTHONPATH=${_venv_dir}/lib/python3.6/site-packages:/usr/lib/python2.7/dist-packages:${PYTHONPATH}
