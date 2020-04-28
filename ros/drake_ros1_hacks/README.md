@@ -26,14 +26,11 @@ Then to run, launch both Drake Visualizer and RViz:
     ./venv/bin/drake-visualizer
 
     # Terminal 2
-    source ./setup.sh
-    roscore
+    ./setup.sh roscore
 
     # Terminal 2
-    source ./setup.sh
-    rviz -d ./demo.rviz
+    ./setup.sh rviz -d ./demo.rviz
 
 Then run the demo:
 
-    source ./setup.sh
-    python3 ./demo.py
+    ./setup.sh python3 ./demo.py

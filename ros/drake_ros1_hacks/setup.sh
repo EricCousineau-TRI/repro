@@ -1,11 +1,13 @@
 #!/bin/bash
 
 # Hacks to make things work.
-# Would not recommend relying on this.
 
 _cur_dir=$(cd $(dirname ${BASH_SOURCE}) && pwd)
 _venv_dir=${_cur_dir}/venv
-(
+
+_venv-create-if-needed()
+{ (
+    # Use subshell to permit errors.
     set -eu
     if [[ ! -f ${_venv_dir}/bin/activate ]]; then
         mkdir -p ${_venv_dir}
@@ -37,8 +39,25 @@ _venv_dir=${_cur_dir}/venv
         fi
         tar xfz ${py3_rebuild_tar} -C ${_venv_dir}/lib/python3.6/site-packages/
     fi
-)
+) }
 
-source /opt/ros/melodic/setup.bash
-# source ${_venv_dir}/bin/activate
-export PYTHONPATH=$(dirname ${_cur_dir}):${_venv_dir}/lib/python3.6/site-packages:${PYTHONPATH}
+_venv-source() {
+    # No subshell.
+    source /opt/ros/melodic/setup.bash
+    # source ${_venv_dir}/bin/activate
+    export PYTHONPATH=$(dirname ${_cur_dir}):${_venv_dir}/lib/python3.6/site-packages:${PYTHONPATH}
+}
+
+if [[ ${0} != ${BASH_SOURCE} ]]; then
+    # Sourced in shell / script.
+    _venv-create-if-needed
+    _venv-source
+else
+    set -eu
+    # Executed as binary.
+    _venv-create-if-needed
+    set +u
+    _venv-source
+    set -x
+    exec "$@"
+fi

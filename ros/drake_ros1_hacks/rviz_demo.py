@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+"""
+Simple demo using rviz.
+"""
+
 import time
 
 import numpy as np
@@ -31,12 +36,20 @@ def main():
         "iiwa7_no_collision.sdf")
     builder = DiagramBuilder()
     plant, scene_graph = AddMultibodyPlantSceneGraph(builder, time_step=0.01)
-    # TODO: Test multiple IIWAs.
-    model = Parser(plant).AddModelFromFile(sdf_file)
-    base_frame = plant.GetFrameByName("iiwa_link_0")
-    plant.WeldFrames(plant.world_frame(), base_frame)
+    parser = Parser(plant)
+    models = []
+    model_count = 3
+    for i in range(model_count):
+        model_name = f"iiwa{i}"
+        # TODO: Test multiple IIWAs.
+        model = parser.AddModelFromFile(sdf_file, model_name)
+        models.append(model)
+        base_frame = plant.GetFrameByName("iiwa_link_0")
+        X_WB = RigidTransform([i, 0, 0])
+        plant.WeldFrames(plant.world_frame(), base_frame, X_WB)
     plant.Finalize()
-    no_control(plant, builder, model)
+    for model in models:
+        no_control(plant, builder, model)
 
     ConnectDrakeVisualizer(builder, scene_graph)
     ConnectRvizVisualizer(builder, scene_graph)

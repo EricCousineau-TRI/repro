@@ -1,3 +1,11 @@
+"""
+Rviz Visualizer support in pydrake for ROS1.
+
+Known issues:
+* Colors cannot be retrieved in Python.
+* (more to be noted)
+"""
+
 import rospy
 from geometry_msgs.msg import TransformStamped
 from tf2_msgs.msg import TFMessage
@@ -52,6 +60,8 @@ def to_markers(shape, stamp, frame_id, X_FG, color):
     elif type(shape) in [Mesh, Convex]:
         marker.type = Marker.MESH_RESOURCE
         marker.mesh_resource = f"file://{shape.filename()}"
+        # TODO(eric.cousineau): Override this based on properties?
+        marker.mesh_use_embedded_materials = True
         marker.scale.x, marker.scale.y, marker.scale.z = 3 * [shape.scale()]
         return [marker]
     else:
