@@ -13,16 +13,20 @@ _venv-create-if-needed()
         mkdir -p ${_venv_dir}
         cd ${_venv_dir}
 
+        # base=drake-20200426-bionic.tar.gz
+        # url=https://drake-packages.csail.mit.edu/drake/nightly/${base}
+
         # WARNING: Drake does not yet have all the bindings necessary to make
         # this work.
         # For now, you need to build using this PR (or use the binary package):
         # https://github.com/RobotLocomotion/drake/pull/13160#issuecomment-620704905
-        cp -r /tmp/drake/* ${_venv_dir}
+        base=drake-20200428162721-9d96a9840684f40af1ec0985417274dd691fafb0-bionic.tar.gz
+        url=https://drake-packages.csail.mit.edu/drake/experimental/${base}
 
-        # file=~/Downloads/drake-20200426-bionic.tar.gz
-        # test -f ${file} || wget -O ${file} https://drake-packages.csail.mit.edu/drake/nightly/$(basename ${file})
-        # # https://drake.mit.edu/python_bindings.html#inside-virtualenv
-        # tar xfz ${file} -C ${_venv_dir} --strip-components=1
+        local=~/Downloads/${base}
+        test -f ${local} || wget -O ${local} ${url}
+        # https://drake.mit.edu/python_bindings.html#inside-virtualenv
+        tar xfz ${local} -C ${_venv_dir} --strip-components=1
 
         python3 -m virtualenv -p python3 --system-site-packages ${_venv_dir}
 
