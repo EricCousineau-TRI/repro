@@ -148,6 +148,7 @@ def sanity_check_query_object(query_object, debug=False):
 
     inspector = query_object.inspector()
     for geometry_id in inspector.GetAllGeometryIds():
+        # TODO(eric.cousineau): Why are these overloads different from C++???
         geometry_name = inspector.GetNameByGeometryId(geometry_id)
         # TODO(eric.cousineau): Expose inspector.get_all_frames().
         frame_id = inspector.GetFrameId(geometry_id)
