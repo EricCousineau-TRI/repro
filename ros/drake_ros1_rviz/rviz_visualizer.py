@@ -1,31 +1,19 @@
-import time
-
-import numpy as np
-
 import rospy
 from geometry_msgs.msg import TransformStamped
 from tf2_msgs.msg import TFMessage
 from tf2_ros import TransformBroadcaster
 from visualization_msgs.msg import Marker, MarkerArray
 
-from pydrake.common import FindResourceOrThrow
 from pydrake.geometry import (
     QueryObject,
     Role,
     Box, Sphere, Cylinder, Mesh, Convex,
 )
 from pydrake.systems.framework import (
-    AbstractValue, Value, LeafSystem, PublishEvent, TriggerType,
-    DiagramBuilder,
+    AbstractValue, LeafSystem, PublishEvent, TriggerType,
 )
-from pydrake.geometry import ConnectDrakeVisualizer
-from pydrake.multibody.parsing import Parser
-from pydrake.multibody.plant import AddMultibodyPlantSceneGraph
-from pydrake.systems.analysis import Simulator
-from pydrake.systems.primitives import ConstantVectorSource
 
-# TODO: Use absolute import.
-from ros_geometry import to_ros_pose, to_ros_transform
+from drake_ros1_rviz.ros_geometry import to_ros_pose, to_ros_transform
 
 DEFAULT_RGBA = [0.9, 0.9, 0.9, 1.0]
 
@@ -38,9 +26,13 @@ def to_markers(shape, stamp, frame_id, X_FG, color):
     marker.action = Marker.ADD
     marker.lifetime = rospy.Duration(0.)
     marker.frame_locked = True
+
+    # TODO: Colors are broken 'cause Geometry properties with Vector4 do not
+    # play well with Python.
     assert color is None
     marker.color.a = 1.
     # marker.color.r, marker.color.g, marker.color.b, marker.color.a = color
+
     if type(shape) == Box:
         marker.type = Marker.CUBE
         marker.scale.x, marker.scale.y, marker.scale.z = shape.size()
@@ -121,6 +113,7 @@ def to_tf_message(query_object):
 class RvizVisualizer(LeafSystem):
     # Better architecture: Output visualization + TF messages on port, let it
     # be published separately.
+    # Modeled after Calder's code in Anzu, and Greg's code in spartan.
     def __init__(
             self,
             scene_graph,
@@ -161,8 +154,6 @@ class RvizVisualizer(LeafSystem):
     def _publish_tf(self, context, event):
         # N.B. This does not check for changes in geometry.
         query_object = self._geometry_query.Eval(context)
-        # marker_array = to_marker_array(query_object, self._role)
-        # self._marker_pub.publish(marker_array)
         tf_message = to_tf_message(query_object)
         self._tf_pub.publish(tf_message)
 
@@ -174,44 +165,3 @@ def ConnectRvizVisualizer(builder, scene_graph, **kwargs):
         scene_graph.get_query_output_port(),
         rviz.get_geometry_query_input_port())
     return rviz
-
-
-def no_control(plant, builder, model):
-    nu = plant.num_actuated_dofs(model)
-    u0 = np.zeros(nu)
-    constant = builder.AddSystem(ConstantVectorSource(u0))
-    builder.Connect(
-        constant.get_output_port(0),
-        plant.get_actuation_input_port(model))
-
-
-def main():
-    sdf_file = FindResourceOrThrow(
-        "drake/manipulation/models/iiwa_description/iiwa7/"
-        "iiwa7_no_collision.sdf")
-    builder = DiagramBuilder()
-    plant, scene_graph = AddMultibodyPlantSceneGraph(builder, time_step=0.01)
-    # TODO: Test multiple IIWAs.
-    model = Parser(plant).AddModelFromFile(sdf_file)
-    base_frame = plant.GetFrameByName("iiwa_link_0")
-    plant.WeldFrames(plant.world_frame(), base_frame)
-    plant.Finalize()
-    no_control(plant, builder, model)
-
-    ConnectDrakeVisualizer(builder, scene_graph)
-    ConnectRvizVisualizer(builder, scene_graph)
-    time.sleep(0.3)
-
-    diagram = builder.Build()
-    simulator = Simulator(diagram)
-    context = simulator.get_mutable_context()
-    simulator.Initialize()
-    simulator.set_target_realtime_rate(1.)
-    # diagram.Publish(context)
-    for _ in range(1000):
-        simulator.AdvanceTo(context.get_time() + 0.1)
-
-
-if __name__ == "__main__":
-    rospy.init_node("test_stuff", disable_signals=True)
-    main()
