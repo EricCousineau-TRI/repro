@@ -1,5 +1,7 @@
 import time
 
+import numpy as np
+
 import rospy
 from geometry_msgs.msg import TransformStamped
 from tf2_msgs.msg import TFMessage
@@ -20,6 +22,7 @@ from pydrake.geometry import ConnectDrakeVisualizer
 from pydrake.multibody.parsing import Parser
 from pydrake.multibody.plant import AddMultibodyPlantSceneGraph
 from pydrake.systems.analysis import Simulator
+from pydrake.systems.primitives import ConstantVectorSource
 
 # TODO: Use absolute import.
 from ros_geometry import to_ros_pose, to_ros_transform
@@ -126,8 +129,8 @@ class RvizVisualizer(LeafSystem):
         self._scene_graph = scene_graph
         self._role = role
 
-        self._marker_pub = rospy.Publisher(topic, MarkerArray)
-        self._tf_pub = rospy.Publisher(tf_topic, TFMessage)
+        self._marker_pub = rospy.Publisher(topic, MarkerArray, queue_size=1)
+        self._tf_pub = rospy.Publisher(tf_topic, TFMessage, queue_size=1)
 
         self._geometry_query = self.DeclareAbstractInputPort(
             "geometry_query", AbstractValue.Make(QueryObject()))
@@ -168,17 +171,27 @@ def ConnectRvizVisualizer(builder, scene_graph, **kwargs):
     return rviz
 
 
+def no_control(plant, builder, model):
+    nu = plant.num_actuated_dofs(model)
+    u0 = np.zeros(nu)
+    constant = builder.AddSystem(ConstantVectorSource(u0))
+    builder.Connect(
+        constant.get_output_port(0),
+        plant.get_actuation_input_port(model))
+
+
 def main():
     sdf_file = FindResourceOrThrow(
         "drake/manipulation/models/iiwa_description/iiwa7/"
         "iiwa7_no_collision.sdf")
     builder = DiagramBuilder()
-    plant, scene_graph = AddMultibodyPlantSceneGraph(builder, time_step=0.)
+    plant, scene_graph = AddMultibodyPlantSceneGraph(builder, time_step=0.01)
     # TODO: Test multiple IIWAs.
-    Parser(plant).AddModelFromFile(sdf_file)
+    model = Parser(plant).AddModelFromFile(sdf_file)
     base_frame = plant.GetFrameByName("iiwa_link_0")
     plant.WeldFrames(plant.world_frame(), base_frame)
     plant.Finalize()
+    no_control(plant, builder, model)
 
     ConnectDrakeVisualizer(builder, scene_graph)
     ConnectRvizVisualizer(builder, scene_graph)
@@ -188,7 +201,10 @@ def main():
     simulator = Simulator(diagram)
     context = simulator.get_mutable_context()
     simulator.Initialize()
-    diagram.Publish(context)
+    # diagram.Publish(context)
+    for _ in range(1000):
+        simulator.AdvanceTo(context.get_time() + 0.1)
+        time.sleep(0.1)
 
 
 if __name__ == "__main__":
