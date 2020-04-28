@@ -64,6 +64,8 @@ def main():
     models = []
     for i in range(args.num_models):
         model_name = f"iiwa{i}"
+        # TODO(eric.cousineau): This warns about mutating the package path
+        # multiple times :(
         model = parser.AddModelFromFile(sdf_file, model_name)
         models.append(model)
         base_frame = plant.GetFrameByName("iiwa_link_0", model)

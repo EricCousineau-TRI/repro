@@ -111,7 +111,7 @@ class RvizVisualizer(LeafSystem):
         old = self._marker_array_old
         new = _ros_geometry.to_ros_marker_array(
             query_object, self._role, stamp=self._marker_array_old_stamp)
-        assert _ros_geometry.compare_marker_arrays(old, new), (
+        assert _ros_geometry.compare_message(old, new), (
             "Geometry changed!")
 
 

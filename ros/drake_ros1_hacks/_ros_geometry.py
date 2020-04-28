@@ -171,10 +171,7 @@ def to_ros_marker_array(query_object, role, stamp):
     for geometry_id in inspector.GetAllGeometryIds():
         shape = inspector.GetShape(geometry_id)
         frame_id = inspector.GetFrameId(geometry_id)
-        # TODO(eric.cousineau): Use X_FG.
-        X_WG = query_object.X_WG(geometry_id)
-        X_WF = query_object.X_WF(frame_id)
-        X_FG = X_WF.inverse() @ X_WG
+        X_FG = inspector.GetPoseInFrame(geometry_id)
         frame_name = inspector.GetNameByFrameId(frame_id)
         properties = get_role_properties(inspector, role, geometry_id)
         if properties is None:
@@ -227,18 +224,3 @@ def compare_message(a, b):
     data_a = serialize_message(a)
     data_b = serialize_message(b)
     return data_a == data_b
-
-
-def compare_marker_arrays(a, b, ang_tol=1e-10, pos_tol=1e-10):
-    # TODO(eric.cousineau): This is a horrible hack because we do not have
-    # inspector.X_FG() exposed. Since X_WF.inverse() @ X_WG has some numeric
-    # difference, we have to normalize that away.
-    b = copy.deepcopy(b)
-    if len(a.markers) == len(b.markers):
-        for a_i, b_i in zip(a.markers, b.markers):
-            diff = from_ros_pose(a_i.pose).inverse() @ from_ros_pose(b_i.pose)
-            ang_diff = abs(AngleAxis(diff.rotation().matrix()).angle())
-            pos_diff = np.linalg.norm(diff.translation())
-            if ang_diff < ang_tol and pos_diff < pos_tol:
-                b_i.pose = a_i.pose
-    return compare_message(a, b)
