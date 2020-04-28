@@ -11,12 +11,12 @@ import numpy as np
 import rospy
 
 from pydrake.common import FindResourceOrThrow
-from pydrake.math import RigidTransform
-from pydrake.systems.framework import DiagramBuilder
 from pydrake.geometry import ConnectDrakeVisualizer
+from pydrake.math import RigidTransform
 from pydrake.multibody.parsing import Parser
 from pydrake.multibody.plant import AddMultibodyPlantSceneGraph
 from pydrake.systems.analysis import Simulator
+from pydrake.systems.framework import DiagramBuilder
 from pydrake.systems.primitives import ConstantVectorSource
 
 from drake_ros1_hacks.rviz_visualizer import ConnectRvizVisualizer

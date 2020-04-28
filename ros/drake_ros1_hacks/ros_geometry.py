@@ -2,11 +2,14 @@
 ROS geometry and visualization conversions for Drake.
 """
 
-from rospy import Duration
-from geometry_msgs.msg import Pose, Transform
-from geometry_msgs.msg import TransformStamped
+# ROS1 Messages.
+from geometry_msgs.msg import Pose, Transform, TransformStamped
 from tf2_msgs.msg import TFMessage
 from visualization_msgs.msg import Marker, MarkerArray
+# ROS1 API.
+from rospy import Duration
+
+from pydrake.common.eigen_geometry import Quaternion
 from pydrake.geometry import (
     QueryObject,
     Role,
@@ -15,12 +18,12 @@ from pydrake.geometry import (
     Shape,
     Box, Sphere, Cylinder, Mesh, Convex,
 )
-
 from pydrake.math import RigidTransform
-from pydrake.common.eigen_geometry import Quaternion
 
 
 def _write_pose_msg(X_AB, p, q):
+    # p - position message
+    # q - quaternion message
     X_AB = RigidTransform(X_AB)
     p.x, p.y, p.z = X_AB.translation()
     q.w, q.x, q.y, q.z = X_AB.rotation().ToQuaternion().wxyz()
@@ -41,6 +44,8 @@ def to_ros_transform(X_AB):
 
 
 def _read_pose_msg(p, q):
+    # p - position message
+    # q - quaternion message
     return RigidTransform(
         Quaternion(wxyz=[q.w, q.x, q.y, q.z]), [p.x, p.y, p.z])
 
@@ -109,6 +114,7 @@ def to_ros_markers(shape, stamp, frame_name, X_FG, color):
 
 
 def get_role_properties(inspector, role, geometry_id):
+    """Permits dynamic role retrival."""
     assert isinstance(inspector, SceneGraphInspector), inspector
     if role == Role.kProximity:
         return inspector.GetProximityProperties(geometry_id)
@@ -133,11 +139,15 @@ def to_ros_marker_array(query_object, role, stamp):
         X_FG = X_WF.inverse() @ X_WG
         frame_name = inspector.GetNameByFrameId(frame_id)
         properties = get_role_properties(inspector, role, geometry_id)
+        if properties is None:
+            # This role is not assigned for this geometry. Skip.
+            continue
         # TODO(eric): Fix this :(
         # color = properties.GetPropertyOrDefault(
         #     "phong", "diffuse", DEFAULT_RGBA)
+        color = None
         marker_array.markers += to_ros_markers(
-            shape, stamp, frame_name, X_FG, color=None)
+            shape, stamp, frame_name, X_FG, color)
     # Ensure unique IDs.
     for i, marker in enumerate(marker_array.markers):
         # TODO(eric.cousineau): Reflect the namespace like Calder does for

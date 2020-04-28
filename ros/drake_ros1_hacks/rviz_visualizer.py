@@ -6,17 +6,26 @@ Known issues:
 * (more to be noted)
 """
 
-import rospy
+import copy
+from io import BytesIO
+
+import numpy as np
+
+# ROS1 Messages.
 from tf2_msgs.msg import TFMessage
 from visualization_msgs.msg import MarkerArray
+# ROS1 API.
+import rospy
 
 from pydrake.geometry import QueryObject, Role
+from pydrake.common.eigen_geometry import AngleAxis
 from pydrake.systems.framework import (
     AbstractValue, LeafSystem, PublishEvent, TriggerType,
 )
 
 from drake_ros1_hacks.ros_geometry import (
     to_ros_pose,
+    from_ros_pose,
     to_ros_transform,
     to_ros_marker_array,
     to_ros_tf_message,
@@ -82,7 +91,8 @@ class RvizVisualizer(LeafSystem):
         self._tf_pub = rospy.Publisher(
             tf_topic, TFMessage, queue_size=1)
 
-        self._marker_array_static = None
+        self._marker_array_old = None
+        self._marker_array_old_stamp = None
 
     def get_geometry_query_input_port(self):
         # We should standardize names...
@@ -92,7 +102,8 @@ class RvizVisualizer(LeafSystem):
         query_object = self._geometry_query.Eval(context)
         stamp = rospy.Time.now()
         marker_array = to_ros_marker_array(query_object, self._role, stamp)
-        self._marker_array_static = marker_array
+        self._marker_array_old = marker_array
+        self._marker_array_old_stamp = stamp
         self._marker_pub.publish(marker_array)
         # Initialize TF.
         tf_message = to_ros_tf_message(query_object, stamp)
@@ -103,26 +114,46 @@ class RvizVisualizer(LeafSystem):
         stamp = rospy.Time.now()
         tf_message = to_ros_tf_message(query_object, stamp)
         self._tf_pub.publish(tf_message)
-        self._throw_on_changed_geometry(query_object)
-
-    def _throw_on_changed_geometry(self, query_object):
+        # We should have exactly the same message.
         # TODO(eric.cousineau): Support changing geometry, and remove this
         # method.
-        # We should have exactly the same message.
-        marker_array_old = self._marker_array_static
-        marker_array_new = to_ros_marker_array(
-            query_object, self._role, stamp=None)
-        # TODO(eric.cousineau): This is hacky :( Better change detection?
-        if (len(marker_array_old.markers) == 0 and
-                len(marker_array_new.markers) == 0):
-            # No geometry. Continue.
-            return
-        # Replace stamps.
-        stamp_old = marker_array_old.markers[0].header.stamp
-        for marker in marker_array_new.markers:
-            marker.header.stamp = stamp_old
-        # Compare messages.
-        assert marker_array_old == marker_array_new
+        # TODO(eric.cousineau): Is there a more SceneGraph-y way to do
+        # geometry-change detection, without event hooks, and without explicit
+        # serialization?
+        old = self._marker_array_old
+        new = to_ros_marker_array(
+            query_object, self._role, stamp=self._marker_array_old_stamp)
+        assert _compare_marker_arrays(old, new), "Geometry changed!"
+
+
+def _serialize_msg(msg):
+    # https://answers.ros.org/question/303115/serialize-ros-message-and-pass-it
+    buff = BytesIO()
+    msg.serialize(buff)
+    return buff.getvalue()
+
+
+def _compare_msg(a, b):
+    # Naive compare.
+    assert type(a) == type(b), f"{type(a)} != {type(b)}"
+    data_a = _serialize_msg(a)
+    data_b = _serialize_msg(b)
+    return data_a == data_b
+
+
+def _compare_marker_arrays(a, b, ang_tol=1e-10, pos_tol=1e-10):
+    # TODO(eric.cousineau): This is a horrible hack because we do not have X_FG
+    # exposed.
+    b = copy.deepcopy(b)
+    if len(a.markers) == len(b.markers):
+        for a_i, b_i in zip(a.markers, b.markers):
+            
+            diff = from_ros_pose(a_i.pose).inverse() @ from_ros_pose(b_i.pose)
+            ang_diff = abs(AngleAxis(diff.rotation().matrix()).angle())
+            pos_diff = np.linalg.norm(diff.translation())
+            if ang_diff < ang_tol and pos_diff < pos_tol:
+                b_i.pose = a_i.pose
+    return _compare_msg(a, b)
 
 
 def ConnectRvizVisualizer(builder, scene_graph, **kwargs):
