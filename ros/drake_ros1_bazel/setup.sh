@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Hacks to make things work.
+# Would not recommned relying on this.
+
 _cur_dir=$(cd $(dirname ${BASH_SOURCE}) && pwd)
 _venv_dir=${_cur_dir}/venv
 (
@@ -16,6 +19,9 @@ _venv_dir=${_cur_dir}/venv
         # If this fails, we should fail fast...
         test -d ${_venv_dir}/lib/python3.6
 
+        # Hack.
+        ln -s /usr/lib/python2.7/dist-packages/rospkg ${_venv_dir}/lib/python3.6/site-packages
+
         py3_rebuild_dir=$(dirname ${_cur_dir})/ros1_py3_rebuild
         py3_rebuild_tar=${py3_rebuild_dir}/py3_rebuild.tar.gz
         if [[ ! -f ${py3_rebuild_tar} ]]; then
@@ -27,4 +33,4 @@ _venv_dir=${_cur_dir}/venv
 
 source /opt/ros/melodic/setup.bash
 # source ${_venv_dir}/bin/activate
-export PYTHONPATH=${_venv_dir}/lib/python3.6/site-packages:/usr/lib/python2.7/dist-packages:${PYTHONPATH}
+export PYTHONPATH=${_venv_dir}/lib/python3.6/site-packages::${PYTHONPATH}
