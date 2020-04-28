@@ -69,7 +69,7 @@ def from_ros_transform(tr):
 DEFAULT_RGBA = [0.9, 0.9, 0.9, 1.0]
 
 
-def to_ros_markers(shape, stamp, frame_name, X_FG, color):
+def to_ros_markers(shape, stamp, frame_name, X_FG, color_rgba):
     assert isinstance(shape, Shape), shape
     assert isinstance(frame_name, str), frame_name
     assert isinstance(X_FG, RigidTransform), X_FG
@@ -84,8 +84,10 @@ def to_ros_markers(shape, stamp, frame_name, X_FG, color):
     def use_color():
         # TODO: Colors are broken 'cause Geometry properties with Vector4 do not
         # play well with Python.
-        assert color is None
+        assert color_rgba is None
         marker.color.a = 1.
+        if color_rgba is None:
+            color_rgba = DEFAULT_RGBA
         # marker.color.r, marker.color.g, marker.color.b, marker.color.a = color
 
     if type(shape) == Box:
@@ -107,14 +109,17 @@ def to_ros_markers(shape, stamp, frame_name, X_FG, color):
         marker.scale.z = shape.length()
         use_color()
         return [marker]
-    elif type(shape) in [Mesh, Convex]:
+    elif type(shape) in (Mesh, Convex):
         marker.type = Marker.MESH_RESOURCE
         marker.mesh_resource = f"file://{shape.filename()}"
-        # TODO(eric.cousineau): Override this based on properties?
+        # TODO(eric.cousineau): Override this based on properties? How to
+        # handle this?
+        assert color_rgba is None
         marker.mesh_use_embedded_materials = True
         marker.scale.x, marker.scale.y, marker.scale.z = 3 * [shape.scale()]
         return [marker]
     else:
+        # TODO(eric): Support Capsule, Ellipse, all dat jazz.
         assert False, f"Unsupported type: {shape}"
 
 
@@ -175,11 +180,11 @@ def to_ros_marker_array(query_object, role, stamp):
             # This role is not assigned for this geometry. Skip.
             continue
         # TODO(eric): Fix this :(
-        # color = properties.GetPropertyOrDefault(
+        # color_rgba = properties.GetPropertyOrDefault(
         #     "phong", "diffuse", DEFAULT_RGBA)
-        color = None
+        color_rgba = None
         marker_array.markers += to_ros_markers(
-            shape, stamp, frame_name, X_FG, color)
+            shape, stamp, frame_name, X_FG, color_rgba)
     # Ensure unique IDs.
     for i, marker in enumerate(marker_array.markers):
         # TODO(eric.cousineau): Reflect the namespace like Calder does for

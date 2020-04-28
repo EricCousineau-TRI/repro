@@ -17,15 +17,7 @@ from pydrake.systems.framework import (
     AbstractValue, LeafSystem, PublishEvent, TriggerType,
 )
 
-from drake_ros1_hacks.ros_geometry import (
-    compare_marker_arrays,
-    from_ros_pose,
-    to_ros_marker_array,
-    to_ros_pose,
-    to_ros_tf_message,
-    to_ros_transform,
-    sanity_check_query_object,
-)
+from drake_ros1_hacks import _ros_geometry
 
 
 class RvizVisualizer(LeafSystem):
@@ -96,20 +88,21 @@ class RvizVisualizer(LeafSystem):
 
     def _initialize(self, context, event):
         query_object = self._geometry_query.Eval(context)
-        sanity_check_query_object(query_object, debug=True)
+        _ros_geometry.sanity_check_query_object(query_object)
         stamp = rospy.Time.now()
-        marker_array = to_ros_marker_array(query_object, self._role, stamp)
+        marker_array = _ros_geometry.to_ros_marker_array(
+            query_object, self._role, stamp)
         self._marker_array_old = marker_array
         self._marker_array_old_stamp = stamp
         self._marker_pub.publish(marker_array)
         # Initialize TF.
-        tf_message = to_ros_tf_message(query_object, stamp)
+        tf_message = _ros_geometry.to_ros_tf_message(query_object, stamp)
         self._tf_pub.publish(tf_message)
 
     def _publish_tf(self, context, event):
         query_object = self._geometry_query.Eval(context)
         stamp = rospy.Time.now()
-        tf_message = to_ros_tf_message(query_object, stamp)
+        tf_message = _ros_geometry.to_ros_tf_message(query_object, stamp)
         self._tf_pub.publish(tf_message)
         # We should have exactly the same message.
         # TODO(eric.cousineau): Support changing geometry, and remove this
@@ -118,9 +111,10 @@ class RvizVisualizer(LeafSystem):
         # geometry-change detection, without event hooks, and without explicit
         # serialization?
         old = self._marker_array_old
-        new = to_ros_marker_array(
+        new = _ros_geometry.to_ros_marker_array(
             query_object, self._role, stamp=self._marker_array_old_stamp)
-        assert compare_marker_arrays(old, new), "Geometry changed!"
+        assert _ros_geometry.compare_marker_arrays(old, new), (
+            "Geometry changed!")
 
 
 def ConnectRvizVisualizer(builder, scene_graph, **kwargs):

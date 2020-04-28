@@ -32,6 +32,10 @@ def no_control(plant, builder, model):
 
 
 def main():
+    args_parser = argparse.ArgumentParser()
+    args_parser.add_argument(
+        "--single_shot", action="store_true",
+        help="")
     sdf_file = FindResourceOrThrow(
         "drake/manipulation/models/iiwa_description/iiwa7/"
         "iiwa7_no_collision.sdf")
@@ -63,10 +67,12 @@ def main():
 
     # Wait for ROS publishers to wake up :(
     time.sleep(0.3)
-    single_shot = False
+    single_shot = True
 
     if single_shot:
         # To see what 'preview' scripts look like.
+        # TODO(eric.cousineau): Make this work *robustly* with Rviz. Markers
+        # still don't always show up :(
         simulator.Initialize()
         diagram.Publish(context)
     else:

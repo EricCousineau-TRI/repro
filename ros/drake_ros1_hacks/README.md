@@ -12,11 +12,18 @@ ROS1 Melodic's Python 2 implementation work in Python 3.6 on Ubuntu.s
 
 Make sure you have ROS1 Melodic installed.
 
+**TODO(eric.cousineau)**: Use Noetic for real Python 3 support.
+
+Also install Drake prereqs. This procedure hacks stuff from:
+<https://drake.mit.edu/python_bindings.html#inside-virtualenv>
+
 Then source setup:
 
     source ./setup.sh
 
 This is a super hacky thing, but it's minimal, and adds stuff in `./venv`.
+
+It requires the sutff from `../ros1_py3_rebuild` to work (i.e. Docker).
 
 ## Demo
 
