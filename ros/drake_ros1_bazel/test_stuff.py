@@ -1,3 +1,5 @@
+import time
+
 import rospy
 from geometry_msgs.msg import TransformStamped
 from tf2_msgs.msg import TFMessage
@@ -20,7 +22,7 @@ from pydrake.multibody.plant import AddMultibodyPlantSceneGraph
 from pydrake.systems.analysis import Simulator
 
 # TODO: Use absolute import.
-from ros_geometry import to_ros_pose
+from ros_geometry import to_ros_pose, to_ros_transform
 
 DEFAULT_RGBA = [0.9, 0.9, 0.9, 1.0]
 
@@ -54,7 +56,7 @@ def to_markers(shape, stamp, frame_id, X_FG, color):
         return [marker]
     elif type(shape) in [Mesh, Convex]:
         marker.type = Marker.MESH_RESOURCE
-        marker.mesh_uri = f"file://{shape.filename()}"
+        marker.mesh_resource = f"file://{shape.filename()}"
         marker.scale.x, marker.scale.y, marker.scale.z = 3 * [shape.scale()]
         return [marker]
     else:
@@ -93,19 +95,20 @@ def to_marker_array(query_object, role):
 
 def to_tf_message(query_object):
     inspector = query_object.inspector()
-    tf_message = TFMessage()
     frame_ids = set()
     for geometry_id in inspector.GetAllGeometryIds():
         frame_ids.add(inspector.GetFrameId(geometry_id))
     frame_ids = sorted(list(frame_ids))
+    tf_message = TFMessage()
     for frame_id in frame_ids:
         frame_name = inspector.GetNameByFrameId(frame_id)
         X_WF = query_object.X_WF(frame_id)
-        transform = TFTransform()
-        transform.target = "world"
-        transform.source = frame_name
-        transform.pose = to_ros_pose(X_WF)
-        tf_messsage.transforms.append(transform)
+        transform = TransformStamped()
+        transform.header.frame_id = "world"
+        transform.header.stamp = rospy.Time.now()
+        transform.child_frame_id = frame_name
+        transform.transform = to_ros_transform(X_WF)
+        tf_message.transforms.append(transform)
     return tf_message
 
 
@@ -167,7 +170,8 @@ def ConnectRvizVisualizer(builder, scene_graph, **kwargs):
 
 def main():
     sdf_file = FindResourceOrThrow(
-        "drake/manipulation/models/iiwa_description/iiwa7/iiwa7_no_collision.sdf")
+        "drake/manipulation/models/iiwa_description/iiwa7/"
+        "iiwa7_no_collision.sdf")
     builder = DiagramBuilder()
     plant, scene_graph = AddMultibodyPlantSceneGraph(builder, time_step=0.)
     # TODO: Test multiple IIWAs.
@@ -178,9 +182,12 @@ def main():
 
     ConnectDrakeVisualizer(builder, scene_graph)
     ConnectRvizVisualizer(builder, scene_graph)
+    time.sleep(0.2)
 
     diagram = builder.Build()
-    Simulator(diagram).Initialize()
+    simulator = Simulator(diagram)
+    context = simulator.get_mutable_context()
+    simulator.Initialize()
     diagram.Publish(context)
 
 
