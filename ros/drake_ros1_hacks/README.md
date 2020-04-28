@@ -1,12 +1,17 @@
-# Unofficial example of Drake + ROS1: `drake_ros1_hacks`
+# Unofficial Hacky Example of Drake + ROS1
 
 For official ROS1 support, see / comment on:
 https://github.com/RobotLocomotion/drake/issues/9500
 
-Only tried out on Ubuntu 18.04, ROS1 Melodic, Python 3.6.
+Only tried out on Ubuntu 18.04, ROS1 Melodic, Python 3.6. This is Python-only,
+no C++.
 
 This has no "real" build system. Only hacks to make to the minimal amount of
 ROS1 Melodic's Python 2 implementation work in Python 3.6 on Ubuntu.s
+
+## Features
+
+* Rviz Visualization using `QueryObject`
 
 ## Setup
 
@@ -44,5 +49,4 @@ Then run the demo (pass `-h` to look at options):
 
 Here's what `--single_shot` looks like `drake-visualizer` and `rviz`:
 
-<img src="./doc/drake_visualizer.png" height="300px"/>
-<img src="./doc/rviz.png" height="300px"/>
+<img src="./doc/drake_visualizer.png" height="250px"/> <img src="./doc/rviz.png" height="250px"/>
