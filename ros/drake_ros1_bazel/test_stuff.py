@@ -4,15 +4,20 @@ from visualization_msgs.msg import Marker, MarkerArray
 from tf2_ros import TransformBroadcaster
 
 from pydrake.geometry import (
-    SceneGraph,
+    QueryObject,
     Role,
     Box, Sphere, Cylinder, Mesh, Convex,
+)
+from pydrake.systems.framework import (
+    AbstractValue, LeafSystem, PublishEvent, TriggerType
 )
 
 from .ros_geometry import to_ros_pose
 
+DEFAULT_RGBA = [0.9, 0.9, 0.9, 1.0]
 
-def to_markers(shape, stamp, frame_id, X_FG):
+
+def to_markers(shape, stamp, frame_id, X_FG, color):
     marker = Marker()
     marker.header.stamp = stamp
     marker.header.frame_id = frame_id
@@ -20,6 +25,7 @@ def to_markers(shape, stamp, frame_id, X_FG):
     marker.action = Marker.ADD
     marker.lifetime = rospy.Duration(0.)
     marker.frame_locked = True
+    marker.color.r, marker.color.g, marker.color.b, marker.color.a = color
     if type(shape) == Box:
         marker.type = Marker.CUBE
         marker.scale.x, marker.scale.y, marker.scale.z = shape.size()
@@ -43,7 +49,16 @@ def to_markers(shape, stamp, frame_id, X_FG):
         return [marker]
     else:
         assert False, f"Unsupported type: {shape}"
-    return [marker]
+
+
+def get_role_properties(inspector, role, geometry_id):
+    if role == Role.kProximity:
+        return inspector.GetProximityProperties(geometry_id)
+    elif role == Role.kIllustration:
+        return inspector.GetIllustrationProperties(geometry_id)
+    elif role == Role.kPerception:
+        return inspector.GetPerceptionProperties(geometry_id)
+    assert False, role
 
 
 def to_marker_array(query_object, role):
@@ -57,8 +72,11 @@ def to_marker_array(query_object, role):
         X_WF = query_object.X_WF(frame_id)
         X_FG = X_WF.inverse() @ X_WG
         frame_name = inspector.GetName(frame_id)
+        properties = get_role_properties(inspector, role, geometry_id)
+        color = properties.GetPropertyOrDefault(
+            "phong", "diffuse", DEFAULT_RGBA)
         marker_array.markers += to_markers(
-            shape, rospy.Time.now(), frame_name, X_FG)
+            shape, rospy.Time.now(), frame_name, X_FG, color)
     return marker_array
 
 
@@ -94,7 +112,6 @@ class RvizVisualizer(LeafSystem):
         self._scene_graph = scene_graph
         self._role = role
 
-        # TODO: Sleep to ensure publisher integrity?
         self._marker_pub = rospy.Publisher(topic, MarkerArray)
         self._tf_pub = rospy.Publisher(tf_topic, TFMessage)
 
@@ -111,6 +128,9 @@ class RvizVisualizer(LeafSystem):
                 trigger_type=TriggerType.kPeriodic,
                 callback=self._publish_tf))
 
+    def get_geometry_query_input_port(self):
+        return self._geometry_query
+
     def _initialize(self, context, event):
         query_object = self._geometry_query.Eval(context)
         marker_array = to_marker_array(query_object, self._role)
@@ -123,4 +143,28 @@ class RvizVisualizer(LeafSystem):
         query_object = self._geometry_query.Eval(context)
         tf_message = to_tf_message(query_object)
         self._tf_pub.publish(tf_message)
+
+
+def main():
+    sdf_file = FindResourceOrThrow(
+        "drake/manipulation/models/iiwa_description/iiwa7/iiwa7_no_collision.sdf")
+    builder = DiagramBuilder()
+    plant, scene_graph = AddMultibodyPlantSceneGraph(builder, time_step=0.)
+    # TODO: Test multiple IIWAs.
+    Parser(plant).AddModelFromFile(sdf_file)
+    base_frame = plant.GetFrameyByName("iiwa_link_0")
+    plant.WeldFrames(plant.world_frame(), base_frame)
+    plant.Finalize()
+
+    rviz = RvizVisualizer(scene_graph)
+    builder.Connect(
+        scene_graph.get_query_output_port(),
+        rviz.get_geometry_query_input_port())
+
+    Simulator(diagram).Initialize()
+    diagram.Publish(context)
+
+
+if __name__ == "__main__":
+    main()
 
