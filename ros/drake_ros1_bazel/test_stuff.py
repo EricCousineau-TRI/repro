@@ -93,6 +93,9 @@ def to_marker_array(query_object, role):
         #     "phong", "diffuse", DEFAULT_RGBA)
         marker_array.markers += to_markers(
             shape, rospy.Time.now(), frame_name, X_FG, color=None)
+    # Ensure unique IDs.
+    for i, marker in enumerate(marker_array.markers):
+        marker.id = i
     return marker_array
 
 
@@ -151,13 +154,15 @@ class RvizVisualizer(LeafSystem):
     def _initialize(self, context, event):
         query_object = self._geometry_query.Eval(context)
         marker_array = to_marker_array(query_object, self._role)
-        tf_message = to_tf_message(query_object)
         self._marker_pub.publish(marker_array)
+        tf_message = to_tf_message(query_object)
         self._tf_pub.publish(tf_message)
 
     def _publish_tf(self, context, event):
         # N.B. This does not check for changes in geometry.
         query_object = self._geometry_query.Eval(context)
+        # marker_array = to_marker_array(query_object, self._role)
+        # self._marker_pub.publish(marker_array)
         tf_message = to_tf_message(query_object)
         self._tf_pub.publish(tf_message)
 
@@ -195,18 +200,18 @@ def main():
 
     ConnectDrakeVisualizer(builder, scene_graph)
     ConnectRvizVisualizer(builder, scene_graph)
-    time.sleep(0.2)
+    time.sleep(0.3)
 
     diagram = builder.Build()
     simulator = Simulator(diagram)
     context = simulator.get_mutable_context()
     simulator.Initialize()
+    simulator.set_target_realtime_rate(1.)
     # diagram.Publish(context)
     for _ in range(1000):
         simulator.AdvanceTo(context.get_time() + 0.1)
-        time.sleep(0.1)
 
 
 if __name__ == "__main__":
-    rospy.init_node("test_stuff")
+    rospy.init_node("test_stuff", disable_signals=True)
     main()
