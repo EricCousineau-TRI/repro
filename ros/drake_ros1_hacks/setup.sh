@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Hacks to make things work.
+# DNM discussion edit
 
 _cur_dir=$(cd $(dirname ${BASH_SOURCE}) && pwd)
 _venv_dir=${_cur_dir}/venv

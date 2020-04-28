@@ -2,6 +2,8 @@
 ROS geometry and visualization conversions for Drake.
 """
 
+# DNM discussion edit
+
 import copy
 from io import BytesIO
 

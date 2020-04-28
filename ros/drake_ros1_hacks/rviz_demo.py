@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# DNM discussion edit
 """
 Simple demo using rviz.
 

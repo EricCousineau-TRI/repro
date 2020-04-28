@@ -4,6 +4,8 @@ Rviz Visualizer support in pydrake for ROS1.
 See known issues in `rviz_demo.py` (for user-visible things).
 """
 
+# DNM discussion edit
+
 # ROS1 Messages.
 from tf2_msgs.msg import TFMessage
 from visualization_msgs.msg import MarkerArray

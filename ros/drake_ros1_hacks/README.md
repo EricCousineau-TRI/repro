@@ -1,3 +1,4 @@
+<!-- DNM discussion edit -->
 # Unofficial Hacky Example of Drake + ROS1
 
 For official ROS1 support, see / comment on:
