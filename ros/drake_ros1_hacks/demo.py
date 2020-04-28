@@ -13,7 +13,7 @@ from pydrake.multibody.plant import AddMultibodyPlantSceneGraph
 from pydrake.systems.analysis import Simulator
 from pydrake.systems.primitives import ConstantVectorSource
 
-from drake_ros1_rviz.rviz_visualizer import ConnectRvizVisualizer
+from drake_ros1_hacks.rviz_visualizer import ConnectRvizVisualizer
 
 
 def no_control(plant, builder, model):
@@ -40,7 +40,6 @@ def main():
 
     ConnectDrakeVisualizer(builder, scene_graph)
     ConnectRvizVisualizer(builder, scene_graph)
-
 
     diagram = builder.Build()
     simulator = Simulator(diagram)

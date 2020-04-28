@@ -13,7 +13,7 @@ from pydrake.systems.framework import (
     AbstractValue, LeafSystem, PublishEvent, TriggerType,
 )
 
-from drake_ros1_rviz.ros_geometry import to_ros_pose, to_ros_transform
+from drake_ros1_hacks.ros_geometry import to_ros_pose, to_ros_transform
 
 DEFAULT_RGBA = [0.9, 0.9, 0.9, 1.0]
 
