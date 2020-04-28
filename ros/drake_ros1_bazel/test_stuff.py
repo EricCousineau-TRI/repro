@@ -1,18 +1,26 @@
 import rospy
 from geometry_msgs.msg import TransformStamped
-from visualization_msgs.msg import Marker, MarkerArray
+from tf2_msgs.msg import TFMessage
 from tf2_ros import TransformBroadcaster
+from visualization_msgs.msg import Marker, MarkerArray
 
+from pydrake.common import FindResourceOrThrow
 from pydrake.geometry import (
     QueryObject,
     Role,
     Box, Sphere, Cylinder, Mesh, Convex,
 )
 from pydrake.systems.framework import (
-    AbstractValue, LeafSystem, PublishEvent, TriggerType
+    AbstractValue, Value, LeafSystem, PublishEvent, TriggerType,
+    DiagramBuilder,
 )
+from pydrake.geometry import ConnectDrakeVisualizer
+from pydrake.multibody.parsing import Parser
+from pydrake.multibody.plant import AddMultibodyPlantSceneGraph
+from pydrake.systems.analysis import Simulator
 
-from .ros_geometry import to_ros_pose
+# TODO: Use absolute import.
+from ros_geometry import to_ros_pose
 
 DEFAULT_RGBA = [0.9, 0.9, 0.9, 1.0]
 
@@ -25,7 +33,9 @@ def to_markers(shape, stamp, frame_id, X_FG, color):
     marker.action = Marker.ADD
     marker.lifetime = rospy.Duration(0.)
     marker.frame_locked = True
-    marker.color.r, marker.color.g, marker.color.b, marker.color.a = color
+    assert color is None
+    marker.color.a = 1.
+    # marker.color.r, marker.color.g, marker.color.b, marker.color.a = color
     if type(shape) == Box:
         marker.type = Marker.CUBE
         marker.scale.x, marker.scale.y, marker.scale.z = shape.size()
@@ -43,7 +53,7 @@ def to_markers(shape, stamp, frame_id, X_FG, color):
         marker.scale.z = shape.length()
         return [marker]
     elif type(shape) in [Mesh, Convex]:
-        marker.type = Marker.MESH
+        marker.type = Marker.MESH_RESOURCE
         marker.mesh_uri = f"file://{shape.filename()}"
         marker.scale.x, marker.scale.y, marker.scale.z = 3 * [shape.scale()]
         return [marker]
@@ -71,12 +81,13 @@ def to_marker_array(query_object, role):
         X_WG = query_object.X_WG(geometry_id)
         X_WF = query_object.X_WF(frame_id)
         X_FG = X_WF.inverse() @ X_WG
-        frame_name = inspector.GetName(frame_id)
+        frame_name = inspector.GetNameByFrameId(frame_id)
         properties = get_role_properties(inspector, role, geometry_id)
-        color = properties.GetPropertyOrDefault(
-            "phong", "diffuse", DEFAULT_RGBA)
+        # TODO(eric): Fix this :(
+        # color = properties.GetPropertyOrDefault(
+        #     "phong", "diffuse", DEFAULT_RGBA)
         marker_array.markers += to_markers(
-            shape, rospy.Time.now(), frame_name, X_FG, color)
+            shape, rospy.Time.now(), frame_name, X_FG, color=None)
     return marker_array
 
 
@@ -88,7 +99,7 @@ def to_tf_message(query_object):
         frame_ids.add(inspector.GetFrameId(geometry_id))
     frame_ids = sorted(list(frame_ids))
     for frame_id in frame_ids:
-        frame_name = inspector.GetName(frame_id)
+        frame_name = inspector.GetNameByFrameId(frame_id)
         X_WF = query_object.X_WF(frame_id)
         transform = TFTransform()
         transform.target = "world"
@@ -145,6 +156,15 @@ class RvizVisualizer(LeafSystem):
         self._tf_pub.publish(tf_message)
 
 
+def ConnectRvizVisualizer(builder, scene_graph, **kwargs):
+    rviz = RvizVisualizer(scene_graph, **kwargs)
+    builder.AddSystem(rviz)
+    builder.Connect(
+        scene_graph.get_query_output_port(),
+        rviz.get_geometry_query_input_port())
+    return rviz
+
+
 def main():
     sdf_file = FindResourceOrThrow(
         "drake/manipulation/models/iiwa_description/iiwa7/iiwa7_no_collision.sdf")
@@ -152,19 +172,18 @@ def main():
     plant, scene_graph = AddMultibodyPlantSceneGraph(builder, time_step=0.)
     # TODO: Test multiple IIWAs.
     Parser(plant).AddModelFromFile(sdf_file)
-    base_frame = plant.GetFrameyByName("iiwa_link_0")
+    base_frame = plant.GetFrameByName("iiwa_link_0")
     plant.WeldFrames(plant.world_frame(), base_frame)
     plant.Finalize()
 
-    rviz = RvizVisualizer(scene_graph)
-    builder.Connect(
-        scene_graph.get_query_output_port(),
-        rviz.get_geometry_query_input_port())
+    ConnectDrakeVisualizer(builder, scene_graph)
+    ConnectRvizVisualizer(builder, scene_graph)
 
+    diagram = builder.Build()
     Simulator(diagram).Initialize()
     diagram.Publish(context)
 
 
 if __name__ == "__main__":
+    rospy.init_node("test_stuff")
     main()
-
