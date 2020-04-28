@@ -14,7 +14,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 # ROS1 API.
 from rospy import Duration
 
-from pydrake.common.eigen_geometry import Quaternion, AngleAxis
+from pydrake.common.eigen_geometry import Quaternion
 from pydrake.geometry import (
     QueryObject,
     Role,
