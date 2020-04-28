@@ -6,8 +6,8 @@ FROM ros:melodic-ros-core-bionic
 # using the python2-specific dependencies, but at least this covers
 # the version-agnostic dependencies.
 RUN apt-get update && apt-get install -q -y \
-    ros-melodic-tf2-py \
     ros-melodic-cv-bridge \
+    ros-melodic-tf2-py \
     && rm -rf /var/lib/apt/lists/*
 
 # Install the Python 3 flavor of the dependencies of the modules
