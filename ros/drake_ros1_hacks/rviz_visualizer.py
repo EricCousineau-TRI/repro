@@ -1,9 +1,7 @@
 """
 Rviz Visualizer support in pydrake for ROS1.
 
-Known issues:
-* Colors cannot be retrieved in Python.
-* (more to be noted)
+See known issues in `rviz_demo.py` (for user-visible things).
 """
 
 # ROS1 Messages.

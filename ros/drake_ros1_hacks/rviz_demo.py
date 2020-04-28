@@ -2,8 +2,17 @@
 
 """
 Simple demo using rviz.
+
+Known issues:
+
+* Markers do not always show up in Rviz on the first time. I (Eric) have to
+relaunch this multiple times.
+* Colors from SceneGraph cannot be retrieved in Python (due to binding of
+Value[Vector*]`.
+* Changes in geometry are explicitly disabled here.
 """
 
+import argparse
 import time
 
 import numpy as np
@@ -34,8 +43,18 @@ def no_control(plant, builder, model):
 def main():
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument(
+        "--simulation_sec", type=float, default=np.inf)
+    args_parser.add_argument(
+        "--sim_dt", type=float, default=0.1)
+    args_parser.add_argument(
         "--single_shot", action="store_true",
-        help="")
+        help="Test workflow of visulaization through Simulator.Initialize")
+    args_parser.add_argument(
+        "--realtime_rate", type=float, default=1.)
+    args_parser.add_argument(
+        "--num_models", type=int, default=3)
+    args = args_parser.parse_args()
+
     sdf_file = FindResourceOrThrow(
         "drake/manipulation/models/iiwa_description/iiwa7/"
         "iiwa7_no_collision.sdf")
@@ -43,8 +62,7 @@ def main():
     plant, scene_graph = AddMultibodyPlantSceneGraph(builder, time_step=0.01)
     parser = Parser(plant)
     models = []
-    model_count = 3
-    for i in range(model_count):
+    for i in range(args.num_models):
         model_name = f"iiwa{i}"
         # TODO: Test multiple IIWAs.
         model = parser.AddModelFromFile(sdf_file, model_name)
@@ -63,21 +81,21 @@ def main():
     diagram = builder.Build()
     simulator = Simulator(diagram)
     context = simulator.get_mutable_context()
-    simulator.set_target_realtime_rate(1.)
+    simulator.set_target_realtime_rate(args.realtime_rate)
 
     # Wait for ROS publishers to wake up :(
     time.sleep(0.3)
-    single_shot = True
 
-    if single_shot:
+    if args.single_shot:
         # To see what 'preview' scripts look like.
         # TODO(eric.cousineau): Make this work *robustly* with Rviz. Markers
         # still don't always show up :(
         simulator.Initialize()
         diagram.Publish(context)
     else:
-        for _ in range(1000):
-            simulator.AdvanceTo(context.get_time() + 0.1)
+        while context.get_time() < args.simulation_sec:
+            # Use increments to permit Ctrl+C to be caught.
+            simulator.AdvanceTo(context.get_time() + args.sim_dt)
 
 
 if __name__ == "__main__":

@@ -38,6 +38,11 @@ Then to run, launch both Drake Visualizer and Rviz:
     # Terminal 2
     ./setup.sh rviz -d ./rviz_demo.rviz
 
-Then run the demo:
+Then run the demo (pass `-h` to look at options):
 
     ./setup.sh python3 ./rviz_demo.py
+
+Here's what `--single_shot` looks like `drake-visualizer` and `rviz`:
+
+<img src="./doc/drake_visualizer.png" height="300px"/>
+<img src="./doc/rviz.png" height="300px"/>
