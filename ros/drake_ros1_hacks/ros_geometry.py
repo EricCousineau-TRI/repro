@@ -130,6 +130,33 @@ def get_role_properties(inspector, role, geometry_id):
     assert False, role
 
 
+def sanity_check_query_object(query_object, debug=False):
+    # Ensures that we have a "sane" query_object for the purpose of ROS1
+    # visualization.
+    # The primary goal is to ensure that each geometry and frame ultimately has
+    # a unique name.
+    assert isinstance(query_object, QueryObject), query_object
+    frame_ids = set()
+    frame_names = set()
+    geometry_ids = set()
+    geometry_names = set()
+
+    inspector = query_object.inspector()
+    for geometry_id in inspector.GetAllGeometryIds():
+        geometry_name = inspector.GetNameByGeometryId(geometry_id)
+        # TODO(eric.cousineau): Expose inspector.get_all_frames().
+        frame_id = inspector.GetFrameId(geometry_id)
+        frame_name = inspector.GetNameByFrameId(frame_id)
+        geometry_ids.add(geometry_id)
+        geometry_names.add(geometry_name)
+        frame_ids.add(frame_id)
+        frame_names.add(frame_name)
+        if debug:
+            print(f"Geometry: {geometry_name} -> Frame: {frame_name}")
+    assert len(frame_ids) == len(frame_names)
+    assert len(geometry_ids) == len(geometry_names)
+
+
 def to_ros_marker_array(query_object, role, stamp):
     assert isinstance(query_object, QueryObject), query_object
     assert isinstance(role, Role), role

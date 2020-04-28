@@ -24,6 +24,7 @@ from drake_ros1_hacks.ros_geometry import (
     to_ros_pose,
     to_ros_tf_message,
     to_ros_transform,
+    sanity_check_query_object,
 )
 
 
@@ -59,7 +60,7 @@ class RvizVisualizer(LeafSystem):
             role=Role.kPerception):
         """
         Arguments:
-            
+            ...
             role: The Role to visualize geometry for.
         """
         LeafSystem.__init__(self)
@@ -95,6 +96,7 @@ class RvizVisualizer(LeafSystem):
 
     def _initialize(self, context, event):
         query_object = self._geometry_query.Eval(context)
+        sanity_check_query_object(query_object, debug=True)
         stamp = rospy.Time.now()
         marker_array = to_ros_marker_array(query_object, self._role, stamp)
         self._marker_array_old = marker_array
