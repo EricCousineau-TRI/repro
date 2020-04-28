@@ -6,11 +6,6 @@ Known issues:
 * (more to be noted)
 """
 
-import copy
-from io import BytesIO
-
-import numpy as np
-
 # ROS1 Messages.
 from tf2_msgs.msg import TFMessage
 from visualization_msgs.msg import MarkerArray
@@ -18,17 +13,17 @@ from visualization_msgs.msg import MarkerArray
 import rospy
 
 from pydrake.geometry import QueryObject, Role
-from pydrake.common.eigen_geometry import AngleAxis
 from pydrake.systems.framework import (
     AbstractValue, LeafSystem, PublishEvent, TriggerType,
 )
 
 from drake_ros1_hacks.ros_geometry import (
-    to_ros_pose,
+    compare_marker_arrays,
     from_ros_pose,
-    to_ros_transform,
     to_ros_marker_array,
+    to_ros_pose,
     to_ros_tf_message,
+    to_ros_transform,
 )
 
 
@@ -123,37 +118,7 @@ class RvizVisualizer(LeafSystem):
         old = self._marker_array_old
         new = to_ros_marker_array(
             query_object, self._role, stamp=self._marker_array_old_stamp)
-        assert _compare_marker_arrays(old, new), "Geometry changed!"
-
-
-def _serialize_msg(msg):
-    # https://answers.ros.org/question/303115/serialize-ros-message-and-pass-it
-    buff = BytesIO()
-    msg.serialize(buff)
-    return buff.getvalue()
-
-
-def _compare_msg(a, b):
-    # Naive compare.
-    assert type(a) == type(b), f"{type(a)} != {type(b)}"
-    data_a = _serialize_msg(a)
-    data_b = _serialize_msg(b)
-    return data_a == data_b
-
-
-def _compare_marker_arrays(a, b, ang_tol=1e-10, pos_tol=1e-10):
-    # TODO(eric.cousineau): This is a horrible hack because we do not have X_FG
-    # exposed.
-    b = copy.deepcopy(b)
-    if len(a.markers) == len(b.markers):
-        for a_i, b_i in zip(a.markers, b.markers):
-            
-            diff = from_ros_pose(a_i.pose).inverse() @ from_ros_pose(b_i.pose)
-            ang_diff = abs(AngleAxis(diff.rotation().matrix()).angle())
-            pos_diff = np.linalg.norm(diff.translation())
-            if ang_diff < ang_tol and pos_diff < pos_tol:
-                b_i.pose = a_i.pose
-    return _compare_msg(a, b)
+        assert compare_marker_arrays(old, new), "Geometry changed!"
 
 
 def ConnectRvizVisualizer(builder, scene_graph, **kwargs):

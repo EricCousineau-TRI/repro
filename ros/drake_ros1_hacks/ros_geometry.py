@@ -2,6 +2,11 @@
 ROS geometry and visualization conversions for Drake.
 """
 
+import copy
+from io import BytesIO
+
+import numpy as np
+
 # ROS1 Messages.
 from geometry_msgs.msg import Pose, Transform, TransformStamped
 from tf2_msgs.msg import TFMessage
@@ -9,7 +14,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 # ROS1 API.
 from rospy import Duration
 
-from pydrake.common.eigen_geometry import Quaternion
+from pydrake.common.eigen_geometry import Quaternion, AngleAxis
 from pydrake.geometry import (
     QueryObject,
     Role,
@@ -174,3 +179,33 @@ def to_ros_tf_message(query_object, stamp):
         transform.transform = to_ros_transform(X_WF)
         tf_message.transforms.append(transform)
     return tf_message
+
+
+def serialize_message(msg):
+    # https://answers.ros.org/question/303115/serialize-ros-message-and-pass-it
+    buff = BytesIO()
+    msg.serialize(buff)
+    return buff.getvalue()
+
+
+def compare_message(a, b):
+    # Naive compare.
+    assert type(a) == type(b), f"{type(a)} != {type(b)}"
+    data_a = serialize_message(a)
+    data_b = serialize_message(b)
+    return data_a == data_b
+
+
+def compare_marker_arrays(a, b, ang_tol=1e-10, pos_tol=1e-10):
+    # TODO(eric.cousineau): This is a horrible hack because we do not have
+    # inspector.X_FG() exposed. Since X_WF.inverse() @ X_WG has some numeric
+    # difference, we have to normalize that away.
+    b = copy.deepcopy(b)
+    if len(a.markers) == len(b.markers):
+        for a_i, b_i in zip(a.markers, b.markers):
+            diff = from_ros_pose(a_i.pose).inverse() @ from_ros_pose(b_i.pose)
+            ang_diff = abs(AngleAxis(diff.rotation().matrix()).angle())
+            pos_diff = np.linalg.norm(diff.translation())
+            if ang_diff < ang_tol and pos_diff < pos_tol:
+                b_i.pose = a_i.pose
+    return compare_message(a, b)
