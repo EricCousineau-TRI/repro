@@ -7,19 +7,22 @@ _venv_dir=${_cur_dir}/venv
 
 _venv-create-if-needed()
 { (
-    # Use subshell to permit errors.
+    # Use subshell (...) to permit errors.
     set -eu
     if [[ ! -f ${_venv_dir}/bin/activate ]]; then
         mkdir -p ${_venv_dir}
         cd ${_venv_dir}
+
+        # WARNING: Drake does not yet have all the bindings necessary to make
+        # this work.
+        # For now, you need to build using this PR (or use the binary package):
+        # https://github.com/RobotLocomotion/drake/pull/13160#issuecomment-620704905
+        cp -r /tmp/drake/* ${_venv_dir}
+
         # file=~/Downloads/drake-20200426-bionic.tar.gz
         # test -f ${file} || wget -O ${file} https://drake-packages.csail.mit.edu/drake/nightly/$(basename ${file})
         # # https://drake.mit.edu/python_bindings.html#inside-virtualenv
         # tar xfz ${file} -C ${_venv_dir} --strip-components=1
-
-        # Need to build using this PR:
-        # https://github.com/robotlocomotion/drake/pull/13156
-        cp -r /tmp/drake/* ${_venv_dir}
 
         python3 -m virtualenv -p python3 --system-site-packages ${_venv_dir}
 

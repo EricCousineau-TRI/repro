@@ -1,6 +1,6 @@
 # Unofficial example of Drake + ROS1: `drake_ros1_hacks`
 
-For official support, see / comment on:
+For official ROS1 support, see / comment on:
 https://github.com/RobotLocomotion/drake/issues/9500
 
 Only tried out on Ubuntu 18.04, ROS1 Melodic, Python 3.6.
