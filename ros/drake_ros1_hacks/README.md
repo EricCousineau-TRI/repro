@@ -15,7 +15,25 @@ ROS1 Melodic's Python 2 implementation work in Python 3.6 on Ubuntu.s
 
 ## Setup
 
-Make sure you have ROS1 Melodic installed.
+Make sure you have ROS1 Melodic installed. Here's a command (copy parentheses
+too) for 18.04 that should make it work:
+
+```sh
+( set -eux;
+    if [[ ! -f /etc/apt/sources.list.d/ros-latest.list ]]; then
+      echo "Adding ROS APT repository ..."
+      echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list
+      sudo apt update
+    fi
+    sudo apt install $(
+        echo ros-melodic-ros-base
+        echo ros-melodic-tf2-msgs
+        echo ros-melodic-tf2-py  # Requires Python 3 rebuild in `ros_py`.
+        echo ros-melodic-visualization-msgs
+        echo ros-melodic-rviz
+    )
+)
+```
 
 **TODO(eric.cousineau)**: Use Noetic for real Python 3 support.
 
