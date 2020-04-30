@@ -16,6 +16,8 @@ _venv-create-if-needed()
         # base=drake-20200426-bionic.tar.gz
         # url=https://drake-packages.csail.mit.edu/drake/nightly/${base}
 
+        echo "Setting up..."
+
         # WARNING: Drake does not yet have all the bindings necessary to make
         # this work.
         # For now, you need to build using this PR (or use the binary package):
@@ -27,6 +29,12 @@ _venv-create-if-needed()
         test -f ${local} || wget -O ${local} ${url}
         # https://drake.mit.edu/python_bindings.html#inside-virtualenv
         tar xfz ${local} -C ${_venv_dir} --strip-components=1
+
+        echo "If you need install Drake prereqs:"
+        echo
+        echo "  cd ${_cur_dir}"
+        echo "  sudo ./venv/share/drake/setup/install_prereqs"
+        echo
 
         python3 -m virtualenv -p python3 --system-site-packages ${_venv_dir}
 

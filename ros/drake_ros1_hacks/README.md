@@ -37,14 +37,16 @@ too) for 18.04 that should make it work:
 
 **TODO(eric.cousineau)**: Use Noetic for real Python 3 support.
 
-Also install Drake prereqs. This procedure hacks stuff from:
-<https://drake.mit.edu/python_bindings.html#inside-virtualenv>
-
 Then source setup:
 
     source ./setup.sh
 
-This is a super hacky thing, but it's minimal, and adds stuff in `./venv`.
+(If you need Drake prereqs, earlier parts of the output of `./setup.sh` will
+show you how.)
+
+This is a super hacky thing, but it's minimal, and adds stuff in `./venv`. This
+procedure hacks stuff from:
+https://drake.mit.edu/python_bindings.html#inside-virtualenv
 
 It requires the sutff from `../ros1_py3_rebuild` to work (i.e. Docker).
 
