@@ -31,7 +31,7 @@ auto GetTypeTag() {
   if constexpr (std::is_same_v<T, A>) {
     return type_tag<C>{};
   } else {
-    return type_tag<T>{};
+    return type_tag<T&&>{};
   }
 }
 
@@ -39,7 +39,7 @@ template <typename T>
 using get_type = typename decltype(GetTypeTag<T>())::type;
 
 template <typename T>
-get_type<T> MaybeConvert(T value) { return value; }
+get_type<T> MaybeConvert(T value) { return std::move(value); }
 
 void print_constructed_and_reset() {
   std::cout
@@ -70,11 +70,11 @@ num_constructed: A: 1, B: 0, C: 1
 
 >>> MaybeConvert(B{});
 
-num_constructed: A: 0, B: 2, C: 0
+num_constructed: A: 0, B: 1, C: 0
 
 
 >>> MaybeConvert(C{});
 
-num_constructed: A: 0, B: 0, C: 2
+num_constructed: A: 0, B: 0, C: 1
 
  */
