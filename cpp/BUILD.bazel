@@ -452,3 +452,13 @@ cc_binary(
     srcs = ["map_unique_ptr.cc"],
     copts = ["-std=c++14"],
 )
+
+cc_binary(
+    name = "rvo_check",
+    srcs = ["rvo_check.cc"],
+    deps = [
+        ":name_trait",
+        ":type_pack",
+    ],
+    copts = ["-std=c++17"],
+)
