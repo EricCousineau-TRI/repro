@@ -7,6 +7,7 @@
 template <typename T>
 struct Count {
   static int num_constructed;
+  int value{100};
 
   Count() { num_constructed++; }
   Count(const Count&) { num_constructed++; }
@@ -23,15 +24,15 @@ struct C : public Count<C> {
   using Base = Count<C>;
   // Allow implicit conversion.
   using Base::Base;
-  C(const A&) : Base() {}
+  C(const B&) : Base() {}
 };
 
 template <typename T>
 auto GetTypeTag() {
-  if constexpr (std::is_same_v<T, A>) {
+  if constexpr (std::is_same_v<T, B>) {
     return type_tag<C>{};
   } else {
-    return type_tag<T&&>{};
+    return type_tag<const T&>{};
   }
 }
 
@@ -39,7 +40,15 @@ template <typename T>
 using get_type = typename decltype(GetTypeTag<T>())::type;
 
 template <typename T>
-get_type<T> MaybeConvert(T value) { return std::move(value); }
+get_type<T> MaybeConvert(const T& value) { return value; }
+
+template <typename T>
+void Check(const T& x) {
+  const auto& y = MaybeConvert(x);
+  if (y.value != 100) {
+    throw std::runtime_error("Bad: " + std::to_string(y.value));
+  }
+}
 
 void print_constructed_and_reset() {
   std::cout
@@ -53,27 +62,27 @@ void print_constructed_and_reset() {
 }
 
 int main() {
-  EVAL(MaybeConvert(A{}));
+  EVAL(Check(A{}));
   print_constructed_and_reset();
-  EVAL(MaybeConvert(B{}));
+  EVAL(Check(B{}));
   print_constructed_and_reset();
-  EVAL(MaybeConvert(C{}));
+  EVAL(Check(C{}));
   print_constructed_and_reset();
   return 0;
 }
 
 /**
->>> MaybeConvert(A{});
+>>> Check(A{});
 
-num_constructed: A: 1, B: 0, C: 1
-
-
->>> MaybeConvert(B{});
-
-num_constructed: A: 0, B: 1, C: 0
+num_constructed: A: 1, B: 0, C: 0
 
 
->>> MaybeConvert(C{});
+>>> Check(B{});
+
+num_constructed: A: 0, B: 1, C: 1
+
+
+>>> Check(C{});
 
 num_constructed: A: 0, B: 0, C: 1
 
