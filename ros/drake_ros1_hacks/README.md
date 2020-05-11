@@ -50,7 +50,40 @@ https://drake.mit.edu/python_bindings.html#inside-virtualenv
 
 It requires the sutff from `../ros1_py3_rebuild` to work (i.e. Docker).
 
-## Demo
+## Rviz Visualization
+
+Takes code from / modeled after:
+
+* [@calderpg-tri](https://github.com/calderpg-tri)'s SceneGraph code in TRI
+Anzu (private)
+* [@gizatt](https://github.com/gizatt/)'s code in spartan: <br/>
+<https://github.com/RobotLocomotion/spartan/blob/854b26e3a/src/catkin_projects/drake_iiwa_sim/src/ros_scene_graph_visualizer.cc>
+* [@RussTedrake](https://github.com/RussTedrake/)'s `MeshcatVisualizer` in
+Drake: <br/>
+<https://github.com/RobotLocomotion/drake/blob/6eabb61a/bindings/pydrake/systems/meshcat_visualizer.py>
+
+**Note**: This tries to do the "proper" approach by using `SceneGraph` /
+`QueryObject`, not using `PoseBundle` nor hacks to try and use
+`DrakeLcm("memq://")` to get information from LCM messages.
+
+### Related Discussions
+
+* [drake#9500 comment](https://github.com/RobotLocomotion/drake/issues/9500#issuecomment-620722987) - this is a new comment (ROS1 Rviz example)
+in an old issue (ROS1 in Drake).
+* [drake#10482 comment](https://github.com/RobotLocomotion/drake/issues/10482#issuecomment-620724731) - proper visualization workflow
+* [EricCousineau-TRI/repro#1](
+https://github.com/EricCousineau-TRI/repro/pull/1) - code discussion
+
+### Known Issues
+
+* Markers do not always show up in Rviz on the first time. I (Eric) have to
+relaunch this multiple times.
+* Colors from SceneGraph cannot be retrieved in Python (due to binding of
+`Value[Vector*]`)
+    * Captured in [drake#13162](https://github.com/RobotLocomotion/drake/issues/13162)
+* Changes in geometry are explicitly disabled here.
+
+### Demo
 
 Then to run, launch both Drake Visualizer and Rviz:
 
@@ -67,6 +100,6 @@ Then run the demo (pass `-h` to look at options):
 
     ./setup.sh python3 ./rviz_demo.py
 
-Here's what `--single_shot` looks like `drake-visualizer` and `rviz`:
+Here's what `--single_shot` looks like in `drake-visualizer` and `rviz`:
 
 <img src="./doc/drake_visualizer.png" height="250px"/> <img src="./doc/rviz.png" height="250px"/>

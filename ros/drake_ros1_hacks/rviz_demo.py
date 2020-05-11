@@ -3,13 +3,7 @@
 """
 Simple demo using rviz.
 
-Known issues:
-
-* Markers do not always show up in Rviz on the first time. I (Eric) have to
-relaunch this multiple times.
-* Colors from SceneGraph cannot be retrieved in Python (due to binding of
-Value[Vector*]`.
-* Changes in geometry are explicitly disabled here.
+Please see `README` for more details.
 """
 
 import argparse

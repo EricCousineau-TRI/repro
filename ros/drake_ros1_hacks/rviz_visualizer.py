@@ -1,7 +1,7 @@
 """
 Rviz Visualizer support in pydrake for ROS1.
 
-See known issues in `rviz_demo.py` (for user-visible things).
+Please see `README` for more details.
 """
 
 # ROS1 Messages.
@@ -30,16 +30,6 @@ class RvizVisualizer(LeafSystem):
     ROS1 Publishers:
     - visualization_topic: MarkerArray
     - tf_topic: TFMessage
-
-    Modeled after:
-    - @calderpg-tri's SceneGraph code in TRI Anzu (private)
-    - @gizatt's code in spartan:
-        https://github.com/RobotLocomotion/spartan/blob/854b26e3a/src/catkin_projects/drake_iiwa_sim/src/ros_scene_graph_visualizer.cc
-    - @russtedrake's MeshcatVisualizer in Drake:
-        https://github.com/RobotLocomotion/drake/blob/6eabb61a/bindings/pydrake/systems/meshcat_visualizer.py
-
-    However, this tries to do the "proper" approach by not using PoseBundle
-    (nor hacks to try and 
     """
 
     def __init__(
@@ -102,12 +92,16 @@ class RvizVisualizer(LeafSystem):
         stamp = rospy.Time.now()
         tf_message = _ros_geometry.to_ros_tf_message(query_object, stamp)
         self._tf_pub.publish(tf_message)
-        # We should have exactly the same message.
+        self._fail_fast_on_geometry_change(query_object)
+
+    def _fail_fast_on_geometry_change(self, query_object):
+        # We should have exactly the same marker (geometry) message as we
+        # started with.
         # TODO(eric.cousineau): Support changing geometry, and remove this
         # method.
         # TODO(eric.cousineau): Is there a more SceneGraph-y way to do
         # geometry-change detection, without event hooks, and without explicit
-        # serialization?
+        # serialization? (drake#13176)
         old = self._marker_array_old
         new = _ros_geometry.to_ros_marker_array(
             query_object, self._role, stamp=self._marker_array_old_stamp)
