@@ -1,6 +1,8 @@
 /*
 Purpose: Try to figure out what compilers actually support this?
 https://en.cppreference.com/w/cpp/language/extending_std#Adding_template_specializations
+
+Answer: https://stackoverflow.com/a/25594741/7829525
 */
 
 #include <functional>
