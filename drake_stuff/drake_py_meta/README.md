@@ -2,5 +2,8 @@
 
 Hashing out thoughts
 
-* `py_function_system.py` - for easily defining system for `pydrake`
-    * Tested as of 2020-05-08.
+## `FunctionSystem`
+
+For easily defining system for `pydrake`.
+
+* `function_system.py` - Ported from Anzu as of 2020-05-19.
