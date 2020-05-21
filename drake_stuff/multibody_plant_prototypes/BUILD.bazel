@@ -20,4 +20,16 @@ py_test(
     deps = [":multibody_plant_subgraph_py"],
 )
 
-# TODO(eric): Add energy hacks.
+# WARNING: This does not yet work.
+py_binary(
+    name = "generate_poses_sink_clutter",
+    srcs = ["multibody_plant_subgraph_test.py"],
+    deps = ["@drake//bindings/pydrake"],
+)
+
+# WARNING: This does not yet work.
+py_library(
+    name = "multibody_plant_energy_hacks_py",
+    srcs = ["multibody_plant_energy_hacks.py"],
+    deps = ["@drake//bindings/pydrake"],
+)

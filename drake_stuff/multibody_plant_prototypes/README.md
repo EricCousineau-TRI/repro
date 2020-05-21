@@ -13,10 +13,14 @@ Prototyping towards the following issues:
 - <https://github.com/RobotLocomotion/drake/issues/13074>
 - <https://github.com/RobotLocomotion/drake/issues/13177>
 
-## `MultibodyPlant` Energy Hacks
+## `generate_poses_sink_clutter.py`
 
-- `multibody_plant_energy_hacks.py`
-
-Prototyping hacks towards:
+Prototyping towards:
 
 <https://stackoverflow.com/questions/61841013/how-to-dampen-multibodyplants-compliant-contact-model-in-a-simulation>
+
+Generates objects in a sink for clutter; trying to use heuristics to be "fast".
+
+See also:
+
+- `multibody_plant_energy_hacks.py`
