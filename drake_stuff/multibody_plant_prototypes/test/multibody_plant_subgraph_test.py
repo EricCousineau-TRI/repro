@@ -12,7 +12,7 @@ To visualize:
     ./run //common:multibody_plant_subgraph_test --visualize
 
 """
-import anzu.common.multibody_plant_subgraph as mut
+import multibody_plant_prototypes.multibody_plant_subgraph as mut
 
 import sys
 import unittest

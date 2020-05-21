@@ -1,0 +1,23 @@
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+
+py_library(
+    name = "module_py",
+    srcs = ["__init__.py"],
+    imports = [".."],
+)
+
+py_library(
+    name = "multibody_plant_subgraph_py",
+    srcs = ["multibody_plant_subgraph.py"],
+    deps = [
+        "@drake//bindings/pydrake",
+    ],
+)
+
+py_test(
+    name = "multibody_plant_subgraph_test",
+    srcs = ["test/multibody_plant_subgraph_test.py"],
+    deps = [":multibody_plant_subgraph_py"],
+)
+
+# TODO(eric): Add energy hacks.
