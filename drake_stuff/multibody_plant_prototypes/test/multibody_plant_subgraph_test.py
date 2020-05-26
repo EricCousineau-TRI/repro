@@ -248,7 +248,7 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
             plant, context, wsg_plant, wsg_context, "body", "left_finger")
 
         # Visualize.
-        if VISUALIZE:
+        if False: #VISUALIZE:
             print("  Visualize IIWA")
             Simulator(iiwa_diagram, iiwa_d_context.Clone()).Initialize()
             input("    Press enter...")
@@ -258,6 +258,104 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
             print("  Visualize Composite")
             Simulator(diagram, d_context.Clone()).Initialize()
             input("    Press enter...")
+
+        self.do_exploding_iiwa_sim(plant, scene_graph, context)
+
+    def do_exploding_iiwa_sim(self, plant_src, scene_graph_src, context_src):
+        # Show a simulation which "changes state" by being rebuilt.
+        builder = DiagramBuilder()
+        plant, scene_graph = AddMultibodyPlantSceneGraph(builder, time_step=1e-3)
+        subgraph_src = mut.MultibodyPlantSubgraph.from_plant(plant_src, scene_graph_src)
+        to_plant = subgraph_src.add_to(plant, scene_graph)
+        # Add ground plane.
+        plant.RegisterCollisionGeometry(
+            plant.world_body(), HalfSpace.MakePose([0, 0, 1], [0, 0, 0]),
+            HalfSpace(), "collision", CoulombFriction(1, 1))
+        plant.Finalize()
+        # Loosey-goosey.
+        for model in mut.get_model_instances(plant):
+            no_control(builder, plant, model)
+        if VISUALIZE:
+            ConnectDrakeVisualizer(builder, scene_graph)
+            ConnectContactResultsToDrakeVisualizer(builder, plant)
+        diagram = builder.Build()
+        # Set up context.
+        d_context = diagram.CreateDefaultContext()
+        context = plant.GetMyContextFromRoot(d_context)
+        to_plant.copy_state(context_src, context)
+        # - Hoist IIWA up in the air.
+        plant.SetFreeBodyPose(
+            context, plant.GetBodyByName("base"), RigidTransform([0, 0, 1.]))
+        # - Set joint velocities to "spin" it in the air.
+        for joint in mut.get_joints(plant):
+            if isinstance(joint, RevoluteJoint):
+                mut.set_joint_positions(plant, context, joint, 0.7)
+                mut.set_joint_velocities(plant, context, joint, -5.)
+
+        def monitor(d_context):
+            context = plant.GetMyContextFromRoot(d_context)
+            # If any contact?
+            query_object = plant.get_geometry_query_input_port().Eval(context)
+            if query_object.HasCollisions():
+                return EventStatus.ReachedTermination(plant, "Collision")
+            else:
+                return EventStatus.DidNothing()
+
+        # Forward simulate.
+        simulator = Simulator(diagram, d_context)
+        simulator.Initialize()
+        simulator.set_monitor(monitor)
+        simulator.set_target_realtime_rate(1.)
+        simulator.AdvanceTo(2.)
+        diagram.Publish(d_context)
+
+        # Recreate simulator.
+        builder_new = DiagramBuilder()
+        plant_new, scene_graph_new = AddMultibodyPlantSceneGraph(
+            builder_new, time_step=plant.time_step())
+
+        subgraph = mut.MultibodyPlantSubgraph.from_plant(plant, scene_graph)
+        # Remove all joints; make them floating bodies.
+        for joint in mut.get_joints(plant):
+            subgraph.remove_joint(joint)
+        # Remove all collision geometries.
+        # TODO(eric.cousineau): Figure out why this causes a TAMSI error.
+        bodies = mut.get_bodies(plant)
+        inspector = scene_graph.model_inspector()
+        for geometry_id in mut.get_geometries(plant, scene_graph, bodies):
+            geometry = inspector.CloneGeometryInstance(geometry_id)
+            if geometry.proximity_properties() is not None:
+                subgraph.remove_geometry_id(geometry_id)
+
+        to_new = subgraph.add_to(plant_new, scene_graph_new)
+        plant_new.Finalize()
+
+        if VISUALIZE:
+            ConnectDrakeVisualizer(builder_new, scene_graph_new)
+            ConnectContactResultsToDrakeVisualizer(builder_new, plant_new)
+        diagram_new = builder_new.Build()
+
+        # Remap state.
+        d_context_new = diagram_new.CreateDefaultContext()
+        d_context_new.SetTime(d_context.get_time())
+        context_new = plant_new.GetMyContextFromRoot(d_context_new)
+        to_new.copy_state(context, context_new)
+
+        # Add crappy heuristic for "bouncing" since collisions do not yet work.
+        for body in mut.get_bodies(plant_new):
+            if body.is_floating():
+                # Add crappy heuristic for "exploding".
+                V_WB = plant_new.EvalBodySpatialVelocityInWorld(context_new, body)
+                w_WB = V_WB.rotational()
+                v_WB = V_WB.translational().copy()
+                v_WB[2] = max(0.5, abs(v_WB[2]) * 0.5)
+                plant_new.SetFreeBodySpatialVelocity(
+                    body, SpatialVelocity(w_WB, v_WB), context_new)
+        # Simulate.
+        simulator_new = Simulator(diagram_new, d_context_new)
+        simulator_new.Initialize()
+        simulator_new.set_target_realtime_rate(1.)
+        simulator_new.AdvanceTo(context_new.get_time() + 0.5)
 
     def test_decomposition_controller_like_workflow(self):
         """Tests subgraphs (post-finalize) for decomposition, with a
