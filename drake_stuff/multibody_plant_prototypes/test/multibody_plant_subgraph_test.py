@@ -12,7 +12,7 @@ To visualize:
     ./run //common:multibody_plant_subgraph_test --visualize
 
 """
-import multibody_plant_prototypes.multibody_plant_subgraph as mut
+import anzu.common.multibody_plant_subgraph as mut
 
 import sys
 import unittest
@@ -21,12 +21,19 @@ import numpy as np
 
 from pydrake.common import FindResourceOrThrow
 from pydrake.examples.manipulation_station import ManipulationStation
-from pydrake.geometry import ConnectDrakeVisualizer
+from pydrake.geometry import ConnectDrakeVisualizer, HalfSpace, Role
 from pydrake.math import RigidTransform, RollPitchYaw
-from pydrake.multibody.plant import AddMultibodyPlantSceneGraph, MultibodyPlant
+from pydrake.multibody.math import SpatialVelocity
 from pydrake.multibody.parsing import Parser
+from pydrake.multibody.plant import (
+    AddMultibodyPlantSceneGraph,
+    ConnectContactResultsToDrakeVisualizer,
+    CoulombFriction,
+    MultibodyPlant,
+)
+from pydrake.multibody.tree import ModelInstanceIndex, RevoluteJoint
 from pydrake.systems.analysis import Simulator
-from pydrake.systems.framework import DiagramBuilder
+from pydrake.systems.framework import DiagramBuilder, EventStatus
 from pydrake.systems.primitives import ConstantVectorSource
 
 VISUALIZE = False
@@ -36,6 +43,14 @@ VISUALIZE = False
 # clutter gen).
 # TODO(eric.cousineau): Add test showing that a purely copied plant has the
 # same position ordering? (fingers crossed)
+
+
+def no_control(builder, plant, model):
+    nu = plant.num_actuated_dofs(model)
+    constant = builder.AddSystem(ConstantVectorSource(np.zeros(nu)))
+    builder.Connect(
+        constant.get_output_port(0),
+        plant.get_actuation_input_port(model))
 
 
 def compare_frames(
@@ -70,6 +85,7 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
         # N.B. Because the model is not welded, we do not an additional policy
         # to "disconnect" it.
         iiwa_subgraph = mut.MultibodyPlantSubgraph.from_plant(iiwa_plant)
+        self.assertIsInstance(iiwa_subgraph, mut.MultibodyPlantSubgraph)
 
         # Make 10 copies of the IIWA in a line.
         plant = MultibodyPlant(time_step=0.01)
@@ -77,6 +93,8 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
         for i in range(10):
             sub_to_full = iiwa_subgraph.add_to(
                 plant, model_instance_remap=f"iiwa_{i}")
+            self.assertIsInstance(
+                sub_to_full, mut.MultibodyPlantAssociations)
             X_WB = RigidTransform(p=[i * 0.5, 0, 0])
             base_frame = sub_to_full.frames[base_frame_sub]
             plant.WeldFrames(plant.world_frame(), base_frame, X_WB)
@@ -101,6 +119,8 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
             "iiwa14_spheres_dense_elbow_collision.urdf")
         iiwa_subgraph, iiwa_model = mut.parse_as_multibody_plant_subgraph(
             iiwa_file)
+        self.assertIsInstance(iiwa_subgraph, mut.MultibodyPlantSubgraph)
+        self.assertIsInstance(iiwa_model, ModelInstanceIndex)
         # Make 10 copies of the IIWA in a line.
         builder = DiagramBuilder()
         plant, scene_graph = AddMultibodyPlantSceneGraph(
@@ -109,6 +129,8 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
         for i in range(10):
             sub_to_full = iiwa_subgraph.add_to(
                 plant, scene_graph, model_instance_remap=f"iiwa_{i}")
+            self.assertIsInstance(
+                sub_to_full, mut.MultibodyPlantAssociations)
             X_WB = RigidTransform(p=[i * 0.5, 0, 0])
             model = sub_to_full.model_instances[iiwa_model]
             base_frame = plant.GetFrameByName("base", model)
@@ -149,6 +171,7 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
 
         iiwa_subgraph = mut.MultibodyPlantSubgraph.from_plant(
             iiwa_plant, iiwa_scene_graph)
+        self.assertIsInstance(iiwa_subgraph, mut.MultibodyPlantSubgraph)
         iiwa_subgraph.add_policy(mut.DisconnectFromWorldSubgraphPolicy())
 
         # Create WSG.
@@ -166,6 +189,7 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
 
         wsg_subgraph = mut.MultibodyPlantSubgraph.from_plant(
             wsg_plant, wsg_scene_graph)
+        self.assertIsInstance(wsg_subgraph, mut.MultibodyPlantSubgraph)
         wsg_subgraph.add_policy(mut.DisconnectFromWorldSubgraphPolicy())
 
         builder = DiagramBuilder()
@@ -173,8 +197,10 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
             builder, time_step=1e-3)
 
         iiwa_to_plant = iiwa_subgraph.add_to(plant, scene_graph)
+        self.assertIsInstance(iiwa_to_plant, mut.MultibodyPlantAssociations)
         iiwa = iiwa_to_plant.model_instances[iiwa_model]
         wsg_to_plant = wsg_subgraph.add_to(plant, scene_graph)
+        self.assertIsInstance(wsg_to_plant, mut.MultibodyPlantAssociations)
         wsg = iiwa_to_plant.model_instances[wsg_model]
 
         if VISUALIZE:
@@ -250,7 +276,7 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
         wsg = plant.GetModelInstanceByName("gripper")
 
         if VISUALIZE:
-            print("test_decomposition")
+            print("test_decomposition_controller_like_workflow")
             ConnectDrakeVisualizer(
                 builder, scene_graph, station.GetOutputPort("pose_bundle"))
         diagram = builder.Build()
@@ -258,66 +284,60 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
         # Set the context with which things should be computed.
         d_context = diagram.CreateDefaultContext()
         context = plant.GetMyContextFromRoot(d_context)
-        q_iiwa = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+        q_iiwa = [0.3, 0.7, 0.3, 0.6, 0.5, 0.6, 0.7]
         q_wsg = [-0.03, 0.03]
         plant.SetPositions(context, iiwa, q_iiwa)
         plant.SetPositions(context, wsg, q_wsg)
 
-        # Make a simple subgraph with just IIWA and gripper.
-        subgraph = mut.MultibodyPlantSubgraph.from_plant(
-            plant, scene_graph, model_instances=[iiwa, wsg])
-        # Remove all articulation from the gripper.
-        subgraph.add_policy(
-            mut.FreezeJointSubgraphPolicy.from_plant(
-                plant, context, model_instances=[wsg]))
-
         # Build and visualize.
-        sub_builder = DiagramBuilder()
-        sub_plant, sub_scene_graph = AddMultibodyPlantSceneGraph(
-            sub_builder, time_step=0.)
+        control_builder = DiagramBuilder()
+        control_plant, control_scene_graph = AddMultibodyPlantSceneGraph(
+            control_builder, time_step=0.)
         if VISUALIZE:
-            ConnectDrakeVisualizer(sub_builder, sub_scene_graph)
-        original_to_sub = subgraph.add_to(
-            sub_plant, sub_scene_graph,
-            model_instance_remap=mut.model_instance_remap_same_name,
-        )
-        sub_iiwa = original_to_sub.model_instances[iiwa]
-        sub_plant.WeldFrames(
-            sub_plant.world_frame(),
-            sub_plant.GetFrameByName("iiwa_link_0", sub_iiwa))
+            ConnectDrakeVisualizer(control_builder, control_scene_graph)
 
-        sub_plant.Finalize()
+        # N.B. This has the same scene, but with all joints outside of the
+        # IIWA frozen.
+        to_control = mut.add_plant_with_articulated_subset_to(
+            plant_src=plant, scene_graph_src=scene_graph,
+            articulated_models_src=[iiwa], context_src=context,
+            plant_dest=control_plant, scene_graph_dest=control_scene_graph)
+        self.assertIsInstance(to_control, mut.MultibodyPlantAssociations)
+        control_iiwa = to_control.model_instances[iiwa]
+        control_plant.Finalize()
+
         self.assertEqual(
-            sub_plant.num_positions(), plant.num_positions(iiwa))
+            control_plant.num_positions(), plant.num_positions(iiwa))
 
-        sub_diagram = sub_builder.Build()
+        control_diagram = control_builder.Build()
 
-        sub_d_context = sub_diagram.CreateDefaultContext()
-        sub_context = sub_plant.GetMyContextFromRoot(sub_d_context)
+        control_d_context = control_diagram.CreateDefaultContext()
+        control_context = control_plant.GetMyContextFromRoot(control_d_context)
 
-        original_to_sub.copy_state(context, sub_context)
+        to_control.copy_state(context, control_context)
         compare_frames(
-            plant, context, sub_plant, sub_context,
+            plant, context, control_plant, control_context,
             "iiwa_link_0", "iiwa_link_7")
         compare_frames(
-            plant, context, sub_plant, sub_context,
+            plant, context, control_plant, control_context,
             "body", "left_finger")
 
         # Visualize.
         if VISUALIZE:
-            print("  Visualize composite")
+            print("  Visualize original plant")
             Simulator(diagram, d_context.Clone()).Initialize()
             input("    Press enter...")
-            print("  Visualize sub")
-            Simulator(sub_diagram, sub_d_context.Clone()).Initialize()
+            print("  Visualize control plant")
+            Simulator(control_diagram, control_d_context.Clone()).Initialize()
             input("    Press enter...")
 
         # For grins, ensure that we can copy everything, including world weld.
-        sub_plant_copy = MultibodyPlant(time_step=0.)
-        mut.MultibodyPlantSubgraph.from_plant(sub_plant).add_to(sub_plant_copy)
-        sub_plant_copy.Finalize()
+        control_plant_copy = MultibodyPlant(time_step=0.)
+        mut.MultibodyPlantSubgraph.from_plant(
+            control_plant).add_to(control_plant_copy)
+        control_plant_copy.Finalize()
         self.assertEqual(
-            sub_plant_copy.num_positions(), sub_plant.num_positions())
+            control_plant_copy.num_positions(), control_plant.num_positions())
 
 
 if __name__ == "__main__":
