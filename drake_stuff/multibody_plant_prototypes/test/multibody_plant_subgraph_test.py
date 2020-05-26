@@ -262,10 +262,14 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
         self.do_exploding_iiwa_sim(plant, scene_graph, context)
 
     def do_exploding_iiwa_sim(self, plant_src, scene_graph_src, context_src):
+        # role = Role.kIllustration
+        role = Role.kProximity
         # Show a simulation which "changes state" by being rebuilt.
         builder = DiagramBuilder()
-        plant, scene_graph = AddMultibodyPlantSceneGraph(builder, time_step=1e-3)
-        subgraph_src = mut.MultibodyPlantSubgraph.from_plant(plant_src, scene_graph_src)
+        plant, scene_graph = AddMultibodyPlantSceneGraph(
+            builder, time_step=1e-3)
+        subgraph_src = mut.MultibodyPlantSubgraph.from_plant(
+            plant_src, scene_graph_src)
         to_plant = subgraph_src.add_to(plant, scene_graph)
         # Add ground plane.
         plant.RegisterCollisionGeometry(
@@ -276,7 +280,7 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
         for model in mut.get_model_instances(plant):
             no_control(builder, plant, model)
         if VISUALIZE:
-            ConnectDrakeVisualizer(builder, scene_graph)
+            ConnectDrakeVisualizer(builder, scene_graph, role=role)
             ConnectContactResultsToDrakeVisualizer(builder, plant)
         diagram = builder.Build()
         # Set up context.
@@ -316,22 +320,25 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
 
         subgraph = mut.MultibodyPlantSubgraph.from_plant(plant, scene_graph)
         # Remove all joints; make them floating bodies.
-        for joint in mut.get_joints(plant):
-            subgraph.remove_joint(joint)
-        # Remove all collision geometries.
-        # TODO(eric.cousineau): Figure out why this causes a TAMSI error.
-        bodies = mut.get_bodies(plant)
-        inspector = scene_graph.model_inspector()
-        for geometry_id in mut.get_geometries(plant, scene_graph, bodies):
-            geometry = inspector.CloneGeometryInstance(geometry_id)
-            if geometry.proximity_properties() is not None:
-                subgraph.remove_geometry_id(geometry_id)
+        remove_joints = True  # False
+        # TODO(eric.cousineau): Why does `remove_joints = True` cause a TAMSI
+        # error? If the joints are removed
+        # Failure at external/drake/multibody/plant/tamsi_solver.cc:217 in
+        # SolveQuadraticForTheSmallestPositiveRoot(): condition 'Delta > 0'
+        # failed.
+        if remove_joints:
+            for joint in mut.get_joints(plant):
+                subgraph.remove_joint(joint)
 
         to_new = subgraph.add_to(plant_new, scene_graph_new)
         plant_new.Finalize()
 
+        if not remove_joints:
+            for model in mut.get_model_instances(plant_new):
+                no_control(builder_new, plant_new, model)
+
         if VISUALIZE:
-            ConnectDrakeVisualizer(builder_new, scene_graph_new)
+            ConnectDrakeVisualizer(builder_new, scene_graph_new, role=role)
             ConnectContactResultsToDrakeVisualizer(builder_new, plant_new)
         diagram_new = builder_new.Build()
 
@@ -341,19 +348,10 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
         context_new = plant_new.GetMyContextFromRoot(d_context_new)
         to_new.copy_state(context, context_new)
 
-        # Add crappy heuristic for "bouncing" since collisions do not yet work.
-        for body in mut.get_bodies(plant_new):
-            if body.is_floating():
-                # Add crappy heuristic for "exploding".
-                V_WB = plant_new.EvalBodySpatialVelocityInWorld(context_new, body)
-                w_WB = V_WB.rotational()
-                v_WB = V_WB.translational().copy()
-                v_WB[2] = max(0.5, abs(v_WB[2]) * 0.5)
-                plant_new.SetFreeBodySpatialVelocity(
-                    body, SpatialVelocity(w_WB, v_WB), context_new)
         # Simulate.
         simulator_new = Simulator(diagram_new, d_context_new)
         simulator_new.Initialize()
+        diagram_new.Publish(d_context_new)
         simulator_new.set_target_realtime_rate(1.)
         simulator_new.AdvanceTo(context_new.get_time() + 0.5)
 
