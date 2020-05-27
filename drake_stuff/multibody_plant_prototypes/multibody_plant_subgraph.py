@@ -828,6 +828,8 @@ class MultibodyPlantSubgraph:
         """
         elem_src = self._elem_src
         elem_removed = MultibodyPlantElementsList()
+        elem_src.bodies.remove(body)
+        elem_removed.bodies.append(body)
         frames = [
             x for x in elem_src.frames
             if x.body() is body]

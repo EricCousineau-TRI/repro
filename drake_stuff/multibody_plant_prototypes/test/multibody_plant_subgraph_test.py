@@ -262,8 +262,8 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
         self.do_exploding_iiwa_sim(plant, scene_graph, context)
 
     def do_exploding_iiwa_sim(self, plant_src, scene_graph_src, context_src):
-        # role = Role.kIllustration
-        role = Role.kProximity
+        role = Role.kIllustration
+        # role = Role.kProximity
         # Show a simulation which "changes state" by being rebuilt.
         builder = DiagramBuilder()
         plant, scene_graph = AddMultibodyPlantSceneGraph(
@@ -272,9 +272,10 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
             plant_src, scene_graph_src)
         to_plant = subgraph_src.add_to(plant, scene_graph)
         # Add ground plane.
+        X_FH = HalfSpace.MakePose([0, 0, 1], [0, 0, 0])
         plant.RegisterCollisionGeometry(
-            plant.world_body(), HalfSpace.MakePose([0, 0, 1], [0, 0, 0]),
-            HalfSpace(), "collision", CoulombFriction(1, 1))
+            plant.world_body(), X_FH, HalfSpace(), "ground_plane_collision",
+            CoulombFriction(0.8, 0.3))
         plant.Finalize()
         # Loosey-goosey.
         for model in mut.get_model_instances(plant):
@@ -311,6 +312,9 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
         simulator.set_monitor(monitor)
         simulator.set_target_realtime_rate(1.)
         simulator.AdvanceTo(2.)
+        # Try to push a bit further?
+        simulator.clear_monitor()
+        simulator.AdvanceTo(d_context.get_time() + 0.05)
         diagram.Publish(d_context)
 
         # Recreate simulator.
@@ -320,22 +324,17 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
 
         subgraph = mut.MultibodyPlantSubgraph.from_plant(plant, scene_graph)
         # Remove all joints; make them floating bodies.
-        remove_joints = True  # False
-        # TODO(eric.cousineau): Why does `remove_joints = True` cause a TAMSI
-        # error? If the joints are removed
-        # Failure at external/drake/multibody/plant/tamsi_solver.cc:217 in
-        # SolveQuadraticForTheSmallestPositiveRoot(): condition 'Delta > 0'
-        # failed.
-        if remove_joints:
-            for joint in mut.get_joints(plant):
-                subgraph.remove_joint(joint)
+        for joint in mut.get_joints(plant):
+            subgraph.remove_joint(joint)
+        # Remove massless / low inertia bodies?
+        for body in mut.get_bodies(plant):
+            if body is plant.world_body():
+                continue
+            if body.default_mass() == 0.:
+                subgraph.remove_body(body)
 
         to_new = subgraph.add_to(plant_new, scene_graph_new)
         plant_new.Finalize()
-
-        if not remove_joints:
-            for model in mut.get_model_instances(plant_new):
-                no_control(builder_new, plant_new, model)
 
         if VISUALIZE:
             ConnectDrakeVisualizer(builder_new, scene_graph_new, role=role)
@@ -353,7 +352,7 @@ class TestMultibodyPlantSubgraph(unittest.TestCase):
         simulator_new.Initialize()
         diagram_new.Publish(d_context_new)
         simulator_new.set_target_realtime_rate(1.)
-        simulator_new.AdvanceTo(context_new.get_time() + 0.5)
+        simulator_new.AdvanceTo(context_new.get_time() + 2)
 
     def test_decomposition_controller_like_workflow(self):
         """Tests subgraphs (post-finalize) for decomposition, with a
