@@ -70,11 +70,23 @@ def main():
     ConnectDrakeVisualizer(builder, scene_graph)
     diagram = builder.Build()
     simulator = Simulator(diagram)
-    simulator.set_target_realtime_rate(1.)
+
     context = simulator.get_context()
+    # plant.SetFreeBodyPose(context, body, X_WB)
+    # plant.SetFreeBodySpatialVelocity(body, V_WB, context)
+
+    # Should look at, show 40sec to 50sec.
+    # TODO(eric.cousineau): Without reset stats, it freezes? :(
+    # simulator.AdvanceTo(40.)
+    simulator.set_target_realtime_rate(100.)
+    # simulator.ResetStatistics()
     dt = 0.1
-    while context.get_time() < 10.:
+    while context.get_time() < 120.:
         simulator.AdvanceTo(context.get_time() + dt)
+
+    # V_WB = plant.EvalBodySpatialVelocityInWorld(context, body)
+    # X_WB = plant.CalcRelativeTransform(
+    #     context, plant.world_frame(), body.body_frame())
 
 
 assert __name__ == "__main__"
