@@ -1,0 +1,9 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+
+# TODO(eric.cousineau): How to run drake visualizer?
+
+py_binary(
+    name = "repro",
+    srcs = ["repro.py"],
+    deps = ["@drake//bindings/pydrake"],
+)
