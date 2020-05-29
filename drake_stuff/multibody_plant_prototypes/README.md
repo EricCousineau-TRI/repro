@@ -13,6 +13,12 @@ Prototyping towards the following issues:
 - <https://github.com/RobotLocomotion/drake/issues/13074>
 - <https://github.com/RobotLocomotion/drake/issues/13177>
 
+To visualize the test cases:
+
+```sh
+bazel run :multibody_plant_subgraph_test -- --visualize
+```
+
 ## `generate_poses_sink_clutter.py`
 
 Prototyping towards:

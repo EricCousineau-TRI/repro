@@ -12,7 +12,7 @@ To visualize:
     ./run //common:multibody_plant_subgraph_test --visualize
 
 """
-import anzu.common.multibody_plant_subgraph as mut
+import multibody_plant_prototypes.multibody_plant_subgraph as mut
 
 import sys
 import unittest
@@ -34,8 +34,8 @@ from pydrake.multibody.tree import ModelInstanceIndex, RevoluteJoint
 from pydrake.systems.analysis import Simulator
 from pydrake.systems.framework import DiagramBuilder, EventStatus
 
-import anzu.common.multibody_extras as me
-import anzu.common.test.multibody_plant_subgraph_test_helpers as util
+import multibody_plant_prototypes.multibody_extras as me
+import multibody_plant_prototypes.test.multibody_plant_subgraph_test_helpers as util
 
 VISUALIZE = False
 

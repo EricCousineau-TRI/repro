@@ -12,8 +12,8 @@ http_archive(
 load("@rules_python//python:repositories.bzl", "py_repositories")
 py_repositories()
 
-DRAKE_RELEASE = "20200521"
-DRAKE_CHECKSUM = "39c88187e7f7efd41034e060704339fa7371af2ab5aad2ef0845087ab8547a3d"
+DRAKE_RELEASE = "20200529"
+DRAKE_CHECKSUM = "812b19de7d461756f60e87712d3c60ab74e7d8b66254c22fbde18f3d715b3bbd"
 
 http_archive(
     name = "drake_artifacts",
