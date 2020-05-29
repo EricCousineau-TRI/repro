@@ -81,7 +81,7 @@ def main():
     simulator.set_target_realtime_rate(100.)
     # simulator.ResetStatistics()
     dt = 0.1
-    while context.get_time() < 120.:
+    while context.get_time() < 240.:
         simulator.AdvanceTo(context.get_time() + dt)
 
     # V_WB = plant.EvalBodySpatialVelocityInWorld(context, body)
