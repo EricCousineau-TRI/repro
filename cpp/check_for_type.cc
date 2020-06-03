@@ -35,9 +35,9 @@ NAME_TRAIT_TPL(has_type);
 template <typename T, typename = void>
 struct has_name_func : std::false_type {};
 
-// template <typename T, typename = void>
-// struct has_name_func<T, decltype(std::declval<T>().name(), void())>
-//     : std::true_type {};
+template <typename T>
+struct has_name_func<T, decltype(std::declval<T>().name(), void())>
+    : std::true_type {};
 
 NAME_TRAIT_TPL(has_name_func);
 
@@ -56,3 +56,14 @@ int main() {
   cout << endl;
   return 0;
 }
+
+/*
+Output:
+
+has_type<example_has_type, void>::value = 1
+has_type<example_has_nothing, void>::value = 0
+
+has_name_func<example_has_name_func, void>::value = 1
+has_name_func<example_has_nothing, void>::value = 0
+
+*/
