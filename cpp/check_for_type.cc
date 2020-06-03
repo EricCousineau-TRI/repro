@@ -1,35 +1,58 @@
+// https://stackoverflow.com/questions/1005476/how-to-detect-whether-there-is-a-specific-member-variable-in-class
 #include <iostream>
 #include <utility>
+
+#include "name_trait.h"
 
 using std::cout;
 using std::endl;
 
-struct trait_good {
+struct example_has_type {
     typedef int type;
 };
-struct trait_bad {
-    typedef int wrong_name;
+NAME_TRAIT(example_has_type);
+
+struct example_has_nothing {};
+NAME_TRAIT(example_has_nothing);
+
+struct example_has_name_func {
+  void name() const {}
 };
+NAME_TRAIT(example_has_name_func);
+
+// Check for ::type
+// https://stackoverflow.com/a/14523787/7829525
+template <typename T, typename = void>
+struct has_type : std::false_type {};
 
 template <typename T>
-struct defer : std::is_same<T, T> { };
+struct has_type<T, decltype(typename T::type{}, void())>
+    : std::true_type {};
 
-template <typename T, typename C = void>
-struct info : std::false_type { };
+NAME_TRAIT_TPL(has_type);
 
-template <typename T>
-struct info<T>
-    : std::enable_if<
-        defer<typename T::type>::value,
-        std::true_type> { };
+// Check for .name()
+template <typename T, typename = void>
+struct has_name_func : std::false_type {};
 
-template <typename T>
+// template <typename T, typename = void>
+// struct has_name_func<T, decltype(std::declval<T>().name(), void())>
+//     : std::true_type {};
+
+NAME_TRAIT_TPL(has_name_func);
+
+template <typename trait>
 void print() {
-    cout << "has ::type? " << info<T>::value << endl;
+  cout << name_trait<trait>::name() << "::value = " << trait::value << endl;
 }
 
 int main() {
-    print<trait_good>();
-    print<trait_bad>();
-    return 0;
+  cout << endl;
+  print<has_type<example_has_type>>();
+  print<has_type<example_has_nothing>>();
+  cout << endl;
+  print<has_name_func<example_has_name_func>>();
+  print<has_name_func<example_has_nothing>>();
+  cout << endl;
+  return 0;
 }

@@ -154,6 +154,7 @@ cc_binary(
 cc_binary(
     name = "check_for_type",
     srcs = ["check_for_type.cc", "name_trait.h"],
+    copts = ["-std=c++17"],
 )
 
 cc_binary(
