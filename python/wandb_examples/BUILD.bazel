@@ -1,0 +1,23 @@
+load(
+    "@rules_python//python:defs.bzl",
+    "py_library",
+    "py_test",
+)
+
+py_library(
+    name = "module_py",
+    srcs = ["__init__.py"],
+    imports = [".."],
+)
+
+py_library(
+    name = "containers_py",
+    srcs = ["containers.py"],
+    deps = [":module_py"],
+)
+
+py_test(
+    name = "containers_test",
+    srcs = ["test/containers_test.py"],
+    deps = [":containers_py"],
+)

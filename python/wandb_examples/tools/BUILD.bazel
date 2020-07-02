@@ -1,0 +1,19 @@
+load("@rules_python//python:defs.bzl", "py_runtime", "py_runtime_pair")
+
+py_runtime(
+    name = "linux_py3_runtime",
+    interpreter_path = "/usr/bin/python3",
+    python_version = "PY3",
+)
+
+py_runtime_pair(
+    name = "linux_py_runtime_pair",
+    py3_runtime = ":linux_py3_runtime",
+)
+
+toolchain(
+    name = "linux_py_toolchain",
+    target_compatible_with = ["@platforms//os:linux"],
+    toolchain = ":linux_py_runtime_pair",
+    toolchain_type = "@rules_python//python:toolchain_type",
+)
