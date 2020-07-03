@@ -28,7 +28,7 @@ Unable to repro here :(
 
 ## `wandb` and `bazel test`
 
-<>
+<https://github.com/wandb/client/issues/1137>
 
 Files:
 
