@@ -5,6 +5,7 @@ import sys
 
 import wandb
 # See: https://github.com/wandb/client/issues/1101
+# Only seems to trigger with `python3-protobuf`, but cannot make MWE...
 import wandb.tensorboard
 
 SHOW_ERROR = False

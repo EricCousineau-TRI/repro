@@ -16,6 +16,7 @@ _venv-setup() { (
     requirements_used=${_venv_dir}/requirements_used.txt
     if ! files-equal ${requirements_in} ${requirements_used}; then
         rm -rf ${_venv_dir}
+        # TODO: Get --system-site-packages to work with python3-protobuf repro?
         ./isolate.sh python3 -m virtualenv -p python3 ${_venv_dir}
         ./isolate.sh ${_venv_dir}/bin/pip install -r ${requirements_in}
         cp ${requirements_in} ${requirements_used}

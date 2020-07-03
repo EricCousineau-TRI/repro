@@ -20,6 +20,12 @@ To view:
 bazel run :containers_test
 ```
 
+## `wandb` and `pkg_resources`
+
+<https://github.com/wandb/client/issues/1101>
+
+Unable to repro here :(
+
 ## `wandb` and `bazel test`
 
 <>
