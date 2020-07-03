@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+# Hacky way to launch Bazel with a (possibly stale) virtualenv.
+
 workspace_dir=$(cd $(dirname ${BASH_SOURCE})/.. && pwd)
 source ${workspace_dir}/setup.sh
 exec bazel-real "$@"

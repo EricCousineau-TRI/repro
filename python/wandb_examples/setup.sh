@@ -15,3 +15,8 @@ _venv-setup() { (
 
 _venv-setup
 source $(dirname ${BASH_SOURCE})/venv/bin/activate
+
+if [[ ${0} == ${BASH_SOURCE} ]]; then
+    # This was executed, *not* sourced. Run arguments directly.
+    exec "$@"
+fi

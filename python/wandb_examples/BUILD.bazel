@@ -21,3 +21,8 @@ py_test(
     srcs = ["test/containers_test.py"],
     deps = [":containers_py"],
 )
+
+py_test(
+    name = "wandb_stub_test",
+    srcs = ["test/wandb_stub_test.py"],
+)
