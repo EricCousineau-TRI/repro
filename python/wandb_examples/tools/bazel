@@ -1,12 +1,11 @@
 #!/bin/bash
 set -eu
-# Hacky way to launch Bazel with a (possibly stale) virtualenv.
+
+# Hacky way to launch Bazel with a virtualenv.
 
 workspace_dir=$(cd $(dirname ${BASH_SOURCE})/.. && pwd)
+# Ensure that the venv is setup.
+${workspace_dir}/setup.sh
 
-cat > ${workspace_dir}/gen.bazelrc <<EOF
-common --python_path=${workspace_dir}/venv/bin/python
-EOF
-
-${workspace_dir}/isolate.sh ${workspace_dir}/setup.sh
-exec ${workspace_dir}/isolate.sh ${workspace_dir}/setup.sh bazel-real "$@"
+# Run bazel.
+exec bazel-real "$@"

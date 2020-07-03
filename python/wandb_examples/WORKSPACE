@@ -9,4 +9,4 @@ http_archive(
     sha256 = "b5668cde8bb6e3515057ef465a35ad712214962f0b3a314e551204266c7be90c",
 )
 
-register_toolchains("//tools:linux_py_toolchain")
+register_toolchains("//tools:venv_py_toolchain")

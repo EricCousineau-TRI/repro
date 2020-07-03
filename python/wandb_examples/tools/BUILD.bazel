@@ -1,20 +1,18 @@
 load("@rules_python//python:defs.bzl", "py_runtime", "py_runtime_pair")
 
 py_runtime(
-    name = "linux_py3_runtime",
+    name = "venv_py3_runtime",
     interpreter = "//:venv_python",
-    # interpreter_path = "//:venv_python",
     python_version = "PY3",
 )
 
 py_runtime_pair(
-    name = "linux_py_runtime_pair",
-    py3_runtime = ":linux_py3_runtime",
+    name = "venv_py_runtime_pair",
+    py3_runtime = ":venv_py3_runtime",
 )
 
 toolchain(
-    name = "linux_py_toolchain",
-    target_compatible_with = ["@platforms//os:linux"],
-    toolchain = ":linux_py_runtime_pair",
+    name = "venv_py_toolchain",
+    toolchain = ":venv_py_runtime_pair",
     toolchain_type = "@rules_python//python:toolchain_type",
 )

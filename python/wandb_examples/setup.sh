@@ -10,12 +10,14 @@ _venv-setup() { (
         cmp "$@" > /dev/null 2>&1
     }
 
-    requirements_in=${_script_dir}/requirements.txt
+    cd ${_script_dir}
+
+    requirements_in=./requirements.txt
     requirements_used=${_venv_dir}/requirements_used.txt
     if ! files-equal ${requirements_in} ${requirements_used}; then
         rm -rf ${_venv_dir}
-        python3 -m virtualenv -p python3 ${_venv_dir}
-        ${_venv_dir}/bin/pip install -r ${requirements_in}
+        ./isolate.sh python3 -m virtualenv -p python3 ${_venv_dir}
+        ./isolate.sh ${_venv_dir}/bin/pip install -r ${requirements_in}
         cp ${requirements_in} ${requirements_used}
     fi
 ) }
