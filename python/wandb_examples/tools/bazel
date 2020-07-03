@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
+shopt -s expand_aliases
 
 # Hacky way to launch Bazel with a (possibly stale) virtualenv.
-
 workspace_dir=$(cd $(dirname ${BASH_SOURCE})/.. && pwd)
-source ${workspace_dir}/setup.sh
-exec bazel-real "$@"
+env_isolate="env -i HOME=$HOME DISPLAY=$DISPLAY SHELL=$SHELL TERM=$TERM USER=$USER PATH=/usr/local/bin:/usr/bin:/bin"
+exec ${env_isolate} bazel-real "$@"
