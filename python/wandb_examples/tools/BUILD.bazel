@@ -2,7 +2,8 @@ load("@rules_python//python:defs.bzl", "py_runtime", "py_runtime_pair")
 
 py_runtime(
     name = "linux_py3_runtime",
-    interpreter_path = "/usr/bin/python3",
+    interpreter = "//:venv_python",
+    # interpreter_path = "//:venv_python",
     python_version = "PY3",
 )
 

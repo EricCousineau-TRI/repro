@@ -1,0 +1,4 @@
+build --test_output=errors
+build --test_summary=terse
+
+#try-import %workspace%/gen.bazelrc

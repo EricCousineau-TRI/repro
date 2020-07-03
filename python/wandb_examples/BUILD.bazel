@@ -4,6 +4,13 @@ load(
     "py_test",
 )
 
+filegroup(
+    name = "venv_python",
+    srcs = ["venv/bin/python"],
+    # data = glob(["venv/**"]),
+    visibility = ["//visibility:public"],
+)
+
 py_library(
     name = "module_py",
     srcs = ["__init__.py"],
