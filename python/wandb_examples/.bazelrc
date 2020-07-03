@@ -1,2 +1,6 @@
 build --test_output=errors
 build --test_summary=terse
+
+# For --config=show_test
+test:show_test --nocache_test_results
+test:show_test --test_output=streamed

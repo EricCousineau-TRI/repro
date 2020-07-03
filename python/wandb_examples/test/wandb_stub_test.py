@@ -1,10 +1,13 @@
 from contextlib import contextmanager
 import os
 import unittest
+import sys
 
 import wandb
 # See: https://github.com/wandb/client/issues/1101
 import wandb.tensorboard
+
+SHOW_ERROR = False
 
 
 @contextmanager
@@ -41,9 +44,15 @@ class TestWandb(unittest.TestCase):
             os.environ["WANDB_CONFIG_DIR"] = os.environ["TEST_TMPDIR"]
             os.environ["WANDB_DIR"] = os.environ["TEST_TMPDIR"]
             os.environ["WANDB_MODE"] = "dryrun"
-        #     with mock_attr(wandb, "_init_headless", fake_init_headless):
-            wandb.init(project="test_project", sync_tensorboard=True)
+            if SHOW_ERROR:
+                wandb.init(project="test_project", sync_tensorboard=True)
+            else:
+                with mock_attr(wandb, "_init_headless", fake_init_headless):
+                    wandb.init(project="test_project", sync_tensorboard=True)
 
 
 if __name__ == "__main__":
+    if "--show_error" in sys.argv:
+        SHOW_ERROR = True
+        sys.argv.remove("--show_error")
     unittest.main()
