@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+
+workspace_dir=$(cd $(dirname ${BASH_SOURCE})/.. && pwd)
+source ${workspace_dir}/setup.sh
+exec bazel-real "$@"
