@@ -16,7 +16,7 @@ def mock_attr(obj, attr, replace):
     """Temporarily replaces an attribute."""
     original = getattr(obj, attr)
     setattr(obj, attr, replace)
-    yield
+    yield original
     setattr(obj, attr, original)
 
 
@@ -52,8 +52,26 @@ class TestWandb(unittest.TestCase):
                     wandb.init(project="test_project", sync_tensorboard=True)
 
 
+@contextmanager
+def count_calls(obj, attr):
+    original = None
+    num_calls = [0]
+
+    def _replace(*args, **kwargs):
+        num_calls[0] += 1
+        return original(*args, **kwargs)
+
+    with mock_attr(obj, attr, _replace) as original:
+        yield num_calls
+
+
 if __name__ == "__main__":
     if "--show_error" in sys.argv:
         SHOW_ERROR = True
         sys.argv.remove("--show_error")
-    unittest.main()
+
+    with count_calls(wandb, "init") as num_calls:
+        try:
+            unittest.main()
+        finally:
+            print(f"Num calls: {num_calls[0]}")
