@@ -18,6 +18,7 @@ from pydrake.common.eigen_geometry import Quaternion
 from pydrake.geometry import (
     QueryObject,
     Role,
+    Rgba,
     SceneGraphInspector,
     FrameId,
     Shape,
@@ -65,8 +66,7 @@ def from_ros_transform(tr):
     return _read_pose_msg(p=tr.translation, q=tr.rotation)
 
 
-# N.B. Not yet used :(
-DEFAULT_RGBA = [0.9, 0.9, 0.9, 1.0]
+DEFAULT_RGBA = Rgba(0.9, 0.9, 0.9, 1.0)
 
 
 def to_ros_markers(shape, stamp, frame_name, X_FG, color_rgba):
@@ -82,13 +82,11 @@ def to_ros_markers(shape, stamp, frame_name, X_FG, color_rgba):
     marker.frame_locked = True
 
     def use_color():
-        # TODO: Colors are broken 'cause Geometry properties with Vector4 do not
-        # play well with Python.
-        assert color_rgba is None
-        marker.color.a = 1.
+        nonlocal color_rgba
         if color_rgba is None:
             color_rgba = DEFAULT_RGBA
-        # marker.color.r, marker.color.g, marker.color.b, marker.color.a = color
+        (marker.color.r, marker.color.g, marker.color.b, marker.color.a) = (
+            color_rgba.r(), color_rgba.g(), color_rgba.b(), color_rgba.a())
 
     if type(shape) == Box:
         marker.type = Marker.CUBE
@@ -112,9 +110,9 @@ def to_ros_markers(shape, stamp, frame_name, X_FG, color_rgba):
     elif type(shape) in (Mesh, Convex):
         marker.type = Marker.MESH_RESOURCE
         marker.mesh_resource = f"file://{shape.filename()}"
-        # TODO(eric.cousineau): Override this based on properties? How to
-        # handle this?
-        assert color_rgba is None
+        # TODO(eric.cousineau): Is this the correct way to handle color vs.
+        # texture?
+        use_color()
         marker.mesh_use_embedded_materials = True
         marker.scale.x, marker.scale.y, marker.scale.z = 3 * [shape.scale()]
         return [marker]
@@ -148,11 +146,10 @@ def sanity_check_query_object(query_object, debug=False):
 
     inspector = query_object.inspector()
     for geometry_id in inspector.GetAllGeometryIds():
-        # TODO(eric.cousineau): Why are these overloads different from C++???
-        geometry_name = inspector.GetNameByGeometryId(geometry_id)
+        geometry_name = inspector.GetName(geometry_id)
         # TODO(eric.cousineau): Expose inspector.get_all_frames().
         frame_id = inspector.GetFrameId(geometry_id)
-        frame_name = inspector.GetNameByFrameId(frame_id)
+        frame_name = inspector.GetName(frame_id)
         geometry_ids.add(geometry_id)
         geometry_names.add(geometry_name)
         frame_ids.add(frame_id)
@@ -172,15 +169,15 @@ def to_ros_marker_array(query_object, role, stamp):
         shape = inspector.GetShape(geometry_id)
         frame_id = inspector.GetFrameId(geometry_id)
         X_FG = inspector.GetPoseInFrame(geometry_id)
-        frame_name = inspector.GetNameByFrameId(frame_id)
+        frame_name = inspector.GetName(frame_id)
         properties = get_role_properties(inspector, role, geometry_id)
         if properties is None:
             # This role is not assigned for this geometry. Skip.
             continue
         # TODO(eric): Fix this :(
-        # color_rgba = properties.GetPropertyOrDefault(
-        #     "phong", "diffuse", DEFAULT_RGBA)
         color_rgba = None
+        if properties.HasProperty("phong", "diffuse"):
+            color_rgba = properties.GetProperty("phong", "diffuse")
         marker_array.markers += to_ros_markers(
             shape, stamp, frame_name, X_FG, color_rgba)
     # Ensure unique IDs.
@@ -200,7 +197,7 @@ def to_ros_tf_message(query_object, stamp):
     frame_ids = sorted(list(frame_ids))
     tf_message = TFMessage()
     for frame_id in frame_ids:
-        frame_name = inspector.GetNameByFrameId(frame_id)
+        frame_name = inspector.GetName(frame_id)
         X_WF = query_object.X_WF(frame_id)
         transform = TransformStamped()
         transform.header.frame_id = "world"

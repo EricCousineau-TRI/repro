@@ -78,9 +78,6 @@ https://github.com/EricCousineau-TRI/repro/pull/1) - code discussion
 
 * Markers do not always show up in Rviz on the first time. I (Eric) have to
 relaunch this multiple times.
-* Colors from SceneGraph cannot be retrieved in Python (due to binding of
-`Value[Vector*]`)
-    * Captured in [drake#13162](https://github.com/RobotLocomotion/drake/issues/13162)
 * Changes in geometry are explicitly disabled here.
 
 ### Demo

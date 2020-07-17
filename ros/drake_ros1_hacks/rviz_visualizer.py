@@ -10,9 +10,10 @@ from visualization_msgs.msg import MarkerArray
 # ROS1 API.
 import rospy
 
+from pydrake.common.value import AbstractValue
 from pydrake.geometry import QueryObject, Role
 from pydrake.systems.framework import (
-    AbstractValue, LeafSystem, PublishEvent, TriggerType,
+    LeafSystem, PublishEvent, TriggerType,
 )
 
 from drake_ros1_hacks import _ros_geometry
