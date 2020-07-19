@@ -37,3 +37,34 @@ for force_sort_within_sections in [False, True]:
             diff_text = "<no diff>"
         print(indent(diff_text, "    "))
         print()
+
+r'''
+Output:
+
+force_sort_within_sections = False
+text_in_map[single_line]
+    <no diff>
+
+force_sort_within_sections = False
+text_in_map[multi_line]
+    <no diff>
+
+force_sort_within_sections = True
+text_in_map[single_line]
+    <no diff>
+
+force_sort_within_sections = True
+text_in_map[multi_line]
+    ---
+    +++
+    @@ -1,7 +1,7 @@
+     """
+     Multi-line docstring
+     """
+    -# Comment for A.
+    +# Comment for B - not A!
+     import a
+     # Comment for B - not A!
+     import b
+
+'''
