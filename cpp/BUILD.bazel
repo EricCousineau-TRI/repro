@@ -469,3 +469,9 @@ cc_binary(
     srcs = ["tpl_spec_out_of_namespace.cc"],
     copts = ["-std=c++11"],
 )
+
+cc_binary(
+    name = "tpl_spec_str",
+    srcs = ["tpl_spec_str.cc"],
+    copts = ["-std=c++17"],
+)
