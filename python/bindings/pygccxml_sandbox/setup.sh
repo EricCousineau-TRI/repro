@@ -23,6 +23,7 @@ _setup_venv() { (
     cat > ./requirements.txt <<EOF
 pygccxml
 cppyy
+cxxfilt
 
 # For ease of use.
 jupyterlab
