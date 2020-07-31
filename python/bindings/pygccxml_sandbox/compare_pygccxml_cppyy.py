@@ -8,8 +8,8 @@ Only tested on Ubuntu 18.04. Change to this directory, then run:
 import multiprocessing as mp
 import time
 
-import tqdm
 import numpy as np
+import tqdm
 
 
 def run_isolated(f, *args, **kwargs):
@@ -84,14 +84,35 @@ def try_pygccxml():
 
 
 @decorate_isolated
+def try_clang_cindex():
+    from clang.cindex import Index, Config, TranslationUnit
+    Config.set_library_file(f"/usr/lib/llvm-9/lib/libclang.so")
+
+    filename = "/tmp/clang_cindex_tmp_src.cc"
+    with open(filename, "w") as f:
+        f.write(code)
+
+    index = Index.create()
+    t_start = time.time()
+    tu = TranslationUnit.from_source(
+        filename=filename,
+        index=index,
+        args=[
+            f"-I/usr/include/eigen3",
+        ],
+    )
+    dt = time.time() - t_start
+    return dt
+
+
+@decorate_isolated
 def try_cppyy():
     import cppyy
     cppyy.add_include_path("/usr/include/eigen3")
 
-    def print_info(cls):
-        print(cls)
-        print(cls.make_std_vector)
-        print(cls.make_matrix3)
+    def access(cls):
+        cls.make_std_vector
+        cls.make_matrix3
 
     t_start = time.time()
 
@@ -99,8 +120,8 @@ def try_cppyy():
     # Access some members to try and make it even for cppyy's lazy
     # instantiation.
     ns = cppyy.gbl.ns
-    print_info(ns.ExampleClass[int])
-    print_info(ns.ExampleClass[float, float])
+    ns.ExampleClass[int]
+    ns.ExampleClass[float, float]
 
     dt = time.time() - t_start
     return dt
@@ -114,10 +135,13 @@ def benchmark(f):
 
 
 def main():
-    print("cppyy")
+    print("clang.cindex")  # 0.66s
+    benchmark(try_clang_cindex)
+
+    print("cppyy")  # 0.60s
     benchmark(try_cppyy)
 
-    print("pygccxml")
+    print("pygccxml")  # 0.98s
     benchmark(try_pygccxml)
 
 
