@@ -1,0 +1,9 @@
+autopybind11 @ git+https://gitlab.kitware.com/autopybind11/autopybind11.git@eb4e7270710cf34c2f82b15f90196f70ad0ae4ac
+ConfigArgParse==1.2.3
+numpy==1.19.1
+pkg-resources==0.0.0
+pycodestyle==2.6.0
+pygccxml==2.0.1
+PyYAML==5.3.1
+toposort==1.5
+tqdm==4.48.0
