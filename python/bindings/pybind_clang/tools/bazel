@@ -1,0 +1,9 @@
+#!/bin/bash
+set -eu
+
+workspace_dir=$(cd $(dirname ${BASH_SOURCE})/.. && pwd)
+# Ensure that the venv is setup.
+${workspace_dir}/setup.sh
+
+# Run bazel.
+exec bazel-real "$@"

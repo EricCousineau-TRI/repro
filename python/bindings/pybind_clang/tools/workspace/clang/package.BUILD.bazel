@@ -1,0 +1,11 @@
+cc_library(
+    name = "clang",
+    includes = ["include"],
+    hdrs = glob([
+        "include/clang/**",
+        "include/llvm/**",
+    ]),
+    srcs = [
+        "lib/libclang.so",
+    ],
+)

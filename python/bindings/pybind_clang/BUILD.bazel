@@ -1,0 +1,6 @@
+
+filegroup(
+    name = "venv_python",
+    srcs = ["venv/bin/python"],
+    visibility = ["//visibility:public"],
+)
