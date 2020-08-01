@@ -24,9 +24,6 @@ _setup_venv() { (
     # For ease of use.
     numpy
     tqdm
-
-    # https://gitlab.kitware.com/autopybind11/autopybind11/-/merge_requests/30
-    #git+https://gitlab.kitware.com/EricCousineau-TRI/autopybind11.git@ce11831
 EOF
 
     # Install later version of castxml.
@@ -38,6 +35,8 @@ EOF
     tar xfz ./castxml.tar.gz -C . --strip-components 1
 
     ./bin/pip install -I -r ./requirements.txt
+    # https://gitlab.kitware.com/autopybind11/autopybind11/-/merge_requests/30
+    # git+https://gitlab.kitware.com/EricCousineau-TRI/autopybind11.git@ce11831
     ./bin/pip install -I -e ~/proj/tri/repo/externals/autopybind11
 
     ./bin/pip freeze > ${_cur_dir}/freeze.txt
