@@ -1,0 +1,23 @@
+load("//tools/skylark:pybind.bzl", "pybind_py_library")
+load(
+    "@rules_python//python:defs.bzl",
+    "py_binary",
+)
+
+pybind_py_library(
+    name = "sample_py",
+    cc_so_name = "sample",
+    cc_srcs = ["sample_py.cc"],
+    cc_deps = [
+        "@clang",
+    ],
+    py_imports = ["."],
+)
+
+py_binary(
+    name = "sample_py_test",
+    srcs = ["sample_py_test.py"],
+    deps = [
+        ":sample_py",
+    ],
+)

@@ -5,7 +5,7 @@
 i.e., rules used by WORKSPACE files, not BUILD files.
 """
 
-load("@drake//tools/workspace:execute.bzl", "which")
+load("@pybind_clang//tools/workspace:execute.bzl", "which")
 
 def exec_using_which(repository_ctx, command):
     """Run the given command (a list), using the which() function in

@@ -1,5 +1,5 @@
 load(
-    "//tools/py_toolchain:interpreter_paths.bzl",
+    "//tools:py_toolchain.bzl",
     "LINUX_INTERPRETER_PATH",
 )
 load("//tools/workspace:execute.bzl", "execute_or_fail", "which")
@@ -25,10 +25,7 @@ def repository_python_info(repository_ctx):
     os_key = os_result.distribution + ":" + os_result.ubuntu_release
     versions_supported = _VERSION_SUPPORT_MATRIX[os_key]
 
-    if:
-        # This value must match the interpreter_path in
-        # @drake//tools/py_toolchain:linux_py3_runtime
-        python = repository_ctx.attr.linux_interpreter_path
+    python = repository_ctx.attr.linux_interpreter_path
 
     version = execute_or_fail(
         repository_ctx,

@@ -1,9 +1,10 @@
+package(default_visibility = ["//visibility:public"])
+
 cc_library(
     name = "clang",
     includes = ["include"],
     hdrs = glob([
-        "include/clang/**",
-        "include/llvm/**",
+        "include/**",
     ]),
     srcs = [
         "lib/libclang.so",

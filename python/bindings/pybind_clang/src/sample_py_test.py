@@ -9,7 +9,7 @@ class MyVisitor:
 def main():
     argv = []
 
-    op = mut.CommonOptionsParser op(argv)
+    op = mut.CommonOptionsParser(argv)
     tool = mut.ClangTool(op.getCompilations(), op.getSourcePathList())
     tool.run(MyVisitor)
     print("Done")
