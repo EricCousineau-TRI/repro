@@ -1,0 +1,124 @@
+ --- modulename: sample_py_test, funcname: main
+sample_py_test.py(23):     for _ in range(1):
+sample_py_test.py(24):         argv = [__file__, "pybind_clang/test/example.cc"]
+sample_py_test.py(25):         op = mut.CommonOptionsParser(argv)
+Error while trying to load a compilation database:
+Could not auto-detect compilation database for file "pybind_clang/test/example.cc"
+No compilation database found in .../sample_py_test.runfiles/pybind_clang/pybind_clang/test or any parent directory
+fixed-compilation-database: Error while opening fixed database: No such file or directory
+json-compilation-database: Error while opening JSON database: No such file or directory
+Running without flags.
+sample_py_test.py(26):         tool = mut.ClangTool(op.getCompilations(), op.getSourcePathList())
+sample_py_test.py(27):         visitor = MyVisitor()
+sample_py_test.py(28):         tool.run(visitor)
+ --- modulename: sample_py_test, funcname: set_ci
+sample_py_test.py(7):         pass
+ --- modulename: sample_py_test, funcname: visit_decl
+sample_py_test.py(10):         d.dump()
+TranslationUnitDecl 0x1c13f68 <<invalid sloc>> <invalid sloc>
+|-TypedefDecl 0x1c14840 <<invalid sloc>> <invalid sloc> implicit __int128_t '__int128'
+| `-BuiltinType 0x1c14500 '__int128'
+|-TypedefDecl 0x1c148b0 <<invalid sloc>> <invalid sloc> implicit __uint128_t 'unsigned __int128'
+| `-BuiltinType 0x1c14520 'unsigned __int128'
+|-TypedefDecl 0x1c14c18 <<invalid sloc>> <invalid sloc> implicit __NSConstantString '__NSConstantString_tag'
+| `-RecordType 0x1c149a0 '__NSConstantString_tag'
+|   `-CXXRecord 0x1c14908 '__NSConstantString_tag'
+|-TypedefDecl 0x1c14cb0 <<invalid sloc>> <invalid sloc> implicit __builtin_ms_va_list 'char *'
+| `-PointerType 0x1c14c70 'char *'
+|   `-BuiltinType 0x1c14000 'char'
+|-TypedefDecl 0x1c4f638 <<invalid sloc>> <invalid sloc> implicit __builtin_va_list '__va_list_tag [1]'
+| `-ConstantArrayType 0x1c4f5e0 '__va_list_tag [1]' 1 
+|   `-RecordType 0x1c14da0 '__va_list_tag'
+|     `-CXXRecord 0x1c14d08 '__va_list_tag'
+|-NamespaceDecl 0x1c4f690 <.../sample_py_test.runfiles/pybind_clang/pybind_clang/test/example.cc:1:1, col:43> col:11 n
+| `-NamespaceDecl 0x1c4f700 <col:15, col:41> col:25 m
+|   `-CXXRecordDecl 0x1c4f770 <col:29, col:38> col:35 class C definition
+|     |-DefinitionData pass_in_registers empty aggregate standard_layout trivially_copyable pod trivial literal has_constexpr_non_copy_move_ctor can_const_default_init
+|     | |-DefaultConstructor exists trivial constexpr needs_implicit defaulted_is_constexpr
+|     | |-CopyConstructor simple trivial has_const_param needs_implicit implicit_has_const_param
+|     | |-MoveConstructor exists simple trivial needs_implicit
+|     | |-CopyAssignment trivial has_const_param needs_implicit implicit_has_const_param
+|     | |-MoveAssignment exists simple trivial needs_implicit
+|     | `-Destructor simple irrelevant trivial needs_implicit
+|     `-CXXRecordDecl 0x1c4f888 <col:29, col:35> col:35 implicit class C
+`-FunctionDecl 0x1c4f980 <line:3:1, line:5:1> line:3:5 main 'int ()'
+  `-CompoundStmt 0x1c4fac0 <col:12, line:5:1>
+    `-ReturnStmt 0x1c4fab0 <line:4:3, col:10>
+      `-IntegerLiteral 0x1c4fa90 <col:10> 'int' 0
+sample_py_test.py(11):         print(d.getDeclKindName(), type(d))
+TranslationUnit <class 'pybind_clang.sample.Decl'>
+sample_py_test.py(12):         if isinstance(d, mut.NamedDecl):
+sample_py_test.py(14):         print("---")
+---
+sample_py_test.py(15):         return True
+ --- modulename: sample_py_test, funcname: visit_decl
+sample_py_test.py(10):         d.dump()
+NamespaceDecl 0x1c4f690 <.../sample_py_test.runfiles/pybind_clang/pybind_clang/test/example.cc:1:1, col:43> col:11 n
+`-NamespaceDecl 0x1c4f700 <col:15, col:41> col:25 m
+  `-CXXRecordDecl 0x1c4f770 <col:29, col:38> col:35 class C definition
+    |-DefinitionData pass_in_registers empty aggregate standard_layout trivially_copyable pod trivial literal has_constexpr_non_copy_move_ctor can_const_default_init
+    | |-DefaultConstructor exists trivial constexpr needs_implicit defaulted_is_constexpr
+    | |-CopyConstructor simple trivial has_const_param needs_implicit implicit_has_const_param
+    | |-MoveConstructor exists simple trivial needs_implicit
+    | |-CopyAssignment trivial has_const_param needs_implicit implicit_has_const_param
+    | |-MoveAssignment exists simple trivial needs_implicit
+    | `-Destructor simple irrelevant trivial needs_implicit
+    `-CXXRecordDecl 0x1c4f888 <col:29, col:35> col:35 implicit class C
+sample_py_test.py(11):         print(d.getDeclKindName(), type(d))
+Namespace <class 'pybind_clang.sample.Decl'>
+sample_py_test.py(12):         if isinstance(d, mut.NamedDecl):
+sample_py_test.py(14):         print("---")
+---
+sample_py_test.py(15):         return True
+ --- modulename: sample_py_test, funcname: visit_decl
+sample_py_test.py(10):         d.dump()
+NamespaceDecl 0x1c4f700 <.../sample_py_test.runfiles/pybind_clang/pybind_clang/test/example.cc:1:15, col:41> col:25 m
+`-CXXRecordDecl 0x1c4f770 <col:29, col:38> col:35 class C definition
+  |-DefinitionData pass_in_registers empty aggregate standard_layout trivially_copyable pod trivial literal has_constexpr_non_copy_move_ctor can_const_default_init
+  | |-DefaultConstructor exists trivial constexpr needs_implicit defaulted_is_constexpr
+  | |-CopyConstructor simple trivial has_const_param needs_implicit implicit_has_const_param
+  | |-MoveConstructor exists simple trivial needs_implicit
+  | |-CopyAssignment trivial has_const_param needs_implicit implicit_has_const_param
+  | |-MoveAssignment exists simple trivial needs_implicit
+  | `-Destructor simple irrelevant trivial needs_implicit
+  `-CXXRecordDecl 0x1c4f888 <col:29, col:35> col:35 implicit class C
+sample_py_test.py(11):         print(d.getDeclKindName(), type(d))
+Namespace <class 'pybind_clang.sample.Decl'>
+sample_py_test.py(12):         if isinstance(d, mut.NamedDecl):
+sample_py_test.py(14):         print("---")
+---
+sample_py_test.py(15):         return True
+ --- modulename: sample_py_test, funcname: visit_decl
+sample_py_test.py(10):         d.dump()
+CXXRecordDecl 0x1c4f770 <.../sample_py_test.runfiles/pybind_clang/pybind_clang/test/example.cc:1:29, col:38> col:35 class C definition
+|-DefinitionData pass_in_registers empty aggregate standard_layout trivially_copyable pod trivial literal has_constexpr_non_copy_move_ctor can_const_default_init
+| |-DefaultConstructor exists trivial constexpr needs_implicit defaulted_is_constexpr
+| |-CopyConstructor simple trivial has_const_param needs_implicit implicit_has_const_param
+| |-MoveConstructor exists simple trivial needs_implicit
+| |-CopyAssignment trivial has_const_param needs_implicit implicit_has_const_param
+| |-MoveAssignment exists simple trivial needs_implicit
+| `-Destructor simple irrelevant trivial needs_implicit
+`-CXXRecordDecl 0x1c4f888 <col:29, col:35> col:35 implicit class C
+sample_py_test.py(11):         print(d.getDeclKindName(), type(d))
+CXXRecord <class 'pybind_clang.sample.CXXRecordDecl'>
+sample_py_test.py(12):         if isinstance(d, mut.NamedDecl):
+sample_py_test.py(13):             print(d.getQualifiedNameAsString())
+n::m::C
+sample_py_test.py(14):         print("---")
+---
+sample_py_test.py(15):         return True
+ --- modulename: sample_py_test, funcname: visit_decl
+sample_py_test.py(10):         d.dump()
+FunctionDecl 0x1c4f980 <.../sample_py_test.runfiles/pybind_clang/pybind_clang/test/example.cc:3:1, line:5:1> line:3:5 main 'int ()'
+`-CompoundStmt 0x1c4fac0 <col:12, line:5:1>
+  `-ReturnStmt 0x1c4fab0 <line:4:3, col:10>
+    `-IntegerLiteral 0x1c4fa90 <col:10> 'int' 0
+sample_py_test.py(11):         print(d.getDeclKindName(), type(d))
+Function <class 'pybind_clang.sample.Decl'>
+sample_py_test.py(12):         if isinstance(d, mut.NamedDecl):
+sample_py_test.py(14):         print("---")
+---
+sample_py_test.py(15):         return True
+sample_py_test.py(23):     for _ in range(1):
+sample_py_test.py(29):     print("Done")
+Done

@@ -4,6 +4,18 @@ load(
     "py_binary",
 )
 
+py_library(
+    name = "module_py",
+    srcs = ["__init__.py"],
+    imports = [".."],
+)
+
+py_library(
+    name = "execution_py",
+    srcs = ["execution.py"],
+    deps = [":module_py"],
+)
+
 pybind_py_library(
     name = "sample_py",
     cc_so_name = "sample",
@@ -11,16 +23,18 @@ pybind_py_library(
     cc_deps = [
         "@clang",
     ],
-    py_imports = ["."],
+    py_deps = [":module_py"],
 )
 
 py_binary(
     name = "sample_py_test",
-    srcs = ["sample_py_test.py"],
+    main = "test/sample_py_test.py",
+    srcs = ["test/sample_py_test.py"],
     data = [
-        "example.cc",
+        "test/example.cc",
     ],
     deps = [
         ":sample_py",
+        ":execution_py",
     ],
 )
