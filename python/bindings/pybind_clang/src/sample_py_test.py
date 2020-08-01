@@ -11,6 +11,7 @@ class MyVisitor:
         print(d.getDeclKindName())
         if isinstance(d, mut.NamedDecl):
             print(d.getQualifiedNameAsString())
+        print("---")
         return True
 
 
@@ -29,16 +30,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-"""
-Output:
-
-Error while trying to load a compilation database:
-Could not auto-detect compilation database for file "src/example.cc"
-No compilation database found in .../sample_py_test.runfiles/pybind_clang/src or any parent directory
-fixed-compilation-database: Error while opening fixed database: No such file or directory
-json-compilation-database: Error while opening JSON database: No such file or directory
-Running without flags.
-n::m::C
-Done
-"""
