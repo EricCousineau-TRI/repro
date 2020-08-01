@@ -1,4 +1,4 @@
-autopybind11 @ git+https://gitlab.kitware.com/autopybind11/autopybind11.git@eb4e7270710cf34c2f82b15f90196f70ad0ae4ac
+autopybind11 @ git+https://gitlab.kitware.com/EricCousineau-TRI/autopybind11.git@ce11831206d341bce85552b3a73061351d072e4f
 ConfigArgParse==1.2.3
 numpy==1.19.1
 pkg-resources==0.0.0

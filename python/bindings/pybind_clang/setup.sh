@@ -6,7 +6,7 @@ _venv_dir=${_cur_dir}/venv
 _setup_venv() { (
     set -eu
 
-    completion_token="2020-07-31.2"
+    completion_token="2020-07-31.4"
     completion_file=${_venv_dir}/.completion-token
 
     cd ${_cur_dir}
@@ -25,7 +25,8 @@ _setup_venv() { (
     numpy
     tqdm
 
-    git+https://gitlab.kitware.com/autopybind11/autopybind11.git@eb4e727
+    # https://gitlab.kitware.com/autopybind11/autopybind11/-/merge_requests/30
+    git+https://gitlab.kitware.com/EricCousineau-TRI/autopybind11.git@ce11831
 EOF
 
     # Install later version of castxml.
@@ -36,7 +37,7 @@ EOF
     fi
     tar xfz ./castxml.tar.gz -C . --strip-components 1
 
-    ./bin/pip install -r ./requirements.txt
+    ./bin/pip install -I -r ./requirements.txt
 
     ./bin/pip freeze > ${_cur_dir}/freeze.txt
 
