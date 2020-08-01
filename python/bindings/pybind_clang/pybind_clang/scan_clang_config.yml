@@ -1,5 +1,7 @@
 files:
 - clang/AST/ASTContext.h
+- clang/AST/DeclCXX.h
+- clang/Frontend/CompilerInstance.h
 
 clang:
 
