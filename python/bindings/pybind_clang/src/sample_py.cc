@@ -20,19 +20,73 @@ using py_rvp = py::return_value_policy;
 
 static llvm::cl::OptionCategory TestCategory("Test");
 
+/*
+Contract:
+
+class MyClass:
+    def __init__(...): ...
+
+    def set_ci(self, ci): ...
+
+    def visit_decl(self, decl): ...
+
+    def visit_attr(self, attr): ...
+
+    def visit_stmt(self, stmt): ...
+
+    def visit_expr(self, stmt): ...
+*/
+
 // https://clang.llvm.org/docs/RAVFrontendAction.html
 // https://clang.llvm.org/docs/LibTooling.html#putting-it-together-the-first-tool
 
 class PyASTVisitor : public clang::RecursiveASTVisitor<PyASTVisitor> {
  public:
-  PyASTVisitor(py::object h) : h_(h) {}
- 
-  bool VisitCXXRecordDecl(clang::CXXRecordDecl* Declaration) {
-    return h_(Declaration).cast<bool>();
+  PyASTVisitor(py::object h) : h_(h) {
+    visit_decl_ = py::getattr(h_, "visit_decl", py::none());
+    visit_attr_ = py::getattr(h_, "visit_attr", py::none());
+    visit_stmt_ = py::getattr(h_, "visit_stmt", py::none());
+    visit_expr_ = py::getattr(h_, "visit_expr", py::none());
+  }
+
+  bool VisitDecl(clang::Decl* d) {
+    if (!visit_decl_.is(py::none())) {
+      return h_.attr("visit_decl")(d).cast<bool>();
+    } else {
+      return true;
+    }
+  }
+
+  bool VisitAttr(clang::Attr* d) {
+    if (!visit_attr_.is(py::none())) {
+      return h_.attr("visit_attr")(d).cast<bool>();
+    } else {
+      return true;
+    }
+  }
+
+  bool VisitStmt(clang::Stmt* d) {
+    if (!visit_stmt_.is(py::none())) {
+      return h_.attr("visit_decl")(d).cast<bool>();
+    } else {
+      return true;
+    }
+  }
+
+  bool VisitDecl(clang::Expr* d) {
+    if (!visit_expr_.is(py::none())) {
+      return h_.attr("visit_expr")(d).cast<bool>();
+    } else {
+      return true;
+    }
   }
 
  private:
   py::object h_;
+  py::object visit_decl_;
+  py::object visit_attr_;
+  py::object visit_stmt_;
+  py::object visit_expr_;
 };
 
 class PyASTConsumer : public clang::ASTConsumer {
@@ -52,8 +106,9 @@ class PyASTFrontendAction : public clang::ASTFrontendAction {
   PyASTFrontendAction(py::object h) : h_(h) {}
 
   virtual std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
-      clang::CompilerInstance& /* ci */,
+      clang::CompilerInstance& ci,
       clang::StringRef /* file */) {
+    h_.attr("set_ci")(&ci);
     return std::make_unique<PyASTConsumer>(h_);
   }
  private:
@@ -113,9 +168,30 @@ PYBIND11_MODULE(sample, m) {
   }
 
   {
-    using Class = clang::CXXRecordDecl;
-    py::class_<Class>(m, "CXXRecordDecl")
+    using Class = clang::ASTContext;
+    py::class_<Class>(m, "ASTContext");
+  }
+
+  {
+    using Class = clang::CompilerInstance;
+    py::class_<Class>(m, "CompilerInstance")
+        .def("getASTContext", &Class::getASTContext, py_rvp::reference);
+  }
+
+  {
+    using Class = clang::Decl;
+    py::class_<Class, std::unique_ptr<Class, py::nodelete>>(m, "Decl")
+        .def("dump", [](const Class& self) { self.dump(); })
+        .def("getDeclKindName", &Class::getDeclKindName);
+  }
+  {
+    using Class = clang::NamedDecl;
+    py::class_<Class, clang::Decl>(m, "NamedDecl")
       .def("getQualifiedNameAsString", &Class::getQualifiedNameAsString);
+  }
+  {
+    using Class = clang::CXXRecordDecl;
+    py::class_<Class, clang::NamedDecl>(m, "CXXRecordDecl");
   }
 }
 
