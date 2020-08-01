@@ -20,21 +20,24 @@ using py_rvp = py::return_value_policy;
 
 static llvm::cl::OptionCategory TestCategory("Test");
 
-
 // https://clang.llvm.org/docs/RAVFrontendAction.html
 // https://clang.llvm.org/docs/LibTooling.html#putting-it-together-the-first-tool
 
 class PyASTVisitor : public clang::RecursiveASTVisitor<PyASTVisitor> {
  public:
-  PyASTVisitor(py::object cls) : cls_(cls) {}
+  PyASTVisitor(py::object h) : h_(h) {}
  
+  bool VisitCXXRecordDecl(clang::CXXRecordDecl* Declaration) {
+    return h_(Declaration).cast<bool>();
+  }
+
  private:
-  py::object cls_;
+  py::object h_;
 };
 
 class PyASTConsumer : public clang::ASTConsumer {
  public:
-  PyASTConsumer(py::object cls) : visitor_(cls) {}
+  PyASTConsumer(py::object h) : visitor_(h) {}
 
   void HandleTranslationUnit(clang::ASTContext &Context) override {
     visitor_.TraverseDecl(Context.getTranslationUnitDecl());
@@ -46,27 +49,27 @@ class PyASTConsumer : public clang::ASTConsumer {
 
 class PyASTFrontendAction : public clang::ASTFrontendAction {
  public:
-  PyASTFrontendAction(py::object cls) : cls_(cls) {}
+  PyASTFrontendAction(py::object h) : h_(h) {}
 
   virtual std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
       clang::CompilerInstance& /* ci */,
       clang::StringRef /* file */) {
-    return std::make_unique<PyASTConsumer>(cls_);
+    return std::make_unique<PyASTConsumer>(h_);
   }
  private:
-  py::object cls_;
+  py::object h_;
 };
 
 class PyASTFrontendActionFactory
     : public clang::tooling::FrontendActionFactory {
   public:
-    PyASTFrontendActionFactory(py::object cls) : cls_(cls) {}
+    PyASTFrontendActionFactory(py::object h) : h_(h) {}
 
     clang::FrontendAction* create() override {
-      return new PyASTFrontendAction(cls_);
+      return new PyASTFrontendAction(h_);
     }
  private:
-  py::object cls_;
+  py::object h_;
 };
 
 PYBIND11_MODULE(sample, m) {
@@ -104,9 +107,15 @@ PYBIND11_MODULE(sample, m) {
             return new Class(db, paths);
           }))
     .def("run",
-        [](Class& self, py::object cls) {
-          return self.run(new PyASTFrontendActionFactory(cls));
+        [](Class& self, py::object h) {
+          return self.run(new PyASTFrontendActionFactory(h));
         });
+  }
+
+  {
+    using Class = clang::CXXRecordDecl;
+    py::class_<Class>(m, "CXXRecordDecl")
+      .def("getQualifiedNameAsString", &Class::getQualifiedNameAsString);
   }
 }
 
