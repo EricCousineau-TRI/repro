@@ -1,0 +1,12 @@
+files:
+- clang/AST/ASTContext.h
+
+clang:
+
+  classes:
+    CompilerInstance: {}
+    ASTContext: {}
+
+    Decl: {}
+    NamedDecl: {}
+    CXXRecordDecl: {}    
