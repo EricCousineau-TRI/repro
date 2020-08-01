@@ -17,6 +17,9 @@ pybind_py_library(
 py_binary(
     name = "sample_py_test",
     srcs = ["sample_py_test.py"],
+    data = [
+        "example.cc",
+    ],
     deps = [
         ":sample_py",
     ],

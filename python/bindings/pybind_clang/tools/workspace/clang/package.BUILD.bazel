@@ -7,6 +7,6 @@ cc_library(
         "include/**",
     ]),
     srcs = [
-        "lib/libclang.so",
+        "lib/libclang-cpp.so",
     ],
 )

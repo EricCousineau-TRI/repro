@@ -7,8 +7,7 @@ class MyVisitor:
 
 
 def main():
-    argv = []
-
+    argv = [__file__, "src/example.cc"]
     op = mut.CommonOptionsParser(argv)
     tool = mut.ClangTool(op.getCompilations(), op.getSourcePathList())
     tool.run(MyVisitor)
