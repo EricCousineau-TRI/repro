@@ -16,6 +16,7 @@ namespace sample {
 namespace {
 
 namespace py = pybind11;
+using py_rvp = py::return_value_policy;
 
 static llvm::cl::OptionCategory TestCategory("Test");
 
@@ -23,7 +24,7 @@ static llvm::cl::OptionCategory TestCategory("Test");
 // https://clang.llvm.org/docs/RAVFrontendAction.html
 // https://clang.llvm.org/docs/LibTooling.html#putting-it-together-the-first-tool
 
-class PyASTVisitor : public clang::RecursiveASTVisitor<Visitor> {
+class PyASTVisitor : public clang::RecursiveASTVisitor<PyASTVisitor> {
  public:
   PyASTVisitor(py::object cls) : cls_(cls) {}
  
@@ -33,19 +34,19 @@ class PyASTVisitor : public clang::RecursiveASTVisitor<Visitor> {
 
 class PyASTConsumer : public clang::ASTConsumer {
  public:
-  PyASTConsumer(py::object cls) : cls_(cls) {}
+  PyASTConsumer(py::object cls) : visitor_(cls) {}
 
-  void HandleTranslationUnit(clang::ASTContext &Context) const {
-    Visitor.TraverseDecl(Context.getTranslationUnitDecl());
+  void HandleTranslationUnit(clang::ASTContext &Context) override {
+    visitor_.TraverseDecl(Context.getTranslationUnitDecl());
   }
 
  public:
-  py::object cls_;
+  PyASTVisitor visitor_;
 };
 
 class PyASTFrontendAction : public clang::ASTFrontendAction {
  public:
-  PyASTFrontendAction(py::object cls) : cls_(cls)
+  PyASTFrontendAction(py::object cls) : cls_(cls) {}
 
   virtual std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
       clang::CompilerInstance& /* ci */,
@@ -56,12 +57,13 @@ class PyASTFrontendAction : public clang::ASTFrontendAction {
   py::object cls_;
 };
 
-class PyASTFrontendActionFactory : public clang::FrontendActionFactory {
+class PyASTFrontendActionFactory
+    : public clang::tooling::FrontendActionFactory {
   public:
     PyASTFrontendActionFactory(py::object cls) : cls_(cls) {}
 
-    std::unique_ptr<clang::FrontendAction> create() override {
-      return std::make_unique<PyASTFrontendAction>(cls_);
+    clang::FrontendAction* create() override {
+      return new PyASTFrontendAction(cls_);
     }
  private:
   py::object cls_;
@@ -85,7 +87,7 @@ PYBIND11_MODULE(sample, m) {
           }
           return new Class(c_argc, c_argv, TestCategory);
         }))
-      .def("getCompilations", &Class::getCompilations)
+      .def("getCompilations", &Class::getCompilations, py_rvp::reference)
       .def("getSourcePathList", &Class::getSourcePathList);
   }
   {
@@ -103,7 +105,7 @@ PYBIND11_MODULE(sample, m) {
           }))
     .def("run",
         [](Class& self, py::object cls) {
-          return self.run(std::make_unique<PyASTFrontendActionFactory>(cls));
+          return self.run(new PyASTFrontendActionFactory(cls));
         });
   }
 }
