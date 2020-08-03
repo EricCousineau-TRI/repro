@@ -1,0 +1,8 @@
+files:
+- drake/math/rotation_matrix.h
+
+drake:
+  math:
+    classes:
+      RotationMatrix:
+        inst: [double, drake::AutoDiffXd, drake::symbolic::Expression]

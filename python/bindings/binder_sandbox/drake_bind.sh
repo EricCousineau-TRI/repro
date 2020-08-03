@@ -10,7 +10,7 @@ ${binder_bin} \
     --root-module sample \
     --prefix /tmp/binder \
     --bind drake \
-    ./headers.h \
+    ./drake_headers.h \
     -- \
     --std=c++17 \
     -x c++ \
