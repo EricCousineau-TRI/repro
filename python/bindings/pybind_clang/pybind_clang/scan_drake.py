@@ -40,6 +40,7 @@ def main():
         "--module_name", "pydrake",
         "--castxml-path", castxml_path,
         "--input_response", rsp_path,
+        "--start_with_declarations", "drake",
     ]
 
     options = parse_options(argv=argv)
