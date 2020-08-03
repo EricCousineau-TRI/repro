@@ -8,7 +8,7 @@ public:
     T value() const;
 };
 
-extern template MyClass<int>;
-extern template MyClass<float>;
+extern template class MyClass<int>;
+extern template class MyClass<float>;
 
 }
