@@ -580,3 +580,11 @@
 // #include "drake/systems/trajectory_optimization/integration_constraint.h"
 // #include "drake/systems/trajectory_optimization/multiple_shooting.h"
 // #include "drake/systems/trajectory_optimization/sequential_expression_manager.h"
+
+namespace drake::math {
+
+const int blerg = sizeof(RotationMatrix<double>);
+// DRAKE_DEFINE_CLASS_TEMPLATE_INSTANTIATIONS_ON_DEFAULT_SCALARS(
+//     drake::math::RotationMatrix);
+
+}  // namespace drake::math

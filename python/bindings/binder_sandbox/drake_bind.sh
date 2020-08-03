@@ -4,7 +4,7 @@ set -eux -o pipefail
 cd $(dirname ${BASH_SOURCE})
 
 drake_path=~/venv/drake
-binder_bin=~/devel/binder/build/llvm-6.0.1/build_6.0.1.linux.eacousineau-workstation.release/bin/binder
+binder_bin=~/devel/binder/build/source/binder
 
 ${binder_bin} \
     --root-module sample \
