@@ -3,13 +3,14 @@ set -eux -o pipefail
 
 cd $(dirname ${BASH_SOURCE})
 
-drake_path=~/tmp/venv/drake
-binder_bin=~/devel/binder/build/source/binder
+drake_path=~/venv/drake
+binder_bin=~/devel/binder/build/llvm-6.0.1/build_6.0.1.linux.eacousineau-workstation.release/bin/binder
 
 ${binder_bin} \
     --root-module sample \
-    --prefix /tmp/binder \
-    --bind drake \
+    --prefix /tmp/binder/ \
+    --annotate-includes \
+    --config ./drake_bind_config.cfg \
     ./drake_headers.h \
     -- \
     --std=c++17 \

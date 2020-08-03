@@ -10,7 +10,7 @@ from autopybind11.__main__ import BindingsGenerator, parse_options
 def main():
     os.chdir(dirname(__file__))
 
-    drake_path = expanduser("~/tmp/venv/drake")
+    drake_path = expanduser("~/venv/drake")
 
     tmp_dir = "/tmp/autopybind11_drake"
     input_dir = join(tmp_dir, "input")
