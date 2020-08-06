@@ -5,4 +5,8 @@ drake:
   geometry:
     render:
       classes:
-        RenderEngine: {}
+        ClippingRange: {}
+        RenderCameraCore: {}
+        ColorRenderCamera: {}
+        DepthRange: {}
+        DepthRenderCamera: {}
