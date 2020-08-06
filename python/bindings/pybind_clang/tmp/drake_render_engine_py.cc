@@ -60,7 +60,7 @@ class PyRenderEngine : public RenderEngine {
   }
 
   void SetDefaultLightPosition(
-      Eigen::Matrix<double, 3, 1, 0, 3, 1> const& X_DL) override {
+      Vector3d const& X_DL) override {
     PYBIND11_OVERLOAD(void, Base, SetDefaultLightPosition, X_DL);
   }
 
@@ -81,80 +81,60 @@ class PyRenderEngine : public RenderEngine {
 
 namespace py = pybind11;
 void auto_bind_RenderEngine(py::module& m) {
-  py::class_<RenderEngine, PyRenderEngine>(m, "RenderEngine")
+  using Class = RenderEngine;
+  py::class_<Class, PyRenderEngine>(m, "RenderEngine")
       .def(py::init<>())
       .def("Clone",
-          static_cast<::std::unique_ptr<RenderEngine> (
-              RenderEngine::*)() const>(
-              &RenderEngine::Clone))
+          static_cast<::std::unique_ptr<Class> (
+              Class::*)() const>(
+              &Class::Clone))
       .def("RegisterVisual",
-          static_cast<bool (RenderEngine::*)(
+          static_cast<bool (Class::*)(
               GeometryId, Shape const&,
               PerceptionProperties const&,
               RigidTransformd const&, bool)>(
-              &RenderEngine::RegisterVisual),
+              &Class::RegisterVisual),
           py::arg("id"), py::arg("shape"), py::arg("properties"),
           py::arg("X_WG"), py::arg("needs_updates") = true)
       .def("RemoveGeometry",
-          static_cast<bool (RenderEngine::*)(
+          static_cast<bool (Class::*)(
               GeometryId)>(
-              &RenderEngine::RemoveGeometry),
+              &Class::RemoveGeometry),
           py::arg("id"))
       .def("has_geometry",
-          static_cast<bool (RenderEngine::*)(
+          static_cast<bool (Class::*)(
               GeometryId) const>(
-              &RenderEngine::has_geometry),
+              &Class::has_geometry),
           py::arg("id"))
       .def("UpdateViewpoint",
-          static_cast<void (RenderEngine::*)(
+          static_cast<void (Class::*)(
               RigidTransformd const&)>(
-              &RenderEngine::UpdateViewpoint),
+              &Class::UpdateViewpoint),
           py::arg("X_WR"))
       .def("RenderColorImage",
-          static_cast<void (RenderEngine::*)(
-              CameraProperties const&, bool,
-              ImageRgba8U*) const>(
-              &RenderEngine::RenderColorImage),
-          py::arg("camera"), py::arg("show_window"), py::arg("color_image_out"))
-      .def("RenderDepthImage",
-          static_cast<void (RenderEngine::*)(
-              DepthCameraProperties const&,
-              ImageDepth32F*) const>(
-              &RenderEngine::RenderDepthImage),
-          py::arg("camera"), py::arg("depth_image_out"))
-      .def("RenderLabelImage",
-          static_cast<void (RenderEngine::*)(
-              CameraProperties const&, bool,
-              ImageLabel16I*) const>(
-              &RenderEngine::RenderLabelImage),
-          py::arg("camera"), py::arg("show_window"), py::arg("label_image_out"))
-      .def("RenderColorImage",
-          static_cast<void (RenderEngine::*)(
+          static_cast<void (Class::*)(
               ColorRenderCamera const&,
               ImageRgba8U*) const>(
-              &RenderEngine::RenderColorImage),
+              &Class::RenderColorImage),
           py::arg("camera"), py::arg("color_image_out"))
       .def("RenderDepthImage",
-          static_cast<void (RenderEngine::*)(
+          static_cast<void (Class::*)(
               DepthRenderCamera const&,
               ImageDepth32F*) const>(
-              &RenderEngine::RenderDepthImage),
+              &Class::RenderDepthImage),
           py::arg("camera"), py::arg("depth_image_out"))
       .def("RenderLabelImage",
-          static_cast<void (RenderEngine::*)(
+          static_cast<void (Class::*)(
               ColorRenderCamera const&,
               ImageLabel16I*) const>(
-              &RenderEngine::RenderLabelImage),
+              &Class::RenderLabelImage),
           py::arg("camera"), py::arg("label_image_out"))
       .def("default_render_label",
           static_cast<RenderLabel (
-              RenderEngine::*)() const>(
-              &RenderEngine::default_render_label))
-      .def_static("DRAKE_COPYABLE_DEMAND_COPY_CAN_COMPILE",
-          static_cast<void (*)()>(
-              &PyRenderEngine::DRAKE_COPYABLE_DEMAND_COPY_CAN_COMPILE))
+              Class::*)() const>(
+              &Class::default_render_label))
       .def("DoRegisterVisual",
-          static_cast<bool (RenderEngine::*)(
+          static_cast<bool (Class::*)(
               GeometryId, Shape const&,
               PerceptionProperties const&,
               RigidTransformd const&)>(
@@ -162,41 +142,41 @@ void auto_bind_RenderEngine(py::module& m) {
           py::arg("id"), py::arg("shape"), py::arg("properties"),
           py::arg("X_WG"))
       .def("DoUpdateVisualPose",
-          static_cast<void (RenderEngine::*)(
+          static_cast<void (Class::*)(
               GeometryId,
               RigidTransformd const&)>(
               &PyRenderEngine::DoUpdateVisualPose),
           py::arg("id"), py::arg("X_WG"))
       .def("DoRemoveGeometry",
-          static_cast<bool (RenderEngine::*)(
+          static_cast<bool (Class::*)(
               GeometryId)>(
               &PyRenderEngine::DoRemoveGeometry),
           py::arg("id"))
       .def("DoClone",
-          static_cast<::std::unique_ptr<RenderEngine> (
-              RenderEngine::*)() const>(
+          static_cast<::std::unique_ptr<Class> (
+              Class::*)() const>(
               &PyRenderEngine::DoClone))
       .def("DoRenderColorImage",
-          static_cast<void (RenderEngine::*)(
+          static_cast<void (Class::*)(
               ColorRenderCamera const&,
               ImageRgba8U*) const>(
               &PyRenderEngine::DoRenderColorImage),
           py::arg("camera"), py::arg("color_image_out"))
       .def("DoRenderDepthImage",
-          static_cast<void (RenderEngine::*)(
+          static_cast<void (Class::*)(
               DepthRenderCamera const&,
               ImageDepth32F*) const>(
               &PyRenderEngine::DoRenderDepthImage),
           py::arg("camera"), py::arg("depth_image_out"))
       .def("DoRenderLabelImage",
-          static_cast<void (RenderEngine::*)(
+          static_cast<void (Class::*)(
               ColorRenderCamera const&,
               ImageLabel16I*) const>(
               &PyRenderEngine::DoRenderLabelImage),
           py::arg("camera"), py::arg("label_image_out"))
       .def("GetRenderLabelOrThrow",
           static_cast<RenderLabel (
-              RenderEngine::*)(
+              Class::*)(
               PerceptionProperties const&) const>(
               &PyRenderEngine::GetRenderLabelOrThrow),
           py::arg("properties"))
@@ -216,8 +196,8 @@ void auto_bind_RenderEngine(py::module& m) {
               &PyRenderEngine::GetColorDFromLabel),
           py::arg("label"))
       .def("SetDefaultLightPosition",
-          static_cast<void (RenderEngine::*)(
-              ::Eigen::Matrix<double, 3, 1, 0, 3, 1> const&)>(
+          static_cast<void (Class::*)(
+              Vector3d const&)>(
               &PyRenderEngine::SetDefaultLightPosition),
           py::arg("X_DL"))
       .def_static("ThrowIfInvalid",
@@ -234,7 +214,5 @@ void auto_bind_RenderEngine(py::module& m) {
           static_cast<void (*)(CameraInfo const&,
               Image<PixelType::kLabel16I> const*,
               char const*)>(&PyRenderEngine::ThrowIfInvalid),
-          py::arg("intrinsics"), py::arg("image"), py::arg("image_type"))
-
-      ;
+          py::arg("intrinsics"), py::arg("image"), py::arg("image_type"));
 }
