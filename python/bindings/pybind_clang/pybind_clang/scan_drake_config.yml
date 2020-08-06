@@ -1,8 +1,8 @@
 files:
-- drake/math/rotation_matrix.h
+- drake/geometry/render/render_engine.h
 
 drake:
-  math:
-    classes:
-      RotationMatrix:
-        inst: [double, drake::AutoDiffXd, drake::symbolic::Expression]
+  geometry:
+    render:
+      classes:
+        RenderEngine: {}
