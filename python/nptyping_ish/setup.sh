@@ -6,7 +6,7 @@ _venv_dir=${_cur_dir}/venv
 _setup_venv() { (
     set -eu
 
-    completion_token="2020-08-11"
+    completion_token="2020-08-14"
     completion_file=${_venv_dir}/.completion-token
 
     # Only install if it hasn't been setup before.

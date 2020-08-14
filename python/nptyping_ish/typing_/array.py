@@ -1,5 +1,6 @@
 """
-Provides an excessively minimal version of `nptyping`.
+Provides an excessively minimal version of `nptyping`, but extends for use with
+dataclasses, as well as pytorch.
 
 Notable differences between this module:
 - These types are not metaclasses.
@@ -19,113 +20,24 @@ Should also monitor alternatives:
 - https://github.com/ramonhagenaars/nptyping/issues/27
 """
 
-from typing import Any, Callable, Tuple, Type, Union
+import dataclasses as dc
+import sys
+from typing import Any, Callable, Type, TypeVar
 
 import numpy as np
+import torch
+from torch.utils.data.dataloader import default_collate
 
-try:
-    import torch
-
-    _has_torch = True
-except ModuleNotFoundError:
-    _has_torch = False
-
-
-def get_typing_name(x: Any):
-    """
-    Gets the name for a class or class-like object.
-
-    For brevity, this will strip off module names for known class-like objects
-    (e.g. torch dtypes, or typing objects).
-    """
-    if isinstance(x, type):
-        return x.__name__
-    elif x is Ellipsis:
-        return "..."
-    else:
-        s = repr(x)
-        typing_prefix = "typing."
-        torch_prefix = "torch."
-        if s.startswith(typing_prefix):
-            return s[len(typing_prefix) :]
-        elif s.startswith(torch_prefix):
-            return s[len(torch_prefix) :]
-        else:
-            return s
-
-
-class _GenericInstantiation:
-    """Indicates a simple instantiation of a Generic."""
-
-    def __init__(self, generic, param):
-        # TODO(eric.cousineau): Rename to `__origin__`?
-        self._generic = generic
-        self._param = param
-        param_str = ", ".join(_get_name(x) for x in param)
-        self._full_name = f"{generic._name}[{param_str}]"
-
-    @property
-    def param(self):
-        """Parameters for given instantiation."""
-        # TODO(eric): Rename to `__args__`?
-        return self._param
-
-    def __repr__(self):
-        return self._full_name
-
-
-class Generic:
-    """
-    Provides a way to denote generic classes and cache "instantiations".
-
-    The ``typing`` module in Python provides generics like this; however, the
-    API does not admit easy inspection (whyeee????!!!), at least in Python 3.6
-    and 3.8, thus we reinvent a smaller wheel.
-    """
-
-    def __init__(self, name: str, *, num_param: Union[Tuple[int], int]):
-        self._name = name
-        if not isinstance(num_param, tuple):
-            num_param = (num_param,)
-        self._num_param = num_param
-        self._instantiations = {}
-
-    def _resolve_param(self, param: Tuple):
-        """
-        Resolves parameters. Override this in subclasses.
-        """
-        if len(param) in self._num_param:
-            raise RuntimeError(
-                f"{self} can only accept {self._num_param} parameter(s)"
-            )
-        return param
-
-    def __getitem__(self, param: Union[Any, Tuple]):
-        """Creates or retrieves a cached instantiation."""
-        if not isinstance(param, tuple):
-            param = (param,)
-        param = self._resolve_param(param)
-        instantiation = self._instantiations.get(param)
-        if instantiation is None:
-            instantiation = self._make_instantiation(param)
-            self._instantiations[param] = instantiation
-        return instantiation
-
-    def _make_instantiation(self, param):
-        return _GenericInstantiation(self, param)
-
-    def is_instantiation(self, instantiation):
-        return instantiation in self._instantiations.values()
-
-    def __repr__(self):
-        return f"<{type(self).__name__} {self._name}>"
-
-
-# Type for FieldHint to indicate structure for list/dict.
-# N.B. See my (Eric's) complaints in `Generic` for why this isn't using
-# `typing.List`, `typing.Dict`.
-List = Generic("List", num_param=1)
-Dict = Generic("Dict", num_param=2)
+from .generic import (
+    Dict,
+    Dimension,
+    Generic,
+    List,
+    N_,
+    SizedList,
+    Tuple,
+    get_typing_name,
+)
 
 
 def _compare_shape(shape_spec: Tuple, shape: Tuple):
@@ -152,7 +64,7 @@ def _compare_shape(shape_spec: Tuple, shape: Tuple):
         if len(shape_spec) != len(shape):
             return False
         for a, b in zip(shape_spec, shape):
-            if Any in (a, b):
+            if a == Any or b == Any:
                 continue
             elif a != b:
                 return False
@@ -195,9 +107,10 @@ class GenericArray(Generic):
         NDArray[(H, W), np.float32] - example float HxW depth image
         NDArray[(H, W, C), np.float32] - example float HxWxC RGB image
 
-        NDArray[(H, W),] - example HxW image of any type
+        NDArray[(H, W), :] - example HxW image of any type
             NOTE: Because NDArray[(H, W)] is the same as NDArray[H, W], you
-            must add the trailing comma!
+            must add a trailing comma. For simplicity (and to play well with
+            the `black` formatter), you should add a simple slice.
 
     An GenericArray instance can be "unbound", "bound", or "partially bound":
 
@@ -304,14 +217,17 @@ class GenericArray(Generic):
     def _resolve_dtype(self, x):
         if x is GenericArray._IS_UNBOUND or x is Any:
             return x
+        elif isinstance(x, slice) and x == slice(None):
+            return GenericArray._IS_UNBOUND
         elif x is None:
             raise RuntimeError("None cannot be explicitly specified")
         else:
             return self._resolve_dtype_func(x)
 
-    def _is_maybe_dtype(self, x):
+    def _is_convertible_to_dtype(self, x):
+        # Returns True if `x` can be converted to a dtype.
+        # TODO(eric.cousineau): Make this more explicit.
         try:
-            # TODO(eric.cousineau): Make this more explicit?
             self._resolve_dtype_func(x)
             return True
         except TypeError:
@@ -324,7 +240,7 @@ class GenericArray(Generic):
             (x,) = param
             if x is None:
                 raise RuntimeError("None cannot be explicitly specified")
-            if self._is_maybe_dtype(x):
+            if self._is_convertible_to_dtype(x):
                 maybe_dtype = x
             else:
                 maybe_shape = x
@@ -368,6 +284,9 @@ class GenericArray(Generic):
             _dtype=dtype,
             _unbound=unbound,
         )
+
+    def __hash__(self):
+        return object.__hash__(self)
 
     def __eq__(self, other: "GenericArray") -> bool:
         """Compares GenericArray types."""
@@ -414,31 +333,6 @@ class GenericArray(Generic):
         return f"{self._name}[{shape_str}, {dtype_str}]"
 
 
-class Dimension:
-    """
-    Represents a simple named dimension.
-
-    Comparison on this type (hashing, equality) is done directly on the value.
-    """
-
-    def __init__(self, name: str, value=Any):
-        assert len(name) > 0
-        self._name = name
-        self._value = value
-
-    def __eq__(self, other):
-        if isinstance(other, Dimension):
-            return self._value == other._value
-        else:
-            return self._value == other
-
-    def __hash__(self):
-        return hash(self._value)
-
-    def __repr__(self):
-        return self._name
-
-
 def _np_resolve_dtype(x):
     return np.dtype(x).type
 
@@ -447,23 +341,251 @@ def _np_resolve_dtype(x):
 NDArray = GenericArray(
     "NDArray", array_cls=np.ndarray, resolve_dtype=_np_resolve_dtype,
 )
+
+
+def _torch_resolve_dtype(x):
+    # TODO(eric.cousineau): Determine better method.
+    return torch.zeros(0, dtype=x).dtype
+
+
+# Defines an annotation for torch.Tensor (which can be created using
+# torch.tensor).
+Tensor = GenericArray(
+    "Tensor", array_cls=torch.Tensor, resolve_dtype=_torch_resolve_dtype,
+)
+
+
+class _Batch(Generic):
+    """
+    Batches any types, possibly transforming for torch.
+    Follows suite with `default_collate`.
+
+    Transformations:
+
+        Numeric (int, float):
+            Will be batched to Tensor[N_, DType]
+            See below for DType transformations.
+        Array:
+            Will be converted to Tensor and batched (prepend N to shape).
+            np.float32 and np.float64 will convert to torch.float32
+        Tensor:
+            Will simply prepend N to shape.
+        Containers:
+            List[T] -> List[Batch[T]]
+            SizedList[M, T] -> SizedList[M, Batch[T]]
+            Dict[K, V] -> Dict[K, Batch[V]]
+            Tuple[T...] -> Tuple[Batch[T]...]
+        Other Types:
+            Shoveled into `SizedList[N_, T]`
+        Struct:
+            Recursive conversion.
+
+    DType conversion:
+
+        int -> torch.int32
+        float -> torch.float32
+        np.float64 -> torch.float32
+    """
+
+    # TODO(eric.cousineau): Provide way to dictacte dtype and image conversion?
+
+    # TODO(eric.cousineau): Is there a better way to convert?
+    _DTYPE_MAP = {
+        int: torch.int32,
+        float: torch.float32,
+        np.float64: torch.float32,
+        np.float32: torch.float32,
+        np.int32: torch.int32,
+        np.int64: torch.int64,
+        np.uint8: torch.uint8,
+        Any: Any,
+    }
+
+    def __init__(self):
+        super().__init__(name="Batch", num_param=1)
+
+    def _register_instantiation(self, T, cls):
+        # This is necessary for pickle support:
+        # https://bugs.python.org/issue35510
+        # https://github.com/RobotLocomotion/drake/issues/11957#issuecomment-673743979  # noqa
+        # If T is a type, register to its module. Otherwise, register to this
+        # module.
+        m = sys.modules[getattr(T, "__module__", __name__)]
+        setattr(m, cls.__name__, cls)
+        cls.__module__ = m.__name__
+
+    def _make_instantiation(self, param):
+        (T,) = param
+        if T in self._DTYPE_MAP:
+            dtype = self._DTYPE_MAP[T]
+            return Tensor[N_, dtype]
+        elif isinstance(T, GenericArray):
+            shape = T.shape
+            unbound = T.unbound()
+            if N_ in shape:
+                raise RuntimeError(f"Cannot batch - already batched! {T}")
+            if unbound is NDArray:
+                torch_dtype = self._DTYPE_MAP[T.dtype]
+                batch_shape = (N_,) + shape
+                return Tensor[batch_shape, torch_dtype]
+            elif unbound is Tensor:
+                new_shape = (N_,) + shape
+                return Tensor[new_shape, T.dtype]
+            else:
+                assert False, T
+        elif List.is_instantiation(T):
+            (U,) = T.param
+            return List[Batch[U]]
+        elif SizedList.is_instantiation(T):
+            M, U = T.param
+            return SizedList[M, Batch[U]]
+        elif Dict.is_instantiation(T):
+            K, V = T.param
+            return Dict[K, Batch[V]]
+        elif Tuple.is_instantiation(T):
+            Us = T.param
+            NUs = tuple(Batch[U] for U in Us)
+            return Tuple[NUs]
+        elif dc.is_dataclass(T):
+            fields = dc.fields(T)
+            NT = dc.make_dataclass(
+                cls_name=f"{self._name}[{T.__name__}]",
+                fields=[(field.name, Batch[field.type]) for field in fields],
+            )
+            self._register_instantiation(T, NT)
+            return NT
+        elif isinstance(T, TypeVar):
+            # TODO(eric.cousineau): Make this a named singleton?
+            return object()
+        else:
+            return SizedList[N_, T]
+
+
+# TODO(eric.cousineau): Rename to Collated?
+Batch = _Batch()
+T_ = TypeVar("T")
+
+
+def _asdict_nonrecursive(x, fields):
+    # We define this method because dc.asdict() is applied recursively (which
+    # we do not want for `batch_collate`).
+    assert dc.is_dataclass(x)
+    out = dict()
+    for field in fields:
+        out[field.name] = getattr(x, field.name)
+    return out
+
+
+def batch_collate(batch: List[T_]) -> Batch[T_]:
+    """Similar to `default_collate`, but handles dataclasses."""
+    # TODO(eric.cousineau): Allow this to be changed?
+    float_dtype = torch.float32
+    numeric_cls = (np.ndarray, torch.Tensor, int, float)
+    assert len(batch) > 0
+    elem = batch[0]
+    T = type(elem)
+    for item in batch:
+        U = type(item)
+        assert U == T, f"{U} != {T}"
+    if dc.is_dataclass(T):
+        fields = dc.fields(T)
+        batch_dict = [_asdict_nonrecursive(item, fields) for item in batch]
+        collated_dict = batch_collate(batch_dict)
+        collated = Batch[T](**collated_dict)
+        return collated
+    elif issubclass(T, dict):
+        return {k: batch_collate([d[k] for d in batch]) for k in elem}
+    elif issubclass(T, (list, tuple)):
+        return T(batch_collate(samples) for samples in zip(*batch))
+    elif issubclass(T, numeric_cls):
+        collated = default_collate(batch)
+        if isinstance(collated, torch.Tensor):
+            if collated.dtype == torch.float64:
+                collated = collated.type(float_dtype)
+        return collated
+    else:
+        # Simply collect items into a list.
+        # N.B. We must do this explicitly because `default_collate` will fail
+        # fast on non-numeric and non-container types like `RigidTransform`.
+        return list(batch)
+
+
+def init_batch_collate_for_multiprocessing(dataset):
+    """
+    Ensures that we can use `batch_collate` in a multiprocessing context
+    (e.g. torch...DataLoader).
+    """
+    if len(dataset) == 0:
+        return
+    batch_collate([dataset[0]])
+
+
 DoubleArray = NDArray[np.float64]  # Same as NDArray[float]
 LongArray = NDArray[np.int64]  # Same as NDArray[int]
 FloatArray = NDArray[np.float32]
 IntArray = NDArray[np.int32]
 
-if _has_torch:
+DoubleTensor = Tensor[torch.float64]  # Same Tensor[float]
+LongTensor = Tensor[torch.int64]  # Same Tensor[int]
+FloatTensor = Tensor[torch.float32]
+IntTensor = Tensor[torch.int32]
 
-    def _torch_resolve_dtype(x):
-        # Dunno a better way.
-        return torch.zeros(0, dtype=x).dtype
+# Common dimensions.
+# Generally, you should import this into other `typing_` modules.
 
-    # Defines an annotation for torch.Tensor (which can be created using
-    # torch.tensor).
-    Tensor = GenericArray(
-        "Tensor", array_cls=torch.Tensor, resolve_dtype=_torch_resolve_dtype,
-    )
-    DoubleTensor = Tensor[torch.float64]  # Same Tensor[float]
-    LongTensor = Tensor[torch.int64]  # Same Tensor[int]
-    FloatTensor = Tensor[torch.float32]
-    IntTensor = Tensor[torch.int32]
+# Width
+W_ = Dimension("W")
+
+# Height
+H_ = Dimension("H")
+
+# RGB channels (3)
+C_ = Dimension("C", 3)
+
+# Common aliases.
+ImageArray = NDArray[(H_, W_, ...), :]
+# TODO(eric.cousineau): Use `np.float32` for images.
+RgbArray = NDArray[(H_, W_, C_), np.float64]
+RgbIntArray = NDArray[(H_, W_, C_), np.uint8]
+DepthArray = NDArray[(H_, W_), np.float32]
+LabelArray = NDArray[(H_, W_), np.int32]
+# NumPy- and Torch-friendly tensor for a mask.
+MaskArray = NDArray[(H_, W_), np.uint8]
+# Camera intrinsics for a pinhole model (K).
+IntrinsicsArray = DoubleArray[(3, 3), :]
+
+# N.B. We do not bake in batching here.
+RgbTensor = Tensor[(C_, H_, W_), torch.float32]
+# N.B. We purposely do not define `RgbIntTensor` as we do not have a use for it
+# yet.
+DepthTensor = Tensor[(H_, W_), torch.float32]
+LabelTensor = Tensor[(H_, W_), torch.int32]
+MaskTensor = Tensor[(H_, W_), torch.uint8]
+IntrinsicsTensor = FloatTensor[(3, 3), :]
+
+
+def print_typing_array_info(m):
+    """
+    Prints human-readable summary of basic typing info available in a
+    module.
+    """
+    dimensions = dict()
+    arrays = dict()
+    for k, v in m.__dict__.items():
+        if k.startswith("_"):
+            continue
+        if isinstance(v, Dimension):
+            dimensions[k] = v
+        elif isinstance(v, GenericArray):
+            arrays[k] = v
+    print(f"Typing info for {m.__name__}")
+    print("  Dimensions:")
+
+    def key(item):
+        return item[0]
+
+    for k, v in sorted(dimensions.items(), key=key):
+        print(f"    {k}: {v}")
+    print("  Arrays:")
+    for k, v in sorted(arrays.items(), key=key):
+        print(f"    {k}: {v}")
