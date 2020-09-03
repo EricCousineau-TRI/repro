@@ -4,22 +4,30 @@ import sys
 import trace
 
 
-def make_tracer():
-    ignoredirs = ("/home")
-    only_mods = {"copy"}
-    ignoremods = list(sorted(set(sys.modules.keys()) - only_mods))
+def make_tracer(only_mods):
+    ignoredirs = ()
+    all_mods = set(sys.modules.keys())
+    ignoremods = set()
+    for mod in all_mods:
+        good = False
+        for only_mod in only_mods:
+            if mod == only_mod or mod.startswith(f"{only_mod}.") or only_mod.startswith(f"{mod}."):
+                good = True
+                break
+        if not good:
+            ignoremods.add(mod)
 
     tracer = trace.Trace(trace=1, count=0, ignoredirs=ignoredirs, ignoremods=ignoremods)
     return tracer
 
 
 def main():
-    # Traced.
-    copy.deepcopy("hello")
     # Not traced.
-    collections.OrderedDict()
+    copy.deepcopy("hello")
+    # Traced.
+    collections.namedtuple("A", ())
 
 
 assert __name__ == "__main__"
-tracer = make_tracer()
+tracer = make_tracer(only_mods={"collections"})
 tracer.runfunc(main)
