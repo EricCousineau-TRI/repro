@@ -16,6 +16,7 @@ def make_tracer(only_mods):
                 break
         if not good:
             ignoremods.add(mod)
+    print("\n".join(sorted(ignoremods)))
 
     tracer = trace.Trace(trace=1, count=0, ignoredirs=ignoredirs, ignoremods=ignoremods)
     return tracer
@@ -24,10 +25,10 @@ def make_tracer(only_mods):
 def main():
     # Not traced.
     copy.deepcopy("hello")
-    # Traced.
+    # Still traced?
     collections.namedtuple("A", ())
 
 
 assert __name__ == "__main__"
-tracer = make_tracer(only_mods={"collections"})
+tracer = make_tracer(only_mods={"copy"})
 tracer.runfunc(main)
