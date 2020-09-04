@@ -6,4 +6,13 @@ on:
   pull_request:
     branches:
       - master
-jobs: {}
+jobs:
+  basic:
+    name: basic
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: build and test
+      run: ./setup/ci/build_and_test.sh
+      shell: bash
