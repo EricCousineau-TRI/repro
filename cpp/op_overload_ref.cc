@@ -13,17 +13,17 @@ class C {
 }
 
 using nested::C;
-using nested::operator+;
+// using nested::operator+;
 
 typedef int (*MyFunc)(C, C);
 
 int main() {
   std::cout << (C{} + C{}) << std::endl;
 
-  MyFunc func1 = &operator+;
+  // MyFunc func1 = &operator+;
 
-  std::cout
-      << "&func1=" << func1 << ",  value=" << func1(C{}, C{}) << std::endl;
+  // std::cout
+  //     << "&func1=" << func1 << ",  value=" << func1(C{}, C{}) << std::endl;
 
   return 0;
 }
@@ -32,11 +32,5 @@ int main() {
 Output:
 
 $ clang++-9 -std=c++17 ./op_overload_ref.cc && ./a.out
-./op_overload_ref.cc:16:15: error: no member named 'operator+' in namespace 'nested'
-using nested::operator+;
-      ~~~~~~~~^
-./op_overload_ref.cc:23:19: error: use of undeclared 'operator+'
-  MyFunc func1 = &operator+;
-                  ^
-2 errors generated.
+100
 */
