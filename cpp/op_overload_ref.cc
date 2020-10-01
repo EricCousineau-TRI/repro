@@ -2,9 +2,13 @@
 
 namespace nested {
 
-struct C {
-  friend int operator+(C, C) { return 10; }
+class C {
+ private:
+  friend int operator+(C, C);
+  static constexpr int kSecret = 100;
 };
+
+int operator+(C, C) { return C::kSecret; }
 
 }
 
@@ -18,8 +22,8 @@ int main() {
 
   MyFunc func1 = &operator+;
 
-  std::cout << "addresses:" << std::endl
-      << "  " << func1 << "  " << func1(C{}, C{}) << std::endl;
+  std::cout
+      << "&func1=" << func1 << ",  value=" << func1(C{}, C{}) << std::endl;
 
   return 0;
 }
@@ -28,11 +32,6 @@ int main() {
 Output:
 
 $ clang++-9 -std=c++17 ./op_overload_ref.cc && ./a.out
-./op_overload_ref.cc:13:15: error: no member named 'operator+' in namespace 'nested'
-using nested::operator+;
-      ~~~~~~~~^
-./op_overload_ref.cc:20:19: error: use of undeclared 'operator+'
-  MyFunc func1 = &operator+;
-                  ^
-2 errors generated.
+100
+&func1=1,  value=100
 */
