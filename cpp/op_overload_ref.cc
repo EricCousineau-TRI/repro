@@ -2,10 +2,10 @@
 
 namespace nested {
 
-struct C {};
-
-int operator+(C, C) { return 10; }
-int operator+(C, int) { return 20; }
+struct C {
+  friend int operator+(C, C) { return 10; }
+  friend int operator+(C, int) { return 20; }
+};
 
 }
 
