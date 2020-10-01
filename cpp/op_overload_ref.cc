@@ -8,7 +8,7 @@ class C {
   static constexpr int kSecret = 100;
 };
 
-int operator+(C, C);
+// int operator+(C, C);
 
 }
 
@@ -32,6 +32,11 @@ int main() {
 Output:
 
 $ clang++-9 -std=c++17 ./op_overload_ref.cc && ./a.out
-100
-&func1=1,  value=100
+./op_overload_ref.cc:16:15: error: no member named 'operator+' in namespace 'nested'
+using nested::operator+;
+      ~~~~~~~~^
+./op_overload_ref.cc:23:19: error: use of undeclared 'operator+'
+  MyFunc func1 = &operator+;
+                  ^
+2 errors generated.
 */
