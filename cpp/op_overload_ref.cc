@@ -32,10 +32,18 @@ int main() {
 /*
 Output:
 
-$ g++ -std=c++17 ./op_overload_ref.cc && ./a.out
-10
-addresses:
-  1  10
-  1  20
-  1  10
+$ clang++-9 -std=c++17 ./op_overload_ref.cc && ./a.out
+./op_overload_ref.cc:13:15: error: no member named 'operator+' in namespace 'nested'
+using nested::operator+;
+      ~~~~~~~~^
+./op_overload_ref.cc:20:19: error: use of undeclared 'operator+'
+  MyFunc func1 = &operator+;
+                  ^
+./op_overload_ref.cc:21:54: error: no member named 'operator+' in namespace 'nested'
+  auto func2 = static_cast<int (*)(C, int)>(&nested::operator+);
+                                             ~~~~~~~~^
+./op_overload_ref.cc:22:52: error: no member named 'operator+' in namespace 'nested'
+  auto func3 = static_cast<int (*)(C, C)>(&nested::operator+);
+                                           ~~~~~~~~^
+4 errors generated.
 */
