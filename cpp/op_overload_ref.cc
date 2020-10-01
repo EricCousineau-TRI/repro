@@ -20,7 +20,7 @@ typedef int (*MyFunc)(C, C);
 int main() {
   std::cout << (C{} + C{}) << std::endl;
 
-  MyFunc func1 = &operator+;
+  MyFunc func1 = &nested::operator+;
 
   std::cout
       << "&func1=" << func1 << ",  value=" << func1(C{}, C{}) << std::endl;
@@ -32,9 +32,9 @@ int main() {
 Output:
 
 $ clang++-9 -std=c++17 ./op_overload_ref.cc && ./a.out
-./op_overload_ref.cc:23:19: error: use of undeclared 'operator+'
-  MyFunc func1 = &operator+;
-                  ^
+./op_overload_ref.cc:23:27: error: no member named 'operator+' in namespace 'nested'
+  MyFunc func1 = &nested::operator+;
+                  ~~~~~~~~^
 1 error generated.
 
 */
