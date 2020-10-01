@@ -4,11 +4,11 @@ namespace nested {
 
 class C {
  private:
-  friend int operator+(C, C);
+  friend int operator+(C, C) { return C::kSecret; }
   static constexpr int kSecret = 100;
 };
 
-int operator+(C, C) { return C::kSecret; }
+int operator+(C, C);
 
 }
 
