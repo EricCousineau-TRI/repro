@@ -20,7 +20,7 @@ typedef int (*MyFunc)(C, C);
 int main() {
   std::cout << (C{} + C{}) << std::endl;
 
-  MyFunc func1 = &nested::C::operator+;
+  MyFunc func1 = +[](C a, C b) { return a + b; };
 
   std::cout
       << "&func1=" << func1 << ",  value=" << func1(C{}, C{}) << std::endl;
@@ -32,9 +32,7 @@ int main() {
 Output:
 
 $ clang++-9 -std=c++17 ./op_overload_ref.cc && ./a.out
-./op_overload_ref.cc:23:30: error: no member named 'operator+' in 'nested::C'
-  MyFunc func1 = &nested::C::operator+;
-                  ~~~~~~~~~~~^
-1 error generated.
+100
+&func1=1,  value=100
 
 */
