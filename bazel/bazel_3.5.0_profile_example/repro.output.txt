@@ -4,7 +4,7 @@ Linux eacousineau-laptop 5.4.0-48-generic #52~18.04.1-Ubuntu SMP Thu Sep 10 12:5
 Ubuntu 18.04.5 LTS \n \l
 
 ++ mktemp -d
-+ cd /tmp/tmp.ADS3db4nxr
++ cd /tmp/tmp.QCw6SB2yDp
 + cat
 + cat
 + cat
@@ -16,8 +16,11 @@ Build target: bazel-out/k8-opt/bin/src/main/java/com/google/devtools/build/lib/b
 Build time: Wed Sep 2 20:11:46 2020 (1599077506)
 Build timestamp: 1599077506
 Build timestamp as int: 1599077506
++ bazel info release
+INFO: Invocation ID: 029b8ca9-a932-4b87-a1fe-fc54446c571b
+release 3.5.0
 + bazel build ...
-INFO: Invocation ID: abba756c-659e-42bf-bd4e-5b21fe8d4bf4
+INFO: Invocation ID: 7bc00766-896a-4be4-8ee4-19f11ee05f54
 Loading: 
 Loading: 0 packages loaded
 Analyzing: target //:sample_test (1 packages loaded, 0 targets configured)
@@ -29,72 +32,74 @@ INFO: Found 1 target...
 [0 / 4] [Prepa] BazelWorkspaceStatusAction stable-status.txt ... (3 actions, 0 running)
 Target //:sample_test up-to-date:
   bazel-bin/sample_test
-INFO: Elapsed time: 4.650s, Critical Path: 0.02s
+INFO: Elapsed time: 4.423s, Critical Path: 0.02s
 INFO: 0 processes.
 INFO: Build completed successfully, 4 total actions
 INFO: Build completed successfully, 4 total actions
 + bazel test --nocache_test_results --profile=./profile.json ...
-INFO: Invocation ID: 23f15f15-953f-474f-9ed1-477e94050b04
+INFO: Invocation ID: 5ff6626a-3179-4cfe-a5ff-42b8fa867034
 Loading: 
 Loading: 0 packages loaded
 INFO: Build option --cache_test_results has changed, discarding analysis cache.
 Analyzing: target //:sample_test (0 packages loaded, 0 targets configured)
 INFO: Analyzed target //:sample_test (0 packages loaded, 223 targets configured).
 INFO: Found 1 test target...
-[0 / 2] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+[0 / 3] [Prepa] BazelWorkspaceStatusAction stable-status.txt
 Target //:sample_test up-to-date:
   bazel-bin/sample_test
-INFO: Elapsed time: 0.360s, Critical Path: 0.11s
+INFO: Elapsed time: 0.418s, Critical Path: 0.10s
 INFO: 2 processes: 1 remote cache hit, 1 linux-sandbox.
 INFO: Build completed successfully, 2 total actions
-//:sample_test                                                           PASSED in 0.1s
+//:sample_test                                                           PASSED in 0.0s
 
 Executed 1 out of 1 test: 1 test passes.
 There were tests whose specified size is too big. Use the --test_verbose_timeout_warnings command line option to see which ones these are.
 INFO: Build completed successfully, 2 total actions
 + bazel analyze-profile ./profile.json
 WARNING: This information is intended for consumption by Bazel developers only, and may change at any time. Script against it at your own risk
-INFO: Profile created on Fri Oct 02 08:38:30 EDT 2020, build ID: 23f15f15-953f-474f-9ed1-477e94050b04, output base: /home/eacousineau/.cache/bazel/_bazel_eacousineau/5634dbc90e07129ce3ffe66f240ef3f4
+INFO: Profile created on Fri Oct 02 08:40:39 EDT 2020, build ID: 5ff6626a-3179-4cfe-a5ff-42b8fa867034, output base: /home/eacousineau/.cache/bazel/_bazel_eacousineau/5c7b32c92c2f8bc503d024fd628ff5f7
 
 === PHASE SUMMARY INFORMATION ===
 
-Total launch phase time         0.018 s    4.97%
-Total init phase time           0.105 s   29.12%
-Total loading phase time        0.010 s    2.81%
-Total analysis phase time       0.104 s   28.84%
-Total preparation phase time    0.001 s    0.30%
-Total execution phase time      0.121 s   33.41%
-Total finish phase time         0.001 s    0.55%
+Total launch phase time         0.016 s    3.81%
+Total init phase time           0.159 s   38.05%
+Total loading phase time        0.020 s    4.80%
+Total analysis phase time       0.112 s   26.84%
+Total preparation phase time    0.001 s    0.25%
+Total execution phase time      0.108 s   25.77%
+Total finish phase time         0.001 s    0.47%
 ------------------------------------------------
-Total run time                  0.362 s  100.00%
+Total run time                  0.419 s  100.00%
 
-Critical path (111 ms):
+Critical path (96.1 ms):
        Time Percentage   Description
-    6.80 ms    6.10%   action 'Symlinking // sample_test'
-    0.10 ms    0.09%   runfiles for // sample_test
-     105 ms   93.81%   action 'Testing // sample_test'
+    6.65 ms    6.91%   action 'Creating source manifest for // sample_test'
+    1.04 ms    1.09%   action 'Creating runfiles tree bazel-out/k8-fastbuild/bin/sample_test.runfiles'
+    0.14 ms    0.15%   runfiles for // sample_test
+    88.3 ms   91.86%   action 'Testing // sample_test'
 + bazel analyze-profile --dump=raw ./profile.json
 WARNING: This information is intended for consumption by Bazel developers only, and may change at any time. Script against it at your own risk
 WARNING: --dump has not been implemented yet for the JSON profile, ignoring.
-INFO: Profile created on Fri Oct 02 08:38:30 EDT 2020, build ID: 23f15f15-953f-474f-9ed1-477e94050b04, output base: /home/eacousineau/.cache/bazel/_bazel_eacousineau/5634dbc90e07129ce3ffe66f240ef3f4
+INFO: Profile created on Fri Oct 02 08:40:39 EDT 2020, build ID: 5ff6626a-3179-4cfe-a5ff-42b8fa867034, output base: /home/eacousineau/.cache/bazel/_bazel_eacousineau/5c7b32c92c2f8bc503d024fd628ff5f7
 
 === PHASE SUMMARY INFORMATION ===
 
-Total launch phase time         0.018 s    4.97%
-Total init phase time           0.105 s   29.12%
-Total loading phase time        0.010 s    2.81%
-Total analysis phase time       0.104 s   28.84%
-Total preparation phase time    0.001 s    0.30%
-Total execution phase time      0.121 s   33.41%
-Total finish phase time         0.001 s    0.55%
+Total launch phase time         0.016 s    3.81%
+Total init phase time           0.159 s   38.05%
+Total loading phase time        0.020 s    4.80%
+Total analysis phase time       0.112 s   26.84%
+Total preparation phase time    0.001 s    0.25%
+Total execution phase time      0.108 s   25.77%
+Total finish phase time         0.001 s    0.47%
 ------------------------------------------------
-Total run time                  0.362 s  100.00%
+Total run time                  0.419 s  100.00%
 
-Critical path (111 ms):
+Critical path (96.1 ms):
        Time Percentage   Description
-    6.80 ms    6.10%   action 'Symlinking // sample_test'
-    0.10 ms    0.09%   runfiles for // sample_test
-     105 ms   93.81%   action 'Testing // sample_test'
+    6.65 ms    6.91%   action 'Creating source manifest for // sample_test'
+    1.04 ms    1.09%   action 'Creating runfiles tree bazel-out/k8-fastbuild/bin/sample_test.runfiles'
+    0.14 ms    0.15%   runfiles for // sample_test
+    88.3 ms   91.86%   action 'Testing // sample_test'
 + set +e
 + bazel analyze-profile --html ./profile.json
 ERROR: --html :: Unrecognized option: --html

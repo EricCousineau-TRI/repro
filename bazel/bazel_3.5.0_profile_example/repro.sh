@@ -31,6 +31,7 @@ EOF
 chmod +x ./sample_test.sh
 
 bazel version
+bazel info release
 bazel build ...
 bazel test --nocache_test_results --profile=./profile.json ...
 
