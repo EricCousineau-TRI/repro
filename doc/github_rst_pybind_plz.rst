@@ -16,13 +16,15 @@ This fork's CI badge:
 .. |DrakeCI| image:: https://github.com/RobotLocomotion/pybind11/workflows/CI/badge.svg
    :target: https://github.com/RobotLocomotion/pybind11/actions
 
+----------
+
 .. figure:: https://github.com/pybind/pybind11/raw/master/docs/pybind11-logo.png
    :alt: pybind11 logo
 
 pybind11 — Seamless operability between C++11 and Python
 ========================================================
 
-..:
+..
    # Hide upstream's badges.
    |Latest Documentation Status| |Stable Documentation Status| |Gitter chat| |CI| |Build status|
 
