@@ -8,7 +8,7 @@ This is a fork of the
 For information specific to this fork, please see
 `README_DRAKE.md <./README_DRAKE.md>`_.
 
-Links and badges within this fork's documentation may link back to the official
+Some links within this fork's documentation may link back to the official
 upstream repository.
 
 .. |DrakeCI| image:: https://github.com/RobotLocomotion/pybind11/workflows/CI/badge.svg
