@@ -1,6 +1,8 @@
 RobotLocomotion Fork for Drake
 ==============================
 
+|DrakeCI|
+
 This is a fork of the
 `official pybind/pybind11 repository <https://github.com/pybind/pybind11/>`_.
 For information specific to this fork, please see
@@ -8,10 +10,6 @@ For information specific to this fork, please see
 
 Links and badges within this fork's documentation may link back to the official
 upstream repository.
-
-This fork's CI badge:
-
-|DrakeCI|
 
 .. |DrakeCI| image:: https://github.com/RobotLocomotion/pybind11/workflows/CI/badge.svg
    :target: https://github.com/RobotLocomotion/pybind11/actions
