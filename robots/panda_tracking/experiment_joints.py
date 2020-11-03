@@ -53,7 +53,8 @@ def main():
     print("Received! Starting")
     t_abs_start = time.time()
     t = 0.0
-    t_transient = 1.0
+    t_transient_start = 3.0
+    t_transient_end = 0.25
 
     v = None
 
@@ -66,17 +67,18 @@ def main():
 
             t_prev = t
             t = time.time() - t_abs_start
-            s = min(t / t_transient, 1.0)
+            s = min(t / t_transient_start, 1.0)
             dt = t - t_prev
 
             v = np.array(status.joint_velocity)
             assert v.shape == (ndof,), v.shape
 
-            T_sec = np.array([4.0, 3.5, 3.0, 2.5, 2.0, 1.5, 1.0])
+            T_sec = np.array([4.0, 3.5, 3.0, 2.5, 2.0, 1.5, 1.0]) / 4
             w = 2 * np.pi / T_sec
+            v_max = np.array([0.5, 1.5, 0.5, 1.0, 1.0, 1.5, 1.5])
 
             vd = np.zeros(ndof)
-            vd[:] = s * 0.5 * np.sin(w * t)
+            vd[:] = s * v_max * np.sin(w * t)
 
             cmd = make_command(vd)
             lcm.publish(cmd_channel, cmd.encode())
@@ -96,14 +98,14 @@ def main():
 
         t_abs_start = time.time()
         t = 0.0
-        while t < t_transient:
+        while t < t_transient_end:
             lcm_handle_all(lcm)
             status = status_sub.get()
             if status is None:
                 continue
 
             t = time.time() - t_abs_start
-            s = min(t / t_transient, 1.0)
+            s = min(t / t_transient_end, 1.0)
             vd = v0 * (1 - s)
             cmd = make_command(vd)
             lcm.publish(cmd_channel, cmd.encode())
