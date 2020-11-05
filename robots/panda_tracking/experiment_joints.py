@@ -39,10 +39,11 @@ def get_timestamp():
     )
 
 
-def main():
+def run(joint_index, save_file_base):
     lcm = LCM(robot_lcm_url)
     status_sub = LcmMessagePoll(lcm, status_channel, lcmt_panda_status)
     events = []
+    print(f"joint_index: {joint_index}")
 
     print("Waiting for first message...")
     lcm.handle()
@@ -55,6 +56,10 @@ def main():
     t = 0.0
     t_transient_start = 3.0
     t_transient_end = 0.25
+
+    t_sweep = 10.0
+    T_sec_min = 1.0
+    T_sec_max = 5.0
 
     v = None
 
@@ -73,9 +78,16 @@ def main():
             v = np.array(status.joint_velocity)
             assert v.shape == (ndof,), v.shape
 
-            T_sec = np.array([4.0, 3.5, 3.0, 2.5, 2.0, 1.5, 1.0]) / 4
+            # T_sec = np.array([4.0, 3.5, 3.0, 2.5, 2.0, 1.5, 1.0]) / 4
+            s_chirp = min(t / t_sweep, 1.0)
+            if s_chirp >= 1.0:
+                raise KeyboardInterrupt
+            T_sec = T_sec_min + (1 - s_chirp) * (T_sec_max - T_sec_min)
+            print(T_sec)
             w = 2 * np.pi / T_sec
-            v_max = np.array([0.5, 1.5, 0.5, 1.0, 1.0, 1.5, 1.5])
+            v_max = np.zeros(ndof)
+            v_max[joint_index] = 1.0
+            # v_max = np.array([0.5, 1.5, 0.5, 1.0, 1.0, 1.5, 1.5])
 
             vd = np.zeros(ndof)
             vd[:] = s * v_max * np.sin(w * t)
@@ -117,11 +129,17 @@ def main():
 
     finally:
         # Save data.
-        base = get_timestamp()
-        file = expanduser(f"~/data/panda/tracking/{base}.pkl")
+        file = expanduser(f"~/data/panda/tracking/{save_file_base}.pkl")
         with open(file, "wb") as f:
             pickle.dump(events, f)
         print(f"Wrote: {file}")
+
+
+def main():
+    timestamp = get_timestamp()
+    for joint_index in range(ndof):
+        base = f"{timestamp}__A{joint_index+1}"
+        run(joint_index, base)
 
 
 assert __name__ == "__main__"
