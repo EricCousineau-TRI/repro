@@ -66,3 +66,39 @@ int main() {
     << nice_type_name<D>() << " -> " << nice_type_name<Dw>() << endl
     << PRINT((is_base_template_of<alias_wrapper, void>::value));
 }
+
+/*
+Output:
+
+>>> (is_base_template_of<alias_wrapper, A>::value)
+0
+
+>>> (is_same<Aw, alias_wrapper<A>>::value)
+1
+
+A -> alias_wrapper<A>
+>>> (is_base_template_of<alias_wrapper, B>::value)
+0
+
+>>> (is_same<Bw, alias_wrapper<Bw>>::value)
+0
+
+B -> alias_wrapper<B>
+>>> (is_base_template_of<alias_wrapper, C>::value)
+1
+
+>>> (is_same<Cw, C>::value)
+1
+
+alias_wrapper<A> -> alias_wrapper<A>
+>>> (is_base_template_of<alias_wrapper, D>::value)
+1
+
+>>> (is_same<Dw, D>::value)
+1
+
+D -> D
+>>> (is_base_template_of<alias_wrapper, void>::value)
+0
+
+*/
