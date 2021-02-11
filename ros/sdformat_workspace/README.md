@@ -1,4 +1,3 @@
-
 Taken from: <https://github.com/RobotLocomotion/drake/pull/12061/files>
 
 # Hacks for Testing latest `libsdformat` stuff
@@ -14,14 +13,12 @@ Then update repositories (and record the exact versions afterwards):
 
     (
         set -eux
-        cd ..
         vcs import ./ < ./meta/vcs.repo
         vcs export --exact ./ > ./meta/vcs-exact.repo
     )
 
 First, test without Bazel overhead:
 
-    cd ..
     colcon build
     colcon test
     # Or just go the build package, and run `make test` / `ctest`.

@@ -15,4 +15,8 @@ repositories:
   ign_tools:
     type: git
     url: https://github.com/ignitionrobotics/ign-tools
-    version: master
+    version: ign-tools1
+  ign_utils:
+    type: git
+    url: https://github.com/ignitionrobotics/ign-utils
+    version: main

@@ -2,16 +2,20 @@ repositories:
   ign_cmake:
     type: git
     url: https://github.com/ignitionrobotics/ign-cmake
-    version: eac0b654a19dc67c580e8ceab494915efc6ab796
+    version: a00a8c9180f1419a0680eb7907f0c9860bc38abc
   ign_math:
     type: git
     url: https://github.com/ignitionrobotics/ign-math
-    version: 51eb0640a0c7454c36fef1a3007d3db37fe9165f
+    version: 5a4321b0a27dfbf3203361b7a14d210427884a47
   ign_tools:
     type: git
     url: https://github.com/ignitionrobotics/ign-tools
-    version: 9c59143295a82e7e3489dc46bf0e70bd1adf86f5
+    version: 7f03bb9e16d9803bff808f1a01f29d9f4df238bd
+  ign_utils:
+    type: git
+    url: https://github.com/ignitionrobotics/ign-utils
+    version: c195c59ce4e03a2ac06aabd0dbeb5dff76142d68
   sdformat:
     type: git
-    url: https://github.com/osrf/sdformat.git
-    version: 113bf26308f7354f446cc4dcd4746196d493bfde
+    url: https://github.com/osrf/sdformat
+    version: 53325ed840db1e9e40f35373e8cb03bc8e0acef9
