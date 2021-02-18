@@ -11,7 +11,7 @@ import wandb
 
 from wandb_pytorch_lightning_combo.process_util import CapturedProcessGroup
 
-DT_INTERVAL = 0.1  # s
+DT_INTERVAL = 0.05  # s
 
 
 def run(procs):
@@ -53,6 +53,7 @@ def run(procs):
         ],
     )
 
+    # Note: Agent hangs if the script encounters an error :/
     while agent.poll() is None:
         assert sweep.poll() is None
         time.sleep(DT_INTERVAL)

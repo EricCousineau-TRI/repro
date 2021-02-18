@@ -14,11 +14,11 @@ _venv_dir=${_cur_dir}/venv
 
 _setup_venv() { (
     set -eu
-    completion_token="2021-02-18.3"
+    cd ${_cur_dir}
+    completion_token="$(cat ./requirements.txt)"
     completion_file=${_venv_dir}/.completion-token
 
-    cd ${_cur_dir}
-    if [[ -f ${completion_file} && $(cat ${completion_file}) == ${completion_token} ]]; then
+    if [[ -f ${completion_file} && "$(cat ${completion_file})" == "${completion_token}" ]]; then
         return 0
     fi
 
@@ -30,7 +30,7 @@ _setup_venv() { (
     ./bin/pip install -I -r ${_cur_dir}/requirements.txt
     ./bin/pip freeze > ${_cur_dir}/requirements.freeze.txt
 
-    echo ${completion_token} > ${completion_file}
+    echo "${completion_token}" > ${completion_file}
 ) }
 
 _setup_venv && source ${_venv_dir}/bin/activate
