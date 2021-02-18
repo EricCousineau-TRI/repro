@@ -24,41 +24,7 @@ def signal_processes(process_list, sig=signal.SIGINT, block=True):
                 process.wait()
 
 
-class on_context_exit(object):
-    """
-    Calls a function with given arguments when a context is left, or when
-    this object is garbage collected.
-    Consider using `contextmanager.closing` for stuiff that has `.close()`.
-
-    Example:
-
-        from subprocess import Popen
-        import time
-        p = Popen(["sleep", "10"])
-        with on_context_exit(lambda: signal_processes([p])):
-            # Do things.
-            time.sleep(1.)
-        # When exiting (due to success or exception failure), the process will
-        # be killed via SIGINT.
-    """
-    def __init__(self, f):
-        self._on_exit = f
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, *args):
-        if self._on_exit:
-            self._on_exit()
-            self._on_exit = None
-
-    def __del__(self):
-        if self._on_exit:
-            self._on_exit()
-            self._on_exit = None
-
-
-def read_available(f, timeout=0.0, chunk_size=1024, empty=""):
+def read_available(f, timeout=0.0, chunk_size=1024, empty=None):
     """
     Reads all available data on a given file. Useful for using PIPE with Popen.
 
@@ -68,6 +34,8 @@ def read_available(f, timeout=0.0, chunk_size=1024, empty=""):
     strings).
     """
     readable, _, _ = select.select([f], [], [f], timeout)
+    if empty is None:
+        empty = bytes()
     out = empty
     if f in readable:
         while True:
@@ -129,7 +97,13 @@ class StreamCollector(object):
             # Get available bytes from streams.
             text_new = ""
             for stream in self._streams:
-                text_new += read_available(stream, timeout=timeout)
+                if stream.closed:
+                    continue
+                data = read_available(stream, timeout=timeout)
+                if isinstance(data, bytes):
+                    # HACK
+                    data = data.decode("utf-8")
+                text_new += data
             if text_new:
                 for on_new_text in self._on_new_text:
                     on_new_text(text_new)
@@ -148,16 +122,15 @@ class CapturedProcess(object):
     For complex state machine process interaction, use `pexpect`.
     """
     def __init__(
-            self, args, stderr=STDOUT, on_new_text=None, **kwargs):
+            self, args, stderr=STDOUT, on_new_text=None, simple_encoding=True,
+            **kwargs):
         # Python processes don't like buffering by default.
         args = ["stdbuf", "--output=0"] + args
         self._args = args
+        if simple_encoding:
+            kwargs.update(encoding="utf-8", universal_newlines=True, bufsize=1)
         proc = Popen(args, stdin=PIPE, stdout=PIPE, stderr=stderr, **kwargs)
         self.proc = proc
-        # N.B. Do not pass `self` inside the lambda to simplify references for
-        # garbage collection.
-        self.scope = on_context_exit(
-            lambda: signal_processes([proc]))
         streams = [proc.stdout]
         if proc.stderr:  # `None` if `stderr=STDOUT` is specified via `Popen`
             streams += [proc.stderr]
@@ -181,8 +154,7 @@ class CapturedProcess(object):
     def close(self):
         """Attempts to signal process to close. If process is already closed,
         this is a no-op."""
-        with self.scope:
-            pass
+        signal_processes([self.proc])
 
 
 class CapturedProcessGroup(object):

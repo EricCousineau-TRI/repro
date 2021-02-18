@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Either source this, or use it as a prefix:
+#
+#   source ./setup.sh
+#   ./my_program
+#
+# or
+#
+#   ./setup.sh ./my_program
+
 _cur_dir=$(cd $(dirname ${BASH_SOURCE}) && pwd)
 _venv_dir=${_cur_dir}/venv
 
@@ -28,6 +37,7 @@ _setup_venv() { (
 
 _setup_venv && source ${_venv_dir}/bin/activate
 
+export PYTHONPATH=${PWD}/..:${PYTHONPATH}
 export WANDB_MODE=dryrun
 export WANDB_PROJECT=uncategorized
 
