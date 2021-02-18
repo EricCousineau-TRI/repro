@@ -1,0 +1,14 @@
+controller:
+  type: local
+
+method: grid
+parameters:
+  custom_toggle:
+    distribution: categorical
+    values: [true]
+
+program: ./train_wandb_pl_main.py
+command:
+- ${program}
+- --wandb_sweep_json
+- ${json}
