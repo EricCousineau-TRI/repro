@@ -9,8 +9,8 @@ import wandb
 
 
 def main():
+        ["wandb", "sweep", "--controller", "./wandb_sweep.yaml"],
     result = subprocess.run(
-        ["wandb", "sweep", "./wandb_sweep.yaml"],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         encoding="utf-8",
