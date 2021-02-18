@@ -15,9 +15,17 @@ DT_INTERVAL = 0.1  # s
 
 
 def run(procs):
+    wandb_project = "uncategorized"
+
     sweep = procs.add(
         "sweep",
-        ["wandb", "sweep", "--controller", "./train_wandb_pl_sweep_example.yaml"],
+        [
+            "wandb",
+            "sweep",
+            "--controller",
+            "--project", wandb_project,
+            "./train_wandb_pl_sweep_example.yaml",
+        ],
     )
 
     # Wait for it to start up and print stuff out.
@@ -37,7 +45,12 @@ def run(procs):
     print(f"Run agent...")
     agent = procs.add(
         "agent", 
-        ["wandb", "agent", sweep_id],
+        [
+            "wandb",
+            "agent",
+            "--project", wandb_project,
+            sweep_id,
+        ],
     )
 
     while agent.poll() is None:

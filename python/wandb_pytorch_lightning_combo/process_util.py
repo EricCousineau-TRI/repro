@@ -1,9 +1,16 @@
 from functools import partial
 import os
 import select
+import shlex
 import signal
 import sys
 from subprocess import Popen, PIPE, STDOUT
+
+
+def shlex_join(args):
+    # TODO(eric.cousineau): Replace this with `shlex.join` when we exclusively
+    # use Python>=3.8.
+    return " ".join(map(shlex.quote, args))
 
 
 def signal_processes(process_list, sig=signal.SIGINT, block=True):
@@ -125,6 +132,8 @@ class CapturedProcess(object):
             self, args, stderr=STDOUT, on_new_text=None, simple_encoding=True,
             **kwargs):
         # Python processes don't like buffering by default.
+        cmd = shlex_join(args)
+        print(f" + {cmd}", file=sys.stderr)
         args = ["stdbuf", "--output=0"] + args
         self._args = args
         if simple_encoding:
