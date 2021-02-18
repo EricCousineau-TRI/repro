@@ -1,0 +1,41 @@
++ env
+LANG=en_US.UTF-8
+DISPLAY=:0
+VIRTUAL_ENV=/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv
+USER=eacousineau
+PWD=/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo
+HOME=/home/eacousineau
+TERM=screen
+SHELL=/bin/bash
+SHLVL=1
+PYTHONPATH=/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/..:
+PATH=/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/bin:/usr/local/bin:/usr/bin:/bin
+PS1=(venv)
+_=/usr/bin/env
++ exec ./train_wandb_pl_sweep.py
+ + wandb sweep --controller --project uncategorized ./train_wandb_pl_sweep_example.yaml
+[sweep] wandb: Creating sweep from: ./train_wandb_pl_sweep_example.yaml
+[sweep] wandb: Created sweep with ID: z05sjcp9
+[sweep] wandb: View sweep at: https://app.wandb.ai/tri/uncategorized/sweeps/z05sjcp9
+[sweep] wandb: Run sweep agent with: wandb agent tri/uncategorized/z05sjcp9
+[sweep] wandb: Starting wandb controller...
+Extracted sweep id: z05sjcp9
+Run agent...
+ + wandb agent --project uncategorized z05sjcp9
+[agent] wandb: Starting wandb agent 🕵️
+[agent] 2021-02-18 14:04:11,529 - wandb.wandb_agent - INFO - Running runs: []
+[agent] 2021-02-18 14:04:11,784 - wandb.wandb_agent - INFO - Agent received command: run
+[agent] 2021-02-18 14:04:11,784 - wandb.wandb_agent - INFO - Agent starting run with config:
+[agent]         custom_toggle: True
+[agent] 2021-02-18 14:04:11,968 - wandb.wandb_agent - INFO - About to run command: ./train_wandb_pl_main.py --is_wandb_sweep --wandb_sweep_json
+[agent] usage: train_wandb_pl_main.py [-h] [--is_wandb_sweep]
+[agent]                               [--wandb_sweep_json WANDB_SWEEP_JSON]
+[agent] train_wandb_pl_main.py: error: argument --wandb_sweep_json: expected one argument
+^CTraceback (most recent call last):
+  File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/train_wandb_pl_sweep.py", line 78, in <module>
+    main()
+  File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/train_wandb_pl_sweep.py", line 74, in main
+    run(procs)
+  File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/train_wandb_pl_sweep.py", line 59, in run
+    time.sleep(DT_INTERVAL)
+KeyboardInterrupt
