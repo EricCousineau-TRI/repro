@@ -50,7 +50,6 @@ def run(procs):
         [
             "wandb",
             "agent",
-            "--project", wandb_project,
             sweep_token,
         ],
     )
