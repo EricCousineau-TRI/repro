@@ -10,5 +10,6 @@ parameters:
 program: ./train_wandb_pl_main.py
 command:
 - ${program}
+- --is_wandb_sweep
 - --wandb_sweep_json
 - ${json}
