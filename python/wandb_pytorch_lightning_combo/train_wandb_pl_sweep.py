@@ -22,7 +22,6 @@ def run(procs):
         [
             "wandb",
             "sweep",
-            "--controller",
             "--project", wandb_project,
             "./train_wandb_pl_sweep_example.yaml",
         ],
@@ -40,6 +39,9 @@ def run(procs):
         )
         if m is not None:
             sweep_id = m.group(1)
+    while sweep.poll() is None:
+        time.sleep(DT_INTERVAL)
+    assert sweep.poll() == 0, sweep.poll()
 
     print(f"Extracted sweep id: {sweep_id}")
     print(f"Run agent...")
@@ -55,13 +57,8 @@ def run(procs):
 
     # Note: Agent hangs if the script encounters an error :/
     while agent.poll() is None:
-        assert sweep.poll() is None
         time.sleep(DT_INTERVAL)
     assert agent.poll() == 0
-
-    # Wait for sweep to close down.
-    while sweep.poll() is None:
-        time.sleep(DT_INTERVAL)
 
     stat = procs.poll()
     assert all(value == 0 for value in stat.values()), stat

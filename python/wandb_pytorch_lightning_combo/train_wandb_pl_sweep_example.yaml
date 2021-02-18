@@ -1,6 +1,3 @@
-controller:
-  type: local
-
 method: grid
 parameters:
   custom_toggle:
