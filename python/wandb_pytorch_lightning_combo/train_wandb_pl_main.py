@@ -52,7 +52,7 @@ def main():
     parser.add_argument("--wandb_sweep_json", type=str, default=None)
     args = parser.parse_args()
 
-    if args.is_sweep:
+    if args.is_wandb_sweep:
         assert args.json is not None
         assert args.json != ""
 
