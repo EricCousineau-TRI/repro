@@ -2,6 +2,7 @@
 
 import os
 
+import argparse
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
@@ -46,6 +47,15 @@ def create_datasets(K, count):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--is_wandb_sweep", action="store_true")
+    parser.add_argument("--wandb_sweep_json", type=str, default=None)
+    args = parser.parse_args()
+
+    if args.is_wandb_sweep:
+        assert args.wandb_sweep_json is not None
+        assert args.wandb_sweep_json != ""
+
     torch.random.manual_seed(0)
 
     with torch.no_grad():

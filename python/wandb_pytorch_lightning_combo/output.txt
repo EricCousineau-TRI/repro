@@ -1,0 +1,68 @@
++ env
+LANG=en_US.UTF-8
+DISPLAY=:0
+VIRTUAL_ENV=/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv
+USER=eacousineau
+PWD=/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo
+HOME=/home/eacousineau
+TERM=screen
+SHELL=/bin/bash
+SHLVL=1
+PYTHONPATH=/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/..:
+PATH=/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/bin:/usr/local/bin:/usr/bin:/bin
+PS1=(venv)
+_=/usr/bin/env
++ exec ./train_wandb_pl_sweep.py
+ + wandb sweep --project uncategorized ./train_wandb_pl_sweep_example.yaml
+[sweep] wandb: Creating sweep from: ./train_wandb_pl_sweep_example.yaml
+[sweep] wandb: Created sweep with ID: 29x2unpb
+[sweep] wandb: View sweep at: https://wandb.ai/tri/uncategorized/sweeps/29x2unpb
+[sweep] wandb: Run sweep agent with: wandb agent tri/uncategorized/29x2unpb
+Extracted sweep token: tri/uncategorized/29x2unpb
+Run agent...
+ + wandb agent tri/uncategorized/29x2unpb
+[agent] wandb: Starting wandb agent 🕵️
+[agent] 2021-02-18 16:50:21,499 - wandb.wandb_agent - INFO - Running runs: []
+[agent] 2021-02-18 16:50:22,051 - wandb.wandb_agent - INFO - Agent received command: run
+[agent] 2021-02-18 16:50:22,052 - wandb.wandb_agent - INFO - Agent starting run with config:
+[agent]         custom_toggle: True
+[agent] 2021-02-18 16:50:22,054 - wandb.wandb_agent - INFO - About to run command: ./train_wandb_pl_main.py --is_wandb_sweep --wandb_sweep_json "{"custom_toggle": true}"
+[agent] GPU available: True, used: False
+[agent] TPU available: None, using: 0 TPU cores
+[agent] /home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/pytorch_lightning/utilities/distributed.py:50: UserWarning: GPU available but not used. Set the --gpus flag when calling the script.
+[agent]   warnings.warn(*args, **kwargs)
+[agent] /home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/pytorch_lightning/utilities/distributed.py:50: UserWarning: MASTER_ADDR environment variable is not defined. Set as localhost
+[agent]   warnings.warn(*args, **kwargs)
+[agent] initializing ddp: GLOBAL_RANK: 0, MEMBER: 1/2
+[agent] initializing ddp: GLOBAL_RANK: 1, MEMBER: 2/2
+[agent] wandb: Currently logged in as: tri (use `wandb login --relogin` to force relogin)
+[agent] wandb: WARNING Ignored wandb.init() arg project when running a sweep
+[agent] wandb: wandb version 0.10.19 is available!  To upgrade, please run:
+[agent] wandb:  $ pip install wandb --upgrade
+[agent] wandb: Tracking run with wandb version 0.10.18
+[agent] wandb: Resuming run test-run
+[agent] wandb: ⭐️ View project at https://wandb.ai/tri/uncategorized
+[agent] wandb: 🧹 View sweep at https://wandb.ai/tri/uncategorized/sweeps/29x2unpb
+[agent] wandb: 🚀 View run at https://wandb.ai/tri/uncategorized/runs/dpwza6kh
+[agent] wandb: Run data is saved locally in /home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/wandb/run-20210218_165024-dpwza6kh
+[agent] wandb: Run `wandb offline` to turn off syncing.
+[agent]
+[agent]   | Name | Type | Params
+[agent] ------------------------------
+[agent] ------------------------------
+[agent] 1         Trainable params
+[agent] 0         Non-trainable params
+[agent] 1         Total params
+[agent] /home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/pytorch_lightning/utilities/distributed.py:50: UserWarning: The dataloader, val dataloader 0, does not have many workers which may be a bottleneck. Consider increasing the value of the `num_workers` argument` (try 48 which is the number of cpus on this machine) in the `DataLoader` init to improve performance.
+[agent]   warnings.warn(*args, **kwargs)
+/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/pytorch_lightning/utilities/distributed.py:50: UserWarning: The dataloader, train dataloader, does not have many workers which may be a bottleneck. Consider increasing the
+value of the `num_workers` argument` (try 48 which is the number of cpus on this machine) in the `DataLoader` init to improve performance.
+[agent]   warnings.warn(*args, **kwargs)
+Epoch 0:   0%|          | 0/2 [00:00<?, ?it/s]
+Epoch 1:  50%|█████     | 1/2 [00:00<00:00, 315.12it/s, loss=9.64, v_num=a6kh]
+Epoch 4: 100%|██████████| 2/2 [00:00<00:00, 251.46it/s, loss=3.89, v_num=a6kh]wandb: WARNING Saving files without folders. If you want to preserve sub directories pass base_path to wandb.save, i.e. wandb.save("/mnt/folder/file.h5", base_path="/mnt")
+Epoch 4: 100%|██████████| 2/2 [00:00<00:00, 226.25it/s, loss=3.89, v_num=a6kh]
+[agent] wandb: WARNING Symlinked 0 file into the W&B run directory, call wandb.save again to sync new files.
+[agent] /home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/pytorch_lightning/utilities/distributed.py:50: UserWarning: cleaning up ddp environment...
+[agent]   warnings.warn(*args, **kwargs)
+[agent] 2021-02-18 16:50:27,068 - wandb.wandb_agent - INFO - Running runs: ['dpwza6kh']
