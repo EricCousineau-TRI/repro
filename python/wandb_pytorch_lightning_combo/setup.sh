@@ -14,7 +14,7 @@ _venv_dir=${_cur_dir}/venv
 
 _setup_venv() { (
     set -eu
-    completion_token="2021-02-18.2"
+    completion_token="2021-02-18.3"
     completion_file=${_venv_dir}/.completion-token
 
     cd ${_cur_dir}
