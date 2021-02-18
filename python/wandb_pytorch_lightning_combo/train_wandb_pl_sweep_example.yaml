@@ -7,6 +7,7 @@ parameters:
     distribution: categorical
     values: [true]
 
+project: uncategorized
 program: ./train_wandb_pl_main.py
 command:
 - ${program}
