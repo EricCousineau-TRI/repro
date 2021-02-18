@@ -1,0 +1,13 @@
+controller:
+  type: local
+
+method: grid
+# metric:
+#   name: loss/train
+#   goal: minimize
+parameters:
+  custom_toggle:
+    distribution: categorical
+    values: [true]
+
+command: [./train_wandb_pl_main.py]

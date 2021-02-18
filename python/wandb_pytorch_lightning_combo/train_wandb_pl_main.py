@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 
 import pytorch_lightning as pl
@@ -45,7 +47,6 @@ def create_datasets(K, count):
 
 def main():
     torch.random.manual_seed(0)
-    os.environ["WANDB_MODE"] = "dryrun"
 
     with torch.no_grad():
         K_gt = torch.tensor(2.0, requires_grad=False)
@@ -59,7 +60,7 @@ def main():
 
     logger = pl.loggers.WandbLogger(
         name="test-run",
-        project="test",
+        project="uncategorized",
         log_model=True,
     )
 

@@ -28,6 +28,8 @@ _setup_venv() { (
 
 _setup_venv && source ${_venv_dir}/bin/activate
 
+export WANDB_MODE=dryrun
+
 if [[ ${0} == ${BASH_SOURCE} ]]; then
     # This was executed, *not* sourced. Run arguments directly.
     exec "$@"
