@@ -10,4 +10,4 @@ command:
 - ${program}
 - --is_wandb_sweep
 - --wandb_sweep_json
-- ${json}
+- ${args_json}

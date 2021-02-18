@@ -53,8 +53,8 @@ def main():
     args = parser.parse_args()
 
     if args.is_wandb_sweep:
-        assert args.json is not None
-        assert args.json != ""
+        assert args.wandb_sweep_json is not None
+        assert args.wandb_sweep_json != ""
 
     torch.random.manual_seed(0)
 
