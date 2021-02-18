@@ -28,22 +28,22 @@ def run(procs):
     )
 
     # Wait for it to start up and print stuff out.
-    sweep_id = None
-    while sweep_id is None:
+    sweep_token = None
+    while sweep_token is None:
         stat = procs.poll()
         assert stat == {}, stat
         time.sleep(DT_INTERVAL)
         m = re.search(
-            r"Created sweep with ID: (\w+)",
+            r"wandb agent ([\w/]+)",
             sweep.output.get_text(),
         )
         if m is not None:
-            sweep_id = m.group(1)
+            sweep_token = m.group(1)
     while sweep.poll() is None:
         time.sleep(DT_INTERVAL)
     assert sweep.poll() == 0, sweep.poll()
 
-    print(f"Extracted sweep id: {sweep_id}")
+    print(f"Extracted sweep token: {sweep_token}")
     print(f"Run agent...")
     agent = procs.add(
         "agent", 
@@ -51,7 +51,7 @@ def run(procs):
             "wandb",
             "agent",
             "--project", wandb_project,
-            sweep_id,
+            sweep_token,
         ],
     )
 
