@@ -40,8 +40,18 @@ def run(procs):
         ["wandb", "agent", sweep_id],
     )
 
-    while True:
+    while agent.poll() is None:
+        assert sweep.poll() is None
         time.sleep(DT_INTERVAL)
+    assert agent.poll() == 0
+
+    # Wait for sweep to close down.
+    while sweep.poll() is None:
+        time.sleep(DT_INTERVAL)
+
+    stat = procs.poll()
+    assert all(value == 0 for value in stat.values()), stat
+    print("[ Done ]")
 
 
 def main():
