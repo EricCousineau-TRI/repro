@@ -15,27 +15,65 @@ _=/usr/bin/env
 + exec ./train_wandb_pl_sweep.py
  + wandb sweep --controller --project uncategorized ./train_wandb_pl_sweep_example.yaml
 [sweep] wandb: Creating sweep from: ./train_wandb_pl_sweep_example.yaml
-[sweep] wandb: Created sweep with ID: z05sjcp9
-[sweep] wandb: View sweep at: https://app.wandb.ai/tri/uncategorized/sweeps/z05sjcp9
-[sweep] wandb: Run sweep agent with: wandb agent tri/uncategorized/z05sjcp9
+[sweep] wandb: Created sweep with ID: x2udlttz
+[sweep] wandb: View sweep at: https://wandb.ai/tri/uncategorized/sweeps/x2udlttz
+[sweep] wandb: Run sweep agent with: wandb agent tri/uncategorized/x2udlttz
 [sweep] wandb: Starting wandb controller...
-Extracted sweep id: z05sjcp9
+Extracted sweep id: x2udlttz
 Run agent...
- + wandb agent --project uncategorized z05sjcp9
+ + wandb agent --project uncategorized x2udlttz
 [agent] wandb: Starting wandb agent 🕵️
-[agent] 2021-02-18 14:04:11,529 - wandb.wandb_agent - INFO - Running runs: []
-[agent] 2021-02-18 14:04:11,784 - wandb.wandb_agent - INFO - Agent received command: run
-[agent] 2021-02-18 14:04:11,784 - wandb.wandb_agent - INFO - Agent starting run with config:
-[agent]         custom_toggle: True
-[agent] 2021-02-18 14:04:11,968 - wandb.wandb_agent - INFO - About to run command: ./train_wandb_pl_main.py --is_wandb_sweep --wandb_sweep_json
-[agent] usage: train_wandb_pl_main.py [-h] [--is_wandb_sweep]
-[agent]                               [--wandb_sweep_json WANDB_SWEEP_JSON]
-[agent] train_wandb_pl_main.py: error: argument --wandb_sweep_json: expected one argument
-^CTraceback (most recent call last):
+[agent] 400 response executing GraphQL.
+[agent] {"errors":[{"message":"entityName required for project query","path":["project"]}],"data":{"project":null}}
+[agent] wandb: ERROR Error while calling W&B API: entityName required for project query (<Response [400]>)
+[agent] Traceback (most recent call last):
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/apis/normalize.py", line 24, in wrapper
+[agent]     return func(*args, **kwargs)
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/sdk/internal/internal_api.py", line 540, in sweep
+[agent]     "specs": specs,
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/old/retry.py", line 96, in __call__
+[agent]     result = self._call_fn(*args, **kwargs)
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/sdk/internal/internal_api.py", line 129, in execute
+[agent]     six.reraise(*sys.exc_info())
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/six.py", line 703, in reraise
+[agent]     raise value
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/sdk/internal/internal_api.py", line 123, in execute
+[agent]     return self.client.execute(*args, **kwargs)
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/vendor/gql-0.2.0/gql/client.py", line 52, in execute
+[agent]     result = self._get_result(document, *args, **kwargs)
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/vendor/gql-0.2.0/gql/client.py", line 60, in _get_result
+[agent]     return self.transport.execute(document, *args, **kwargs)
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/vendor/gql-0.2.0/gql/transport/requests.py", line 39, in execute
+[agent]     request.raise_for_status()
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/requests/models.py", line 943, in raise_for_status
+[agent]     raise HTTPError(http_error_msg, response=self)
+[agent] requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: https://api.wandb.ai/graphql
+[agent]
+[agent] During handling of the above exception, another exception occurred:
+[agent]
+[agent] Traceback (most recent call last):
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/cli/cli.py", line 94, in wrapper
+[agent]     return func(*args, **kwargs)
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/cli/cli.py", line 815, in agent
+[agent]     wandb_agent.agent(sweep_id, entity=entity, project=project, count=count)
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/wandb_agent.py", line 568, in agent
+[agent]     count=count,
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/wandb_agent.py", line 519, in run_agent
+[agent]     agent.run()
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/wandb_agent.py", line 181, in run
+[agent]     sweep_obj = self._api.sweep(self._sweep_id, "{}")
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/apis/internal.py", line 86, in sweep
+[agent]     return self.api.sweep(*args, **kwargs)
+[agent]   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/wandb/apis/normalize.py", line 26, in wrapper
+[agent]     raise CommError(err.response, err)
+[agent] wandb.errors.error.CommError: <Response [400]>
+[agent]
+[agent] Error: <Response [400]>
+Traceback (most recent call last):
   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/train_wandb_pl_sweep.py", line 78, in <module>
     main()
   File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/train_wandb_pl_sweep.py", line 74, in main
     run(procs)
-  File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/train_wandb_pl_sweep.py", line 59, in run
-    time.sleep(DT_INTERVAL)
-KeyboardInterrupt
+  File "/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/train_wandb_pl_sweep.py", line 60, in run
+    assert agent.poll() == 0
+AssertionError
