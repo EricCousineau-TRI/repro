@@ -1,5 +1,5 @@
-wandb == 0.9.1
-tensorboardX == 2.0
+wandb == 0.10.19
+tensorboard == 2.0
 
 # This would be the same as Ubuntu 18.04's current `python3-protobuf` pkg
 # protobuf == 3.0.0
