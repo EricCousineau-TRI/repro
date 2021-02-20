@@ -1,6 +1,12 @@
 # Basic Test for wandb sweeps + pytorch-lightning
 
-To run:
+Basic:
+
+```
+./isolate.sh ./setup.sh env WANDB_MODE=dryrun ./train_wandb_pl_main.py
+```
+
+More complicated:
 
 ```sh
 ./isolate.sh ./setup.sh ./train_wandb_pl_sweep.py
