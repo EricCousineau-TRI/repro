@@ -1,19 +1,12 @@
-# Basic Test for wandb sweeps + pytorch-lightning
-
-Basic:
+# Basic Test for wandb + pytorch-lightning
 
 ```
-./isolate.sh ./setup.sh env WANDB_MODE=dryrun ./train_wandb_pl_main.py
+./isolate.sh ./setup.sh ./train_wandb_pl_main.py
 ```
 
-More complicated:
+For Ubuntu 18.04, requires `python3-venv` on Ubuntu 18.04.
 
-```sh
-./isolate.sh ./setup.sh ./train_wandb_pl_sweep.py
-```
-
-Requires `python3-venv` on Ubuntu 18.04. Don't know/care about other platforms
-;)
+I personally don't know/care about other platforms for this ;)
 
 ## Debug if stuck
 
@@ -23,5 +16,7 @@ Requires `python3-venv` on Ubuntu 18.04. Don't know/care about other platforms
 
 ## Currently
 
-Above train script is stuck... In CPython 3.6.9 and 3.8.0
-Seemed like it worked before, but meh.
+Above train script is stuck... In both CPython 3.6.9 and 3.8.0.
+
+Seemed like it worked before (commit 583acd21), but meh, can't easily pinpoint
+what changed.

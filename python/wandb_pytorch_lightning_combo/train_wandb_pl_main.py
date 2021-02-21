@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import os
+import sys
+sys.dont_write_bytecode = True
 
 import argparse
 import pytorch_lightning as pl
@@ -9,22 +11,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import wandb
 
-# begin: https://stackoverflow.com/a/45690594/7829525
-import socket
-from contextlib import closing
-
-def find_free_port():
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-        s.bind(('', 0))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return s.getsockname()[1]
-# end
-
-_port = find_free_port()
-print(f"""
-    pystuck port: {_port}
-""", flush=True)
-import pystuck; pystuck.run_server(port=_port)
+import wandb_pytorch_lightning_combo.do_pystuck
 
 
 class ConstantMultiply(pl.LightningModule):
@@ -64,17 +51,6 @@ def create_datasets(K, count):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--is_wandb_sweep", action="store_true")
-    parser.add_argument("--wandb_sweep_json", type=str, default=None)
-    args = parser.parse_args()
-
-    if args.is_wandb_sweep:
-        assert args.wandb_sweep_json is not None
-        assert args.wandb_sweep_json != ""
-
-    torch.random.manual_seed(0)
-
     with torch.no_grad():
         K_gt = torch.tensor(2.0, requires_grad=False)
     model = ConstantMultiply()
@@ -88,15 +64,26 @@ def main():
     logger = pl.loggers.WandbLogger(
         name="test-run",
         project="uncategorized",
-        log_model=True,
     )
+
+    # # Uncomment this to make all cases work.
+    # logger = None
 
     trainer = pl.Trainer(
         logger=logger,
         max_epochs=5,
         num_processes=2,
+
+        # Freezes.
         accelerator="ddp_cpu",
-        gpus=None,
+
+        # # Freezes.
+        # accelerator="ddp_spawn",
+        # gpus=[0, 1],
+
+        # # Works.
+        # accelerator="ddp",
+        # gpus=[0, 1],
     )
     trainer.fit(model, dataloader_train, dataloader_val)
 

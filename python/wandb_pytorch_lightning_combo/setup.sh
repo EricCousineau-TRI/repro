@@ -35,6 +35,8 @@ _setup_venv() { (
 
 _setup_venv && source ${_venv_dir}/bin/activate
 
+export WANDB_MODE=dryrun
+export WANDB_DIR=/tmp
 export PYTHONPATH=${_cur_dir}/..:${PYTHONPATH}
 
 if [[ ${0} == ${BASH_SOURCE} ]]; then
