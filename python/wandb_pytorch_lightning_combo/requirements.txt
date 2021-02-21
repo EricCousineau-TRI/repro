@@ -1,3 +1,6 @@
 pytorch-lightning == 1.1.8
 torch == 1.7.1
 wandb == 0.10.18
+
+# Sigh.
+pystuck == 0.8.5

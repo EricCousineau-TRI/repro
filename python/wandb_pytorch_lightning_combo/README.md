@@ -14,3 +14,9 @@ More complicated:
 
 Requires `python3-venv` on Ubuntu 18.04. Don't know/care about other platforms
 ;)
+
+## Debug if stuck
+
+```
+./isolate.sh ./setup.sh pystuck --port={port}
+```
