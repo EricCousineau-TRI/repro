@@ -1,66 +1,0 @@
-+ env
-LANG=en_US.UTF-8
-DISPLAY=:0
-VIRTUAL_ENV=/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv
-WANDB_DIR=/tmp
-WANDB_MODE=dryrun
-PWD=/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo
-HOME=/home/eacousineau
-TERM=screen
-SHELL=/bin/bash
-SHLVL=1
-PYTHONPATH=/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/..:
-PATH=/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/bin:/usr/local/bin:/usr/bin:/bin
-PS1=(venv) 
-_=/usr/bin/env
-+ exec ./train_wandb_pl_main.py
-
-    pystuck port: 60909
-
-GPU available: True, used: False
-TPU available: None, using: 0 TPU cores
-/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/pytorch_lightning/utilities/distributed.py:50: UserWarning: GPU available but not used. Set the --gpus flag when calling the script.
-  warnings.warn(*args, **kwargs)
-wandb: Offline run mode, not syncing to the cloud.
-wandb: W&B syncing is set to `offline` in this directory.  Run `wandb online` to enable cloud syncing.
-
-    pystuck port: 37259
-
-/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/pytorch_lightning/utilities/distributed.py:50: UserWarning: MASTER_ADDR environment variable is not defined. Set as localhost
-  warnings.warn(*args, **kwargs)
-initializing ddp: GLOBAL_RANK: 0, MEMBER: 1/2
-
-    pystuck port: 53507
-
-initializing ddp: GLOBAL_RANK: 1, MEMBER: 2/2
-
-  | Name | Type | Params
-------------------------------
-------------------------------
-1         Trainable params
-0         Non-trainable params
-1         Total params
-0.000     Total estimated model params size (MB)
-Validation sanity check: 0it [00:00, ?it/s]Validation sanity check:   0%|          | 0/1 [00:00<?, ?it/s]                                                              Training: 0it [00:00, ?it/s]Training:   0%|          | 0/2 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/2 [00:00<?, ?it/s] Epoch 0:  50%|█████     | 1/2 [00:00<00:00, 30.58it/s, loss=17.5, v_num=bjj8]
-Validating: 0it [00:00, ?it/s][A
-Validating:   0%|          | 0/1 [00:00<?, ?it/s][AEpoch 0: 100%|██████████| 2/2 [00:00<00:00, 53.35it/s, loss=17.5, v_num=bjj8]
-                                                 [A/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/pytorch_lightning/utilities/distributed.py:50: UserWarning: The dataloader, val dataloader 0, does not have many workers which may be a bottleneck. Consider increasing the value of the `num_workers` argument` (try 48 which is the number of cpus on this machine) in the `DataLoader` init to improve performance.
-  warnings.warn(*args, **kwargs)
-/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/pytorch_lightning/utilities/distributed.py:50: UserWarning: The dataloader, train dataloader, does not have many workers which may be a bottleneck. Consider increasing the value of the `num_workers` argument` (try 48 which is the number of cpus on this machine) in the `DataLoader` init to improve performance.
-  warnings.warn(*args, **kwargs)
-wandb: Offline run mode, not syncing to the cloud.
-wandb: W&B syncing is set to `offline` in this directory.  Run `wandb online` to enable cloud syncing.
-Epoch 0:   0%|          | 0/2 [00:00<?, ?it/s, loss=17.5, v_num=bjj8]        Epoch 1:   0%|          | 0/2 [00:00<?, ?it/s, loss=17.5, v_num=bjj8]Epoch 1:  50%|█████     | 1/2 [00:00<00:00, 141.01it/s, loss=9.64, v_num=bjj8]
-Validating: 0it [00:00, ?it/s][A
-Validating:   0%|          | 0/1 [00:00<?, ?it/s][AEpoch 1: 100%|██████████| 2/2 [00:00<00:00, 182.67it/s, loss=9.64, v_num=bjj8]
-                                                 [AEpoch 1:   0%|          | 0/2 [00:00<?, ?it/s, loss=9.64, v_num=bjj8]         Epoch 2:   0%|          | 0/2 [00:00<?, ?it/s, loss=9.64, v_num=bjj8]Epoch 2:  50%|█████     | 1/2 [00:00<00:00, 359.78it/s, loss=6.48, v_num=bjj8]
-Validating: 0it [00:00, ?it/s][A
-Validating:   0%|          | 0/1 [00:00<?, ?it/s][AEpoch 2: 100%|██████████| 2/2 [00:00<00:00, 329.40it/s, loss=6.48, v_num=bjj8]
-                                                 [AEpoch 2:   0%|          | 0/2 [00:00<?, ?it/s, loss=6.48, v_num=bjj8]         Epoch 3:   0%|          | 0/2 [00:00<?, ?it/s, loss=6.48, v_num=bjj8]Epoch 3:  50%|█████     | 1/2 [00:00<00:00, 333.23it/s, loss=4.87, v_num=bjj8]
-Validating: 0it [00:00, ?it/s][A
-Validating:   0%|          | 0/1 [00:00<?, ?it/s][AEpoch 3: 100%|██████████| 2/2 [00:00<00:00, 311.65it/s, loss=4.87, v_num=bjj8]
-                                                 [AEpoch 3:   0%|          | 0/2 [00:00<?, ?it/s, loss=4.87, v_num=bjj8]         Epoch 4:   0%|          | 0/2 [00:00<?, ?it/s, loss=4.87, v_num=bjj8]Epoch 4:  50%|█████     | 1/2 [00:00<00:00, 354.10it/s, loss=3.89, v_num=bjj8]
-Validating: 0it [00:00, ?it/s][A
-Validating:   0%|          | 0/1 [00:00<?, ?it/s][AEpoch 4: 100%|██████████| 2/2 [00:00<00:00, 333.37it/s, loss=3.89, v_num=bjj8]
-                                                 [AEpoch 4: 100%|██████████| 2/2 [00:00<00:00, 238.16it/s, loss=3.89, v_num=bjj8]/home/eacousineau/proj/tri/repo/repro/python/wandb_pytorch_lightning_combo/venv/lib/python3.6/site-packages/pytorch_lightning/utilities/distributed.py:50: UserWarning: cleaning up ddp environment...
-  warnings.warn(*args, **kwargs)

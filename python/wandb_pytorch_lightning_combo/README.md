@@ -6,14 +6,6 @@
 
 For Ubuntu 18.04, requires `python3-venv` on Ubuntu 18.04.
 
-I personally don't know/care about other platforms for this ;)
-
-## Debug if stuck
-
-```
-./isolate.sh ./setup.sh pystuck --port={port}
-```
-
 ## Currently
 
 Above train script is stuck... In both CPython 3.6.9 and 3.8.0.
