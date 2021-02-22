@@ -6,13 +6,14 @@ sys.dont_write_bytecode = True
 
 import argparse
 import pytorch_lightning as pl
+from pytorch_lightning.plugins.training_type.ddp import DDPPlugin
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import wandb
 
 import wandb_pytorch_lightning_combo.do_pystuck
-from wandb_pytorch_lightning_combo.ddp_fork import DDPForkPlugin
+# from wandb_pytorch_lightning_combo.ddp_fork import DDPForkPlugin
 
 
 class ConstantMultiply(pl.LightningModule):
@@ -68,7 +69,9 @@ def main():
     )
 
     # # Uncomment this to make all cases work.
-    # logger = None
+    logger = None
+
+    cpu = torch.device("cpu")
 
     trainer = pl.Trainer(
         logger=logger,
@@ -86,8 +89,9 @@ def main():
         # accelerator="ddp",
         # gpus=[0, 1],
 
-        plugins=[DDPForkPlugin(
-            parallel_devices=[torch.device("cpu"), torch.device("cpu")],
+        # this doesn't work either...
+        plugins=[DDPPlugin(
+            parallel_devices=[cpu, cpu],
             num_nodes=2,
         )],
     )
