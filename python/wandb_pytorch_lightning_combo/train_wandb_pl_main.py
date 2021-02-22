@@ -70,9 +70,13 @@ def main():
         num_processes=2,
 
         # Freezes.
+        # In wandb==0.9.4, freezes at the end of `fit()`.
+        # In wandb>=0.10.2, freezes during cleanup.
         accelerator="ddp_cpu",
 
         # # Freezes.
+        # # In wandb==0.9.4, fails with `'NoneType' object has no attribute 'step'`
+        # # In wandb>=0.10.2, freezes during cleanup.
         # accelerator="ddp_spawn",
         # gpus=[0, 1],
 
