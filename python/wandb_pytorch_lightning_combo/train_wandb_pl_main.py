@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 import wandb
 
 import wandb_pytorch_lightning_combo.do_pystuck
+from wandb_pytorch_lightning_combo.ddp_fork import DDPForkPlugin
 
 
 class ConstantMultiply(pl.LightningModule):
@@ -74,8 +75,8 @@ def main():
         max_epochs=5,
         num_processes=2,
 
-        # Freezes.
-        accelerator="ddp_cpu",
+        # # Freezes.
+        # accelerator="ddp_cpu",
 
         # # Freezes.
         # accelerator="ddp_spawn",
@@ -84,6 +85,11 @@ def main():
         # # Works.
         # accelerator="ddp",
         # gpus=[0, 1],
+
+        plugins=[DDPForkPlugin(
+            parallel_devices=[torch.device("cpu"), torch.device("cpu")],
+            num_nodes=2,
+        )],
     )
     trainer.fit(model, dataloader_train, dataloader_val)
 
