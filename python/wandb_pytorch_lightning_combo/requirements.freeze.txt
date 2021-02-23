@@ -9,7 +9,7 @@ click==7.1.2
 configparser==5.0.1
 dataclasses==0.8
 docker-pycreds==0.4.0
-fsspec==0.8.5
+fsspec==0.8.6
 future==0.18.2
 gitdb==4.0.5
 GitPython==3.1.13
@@ -18,7 +18,7 @@ google-auth-oauthlib==0.4.2
 grpcio==1.35.0
 idna==2.10
 idna-ssl==1.1.0
-importlib-metadata==3.4.0
+importlib-metadata==3.5.0
 Markdown==3.3.3
 multidict==5.1.0
 numpy==1.19.5
@@ -47,7 +47,7 @@ torch==1.7.1
 tqdm==4.57.0
 typing-extensions==3.7.4.3
 urllib3==1.26.3
-wandb==0.10.19
+wandb==0.10.20
 Werkzeug==1.0.1
 yarl==1.6.3
 zipp==3.4.0
