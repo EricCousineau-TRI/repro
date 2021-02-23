@@ -37,6 +37,7 @@ _setup_venv && source ${_venv_dir}/bin/activate
 
 export WANDB_MODE=dryrun
 export WANDB_DIR=/tmp
+export WANDB_START_METHOD=fork
 export PYTHONPATH=${_cur_dir}/..:${PYTHONPATH}
 
 if [[ ${0} == ${BASH_SOURCE} ]]; then
