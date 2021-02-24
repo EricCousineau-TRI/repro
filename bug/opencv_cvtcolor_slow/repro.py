@@ -13,13 +13,14 @@ def main():
     count = 1000
     scope = dict(globals())
     scope.update(locals())
+    print(f"count: {count}")
 
     dt_cv = timeit.timeit('cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR, bgr)', number=count, globals=scope)
-    print(dt_cv / count)
+    print(f"cv2: {dt_cv / count:.6f}s")
     sys.stdout.flush()
 
     dt_np = timeit.timeit('bgr[:] = rgb[:, :, ::-1]', number=count, globals=scope)
-    print(dt_np / count)
+    print(f"np:  {dt_np / count:.6f}s")
 
 
 if __name__ == "__main__":
@@ -29,6 +30,7 @@ if __name__ == "__main__":
 """
 Ubuntu 18.04, CPython 3.6.9, 48 core machine:
 
-0.00018751850200351326
-0.00226589811098529
+    count: 1000
+    cv2: 0.000188s
+    np:  0.002309s
 """
