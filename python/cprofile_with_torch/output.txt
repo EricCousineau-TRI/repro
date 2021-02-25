@@ -1,0 +1,16 @@
+         1299 function calls (1108 primitive calls) in 0.008 seconds
+
+   Random listing order was used
+   List reduced from 24 to 5 due to restriction <5>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.008    0.008 _utils.py:60(forward)
+        1    0.000    0.000    0.008    0.008 _utils.py:17(forward)
+       16    0.001    0.000    0.008    0.000 resnet.py:101(forward)
+       54    0.000    0.000    0.000    0.000 __init__.py:31(__get__)
+        1    0.000    0.000    0.000    0.000 container.py:327(items)
+
+
+
+dt_mean: 0.0437s
+dts[-1]: 0.0347s
