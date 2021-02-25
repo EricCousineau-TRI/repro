@@ -68,7 +68,7 @@ def main():
   
         is_last = i + 1== count
         if is_last:
-            pr = profile.Profile(builtins=False)
+            pr = profile.Profile()
             pr.enable()
         t_start = time.perf_counter()
 
@@ -85,8 +85,7 @@ def main():
             pr.disable()
             stats = pstats.Stats(pr)
 
-    stats.sort_stats("cumtime")
-    stats.strip_dirs().print_stats(5)
+    stats.sort_stats("cumtime").strip_dirs().print_stats(5)
 
     print()
     dt_mean = np.mean(dts)

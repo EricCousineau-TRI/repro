@@ -1,16 +1,16 @@
-         1299 function calls (1108 primitive calls) in 0.009 seconds
+         2925 function calls (2734 primitive calls) in 0.035 seconds
 
    Random listing order was used
-   List reduced from 24 to 5 due to restriction <5>
+   List reduced from 47 to 5 due to restriction <5>
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-        1    0.000    0.000    0.008    0.008 _utils.py:60(forward)
-        1    0.000    0.000    0.009    0.009 _utils.py:17(forward)
-       16    0.001    0.000    0.008    0.000 resnet.py:101(forward)
-       54    0.000    0.000    0.000    0.000 __init__.py:31(__get__)
-        1    0.000    0.000    0.000    0.000 container.py:327(items)
+      761    0.000    0.000    0.000    0.000 {method 'values' of 'collections.OrderedDict' objects}
+        1    0.000    0.000    0.000    0.000 {method 'items' of 'collections.OrderedDict' objects}
+        1    0.000    0.000    0.000    0.000 {method 'append' of 'list' objects}
+        2    0.000    0.000    0.000    0.000 {built-in method time.perf_counter}
+        1    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
 
 
 
-dt_mean: 0.0430s
-dts[-1]: 0.0348s
+dt_mean: 0.0435s
+dts[-1]: 0.0350s
