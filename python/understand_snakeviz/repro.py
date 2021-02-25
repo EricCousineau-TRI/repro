@@ -2,6 +2,12 @@
 Provides a dumb way to understand SnakeViz + pstats output.
 
 I (Eric) dunno why horizontal times to sum to the total runtime.
+
+Follow-up:
+
+Times in each cell are *cumulative* time for that function. Derp.
+Thus, horizontal times will not sum up to overall time, b/c it's repeated for
+each function.
 """
 
 from contextlib import contextmanager
