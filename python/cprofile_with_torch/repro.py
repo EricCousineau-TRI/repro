@@ -72,12 +72,26 @@ def main():
             pr.enable()
         t_start = time.time()
 
+        # N.B. If this were wrapped in a function, it would show same time from
+        # cProfile and time.time().
+
+        # Using CUDA_LAUNCH_BLOCKING would also keep the same timing (though it
+        # would be slightly slower, e.g. from 35ms async to 50ms sync).
+
         # Simulate transfer.
         rgb_tensor = rgb_tensor.to(gpu)
         y = net(rgb_tensor)
         dd_tensor = y["out"]
-        dd_array = dd_tensor.to(cpu).numpy()
-        assert dd_array is not None
+
+        # This does *not* keep the same timing info.
+        dd_mean = torch.mean(dd_tensor[[0]]).to(cpu).numpy()
+
+        # # This keeps same timing info.
+        # dd_mean = torch.mean(dd_tensor).to(cpu).numpy()
+
+        # # This keeps same timing info.
+        # dd_array = dd_tensor.to(cpu).numpy()
+        # assert dd_array is not None
 
         dt = time.time() - t_start
         dts.append(dt)
@@ -85,9 +99,8 @@ def main():
             pr.disable()
             stats = pstats.Stats(pr)
 
-    stats.sort_stats("cumtime").strip_dirs().print_stats(5)
+    stats.sort_stats("cumtime").reverse_order().strip_dirs().print_stats(5)
 
-    print()
     dt_mean = np.mean(dts)
     print(f"dt_mean: {dt_mean:.4f}s")
     print(f"dts[-1]: {dts[-1]:.4f}s")

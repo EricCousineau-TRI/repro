@@ -1,7 +1,7 @@
-         2924 function calls (2733 primitive calls) in 0.035 seconds
+         2925 function calls (2734 primitive calls) in 0.009 seconds
 
    Random listing order was used
-   List reduced from 45 to 5 due to restriction <5>
+   List reduced from 46 to 5 due to restriction <5>
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
       761    0.000    0.000    0.000    0.000 {method 'values' of 'collections.OrderedDict' objects}
@@ -11,6 +11,5 @@
         1    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
 
 
-
-dt_mean: 0.0415s
-dts[-1]: 0.0354s
+dt_mean: 0.0367s
+dts[-1]: 0.0355s
