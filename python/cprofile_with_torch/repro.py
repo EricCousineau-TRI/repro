@@ -70,16 +70,16 @@ def main():
         if is_last:
             pr = profile.Profile()
             pr.enable()
-        t_start = time.perf_counter()
+        t_start = time.time()
 
         # Simulate transfer.
         rgb_tensor = rgb_tensor.to(gpu)
         y = net(rgb_tensor)
         dd_tensor = y["out"]
-        dd_array = dd_tensor.detach().cpu().numpy()
+        dd_array = dd_tensor.to(cpu).numpy()
         assert dd_array is not None
 
-        dt = time.perf_counter() - t_start
+        dt = time.time() - t_start
         dts.append(dt)
         if is_last:
             pr.disable()
