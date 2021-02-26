@@ -3,6 +3,7 @@ import time
 
 from pydrake.systems.framework import (DiagramBuilder,)
 from pydrake.systems.primitives import (ConstantVectorSource,)
+from pydrake.lcm import DrakeLcm
 from pydrake.geometry import (Box,
                               DrakeVisualizer)
 from pydrake.math import (RigidTransform, RollPitchYaw)
@@ -10,6 +11,8 @@ from pydrake.multibody.plant import (AddMultibodyPlantSceneGraph, CoulombFrictio
 from pydrake.multibody.tree import (SpatialInertia, RotationalInertia, PlanarJoint)
 
 from pydrake.systems.analysis import Simulator
+
+global_lcm_ftw = DrakeLcm()
 
 def make_box(mbp, name):
     inertia = SpatialInertia.MakeFromCentralInertia(1, [0, 0, 0], RotationalInertia(1/600, 1/120, 1/120))
@@ -64,7 +67,7 @@ def experiment(start_state, force_schedule, sleeptime=None):
     builder = DiagramBuilder()
     mbp, sg = make_mbp(builder)
     mbp.Finalize()
-    DrakeVisualizer.AddToBuilder(builder, sg)
+    DrakeVisualizer.AddToBuilder(builder, sg, lcm=global_lcm_ftw)
 
     thrusters = add_thrusters(builder, mbp)
 
