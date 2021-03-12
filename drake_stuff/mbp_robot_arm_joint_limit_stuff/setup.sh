@@ -15,7 +15,7 @@ _venv_dir=${_cur_dir}/venv
 _download_drake() { (
     # See: https://drake.mit.edu/from_binary.html
     # Download and echo path to stdout for capture.
-    set -eu
+    set -eux
 
     base=drake-20210312-bionic.tar.gz
     dir=~/Downloads
@@ -24,6 +24,32 @@ _download_drake() { (
         wget ${uri}/${base} -O ${dir}/${base}
     fi
     echo ${dir}/${base}
+) }
+
+_provision_repos() { (
+    set -eu
+    cd ${_cur_dir}
+
+    repo_dir=${PWD}/repos
+    completion_token=2021-03-12.1
+    completion_file=${repo_dir}/.completion-token
+
+    if [[ -f ${completion_file} && "$(cat ${completion_file})" == "${completion_token}" ]]; then
+        return 0
+    fi
+
+    set -x
+    rm -rf ${repo_dir}
+
+    mkdir ${repo_dir} && cd ${repo_dir}
+
+    git clone https://github.com/ros-industrial/universal_robot
+    cd universal_robot/
+    git checkout e8234318cc94  # From melodic-devel-staging
+
+    # Er... dunno what to do about this, so hackzzz
+    cd ${_cur_dir}
+    ./ros_setup.bash ./render_ur_urdfs.py
 ) }
 
 _setup_venv() { (
@@ -52,6 +78,7 @@ _setup_venv() { (
     echo "${completion_token}" > ${completion_file}
 ) }
 
+_provision_repos
 _setup_venv && source ${_venv_dir}/bin/activate
 
 if [[ ${0} == ${BASH_SOURCE} ]]; then
