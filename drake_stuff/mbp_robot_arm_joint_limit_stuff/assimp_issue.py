@@ -43,6 +43,10 @@ def convert_mesh(old_mesh_file, new_mesh_file, file_type):
     np.testing.assert_allclose(v_old, v_new, atol=1e-8, rtol=0)
 
 
+def main():
+    convert_mesh("base.dae", "base.obj", "obj")
+    print("[ Done ]")
+
+
 assert __name__ == "__main__"
-convert_mesh("shoulder.dae", "shoulder.obj", "obj")
-print("[ Good ]")
+main()
