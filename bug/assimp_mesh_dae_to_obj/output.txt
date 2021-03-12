@@ -5,7 +5,7 @@
 [ System Version ]
 + python3 ./repro.py
 pyassimp: /usr/lib/python3/dist-packages/pyassimp/__init__.py
-  dll: <CDLL 'libassimp.so.4', handle 2101ca0 at 0x7f28e296ae80>
+  dll: <CDLL 'libassimp.so.4', handle 1b64ca0 at 0x7fc5bad0feb8>
 
 Original: base.dae
 [[ 1.  0.  0.  0.]
@@ -50,26 +50,26 @@ Not equal to tolerance rtol=0, atol=1e-08
 [ Rebuilt Version ]
 + ${src}/venv/bin/python ./repro.py
 pyassimp: ${src}/venv/lib/python3.6/site-packages/pyassimp/__init__.py
-  dll: <CDLL '${src}/venv/lib/python3.6/site-packages/pyassimp/libassimp.so', handle 2c2d040 at 0x7fc551a509b0>
+  dll: <CDLL '${src}/venv/lib/python3.6/site-packages/pyassimp/libassimp.so', handle 2c105a0 at 0x7f5b006df0f0>
 
 Original: base.dae
-[[  0.00000000e+00   0.00000000e+00   0.00000000e+00   0.00000000e+00]
- [  0.00000000e+00   1.00000000e+00   0.00000000e+00   0.00000000e+00]
- [ -1.00000000e+00   0.00000000e+00   0.00000000e+00   0.00000000e+00]
- [  0.00000000e+00   0.00000000e+00   1.00000000e+00   1.35291004e-04]]
-  [[ 0.          0.          0.          0.        ]
-   [ 1.          0.          0.          0.        ]
-   [ 0.          1.          0.          0.        ]
-   [ 0.          0.          1.         -0.93343312]]
-Converted: base.obj
-[[ 0.  0.  0.  0.]
- [ 1.  0.  0.  0.]
- [ 0.  1.  0.  0.]
- [ 0.  0.  1.  0.]]
-  [[ 0.  0.  0.  0.]
-   [ 1.  0.  0.  0.]
+[[ 1.  0.  0.  0.]
+ [ 0.  0.  1.  0.]
+ [ 0. -1.  0.  0.]
+ [ 0.  0.  0.  1.]]
+  [[ 1.  0.  0.  0.]
    [ 0.  1.  0.  0.]
-   [ 0.  0.  1.  0.]]
+   [ 0.  0.  1.  0.]
+   [ 0.  0.  0.  1.]]
+Converted: base.obj
+[[ 1.  0.  0.  0.]
+ [ 0.  1.  0.  0.]
+ [ 0.  0.  1.  0.]
+ [ 0.  0.  0.  1.]]
+  [[ 1.  0.  0.  0.]
+   [ 0.  1.  0.  0.]
+   [ 0.  0.  1.  0.]
+   [ 0.  0.  0.  1.]]
 Traceback (most recent call last):
   File "./repro.py", line 59, in <module>
     main()

@@ -57,7 +57,8 @@ def main():
     assimp_dir = abspath("assimp")
     if not isdir("assimp"):
         # Download and build assmip.
-        shell("git clone https://github.com/assimp/assimp -b v5.0.1")
+        # shell("git clone https://github.com/assimp/assimp -b v5.0.1")
+        shell("git clone https://github.com/assimp/assimp -b v4.1.0")
         cd(assimp_dir)
 
         mkcd("build")
