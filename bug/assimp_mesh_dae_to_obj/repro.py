@@ -51,7 +51,7 @@ def print_assimp_info():
 
 def main():
     print_assimp_info()
-    convert_mesh("base.dae", "base.obj", "obj")
+    convert_mesh("shoulder.dae", "shoulder.obj", "obj")
     print("[ Done ]")
 
 
