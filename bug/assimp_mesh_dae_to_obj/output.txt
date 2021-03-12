@@ -1,9 +1,11 @@
 + cd ${src}
 + cd ${src}
++ cd ${src}
++ cd ${src}
 [ System Version ]
 + python3 ./repro.py
 pyassimp: /usr/lib/python3/dist-packages/pyassimp/__init__.py
-  dll: <CDLL 'libassimp.so.4', handle 2b3bca0 at 0x7f65e2e99eb8>
+  dll: <CDLL 'libassimp.so.4', handle 2101ca0 at 0x7f28e296ae80>
 
 Original: base.dae
 [[ 1.  0.  0.  0.]
@@ -23,6 +25,51 @@ Converted: base.obj
    [ 0.  1.  0.  0.]
    [ 0.  0.  1.  0.]
    [ 0.  0.  0.  1.]]
+Traceback (most recent call last):
+  File "./repro.py", line 59, in <module>
+    main()
+  File "./repro.py", line 54, in main
+    convert_mesh("base.dae", "base.obj", "obj")
+  File "./repro.py", line 43, in convert_mesh
+    np.testing.assert_allclose(v_old, v_new, atol=1e-8, rtol=0)
+  File "/usr/lib/python3/dist-packages/numpy/testing/utils.py", line 1395, in assert_allclose
+    verbose=verbose, header=header, equal_nan=equal_nan)
+  File "/usr/lib/python3/dist-packages/numpy/testing/utils.py", line 778, in assert_array_compare
+    raise AssertionError(msg)
+AssertionError: 
+Not equal to tolerance rtol=0, atol=1e-08
+
+(mismatch 66.66666666666666%)
+ x: array([[-0.011574, -0.076   ,  0.033702],
+       [-0.019829, -0.075862,  0.020303],
+       [-0.015892, -0.076   ,  0.011546],...
+ y: array([[-0.011574,  0.033702,  0.076   ],
+       [-0.019829,  0.020303,  0.075862],
+       [-0.015892,  0.011546,  0.076   ],...
+
+[ Rebuilt Version ]
++ ${src}/venv/bin/python ./repro.py
+pyassimp: ${src}/venv/lib/python3.6/site-packages/pyassimp/__init__.py
+  dll: <CDLL '${src}/venv/lib/python3.6/site-packages/pyassimp/libassimp.so', handle 2c2d040 at 0x7fc551a509b0>
+
+Original: base.dae
+[[  0.00000000e+00   0.00000000e+00   0.00000000e+00   0.00000000e+00]
+ [  0.00000000e+00   1.00000000e+00   0.00000000e+00   0.00000000e+00]
+ [ -1.00000000e+00   0.00000000e+00   0.00000000e+00   0.00000000e+00]
+ [  0.00000000e+00   0.00000000e+00   1.00000000e+00   1.35291004e-04]]
+  [[ 0.          0.          0.          0.        ]
+   [ 1.          0.          0.          0.        ]
+   [ 0.          1.          0.          0.        ]
+   [ 0.          0.          1.         -0.93343312]]
+Converted: base.obj
+[[ 0.  0.  0.  0.]
+ [ 1.  0.  0.  0.]
+ [ 0.  1.  0.  0.]
+ [ 0.  0.  1.  0.]]
+  [[ 0.  0.  0.  0.]
+   [ 1.  0.  0.  0.]
+   [ 0.  1.  0.  0.]
+   [ 0.  0.  1.  0.]]
 Traceback (most recent call last):
   File "./repro.py", line 59, in <module>
     main()
