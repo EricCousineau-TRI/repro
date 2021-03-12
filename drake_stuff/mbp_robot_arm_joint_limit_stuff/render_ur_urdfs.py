@@ -14,6 +14,7 @@ from subprocess import PIPE, run
 import sys
 from textwrap import indent
 
+import numpy as np
 import pyassimp
 import yaml
 
@@ -60,16 +61,56 @@ def parent_dir(p, *, count):
     return p
 
 
-def convert_file_to_obj(mesh_file, suffix):
+def load_mesh(mesh_file):
     assert isfile(mesh_file), mesh_file
+    scene = pyassimp.load(mesh_file)
+    assert scene is not None, mesh_file
+    return scene
+
+
+def get_mesh_extent(scene, mesh_file):
+    # Return geometric center and size.
+
+    def check_identity(node):
+        np.testing.assert_equal(
+            node.transformation,
+            np.eye(4),
+            err_msg=mesh_file,
+        )
+        for child in node.children:
+            check_identity(child)
+
+    assert len(scene.meshes) > 0, mesh_file
+    # Meshes should not have transforms.
+    check_identity(scene.rootnode)
+
+    v_list = []
+    for mesh in scene.meshes:
+        v_list.append(mesh.vertices)
+    v = np.vstack(v_list)
+    lb = np.min(v, axis=0)
+    ub = np.max(v, axis=0)
+    size = ub - lb
+    center = (ub + lb) / 2
+    return np.array([center, size])
+
+
+def convert_file_to_obj(mesh_file, suffix):
     assert mesh_file.endswith(suffix), mesh_file
     obj_file = mesh_file[:-len(suffix)] + ".obj"
     print(f"Convert Mesh: {mesh_file} -> {obj_file}")
     if isfile(obj_file):
         return
-    scene = pyassimp.load(mesh_file)
-    assert scene is not None, mesh_file
+    scene = load_mesh(mesh_file)
+    extent = get_mesh_extent(scene, mesh_file)
     pyassimp.export(scene, obj_file, file_type="obj")
+    # Sanity check.
+    scene_obj = load_mesh(obj_file)
+    extent_obj = get_mesh_extent(scene, mesh_file)
+    np.testing.assert_equal(
+        extent, extent_obj,
+        err_msg=repr((mesh_file, obj_file)),
+    )
 
 
 def replace_text_to_obj(content, suffix):
@@ -109,10 +150,10 @@ def main():
 
     print()
     print(f"[ Convert Meshes for Drake :( ]")
-    for stl_file in find_mesh_files("meshes", ".stl"):
-        convert_file_to_obj(stl_file, ".stl")
     for dae_file in find_mesh_files("meshes", ".dae"):
         convert_file_to_obj(dae_file, ".dae")
+    for stl_file in find_mesh_files("meshes", ".stl"):
+        convert_file_to_obj(stl_file, ".stl")
 
     urdf_files = []
     # Start a roscore, 'cause blech.
