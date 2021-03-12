@@ -9,13 +9,15 @@ https://github.com/RobotLocomotion/drake/blob/7de24898/tmp/benchmark/generate_be
 
 from contextlib import closing
 import os
-from os.path import abspath, dirname
+from os.path import abspath, dirname, isfile
 from subprocess import PIPE, run
 import sys
 from textwrap import indent
 
-from process_util import CapturedProcess, bind_print_prefixed
+import pyassimp
 import yaml
+
+from process_util import CapturedProcess, bind_print_prefixed
 
 
 class UserError(RuntimeError):
@@ -58,6 +60,29 @@ def parent_dir(p, *, count):
     return p
 
 
+def convert_file_to_obj(mesh_file, suffix):
+    assert isfile(mesh_file), mesh_file
+    assert mesh_file.endswith(suffix), mesh_file
+    obj_file = mesh_file[:-len(suffix)] + ".obj"
+    print(f"Convert Mesh: {mesh_file} -> {obj_file}")
+    if isfile(obj_file):
+        return
+    scene = pyassimp.load(mesh_file)
+    assert scene is not None, mesh_file
+    pyassimp.export(scene, obj_file, file_type="obj")
+
+
+def replace_text_to_obj(content, suffix):
+    # Not robust, but meh.
+    return content.replace(suffix, ".obj")
+
+
+def find_mesh_files(d, suffix):
+    files = subshell(f"find meshes -name '*{suffix}'").strip().split()
+    files.sort()
+    return files
+
+
 FLAVORS = [
     "ur3",
     "ur3e",
@@ -82,8 +107,14 @@ def main():
 
     cd("ur_description")
 
-    urdf_files = []
+    print()
+    print(f"[ Convert Meshes for Drake :( ]")
+    for stl_file in find_mesh_files("meshes", ".stl"):
+        convert_file_to_obj(stl_file, ".stl")
+    for dae_file in find_mesh_files("meshes", ".dae"):
+        convert_file_to_obj(dae_file, ".dae")
 
+    urdf_files = []
     # Start a roscore, 'cause blech.
     roscore = CapturedProcess(
         ["roscore", "-p", "11321"],
@@ -100,6 +131,8 @@ def main():
             output = subshell(f"rosparam get /robot_description")
             # Blech :(
             content = yaml.load(output)
+            content = replace_text_to_obj(content, ".stl")
+            content = replace_text_to_obj(content, ".dae")
             with open(urdf_file, "w") as f:
                 f.write(content)
             urdf_files.append(urdf_file)
@@ -112,6 +145,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
+        print()
         print("[ Done ]")
     except UserError as e:
         eprint(e)
