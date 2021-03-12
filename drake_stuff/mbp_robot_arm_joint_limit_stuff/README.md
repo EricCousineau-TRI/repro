@@ -28,6 +28,8 @@ This will:
 
 ```sh
 cd assimp
+# In assimp source tree.
+git clone https://github.com/assimp/assimp -b v5.0.1
 src_dir=${PWD}
 # install_dir=${src_dir}/build/install
 install_dir=~/proj/tri/repo/repro/drake_stuff/mbp_robot_arm_joint_limit_stuff/venv

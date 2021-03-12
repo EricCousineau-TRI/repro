@@ -71,18 +71,18 @@ def load_mesh(mesh_file):
 def get_mesh_extent(scene, mesh_file):
     # Return geometric center and size.
 
-    def check_identity(node):
-        np.testing.assert_equal(
-            node.transformation,
-            np.eye(4),
-            err_msg=mesh_file,
-        )
-        for child in node.children:
-            check_identity(child)
+    # def check_identity(node):
+    #     np.testing.assert_equal(
+    #         node.transformation,
+    #         np.eye(4),
+    #         err_msg=mesh_file,
+    #     )
+    #     for child in node.children:
+    #         check_identity(child)
 
-    assert len(scene.meshes) > 0, mesh_file
-    # Meshes should not have transforms.
-    check_identity(scene.rootnode)
+    # assert len(scene.meshes) > 0, mesh_file
+    # # Meshes should not have transforms.
+    # check_identity(scene.rootnode)
 
     v_list = []
     for mesh in scene.meshes:
