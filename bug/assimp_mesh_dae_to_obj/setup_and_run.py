@@ -61,8 +61,8 @@ def main():
         cd(assimp_dir)
 
         mkcd("build")
-        shell(f"cmake ..")
-        shell("make -j")
+        shell(f"cmake .. -GNinja")
+        shell("ninja")
 
     # Make venv.
     venv_dir = abspath("venv")
@@ -73,8 +73,8 @@ def main():
         # Retarget assimp to install to venv.
         cd(assimp_dir)
         cd("build")
-        shell(f"cmake .. -DCMAKE_INSTALL_PREFIX={venv_dir}")
-        shell(f"make -j install")
+        shell(f"cmake . -DCMAKE_INSTALL_PREFIX={venv_dir}")
+        shell(f"ninja install")
         # Do Python install.
         cd("../port/PyAssimp")
         shell(f"{venv_dir}/bin/python ./setup.py install")
