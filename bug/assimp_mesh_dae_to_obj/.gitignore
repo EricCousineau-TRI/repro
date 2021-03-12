@@ -1,0 +1,5 @@
+/assimp/
+/venv/
+*.obj
+*.mtl
+*.dae
