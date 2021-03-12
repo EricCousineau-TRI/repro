@@ -136,6 +136,9 @@ def main():
     source_tree = parent_dir(abspath(__file__), count=1)
     cd(source_tree)
 
+    print(pyassimp.__file__)
+    print(pyassimp.core._assimp_lib.dll)
+
     if "ROS_DISTRO" not in os.environ:
         raise UserError("Please run under `./ros_setup.bash`, or whatevs")
 

@@ -50,6 +50,8 @@ _provision_repos() { (
     # Er... dunno what to do about this, so hackzzz
     cd ${_cur_dir}
     ./ros_setup.bash ./render_ur_urdfs.py
+
+    echo "${completion_token}" > ${completion_file}
 ) }
 
 _setup_venv() { (
@@ -78,8 +80,9 @@ _setup_venv() { (
     echo "${completion_token}" > ${completion_file}
 ) }
 
-_provision_repos
 _setup_venv && source ${_venv_dir}/bin/activate
+
+_provision_repos
 
 if [[ ${0} == ${BASH_SOURCE} ]]; then
     # This was executed, *not* sourced. Run arguments directly.
