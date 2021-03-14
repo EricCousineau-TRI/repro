@@ -24,3 +24,19 @@ Just clone, go to this folder, then open:
 ```sh
 texstudio ./main.tex
 ```
+
+(ignore the equations, they're just there to fill space)
+
+## Video
+
+![video](./video.mp4)
+
+## Images
+
+Before:
+
+![before](./drawing-before.svg)
+
+After:
+
+![after](./drawing-after.svg)
