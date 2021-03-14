@@ -15,6 +15,7 @@ sudo apt install \
 ```
 
 References used:
+
 * <https://tex.stackexchange.com/questions/158700/latex-cant-find-sty-files-altough-packages-are-installed-texlive-ubuntu-12/158721>
 
 ## Running
@@ -29,7 +30,19 @@ texstudio ./main.tex
 
 ## Video
 
-![video](./video.mp4)
+[mp4](https://user-images.githubusercontent.com/26719449/111078951-3f983080-84ce-11eb-823c-d9f16e0edfcf.mp4)
+
+`mp4` recorded using [SimpleScreenRecorderer 0.3.8](https://github.com/MaartenBaert/ssr/releases/tag/0.3.8) (from Debian).
+
+![gif](https://user-images.githubusercontent.com/26719449/111079241-85092d80-84cf-11eb-8bae-cd5dbdad055f.gif)
+
+`gif` encoding using [gifski](https://gif.ski) 1.4.0:
+
+```sh
+gifski --fast-forward 2 --fast --fps 5 --width 1000 \
+    2021-03-14-latex-inkscape-question-again.mp4 \
+    --output 2021-03-14-latex-inkscape-question-again.gif
+```
 
 ## Images
 
