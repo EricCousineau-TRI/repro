@@ -3,6 +3,10 @@
 I always forget a good workflow to do this. Capturing for myself, and to ask
 for better workflows.
 
+Update: Should've read the docs:
+
+* <https://wiki.inkscape.org/wiki/index.php/LaTeX#How_to_embed_a_LaTeX_equation_inside_Inkscape>
+
 ## Prereqs
 
 Only tested on Ubuntu 18.04
