@@ -1,0 +1,33 @@
+% https://tex.stackexchange.com/q/50162/136386
+\documentclass[preview]{standalone}
+
+\renewcommand{\baselinestretch}{1.5}
+\usepackage{amsmath}
+
+\newcommand{\bs}{\boldsymbol}
+% Vector symbol
+\newcommand{\vs}[1]{{\bs{#1}}}
+% Matrix symbol
+\newcommand{\ms}[1]{{\bs{#1}}}
+
+% Reals
+\newcommand{\R}{\mathbb{R}}
+
+\newcommand{\vq}{\vs{q}}
+\newcommand{\vv}{\vs{v}}
+\newcommand{\vu}{\vs{u}}
+\newcommand{\mM}{\ms{M}}
+\newcommand{\mC}{\ms{C}}
+\newcommand{\vtauc}{\vs{\tau}_c}
+\newcommand{\mB}{\ms{B}}
+
+\begin{document}
+
+\begin{align*}
+    \mM(\vq) \dot{\vv} + \mC(\vq, \vv) \vv &= \vtauc(\vq) + \mB \vu \\
+    \vv &= \dot{\vq} \hspace{2em} \text{(in this case)} \\
+    \mathcal{R}^{n_q}  \\
+    \mathcal{R}^{n_u}
+\end{align*}
+
+\end{document}
