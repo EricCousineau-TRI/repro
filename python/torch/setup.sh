@@ -1,19 +1,45 @@
 #!/bin/bash
 
-_env_dir=$(cd $(dirname ${BASH_SOURCE}) && pwd)/virtualenv
-_python_bin=$(which python2)
-if [[ ! -f ${_env_dir}/bin/python2 ]]; then
-(
-    set -eux
-    cd $(dirname ${_env_dir})
-    ${_python_bin} -m virtualenv --python ${_python_bin} ${_env_dir}
-    set +eux
-    source ${_env_dir}/bin/activate
-    # Install some (if not all) needed dependencies.
-    pip install -r ${_env_dir}/../requirements.txt
-    set -eux
-)
-fi
+# Either source this, or use it as a prefix:
+#
+#   source ./setup.sh
+#   ./my_program
+#
+# or
+#
+#   ./setup.sh ./my_program
 
-source ${_env_dir}/bin/activate
-unset _env_dir _python_bin
+_cur_dir=$(cd $(dirname ${BASH_SOURCE}) && pwd)
+_venv_dir=${_cur_dir}/venv
+
+_setup_venv() { (
+    set -eu
+    cd ${_cur_dir}
+    completion_token="$(cat ./requirements.txt)"
+    completion_file=${_venv_dir}/.completion-token
+
+    if [[ -f ${completion_file} && "$(cat ${completion_file})" == "${completion_token}" ]]; then
+        return 0
+    fi
+
+    set -x
+    rm -rf ${_venv_dir}
+
+    # See: https://drake.mit.edu/python_bindings.html#inside-virtualenv
+    python3 -m venv ${_venv_dir} --system-site-packages
+    cd ${_venv_dir}
+    ./bin/pip install -I pip wheel
+    ./bin/pip install -I -r ${_cur_dir}/requirements.txt
+    ./bin/pip freeze > ${_cur_dir}/requirements.freeze.txt
+
+    echo "${completion_token}" > ${completion_file}
+) }
+
+_setup_venv && source ${_venv_dir}/bin/activate
+
+if [[ ${0} == ${BASH_SOURCE} ]]; then
+    # This was executed, *not* sourced. Run arguments directly.
+    set -eux
+    env
+    exec "$@"
+fi

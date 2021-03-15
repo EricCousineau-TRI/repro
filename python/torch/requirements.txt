@@ -1,5 +1,2 @@
-jupyter
-numpy==1.15.0
-torch
-
-jupyterlab
+jupyterlab==3.0.10
+torch==1.7.1
