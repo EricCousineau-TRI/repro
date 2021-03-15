@@ -67,6 +67,8 @@ After:
 
 ## Bug: Paste between windows
 
+Filed issue: <https://gitlab.com/inkscape/inbox/-/issues/4622>
+
 [bug mp4](https://user-images.githubusercontent.com/26719449/111192837-e55fa400-858f-11eb-93a7-bb4f284a04b3.mp4)
 
 ![bug image](https://user-images.githubusercontent.com/26719449/111192999-150eac00-8590-11eb-9f7d-9b300844cba2.png)
