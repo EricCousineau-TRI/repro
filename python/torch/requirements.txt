@@ -1,2 +1,2 @@
-jupyterlab==3.0.10
-torch==1.7.1
+jupyterlab==3.0.12
+torch==1.8.0

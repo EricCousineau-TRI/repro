@@ -25,8 +25,7 @@ _setup_venv() { (
     set -x
     rm -rf ${_venv_dir}
 
-    # See: https://drake.mit.edu/python_bindings.html#inside-virtualenv
-    python3 -m venv ${_venv_dir} --system-site-packages
+    python3 -m venv ${_venv_dir}
     cd ${_venv_dir}
     ./bin/pip install -I pip wheel
     ./bin/pip install -I -r ${_cur_dir}/requirements.txt
