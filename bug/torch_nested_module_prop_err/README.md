@@ -5,15 +5,17 @@ writing).
 
 Only manually tested on Ubuntu 18.04. Requires `apt install python3-venv`.
 
+Confirmed that this is due to: <br/>
+<https://github.com/pytorch/pytorch/issues/49726> <br/>
+Reduxed to use that code
+
 ## Quick Run
 
 ```sh
 $ ./setup.sh ./repro.py
-Descriptor (good): <property object at 0x7fa030541638>
-nested=A (good):
-  1
-nested=B, getattr (unexpected error):
-  'Top' object has no attribute 'proxy_property'
-nested=B, fget (expected error):
-  'B' object has no attribute 'good_attr'
+Descriptor (good): <property object at 0x7f8568189ef8>
+A.attr (unexpected error):
+  'A' object has no attribute 'attr'
+prop.fget(A) (expected error):
+  'A' object has no attribute 'bad_prop'
 ```
