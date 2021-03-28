@@ -1,0 +1,5 @@
+torch == 1.8.1
+jupyterlab == 3.0.12
+# TODO(eric, andres): Remove this once the following issue is resolved:
+# https://github.com/ipython/ipython/issues/12740
+jedi == 0.17.2
