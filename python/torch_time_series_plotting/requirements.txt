@@ -1,0 +1,13 @@
+matplotlib == 3.3.4  # 3.4.x doesn't support Python 3.6
+numpy == 1.19.5  # 1.20.x doesn't support Pytohn 3.6
+torch == 1.8.1
+
+pytorch-lightning == 1.2.5
+
+tensorboard == 2.4.1
+wandb == 0.10.23
+
+jupyterlab == 3.0.12
+# TODO(eric): Remove this once the following issue is resolved:
+# https://github.com/ipython/ipython/issues/12740
+jedi == 0.17.2
