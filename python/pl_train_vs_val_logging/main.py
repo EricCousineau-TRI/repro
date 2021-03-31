@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 
 """
-Seems fine in current setup:
+Logging behavior is still confusing:
 
-    val: N=2, batch_idx=0, K_pre=1.0
-    val: N=2, batch_idx=1, K_pre=1.0
-    train: N=2, batch_idx=0, K_pre=1.0
-    train: N=2, batch_idx=1, K_pre=2.0
-    val: N=2, batch_idx=0, K_pre=3.0
-    val: N=2, batch_idx=1, K_pre=3.0
-    train: N=2, batch_idx=0, K_pre=3.0
-    train: N=2, batch_idx=1, K_pre=4.0
-    val: N=2, batch_idx=0, K_pre=5.0
-    val: N=2, batch_idx=1, K_pre=5.0
+val: N=2, batch_idx=0, K_pre=1.0
+val: N=2, batch_idx=1, K_pre=1.0
+train: N=2, batch_idx=0, K_pre=1.0
+train: N=2, batch_idx=1, K_pre=2.0
+val: N=2, batch_idx=0, K_pre=3.0
+val: N=2, batch_idx=1, K_pre=3.0
+  log[step=1]: {'val/loss': -3.0, 'epoch': 0}
+train: N=2, batch_idx=0, K_pre=3.0
+train: N=2, batch_idx=1, K_pre=4.0
+val: N=2, batch_idx=0, K_pre=5.0
+val: N=2, batch_idx=1, K_pre=5.0
+  log[step=3]: {'val/loss': -5.0, 'epoch': 1}
 """
 
 import pprint as pp
@@ -20,7 +22,7 @@ from textwrap import indent
 import warnings
 
 import pytorch_lightning as pl
-from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.loggers import LightningLoggerBase
 import torch
 from torch.utils.data import DataLoader
 
@@ -54,6 +56,29 @@ class ConstantMultiply(pl.LightningModule):
         return optimizer
 
 
+class PrintLogger(LightningLoggerBase):
+    def __init__(self):
+        super().__init__()
+
+    @property
+    def experiment(self):
+        return "lightning_logs"
+
+    def log_metrics(self, metrics, step):
+        print(f"  log[step={step}]: {metrics}")
+
+    def log_hyperparams(self, params):
+        pass
+
+    @property
+    def name(self):
+        return self.experiment
+
+    @property
+    def version(self):
+        return 0
+
+
 @torch.no_grad()
 def create_dataset(count):
     # These values don't actually matter.
@@ -69,11 +94,8 @@ def main():
     dataloader_val = DataLoader(dataset, batch_size=N, shuffle=False)
     num_batches = len(dataloader)
 
-    log_dir = "/tmp/pl_train_vs_val_logging"
-    print(f"log_dir: {log_dir}")
-
     model = ConstantMultiply()
-    logger = TensorBoardLogger(log_dir)
+    logger = PrintLogger()
 
     # Denoise pl
     warnings.filterwarnings(
