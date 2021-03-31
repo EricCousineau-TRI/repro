@@ -1,0 +1,3 @@
+# Figger out Why Train/Val on PL does weird things
+
+On internal code. Will try to replay things here...
