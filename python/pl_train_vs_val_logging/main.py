@@ -73,8 +73,12 @@ def main():
         max_epochs=2,
         progress_bar_refresh_rate=0,
     )
-    # TODO(eric.cousineau): This causes training to break?
-    # pprint_trainer_args(trainer)
+    # TODO(eric.cousineau): This causes training to break on pl==1.2.0, but not
+    # 1.2.6.
+    #   File ".../pytorch_lightning/core/optimizer.py", line 100, in _to_lightning_optimizer
+    #     optimizer = trainer.lightning_optimizers[opt_idx]
+    # KeyError: 0
+    pprint_trainer_args(trainer)
     trainer.fit(
         model,
         train_dataloader=dataloader, 
