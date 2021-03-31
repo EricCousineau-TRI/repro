@@ -53,7 +53,7 @@ class ConstantMultiply(pl.LightningModule):
 
 @torch.no_grad()
 def create_dataset(count):
-    # These values don't actually value.
+    # These values don't actually matter.
     xs = [torch.tensor([0.0]) for i in range(count)]
     return xs
 
