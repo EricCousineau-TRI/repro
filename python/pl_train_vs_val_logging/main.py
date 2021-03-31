@@ -20,6 +20,7 @@ from textwrap import indent
 import warnings
 
 import pytorch_lightning as pl
+from pytorch_lightning.loggers import TensorBoardLogger
 import torch
 from torch.utils.data import DataLoader
 
@@ -66,19 +67,35 @@ def main():
     dataset = create_dataset(count)
     dataloader = DataLoader(dataset, batch_size=N, shuffle=False)
     dataloader_val = DataLoader(dataset, batch_size=N, shuffle=False)
+    num_batches = len(dataloader)
+
+    log_dir = "/tmp/pl_train_vs_val_logging"
+    print(f"log_dir: {log_dir}")
 
     model = ConstantMultiply()
-    warnings.simplefilter("ignore", UserWarning)  # Denoise pl
+    logger = TensorBoardLogger(log_dir)
+
+    # Denoise pl
+    warnings.filterwarnings(
+        "ignore", r".*GPU available but not used.*", UserWarning
+    )
+    warnings.filterwarnings(
+        "ignore", r".*does not have many workers.*", UserWarning
+    )
     trainer = pl.Trainer(
         max_epochs=2,
         progress_bar_refresh_rate=0,
+        logger=logger,
+        flush_logs_every_n_steps=num_batches,
     )
+
     # TODO(eric.cousineau): This causes training to break on pl==1.2.0, but not
     # 1.2.6.
     #   File ".../pytorch_lightning/core/optimizer.py", line 100, in _to_lightning_optimizer
     #     optimizer = trainer.lightning_optimizers[opt_idx]
     # KeyError: 0
-    pprint_trainer_args(trainer)
+    # pprint_trainer_args(trainer)
+
     trainer.fit(
         model,
         train_dataloader=dataloader, 
