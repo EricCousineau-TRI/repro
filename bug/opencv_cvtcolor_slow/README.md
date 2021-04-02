@@ -36,3 +36,18 @@ Relates:
 ```sh
 ./setup.sh python ./repro.py
 ```
+
+## For building OpenCV Python
+
+e.g. 3.4.0:
+
+```sh
+git clone --recurse-submodules https://github.com/opencv/opencv-python -b 14
+cd opencv-python/
+python3 -m venv ./venv
+source ./venv/bin/activate
+pip install -U pip
+pip install -I scikit-build==0.6.1
+env ENABLE_HEADLESS=1 VERBOSE=1 python setup.py bdist_wheel -- -- -j24
+pip install ./dist/opencv_python_headless-3.4.0.14*.whl
+```
