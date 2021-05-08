@@ -256,8 +256,18 @@ def _add_item(container, key, value):
     container[key] = value
 
 
-def _inverse(container, strict):
+def _get_cls_or_factory(container):
     cls = type(container)
+    if issubclass(cls, SortedDict):
+        return partial(cls, sorted_keys=container._sorted_keys)
+    elif issubclass(cls, SortedSet):
+        return partial(cls, sorted=container._sorted)
+    else:
+        return cls
+
+
+def _inverse(container, strict):
+    cls = _get_cls_or_factory(container)
     new = cls()
     for src, dest in container.items():
         if strict:

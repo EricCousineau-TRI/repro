@@ -16,11 +16,16 @@ Prototyping towards the following issues:
 To visualize the test cases:
 
 ```sh
+cd .../multibody_plant_prototypes
+
+# Build
+bazel build //... @drake_artifacts//...
+
 # Terminal 1
-bazel run @drake_artifacts//:drake_visualizer
+./bazel-bin/external/drake_artifacts/drake_visualizer
 
 # Terminal 2
-bazel run :multibody_plant_subgraph_test -- --visualize --verbose
+./bazel-bin/multibody_plant_subgraph_test --visualize --verbose
 ```
 
 ## `generate_poses_sink_clutter.py`
