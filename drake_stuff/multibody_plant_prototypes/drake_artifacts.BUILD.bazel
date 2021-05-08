@@ -1,0 +1,12 @@
+filegroup(
+    name = "all_files",
+    srcs = glob(["**/*"]),
+)
+
+# WARNING: Kinda hacky, not conservative, but meh.
+sh_binary(
+    name = "drake_visualizer",
+    srcs = ["bin/drake-visualizer"],
+    data = [":all_files"],
+    visibility = ["//visibility:public"],
+)

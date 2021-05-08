@@ -20,7 +20,7 @@ http_archive(
     url = "https://drake-packages.csail.mit.edu/drake/nightly/drake-{}-bionic.tar.gz".format(DRAKE_RELEASE),
     sha256 = DRAKE_CHECKSUM,
     strip_prefix = "drake/",
-    build_file_content = "#",
+    build_file = "@//:drake_artifacts.BUILD.bazel",
 )
 
 load("@drake_artifacts//:share/drake/repo.bzl", "drake_repository")

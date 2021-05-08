@@ -16,7 +16,11 @@ Prototyping towards the following issues:
 To visualize the test cases:
 
 ```sh
-bazel run :multibody_plant_subgraph_test -- --visualize
+# Terminal 1
+bazel run @drake_artifacts//:drake_visualizer
+
+# Terminal 2
+bazel run :multibody_plant_subgraph_test -- --visualize --verbose
 ```
 
 ## `generate_poses_sink_clutter.py`

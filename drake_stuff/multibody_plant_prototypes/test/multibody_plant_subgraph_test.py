@@ -12,6 +12,10 @@ To visualize:
     ./run //common:multibody_plant_subgraph_test --visualize
 
 """
+
+from multibody_plant_prototypes import debug  # noqa
+debug.reexecute_if_unbuffered()  # noqa
+
 from contextlib import contextmanager
 import copy
 import sys
@@ -400,6 +404,7 @@ class TestWorkflows(unittest.TestCase):
                 plant, context, iiwa_plant, iiwa_context,
                 "base", "iiwa_link_7", model_instance=model)
 
+    @debug.traced
     def test_composition_array_with_scene_graph(self):
         """Tests subgraphs (post-finalize) with a scene graph. This time, using
         sugar from parse_as_multibody_plant_subgraph."""
@@ -438,6 +443,7 @@ class TestWorkflows(unittest.TestCase):
             self.assertEqual(
                 plant.GetModelInstanceName(model), f"iiwa_{i}")
 
+        # WARNING: This currently freezes?!
         if VISUALIZE:
             print("  Visualize composite")
             Simulator(diagram, d_context.Clone()).Initialize()
