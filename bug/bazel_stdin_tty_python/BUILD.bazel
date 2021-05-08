@@ -1,0 +1,12 @@
+# Works A-OK.
+py_binary(
+    name = "read_from_tty",
+    srcs = ["read_from_tty.py"],
+)
+
+# Only works when executed using `./bazel-bin`.
+py_test(
+    name = "read_from_tty_as_test",
+    srcs = ["read_from_tty.py"],
+    main = "read_from_tty.py",
+)
