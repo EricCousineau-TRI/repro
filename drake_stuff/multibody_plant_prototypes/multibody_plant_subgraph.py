@@ -25,17 +25,17 @@ The MultibodyPlantSubgraph class was designed for the following workflows:
 - Creating an "un-finalized" instance of a MultibodyPlant (or portion) by
   making a subgraph consisting of the portion of interest and copying it into a
   new plant.
-    - It can be used to replacing joints and/or floating bodies with welds
-      which can be useful for fixing degrees of freedom for controllers, etc.
+    - It can be used to replace joints and/or floating bodies with welds which
+      can be useful for fixing degrees of freedom for controllers, etc.
 
 - Creating a "finalized" copy of an unfinalized MultibodyPlant as means to
   compute kinematics using an unfinalized plant.
 
 - Sometimes, a (MultibodyPlant, SceneGraph) might be part of a diagram that
-  ..cannot be converted, e.g., .ToAutoDiffXd(), due to limitations of other
+  cannot be converted, e.g., .ToAutoDiffXd(), due to limitations of other
   systems in the diagram (e.g. LCM publishers). The (MultibodyPlant,
-  SceneGraph) can be copied to a new diagram with only those elements, so that
-  they can be used in optimization.
+  SceneGraph) pair can be copied to a new diagram with only those elements, so
+  that they can be used in optimization.
 
 For examples of these workflows, please see `multibody_plant_subgraph_test.py`
 in Anzu.
@@ -49,8 +49,10 @@ Currently out of scope for this design:
   SceneGraph). It makes no steps towards trying to identify and copy subsets of
   Systems Framework Diagrams.
 """
+
 from collections import OrderedDict
 import copy
+from functools import partial
 
 from pydrake.geometry import GeometryId, SceneGraph
 from pydrake.multibody.parsing import Parser
@@ -73,19 +75,7 @@ from pydrake.multibody.tree import (
 from pydrake.systems.framework import Context, DiagramBuilder
 
 from . import multibody_extras as me
-
-
-def _sorted_indices(indices):
-    # TODO(eric.cousineau): Bind `<`?
-    return sorted(indices, key=lambda x: int(x))
-
-
-def _sorted_elements(items):
-    return sorted(items, key=lambda x: int(x.index()))
-
-
-def _sorted_identifiers(ids):
-    return sorted(ids, key=lambda x: x.get_value())
+from .containers import SortedDict, SortedSet
 
 
 def model_instance_remap_to_default(plant_src, model_instance_src, plant_dest):
@@ -116,68 +106,83 @@ def model_instance_remap_same_name(name):
     return name
 
 
-def make_multibody_plant_elements_cls(name, container_cls):
-
-    class Impl:
-        """Provides a container for elements that MultibodyPlantSubgraph allows
-        the user to interact with."""
-        def __init__(self):
-            self.model_instances = container_cls()
-            self.bodies = container_cls()
-            self.frames = container_cls()
-            self.joints = container_cls()
-            self.joint_actuators = container_cls()
-            # TODO(eric.cousineau): How to handle force elements?
-            self.geometry_ids = container_cls()
-            # TODO(eric.cousineau): How to handle collision filters?
-
-        def _copy_to(self, new):
-            new.model_instances = copy.copy(self.model_instances)
-            new.bodies = copy.copy(self.bodies)
-            new.frames = copy.copy(self.frames)
-            new.joints = copy.copy(self.joints)
-            new.joint_actuators = copy.copy(self.joint_actuators)
-            new.geometry_ids = copy.copy(self.geometry_ids)
-
-        def __copy__(self):
-            """Makes a "level 2" shallow copy."""
-            new = Impl()
-            self._copy_to(new)
-            return new
-
-        def _apply(self, container_func, other):
-            container_func(self.model_instances, other.model_instances)
-            container_func(self.bodies, other.bodies)
-            container_func(self.frames, other.frames)
-            container_func(self.joints, other.joints)
-            container_func(self.joint_actuators, other.joint_actuators)
-            container_func(self.geometry_ids, other.geometry_ids)
-            return self
-
-    # Rename the class.
-    Impl.__name__ = name
-    Impl.__qualname__ = name
-    return Impl
-
-
-# TODO(eric.cousineau): Use a set instead.
-_MultibodyPlantElementsList = make_multibody_plant_elements_cls(
-    "MultibodyPlantElements",
-    container_cls=list,
-)
-_MultibodyPlantElementsMap = make_multibody_plant_elements_cls(
-    "MultibodyPlantElements",
-    container_cls=OrderedDict,
+_FIELDS = (
+    'model_instances',
+    'bodies',
+    'frames',
+    'joints',
+    'joint_actuators',
+    'geometry_ids',
 )
 
 
-def _exclusive_extend(dest, src):
+class _MultibodyPlantElementsBase:
+    """Provides a container for elements that MultibodyPlantSubgraph allows
+    the user to interact with."""
+    def __init__(self, container_cls):
+        self.model_instances = container_cls()
+        self.bodies = container_cls()
+        self.frames = container_cls()
+        self.joints = container_cls()
+        self.joint_actuators = container_cls()
+        # TODO(eric.cousineau): How to handle force elements?
+        self.geometry_ids = container_cls()
+        # TODO(eric.cousineau): How to handle collision filters?
+
+    def _copy_to(self, new):
+        new.model_instances = copy.copy(self.model_instances)
+        new.bodies = copy.copy(self.bodies)
+        new.frames = copy.copy(self.frames)
+        new.joints = copy.copy(self.joints)
+        new.joint_actuators = copy.copy(self.joint_actuators)
+        new.geometry_ids = copy.copy(self.geometry_ids)
+
+    def __copy__(self):
+        """Makes a "level 2" shallow copy."""
+        new = _MultibodyPlantElementsBase()
+        self._copy_to(new)
+        return new
+
+    def _apply(self, container_func, other):
+        container_func(self.model_instances, other.model_instances)
+        container_func(self.bodies, other.bodies)
+        container_func(self.frames, other.frames)
+        container_func(self.joints, other.joints)
+        container_func(self.joint_actuators, other.joint_actuators)
+        container_func(self.geometry_ids, other.geometry_ids)
+        return self
+
+    def __eq__(self, other):
+        return (
+            self.model_instances == other.model_instances and
+            self.bodies == other.bodies and
+            self.frames == other.frames and
+            self.joints == other.joints and
+            self.joint_actuators == other.joint_actuators and
+            self.geometry_ids == other.geometry_ids)
+
+    def as_tuple(self):
+        return (
+            ('model_instances', self.model_instances),
+            ('bodies', self.bodies),
+            ('frames', self.frames),
+            ('joints', self.joints),
+            ('joint_actuators', self.joint_actuators),
+            ('geometry_ids', self.geometry_ids),
+        )
+
+    def __repr__(self):
+        s = "(\n  " + ",\n  ".join(str(x) for x in self.as_tuple()) + ",\n)"
+        return s
+
+
+def _exclusive_set_update(dest, src):
     assert len(src) == len(set(src))  # Unique source material
-    assert set(dest).isdisjoint(src)  # No common elements.
-    dest.extend(src)
+    assert dest.isdisjoint(src)  # No common elements.
+    dest.update(src)
 
 
-class MultibodyPlantElements(_MultibodyPlantElementsList):
+class MultibodyPlantElements(_MultibodyPlantElementsBase):
     """
     Aggregates elements from a MultibodyPlant (and optional SceneGraph).
 
@@ -185,12 +190,13 @@ class MultibodyPlantElements(_MultibodyPlantElementsList):
     more thorough bookkeeping instead.
     """
     def __init__(self, plant, scene_graph=None):
+        sorted_factory = partial(SortedSet, sorted=me.elements_sorted)
+        super().__init__(sorted_factory)
         assert isinstance(plant, MultibodyPlant)
         if scene_graph is not None:
             assert isinstance(scene_graph, SceneGraph)
         self.plant = plant
         self.scene_graph = scene_graph
-        super().__init__()
 
     def __copy__(self):
         new = MultibodyPlantElements(self.plant, self.scene_graph)
@@ -204,25 +210,32 @@ class MultibodyPlantElements(_MultibodyPlantElementsList):
 
     def __iadd__(self, other):
         self._check(other)
-        self._apply(_exclusive_extend, other)
+        self._apply(_exclusive_set_update, other)
         return self
+
+    def __eq__(self, other):
+        return (
+            self.plant is other.plant and
+            self.scene_graph is other.scene_graph and
+            super().__eq__(other))
 
 
 def get_elements_from_bodies(
         plant, bodies, scene_graph=None, model_instances=None):
     elem = MultibodyPlantElements(plant, scene_graph)
-    elem.bodies += bodies
+    elem.bodies.update(bodies)
     if model_instances is None:
-        elem.model_instances = list({x.model_instance() for x in elem.bodies})
+        elem.model_instances = {x.model_instance() for x in elem.bodies}
     else:
-        elem.model_instances += model_instances
-    elem.joints += me.get_joints_solely_connected_to(
-        plant, elem.bodies)
-    elem.joint_actuators += me.get_joint_actuators_affecting_joints(
-            plant, elem.joints)
-    elem.frames += me.get_frames_attached_to(plant, elem.bodies)
+        elem.model_instances.update(model_instances)
+    elem.joints.update(me.get_joints_solely_connected_to(
+        plant, elem.bodies))
+    elem.joint_actuators.update(me.get_joint_actuators_affecting_joints(
+            plant, elem.joints))
+    elem.frames.update(me.get_frames_attached_to(plant, elem.bodies))
     if scene_graph is not None:
-        elem.geometry_ids += me.get_geometries(plant, scene_graph, elem.bodies)
+        elem.geometry_ids.update(
+            me.get_geometries(plant, scene_graph, elem.bodies))
     return elem
 
 
@@ -243,7 +256,17 @@ def _add_item(container, key, value):
     container[key] = value
 
 
-class MultibodyPlantElementsMap(_MultibodyPlantElementsMap):
+def _inverse(container, strict):
+    cls = type(container)
+    new = cls()
+    for src, dest in container.items():
+        if strict:
+            assert dest not in new
+        new[dest] = src
+    return new
+
+
+class MultibodyPlantElementsMap(_MultibodyPlantElementsBase):
     """
     Handles both the copying of elements from `plant_src` (and
     `scene_graph_src`), keeping track of those associations, and handling of
@@ -260,18 +283,43 @@ class MultibodyPlantElementsMap(_MultibodyPlantElementsMap):
     def __init__(
             self, plant_src, plant_dest,
             scene_graph_src=None, scene_graph_dest=None):
+        sorted_factory = partial(SortedDict, sorted_keys=me.elements_sorted)
+        super().__init__(sorted_factory)
         self.plant_src = plant_src
         self.scene_graph_src = scene_graph_src
         self.plant_dest = plant_dest
         self.scene_graph_dest = scene_graph_dest
+        # These elements are allowed to "repeat".
         self._builtins_src = self.make_empty_elements_src()
-        super().__init__()
+
+    def __eq__(self, other):
+        return (
+            self.plant_src is other.plant_src and
+            self.scene_graph_src is other.scene_graph_src and
+            self.plant_dest is other.plant_dest and
+            self.scene_graph_dest is other.scene_graph_dest and
+            super().__eq__(other))
 
     def make_empty_elements_src(self):
         return MultibodyPlantElements(self.plant_src, self.scene_graph_src)
 
     def make_empty_elements_dest(self):
         return MultibodyPlantElements(self.plant_dest, self.scene_graph_dest)
+
+    def inverse(self, strict=True):
+        """Reverses associations. If strict, then this must be a injective
+        mapping (e.g. each source element maps to a unique destination
+        element)."""
+        new = MultibodyPlantElementsMap(
+            self.plant_dest, self.plant_src,
+            self.scene_graph_dest, self.scene_graph_src)
+        new.model_instances = _inverse(self.model_instances, strict)
+        new.bodies = _inverse(self.bodies, strict)
+        new.frames = _inverse(self.frames, strict)
+        new.joints = _inverse(self.joints, strict)
+        new.joint_actuators = _inverse(self.joint_actuators, strict)
+        new.geometry_ids = _inverse(self.geometry_ids, strict)
+        return new
 
     def register_world_body_and_frame(self):
         """Registers the world body and frame."""
@@ -280,11 +328,11 @@ class MultibodyPlantElementsMap(_MultibodyPlantElementsMap):
         _add_item(
             self.bodies,
             plant_src.world_body(), plant_dest.world_body())
-        self._builtins_src.bodies.append(plant_src.world_body())
+        self._builtins_src.bodies.add(plant_src.world_body())
         _add_item(
             self.frames,
             plant_src.world_frame(), plant_dest.world_frame())
-        self._builtins_src.frames.append(plant_src.world_frame())
+        self._builtins_src.frames.add(plant_src.world_frame())
 
     def register_model_instance(self, model_instance_src, model_instance_dest):
         """Register a ModelInstanceIndex for both the source and destination
@@ -321,7 +369,7 @@ class MultibodyPlantElementsMap(_MultibodyPlantElementsMap):
         # Register body frame as a builtin.
         frame_src = body_src.body_frame()
         frame_dest = body_dest.body_frame()
-        self._builtins_src.frames.append(frame_src)
+        self._builtins_src.frames.add(frame_src)
         _add_item(self.frames, frame_src, frame_dest)
         return frame_src
 
@@ -391,8 +439,8 @@ class MultibodyPlantElementsMap(_MultibodyPlantElementsMap):
         elif type(joint_src) == WeldJoint:
             joint_dest = WeldJoint(
                 name=joint_src.name(),
-                parent_frame_P=frame_on_parent_dest,
-                child_frame_C=frame_on_child_dest,
+                frame_on_parent_P=frame_on_parent_dest,
+                frame_on_child_C=frame_on_child_dest,
                 X_PC=joint_src.X_PC(),
             )
         else:
@@ -471,8 +519,10 @@ class MultibodyPlantElementsMap(_MultibodyPlantElementsMap):
         geometry_instance_dest.set_name(scoped_name_dest)
 
         # TODO(eric.cousineau): How to relax this constraint? How can we
-        # register with SceneGraph only? See Sean's TODO in
-        # MultibodyPlant.RegisterCollisionGeometry.
+        # register with SceneGraph only?
+        # See: https://github.com/RobotLocomotion/drake/issues/13445
+        # TODO(eric.cousineau): Try Ale's potential fix here:
+        # https://github.com/RobotLocomotion/drake/pull/13371
         proximity_properties = (
             geometry_instance_dest.proximity_properties())
         if proximity_properties is not None:
@@ -508,18 +558,14 @@ class MultibodyPlantElementsMap(_MultibodyPlantElementsMap):
                 plant_dest.SetFreeBodySpatialVelocity(
                     body_dest, V_WB, context_dest)
         for joint_src, joint_dest in self.joints.items():
+            if type(joint_src) != type(joint_dest):
+                # This joint may have been welded (and part of a inverse map).
+                # Skip.
+                continue
             qj = me.get_joint_positions(plant_src, context_src, joint_src)
             me.set_joint_positions(plant_dest, context_dest, joint_dest, qj)
             vj = me.get_joint_velocities(plant_src, context_src, joint_src)
             me.set_joint_velocities(plant_dest, context_dest, joint_dest, vj)
-
-
-def disconnect_subgraph_from_world(subgraph):
-    """Disconnects the subgraph from the world; all bodies that were welded to
-    the world will now be floating."""
-    # TODO(eric.cousineau): Add option to disconnect / remove bodies welded to
-    # the world too.
-    return subgraph.remove_body(subgraph.plant_src.world_body())
 
 
 class SubgraphPolicy:
@@ -594,32 +640,71 @@ class FreezeJointSubgraphPolicy(SubgraphPolicy):
             weld = src_to_dest.plant_dest.WeldFrames(
                 frame_P_dest, frame_C_dest, X_PC)
             src_to_dest.joints[joint_src] = weld
-            elem_added.joints.append(weld)
+            elem_added.joints.add(weld)
         return elem_added, elem_removed
 
 
 class MultibodyPlantSubgraph:
+    # TODO(eric.cousineau): Consider renaming to `MultibodyPlantCopier`?
+    # Move subgraph constraints / documentation to the
+    # `check_subgraph_invariants` function?
     """
-    Defines subgraph of a source MultibodyPlant (and possibly SceneGraph). This
-    subgraph can then be copied onto a destination MultibdoyPlant (and possibly
-    SceneGraph), and return its associations.
+    Defines the subgraph of a *single* source MultibodyPlant (and possibly
+    SceneGraph). This subgraph can then be copied onto *any* unfinalized
+    destination MultibodyPlant (and possibly SceneGraph), and return the
+    associations between the source (MBP, *SG) and a given destination (MBP,
+    *SG).
+
+    Note: The abbreviation "(MBP, *SG)" is intended to imply a MultibodyPlant
+    and possibly SceneGraph; if the SceneGraph is specified, it *must* be
+    registered with the given plant.
 
     This MultibodyPlantSubgraph only identifies topology; computations
-    themselves are only done by MultibodyPlant / SceneGraph.
+    themselves are only done by (MBP, *SG).
 
     For more information about workflows, see the module-level docstring.
 
     Note:
         It does *not* matter if the source plant is finalized or not.
 
-    As used here, the term "subgraph" is purely conceptual. The vertices of the
-    graph are MBP elements (e.g., bodies, frames, joints, etc.). An edge exists
-    between the vertices if the elements reference each other (e.g., there are
-    edges between a joint element and the body elements it connects, between a
-    frame and the body to which it is affixed, etc.).
+    It is important to note that model instances (ModelInstanceIndex) in Drake
+    should not be strictly interpreted as physical things; i.e. some model
+    instances could correspond to a mechanical subsystem (e.g. an arm), where
+    other model instances could identify a group of disconnected bodies,
+    joints, frames, etc. Instead, they're more of a "tagging" mechanism. Given
+    that they are part of the public API for MultibodyPlant, and their names
+    are an important facet of this, they are incorporated into the subgraph
+    (defined below) as an effective "container" for the objects that are
+    "tagged" with this instance.
 
-    The subgraph must be a connected component. More concretely, the invaraints
-    for elements in this subgraph:
+    As used here, the term "subgraph" is purely conceptual. The vertices of the
+    graph are (MBP, *SG) elements (e.g., bodies, frames, joints, geometries,
+    etc.) and model instances, and graph itself is directed. A directed edge is
+    deemed to exist from one vertex A to another vertex B iff A refers to B in
+    a way that is required for A to "exist" specific to the MultibodyPlant. For
+    example:
+
+    - A model instance I can be in the graph without having any bodies that
+      belong to it, but a body B cannot be in the subgraph if model instance I
+      is not part of the subgraph -- because I is specifically required for
+      defining B.
+    - Two bodies B1 and B2 connected by a joint J in the original plant can be
+      in the subgraph, regardless of whether J is in it. However, B cannot be
+      in the subgraph if either B1 or B2 are not in it.
+    - A geometry G *could* be defined in the SceneGraph without being attached
+      to any body in the MultibodyPlant. However, for the purposes of this
+      class, it is deemed necessary for the geometry G to be associated with
+      the body B in order to facilitate association after the geometry is
+      copied to a destination plant.
+
+    The (directed) subgraph must connected in a specific way; the connectivity
+    is as strict as or more strict than being weakly connected (all vertices
+    have a reachable path between each other), but not as strict as being
+    unilaterally connected (all vertices are connected to each other). This is
+    because some vertices may require multiple connections, e.g. the joint
+    example illustrated above.
+
+    The concrete invariants for elements in this subgraph:
 
     - All subgraph model instances must be part of the subgraph's
       MultibodyPlant.
@@ -632,21 +717,26 @@ class MultibodyPlantSubgraph:
 
     - All subgraph joint actuators must act solely on the subgraph joints.
 
-    - All subgraph geometries must be attached to the subgraph bodies, and may
-      must be part of the subgraph's SceneGraph.
+    - All subgraph geometries must be attached to the subgraph bodies, and
+      must be part of the subgraph's SceneGraph (if specified).
 
-      Geometries have additional (hack-ish) constraints:
+      Geometries have additional (hack-ish) constraints that are not enforced
+      as subgraph invariants, but rather when adding the subgraph to a new
+      MultibodyPlant (and possibly SceneGraph):
 
       - The subgraph geometry must use the "scoped name" of
         "{body_model_instance}::{geometry_name}". This is necessary so
-        that the copies of geometry can be renamed can be renamed to the new
-        model instance name given as part of the copy operation.
-      - A collision geometry *cannot* have any other roles. This is due
-        to a constraint in how `MultibodyPlant` handles collision
-        geometry.
-      - This class only deals with SceneGraph's model geometry; it does not
-        try to mutate any Context-stored geometries.
+        that the copies of geometry can be renamed to the new model instance
+        name given as part of the copy operation. Any geometry not using this
+        pattern will raise an error.
+      - If a geometry has a collision role in addition to other roles, an error
+        will be raised. This is due to a constraint in how `MultibodyPlant`
+        handles collision geometry (drake#13445).
+      - This class only deals with SceneGraph's registered model geometry; it
+        does not affect copies of that model in any allocated Contexts.
     """
+    # TODO(eric.cousineau): Relax the error constraints for geometry and
+    # possibly ignore them.
 
     def __init__(self, elem):
         assert isinstance(elem, MultibodyPlantElements)
@@ -696,16 +786,21 @@ class MultibodyPlantSubgraph:
     def add_body(self, body, include_dependents=False):
         raise NotImplemented
 
-    def remove_body(self, body):
-        """Removes body and all associated elements from this subgraph.
+    def remove_body(self, body, include_welded_bodies=False):
+        """
+        Removes body and all associated elements from this subgraph.
+
+        Args:
+            body: Body to be removed.
+            include_welded_bodies: If True, will also remove any bodies in this
+                subgraph that are welded to ``body``.
         Returns:
             MultibodyPlantElements containing all removed elements.
         """
-        # TODO(eric.cousineau): Add `include_welded_bodies` flag.
         elem_src = self._elem_src
         elem_removed = self.make_empty_elements()
         elem_src.bodies.remove(body)
-        elem_removed.bodies.append(body)
+        elem_removed.bodies.add(body)
         frames = [
             x for x in elem_src.frames
             if x.body() is body]
@@ -721,6 +816,10 @@ class MultibodyPlantSubgraph:
                 self.plant_src, self.scene_graph_src, [body])
             for x in geometry_ids:
                 elem_removed += self.remove_geometry_id(x)
+        if include_welded_bodies:
+            for welded_body in self.plant_src.GetBodiesWeldedTo(body):
+                if welded_body in elem_src.bodies:
+                    elem_removed += self.remove_body(welded_body)
         return elem_removed
 
     def add_frame(self, frame, include_dependents=False):
@@ -736,7 +835,7 @@ class MultibodyPlantSubgraph:
         elem_src = self._elem_src
         elem_removed = self.make_empty_elements()
         elem_src.frames.remove(frame)
-        elem_removed.frames.append(frame)
+        elem_removed.frames.add(frame)
         return elem_removed
 
     def add_joint(self, joint, include_dependents=False):
@@ -750,7 +849,7 @@ class MultibodyPlantSubgraph:
         elem_src = self._elem_src
         elem_removed = self.make_empty_elements()
         elem_src.joints.remove(joint)
-        elem_removed.joints.append(joint)
+        elem_removed.joints.add(joint)
         joint_actuators = [
             x for x in elem_src.joint_actuators
             if x.joint() is joint]
@@ -769,7 +868,7 @@ class MultibodyPlantSubgraph:
         elem_src = self._elem_src
         elem_removed = self.make_empty_elements()
         elem_src.joint_actuators.remove(joint_actuator)
-        elem_removed.joint_actuators.append(joint_actuator)
+        elem_removed.joint_actuators.add(joint_actuator)
         return elem_removed
 
     def add_geometry_id(self, geometry_id):
@@ -783,7 +882,7 @@ class MultibodyPlantSubgraph:
         elem_src = self._elem_src
         elem_src.geometry_ids.remove(geometry_id)
         elem_removed = self.make_empty_elements()
-        elem_removed.geometry_ids.append(geometry_id)
+        elem_removed.geometry_ids.add(geometry_id)
         return elem_removed
 
     def add_to(
@@ -798,14 +897,15 @@ class MultibodyPlantSubgraph:
             scene_graph_dest: "Destination scene graph".
                 If this is specified, there must be a source scene_graph.
             model_instance_remap:
-                Either a function of the form:
+                Either a function of the form, which remaps source model
+                instances to a set of destination model instance:
 
                     func(plant_src, model_instance_src, plant_dest)
                         -> model_instance_dest
 
-                Or a string, which simply remaps all source model instances to
-                a model instance of the given name (which may be added if it
-                does not already exist).
+                Or a string, which in this function will be used to remap all
+                source model instances to a destination model instance of the
+                given name (which may be added if it does not already exist).
         Returns:
             src_to_dest (MultibodyPlantElementsMap) used to copy elements and
                 record the associations from this subgraph's plant_src (and
@@ -833,7 +933,7 @@ class MultibodyPlantSubgraph:
         )
 
         # Remap and register model instances.
-        for model_instance_src in _sorted_indices(elem_src.model_instances):
+        for model_instance_src in me.elements_sorted(elem_src.model_instances):
             model_instance_dest = model_instance_remap(
                 plant_src, model_instance_src, plant_dest)
             src_to_dest.register_model_instance(
@@ -845,24 +945,24 @@ class MultibodyPlantSubgraph:
             src_to_dest.register_world_body_and_frame()
 
         # Copy bodies.
-        for body_src in _sorted_elements(elem_src.bodies):
+        for body_src in me.elements_sorted(elem_src.bodies):
             src_to_dest.copy_body(body_src)
 
         # Copy frames.
-        for frame_src in _sorted_elements(elem_src.frames):
+        for frame_src in me.elements_sorted(elem_src.frames):
             src_to_dest.copy_frame(frame_src)
 
         # Copy joints.
-        for joint_src in _sorted_elements(elem_src.joints):
+        for joint_src in me.elements_sorted(elem_src.joints):
             src_to_dest.copy_joint(joint_src)
 
         # Copy joint actuators.
-        for joint_actuator_src in _sorted_elements(elem_src.joint_actuators):
+        for joint_actuator_src in me.elements_sorted(elem_src.joint_actuators):
             src_to_dest.copy_joint_actuator(joint_actuator_src)
 
         # Copy geometries (if applicable).
         if scene_graph_dest is not None:
-            for geometry_id_src in _sorted_identifiers(elem_src.geometry_ids):
+            for geometry_id_src in me.elements_sorted(elem_src.geometry_ids):
                 src_to_dest.copy_geometry_by_id(geometry_id_src)
 
         # Apply policies to new mapping.
@@ -880,6 +980,9 @@ def check_subgraph_invariants(elem):
     # Ensures that current elements / topology satisifes subgraph invariants.
     plant = elem.plant
     scene_graph = elem.scene_graph
+
+    plant_model_instances = me.get_model_instances(plant)
+    assert set(elem.model_instances) <= set(plant_model_instances)
 
     # Check bodies.
     for body in elem.bodies:
@@ -918,7 +1021,7 @@ def check_subgraph_invariants(elem):
             body = plant.GetBodyFromFrameId(frame_id)
             assert body in elem.bodies
     else:
-        assert elem.geometry_ids == []
+        assert elem.geometry_ids == set(), elem.geometry_ids
 
 
 def parse_as_multibody_plant_subgraph(

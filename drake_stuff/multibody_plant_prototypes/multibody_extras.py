@@ -1,10 +1,18 @@
+import numpy as np
+
+from pydrake.geometry import Role
+from pydrake.multibody.math import SpatialVelocity
 from pydrake.multibody.tree import (
     BodyIndex,
     FrameIndex,
+    JacobianWrtVariable,
     JointActuatorIndex,
     JointIndex,
     ModelInstanceIndex,
 )
+
+from multibody_plant_prototypes.cc import GetGeometries, RemoveRoleFromGeometries
+from multibody_plant_prototypes.containers import take_first
 
 
 def _get_plant_aggregate(num_func, get_func, index_cls, model_instances=None):
@@ -91,12 +99,7 @@ def get_or_add_model_instance(plant, name):
 def get_geometries(plant, scene_graph, bodies):
     """Returns all GeometryId's attached to bodies. Assumes corresponding
     FrameId's have been added."""
-    geometry_ids = []
-    inspector = scene_graph.model_inspector()
-    for geometry_id in inspector.GetAllGeometryIds():
-        body = plant.GetBodyFromFrameId(inspector.GetFrameId(geometry_id))
-        if body in bodies:
-            geometry_ids.append(geometry_id)
+    geometry_ids = GetGeometries(plant, scene_graph, list(bodies))
     return sorted(geometry_ids, key=lambda x: x.get_value())
 
 
@@ -132,3 +135,103 @@ def set_joint_velocities(plant, context, joint, vj):
     count = joint.num_velocities()
     v[start:start + count] = vj
     plant.SetVelocities(context, v)
+
+
+def elements_sorted(xs):
+    # TODO(eric.cousineau): Bind `__lt__` for sorting these types, and then
+    # just use sorted().
+    # Use https://github.com/RobotLocomotion/drake/pull/13489
+    xs = list(xs)
+    if len(xs) == 0:
+        return xs
+    x0 = take_first(xs)
+    # TypeSafeIndex.
+    try:
+        int(x0)
+        return sorted(xs, key=lambda x: int(x))
+    except TypeError as e:
+        if "int() argument" not in str(e):
+            raise
+    # MultibodyPlant element.
+    try:
+        int(x0.index())
+        return sorted(xs, key=lambda x: int(x.index()))
+    except AttributeError as e:
+        if "has no attribute 'index'" not in str(e):
+            raise
+    # Geometry identifier.
+    try:
+        x0.get_value()
+        return sorted(xs, key=lambda x: int(x.get_value()))
+    except AttributeError as e:
+        if "has no attribute 'get_value'" not in str(e):
+            raise
+    assert False
+
+
+def get_frame_pose(plant, context, frame_T, frame_F):
+    """Gets the pose of a frame."""
+    X_TF = plant.CalcRelativeTransform(context, frame_T, frame_F)
+    return X_TF
+
+
+def set_frame_pose(plant, context, frame_T, frame_F, X_TF):
+    """Sets the pose of a frame attached to floating body."""
+    if frame_T is None:
+        frame_T = plant.world_frame()
+    X_WT = plant.CalcRelativeTransform(context, plant.world_frame(), frame_T)
+    assert frame_F.body().is_floating()
+    X_FB = frame_F.GetFixedPoseInBodyFrame().inverse()
+    X_WB = X_WT @ X_TF @ X_FB
+    plant.SetFreeBodyPose(context, frame_F.body(), X_WB)
+
+
+def get_frame_spatial_velocity(plant, context, frame_T, frame_F, frame_E=None):
+    """
+    Returns:
+        SpatialVelocity of frame F's origin w.r.t. frame T, expressed in E
+        (which is frame T if unspecified).
+    """
+    if frame_E is None:
+        frame_E = frame_T
+    Jv_TF_E = plant.CalcJacobianSpatialVelocity(
+        context,
+        with_respect_to=JacobianWrtVariable.kV,
+        frame_B=frame_F,
+        p_BP=[0, 0, 0],
+        frame_A=frame_T,
+        frame_E=frame_E,
+    )
+    v = plant.GetVelocities(context)
+    V_TF_E = SpatialVelocity(Jv_TF_E @ v)
+    return V_TF_E
+
+
+def set_frame_spatial_velocity(
+    plant, context, frame_T, frame_F, V_TF_E, frame_E=None
+):
+    if frame_E is None:
+        frame_E = frame_T
+    R_WE = plant.CalcRelativeTransform(
+        context, plant.world_frame(), frame_E
+    ).rotation()
+    V_TF_W = V_TF_E.Rotate(R_WE)
+    X_WT = plant.CalcRelativeTransform(context, plant.world_frame(), frame_T)
+    V_WT = get_frame_spatial_velocity(
+        plant, context, plant.world_frame(), frame_T
+    )
+    V_WF = V_WT.ComposeWithMovingFrameVelocity(X_WT.translation(), V_TF_W)
+    body_B = frame_F.body()
+    R_WB = plant.CalcRelativeTransform(
+        context, plant.world_frame(), body_B.body_frame()
+    ).rotation()
+    p_BF = frame_F.GetFixedPoseInBodyFrame().translation()
+    p_BF_W = R_WB @ p_BF
+    V_WBf = V_WF.Shift(p_BF_W)
+    plant.SetFreeBodySpatialVelocity(body_B, V_WBf, context)
+
+
+def remove_role_from_geometries(plant, scene_graph, *, role, bodies=None):
+    if bodies is None:
+        bodies = get_bodies(plant)
+    return RemoveRoleFromGeometries(plant, scene_graph, role, list(bodies))

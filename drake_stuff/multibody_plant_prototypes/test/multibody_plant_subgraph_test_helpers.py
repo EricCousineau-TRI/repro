@@ -8,11 +8,7 @@ import random
 import numpy as np
 from numpy.testing import assert_array_equal
 
-from pydrake.geometry import (
-    GeometryInstance,
-    Box,
-    HalfSpace,
-)
+from pydrake.geometry import Box, GeometryInstance, HalfSpace
 from pydrake.math import RigidTransform
 from pydrake.multibody.plant import CoulombFriction
 from pydrake.multibody.tree import (
@@ -27,11 +23,24 @@ from pydrake.multibody.tree import (
 )
 from pydrake.systems.primitives import ConstantVectorSource
 
+from multibody_plant_prototypes.containers import strict_zip
+
+from .. import multibody_extras as me
 from .. import multibody_plant_subgraph as mut
 
+JOINT_CLS_LIST = [
+    PrismaticJoint,
+    RevoluteJoint,
+    BallRpyJoint,
+    UniversalJoint,
+    WeldJoint,
+]
 
-def no_control(builder, plant, model):
+
+def build_with_no_control(builder, plant, model):
     """Connects a zero-torque input to a given model instance in a plant."""
+    # TODO(eric.cousineau): Use `multibody_plant_prototypes.control` if the dependency can
+    # be simplified.
     nu = plant.num_actuated_dofs(model)
     constant = builder.AddSystem(ConstantVectorSource(np.zeros(nu)))
     builder.Connect(
@@ -39,7 +48,7 @@ def no_control(builder, plant, model):
         plant.get_actuation_input_port(model))
 
 
-def compare_frames(
+def compare_frame_poses(
         plant, context, sub_plant, sub_context,
         base_frame_name, test_frame_name, **kwargs):
     """Compares the poses of two frames."""
@@ -120,21 +129,13 @@ def add_arbitrary_multibody_stuff(
             model_instance=parent_frame.model_instance(),
         ))
 
-    joint_cls_list = [
-        BallRpyJoint,
-        PrismaticJoint,
-        RevoluteJoint,
-        UniversalJoint,
-        WeldJoint,
-    ]
-
     def random_joint(parent, child):
         # Returns a random joint, but with an incrementing name. Note that we
         # use a separate index so that we ensure we can loop through all
         # joints.
         i = i_next("joint")
         name = f"joint_{i}"
-        joint_cls = joint_cls_list[i % len(joint_cls_list)]
+        joint_cls = JOINT_CLS_LIST[i % len(JOINT_CLS_LIST)]
         frame_on_parent = random_frame(parent.body_frame())
         frame_on_child = random_frame(child.body_frame())
         axis = np.zeros(3)
@@ -173,8 +174,8 @@ def add_arbitrary_multibody_stuff(
         elif joint_cls == WeldJoint:
             joint = WeldJoint(
                 name,
-                parent_frame_P=frame_on_parent,
-                child_frame_C=frame_on_child,
+                frame_on_parent_P=frame_on_parent,
+                frame_on_child_C=frame_on_child,
                 X_PC=random_X(),
             )
         else:
@@ -234,24 +235,16 @@ def add_arbitrary_multibody_stuff(
             body, RigidTransform([grid_col, grid_row, 2]))
         random_frame(body.body_frame())
         # Consider attaching a joint and/or frame to the world.
-        if maybe():
+        if maybe() or num_bodies < 3:
             prev_body = plant.world_body()
             random_frame(plant.world_frame())
-        if prev_body is not None and maybe():
+        if prev_body is not None and (maybe() or num_bodies < 3):
             joint = random_joint(prev_body, body)
-            if joint.num_velocities() == 1 and maybe():
+            if joint.num_velocities() == 1 and (maybe() or num_bodies < 3):
                 random_joint_actuator(joint)
         if plant.geometry_source_is_registered():
             random_geometry(body)
         prev_body = body
-
-
-def strict_zip(a, b):
-    # Ensures that both containers have the same length. Normal `zip()`
-    # functionality will stop when it reached the end of the shortest
-    # container.
-    assert len(a) == len(b)
-    return zip(a, b)
 
 
 def assert_inertia_equals(a, b):
@@ -342,8 +335,8 @@ def assert_plant_equals(plant_a, scene_graph_a, plant_b, scene_graph_b):
         assert_pose_equals(
             plant_a.GetDefaultFreeBodyPose(body_a),
             plant_b.GetDefaultFreeBodyPose(body_b))
-        checked_a.bodies.append(body_a)
-        checked_b.bodies.append(body_b)
+        checked_a.bodies.add(body_a)
+        checked_b.bodies.add(body_b)
 
     def assert_frame_equals(frame_a, frame_b):
         check_element(frame_a, frame_b, check_index=False)
@@ -352,8 +345,8 @@ def assert_plant_equals(plant_a, scene_graph_a, plant_b, scene_graph_b):
         assert_pose_equals(
             frame_a.GetFixedPoseInBodyFrame(),
             frame_b.GetFixedPoseInBodyFrame())
-        checked_a.frames.append(frame_a)
-        checked_b.frames.append(frame_b)
+        checked_a.frames.add(frame_a)
+        checked_b.frames.add(frame_b)
 
     def assert_joint_equals(joint_a, joint_b):
         check_element(joint_a, joint_b)
@@ -394,8 +387,8 @@ def assert_plant_equals(plant_a, scene_graph_a, plant_b, scene_graph_b):
                 joint_a.revolute_axis(), joint_b.revolute_axis())
         if type(joint_a) == WeldJoint:
             assert_pose_equals(joint_a.X_PC(), joint_b.X_PC())
-        checked_a.joints.append(joint_a)
-        checked_b.joints.append(joint_b)
+        checked_a.joints.add(joint_a)
+        checked_b.joints.add(joint_b)
 
     def assert_geometry_equals(a, b):
         inspector_a = scene_graph_a.model_inspector()
@@ -421,18 +414,18 @@ def assert_plant_equals(plant_a, scene_graph_a, plant_b, scene_graph_b):
                 prop_func(geometry_a), prop_func(geometry_b))
 
     def frame_map(frames):
-        out = defaultdict(list)
+        out = defaultdict(set)
         for frame in frames:
             # Some frames may not have a name :(
             key = (frame.body().name(), frame.name())
-            out[key].append(frame)
+            out[key].add(frame)
         return out
 
     for a, b in strict_zip(elem_a.model_instances, elem_b.model_instances):
         assert a is not b
         assert a == b
-        checked_a.model_instances.append(a)
-        checked_b.model_instances.append(b)
+        checked_a.model_instances.add(a)
+        checked_b.model_instances.add(b)
 
     for body_a, body_b in strict_zip(elem_a.bodies, elem_b.bodies):
         assert_body_equals(body_a, body_b)
