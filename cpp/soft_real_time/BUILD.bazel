@@ -1,0 +1,21 @@
+cc_library(
+    name = "anzu_sched_param",
+    srcs = ["anzu_sched_param.c"],
+    hdrs = ["anzu_sched_param.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "pthread_whachu_doin_c",
+    srcs = ["pthread_whachu_doin_c.c"],
+    linkopts = ["-lpthread"],
+    deps = [
+        ":anzu_sched_param",
+        # "@glib",  # would hafta expose this as is done in Drake
+    ],
+)
+
+py_binary(
+    name = "pthread_whachu_doin_py",
+    srcs = ["pthread_whachu_doin_py.py"],
+)
