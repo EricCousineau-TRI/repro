@@ -1,5 +1,20 @@
 #!/usr/bin/env python3
 
+"""
+Prints remotes in an "actionable" form.
+
+Example:
+
+    $ cd drake
+    $ git_remote_export.py
+    git remote add origin git@github.com:EricCousineau-TRI/drake.git
+    git remote add upstream https://github.com/RobotLocomotion/drake
+      git config remote.upstream.pushurl no_push
+    git remote add azeey git@github.com:azeey/drake.git
+    git remote add hongkai git@github.com:hongkai-dai/drake.git
+    ...
+"""
+
 import argparse
 
 import pyperclip
