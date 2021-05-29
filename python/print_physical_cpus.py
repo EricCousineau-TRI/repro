@@ -1,11 +1,13 @@
+#!/usr/bin/env python3
+
 """
-Merap.
+Print physical CPUs and their vCPUs.
 """
 
 from collections import defaultdict, namedtuple
 import os
 
-Physical = namedtuple("Physical", ("core", "sub"))
+Physical = namedtuple("Physical", ("core", "chip"))
 
 
 def parse_cpuinfo(text):
