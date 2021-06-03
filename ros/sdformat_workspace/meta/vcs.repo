@@ -11,7 +11,7 @@ repositories:
   sdformat:
     type: git
     url: https://github.com/osrf/sdformat
-    version: master
+    version: sdformat11_11.1.0
   ign_tools:
     type: git
     url: https://github.com/ignitionrobotics/ign-tools
@@ -19,4 +19,4 @@ repositories:
   ign_utils:
     type: git
     url: https://github.com/ignitionrobotics/ign-utils
-    version: main
+    version: ignition-utils1_1.0.0
