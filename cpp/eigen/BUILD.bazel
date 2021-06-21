@@ -144,3 +144,9 @@ cc_binary(
     srcs = ["linspace.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "mutable_ref_of_row",
+    srcs = ["mutable_ref_of_row.cc"],
+    deps = ["@eigen//:eigen"],
+)
