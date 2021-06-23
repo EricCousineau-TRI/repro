@@ -150,3 +150,9 @@ cc_binary(
     srcs = ["mutable_ref_of_row.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "reductions",
+    srcs = ["reductions.cc"],
+    deps = ["@eigen//:eigen"],
+)
