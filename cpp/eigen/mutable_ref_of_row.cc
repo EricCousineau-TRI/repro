@@ -13,9 +13,10 @@ int main() {
   // Ref<RowVectorXd> x_row0(X.row(0));  // FAIL
   // Ref<MatrixXd::RowXpr> x_row0(X.row(0));  // FAIL
   // Ref<MatrixXd::RowXpr::PlainMatrix> x_row0(X.row(0));  // FAIL
+  Ref<MatrixXd> x_row0(X.row(0).transpose());
 
   // Ref<MatrixXd> x_row0(X.block(0, 0, 1, X.cols()));  // Works
-  Ref<RowVectorXd, 0, InnerStride<>> x_row0(X.row(0));  // Works
+  // Ref<RowVectorXd, 0, InnerStride<>> x_row0(X.row(0));  // Works
 
   x_row0 *= 10;
 
