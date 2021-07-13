@@ -17,7 +17,7 @@ _download_drake() { (
     # Download and echo path to stdout for capture.
     set -eux
 
-    base=drake-20210312-bionic.tar.gz
+    base=drake-latest-focal.tar.gz
     dir=~/Downloads
     uri=https://drake-packages.csail.mit.edu/drake/nightly
     if [[ ! -f ${dir}/${base} ]]; then

@@ -1,4 +1,4 @@
-dataclasses == 0.8
+dataclasses
 
 # Following adapted from a portion of TRI Anzu code.
 # Jupyter, for interactive workflows.
