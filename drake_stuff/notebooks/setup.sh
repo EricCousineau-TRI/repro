@@ -17,8 +17,8 @@ _download_drake() { (
     # Download and echo path to stdout for capture.
     set -eux
 
-    # v0.31.0
-    base=drake-20210623-bionic.tar.gz
+    # v0.32.0
+    base=drake-20210714-bionic.tar.gz
     dir=~/Downloads
     uri=https://drake-packages.csail.mit.edu/drake/nightly
     if [[ ! -f ${dir}/${base} ]]; then
@@ -30,7 +30,7 @@ _download_drake() { (
 _setup_venv() { (
     set -eu
     cd ${_cur_dir}
-    completion_token="2021-06-29.0"
+    completion_token="2021-07-15.0"
     completion_file=${_venv_dir}/.completion-token
 
     if [[ -f ${completion_file} && "$(cat ${completion_file})" == "${completion_token}" ]]; then
