@@ -17,7 +17,8 @@ def run_with_pkg(pkg, *, find_links=False):
         shell(f"./venv/bin/pip install {pkg} -f https://download.pytorch.org/whl/torch_stable.html", verbose=True)
     else:
         shell(f"./venv/bin/pip install {pkg}", verbose=True)
-    shell("./venv/bin/python ./torch_inv_bug.py")
+    # shell("./venv/bin/python ./torch_inv_bug.py")
+    shell("./venv/bin/python ./torch_mm_bug.py")
 
 
 def main():
@@ -30,7 +31,7 @@ def main():
     run_with_pkg("torch==1.7.1+cu110", find_links=True)
 
     # Works
-    run_with_pkg("torch==1.8.0+cu111", find_links=True)
+    run_with_pkg("torch==1.8.1+cu111", find_links=True)
 
     # Works
     run_with_pkg("torch==1.9.0+cu111", find_links=True)
