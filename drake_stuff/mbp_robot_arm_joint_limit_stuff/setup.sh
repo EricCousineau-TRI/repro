@@ -26,30 +26,43 @@ _download_drake() { (
     echo ${dir}/${base}
 ) }
 
+_preprocess_sdf() { (
+    #convert .stl and .dae entries to .obj
+    sed -i 's/.stl/.obj/g' "$1$2"
+    # Some sdfs have a comment before the xml tag
+    # this makes the parser fail, since the tag is optional
+    # we'll remove it as safety workaround
+    sed -i '/<?xml*/d' "$1$2"
+
+) }
+
 _provision_repos() { (
     set -eu
     cd ${_cur_dir}
-
     repo_dir=${PWD}/repos
     completion_token=2021-03-12.1
-    completion_file=${repo_dir}/.completion-token
+    completion_file=$1/.completion-token
 
-    if [[ -f ${completion_file} && "$(cat ${completion_file})" == "${completion_token}" ]]; then
+    if [[ "$2" == *\.sdf ]]
+    then
+        _preprocess_sdf "$1" "$2"
+        ./render_ur_urdfs.py "$1" "$2"
+    else
+        if [[ -f ${completion_file} && "$(cat ${completion_file})" == "${completion_token}" ]]; then
         return 0
+        fi
+        set -x
+        rm -rf ${repo_dir}
+
+        mkdir ${repo_dir} && cd ${repo_dir}
+
+        git clone https://github.com/ros-industrial/universal_robot
+        cd universal_robot/
+        git checkout e8234318cc94  # From melodic-devel-staging
+        # Er... dunno what to do about this, so hackzzz
+        cd ${_cur_dir}
+        ./ros_setup.bash ./render_ur_urdfs.py "$1" "$2"
     fi
-
-    set -x
-    rm -rf ${repo_dir}
-
-    mkdir ${repo_dir} && cd ${repo_dir}
-
-    git clone https://github.com/ros-industrial/universal_robot
-    cd universal_robot/
-    git checkout e8234318cc94  # From melodic-devel-staging
-
-    # Er... dunno what to do about this, so hackzzz
-    cd ${_cur_dir}
-    ./ros_setup.bash ./render_ur_urdfs.py
 
     echo "${completion_token}" > ${completion_file}
 ) }
@@ -80,13 +93,25 @@ _setup_venv() { (
     echo "${completion_token}" > ${completion_file}
 ) }
 
+if [  $# -lt "2" ]
+    then
+    echo "Please provide path to model directory and model file name."
+    echo "      Usage:"
+    echo "                  $./setup.sh <model_directory_path> <model_file_name> ./[executable]"
+    echo "      or"
+    echo "                  $source ./setup.sh <model_directory_path> <model_file_name>"
+    echo "                  $./[executable]"
+
+    exit 1
+fi
+
 _setup_venv && source ${_venv_dir}/bin/activate
 
-_provision_repos
+_provision_repos "$1" "$2"
 
 if [[ ${0} == ${BASH_SOURCE} ]]; then
     # This was executed, *not* sourced. Run arguments directly.
     set -eux
     env
-    exec "$@"
+    exec "${@:3}"
 fi
