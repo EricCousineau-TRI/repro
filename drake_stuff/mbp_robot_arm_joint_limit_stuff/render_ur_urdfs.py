@@ -69,7 +69,23 @@ def load_mesh(mesh_file):
     return scene
 
 
-def get_mesh_extent(scene, mesh_file):
+def get_transformed_vertices(node, v_list):
+    for child in node.children:
+        get_transformed_vertices(child, v_list)
+
+        # add current node meshes to the list
+        for mesh in child.meshes:
+            for j in range(mesh.vertices.shape[0]):
+                v_list.append(child.transformation.dot(
+                    np.append(mesh.vertices[j], 1))[0:3])
+
+        # apply current transformation to vertices
+        for i in range(len(v_list)):
+            v_list[i] = node.transformation.dot(
+                np.append(v_list[i], 1)).A[0, 0:3]
+
+
+def get_mesh_extent(scene, mesh_file, filetype='obj'):
     # Return geometric center and size.
 
     # def check_identity(node):
@@ -86,11 +102,19 @@ def get_mesh_extent(scene, mesh_file):
     # check_identity(scene.rootnode)
 
     v_list = []
-    for mesh in scene.meshes:
-        v_list.append(mesh.vertices)
-    v = np.vstack(v_list)
-    lb = np.min(v, axis=0)
-    ub = np.max(v, axis=0)
+
+    if(filetype == '.dae'):
+        rotation = np.matrix(
+            [[1,  0,  0, 0], [0,  0,  -1, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
+    else:
+        rotation = np.matrix(
+            [[1,  0,  0, 0], [0,  1,  0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+
+    scene.rootnode.transformation = rotation.dot(scene.rootnode.transformation)
+    get_transformed_vertices(scene.rootnode, v_list)
+
+    lb = np.min(v_list, axis=0)
+    ub = np.max(v_list, axis=0)
     size = ub - lb
     center = (ub + lb) / 2
     return np.array([center, size])
@@ -104,30 +128,39 @@ def convert_file_to_obj(mesh_file, suffix, scale=1):
         return
     scene = load_mesh(mesh_file)
 
-    #Workaround for issue https://github.com/assimp/assimp/issues/849
-    scene.mRootNode.contents.mTransformation = \
-        pyassimp.structs.Matrix4x4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1)
-
-    #Scaling mesh to meters
-    if(suffix==".dae"):
-        scene.mRootNode.contents.mTransformation .a1 = \
-            scene.mRootNode.contents.mTransformation .a1 * scale
-        scene.mRootNode.contents.mTransformation .b2 = \
-             scene.mRootNode.contents.mTransformation .b2 * scale
-        scene.mRootNode.contents.mTransformation .c3 = \
-            scene.mRootNode.contents.mTransformation .c3 * scale
+    # workaround for issue https://github.com/assimp/assimp/issues/849
+    if(suffix == ".dae"):
+        rotation = np.matrix(
+            [[1,  0,  0, 0], [0,  0, -1, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
+        transformed = rotation.dot(scene.rootnode.transformation)
+        scene.mRootNode.contents.mTransformation .a1 = transformed.item(0)
+        scene.mRootNode.contents.mTransformation .a2 = transformed.item(1)
+        scene.mRootNode.contents.mTransformation .a3 = transformed.item(2)
+        scene.mRootNode.contents.mTransformation .a4 = transformed.item(3)
+        scene.mRootNode.contents.mTransformation .b1 = transformed.item(4)
+        scene.mRootNode.contents.mTransformation .b2 = transformed.item(5)
+        scene.mRootNode.contents.mTransformation .b3 = transformed.item(6)
+        scene.mRootNode.contents.mTransformation .b4 = transformed.item(7)
+        scene.mRootNode.contents.mTransformation .c1 = transformed.item(8)
+        scene.mRootNode.contents.mTransformation .c2 = transformed.item(9)
+        scene.mRootNode.contents.mTransformation .c3 = transformed.item(10)
+        scene.mRootNode.contents.mTransformation .c4 = transformed.item(11)
+        scene.mRootNode.contents.mTransformation .d1 = transformed.item(12)
+        scene.mRootNode.contents.mTransformation .d2 = transformed.item(13)
+        scene.mRootNode.contents.mTransformation .d3 = transformed.item(14)
+        scene.mRootNode.contents.mTransformation .d4 = transformed.item(15)
 
     pyassimp.export(scene, obj_file, file_type="obj")
 
     # TODO (marcoag) skip sanity check for now
     # find a way to do one
-    extent = get_mesh_extent(scene, mesh_file)
+    extent = get_mesh_extent(scene, mesh_file, suffix)
     scene_obj = load_mesh(obj_file)
     extent_obj = get_mesh_extent(scene_obj, mesh_file)
-#    np.testing.assert_equal(
-#        extent, extent_obj,
-#        err_msg=repr((mesh_file, obj_file)),
-#    )
+    np.testing.assert_allclose(
+        extent, extent_obj, rtol=1e-05, atol=1e-07,
+        err_msg=repr((mesh_file, obj_file)),
+    )
 
 
 def replace_text_to_obj(content, suffix):
