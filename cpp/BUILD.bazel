@@ -480,3 +480,9 @@ cc_binary(
     srcs = ["tpl_spec_str.cc"],
     copts = ["-std=c++17"],
 )
+
+cc_binary(
+    name = "method_cast",
+    srcs = ["method_cast.cc"],
+    copts = ["-std=c++17"],
+)
