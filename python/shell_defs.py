@@ -105,3 +105,8 @@ def subshell(cmd, check=True, stderr=None, strip=True, **kwargs):
     if strip:
         out = out.strip()
     return out
+
+
+def cd(path):
+    eprint(f"+ cd {path}")
+    os.chdir(path)
