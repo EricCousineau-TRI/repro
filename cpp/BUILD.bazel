@@ -173,6 +173,11 @@ cc_binary(
 )
 
 cc_binary(
+    name = "auto_lambda_return",
+    srcs = ["auto_lambda_return.cc", "name_trait.h"],
+)
+
+cc_binary(
     name = "tpl_rref_only",
     srcs = ["tpl_rref_only.cc"],
     deps = [":name_trait"],
@@ -473,5 +478,11 @@ cc_binary(
 cc_binary(
     name = "tpl_spec_str",
     srcs = ["tpl_spec_str.cc"],
+    copts = ["-std=c++17"],
+)
+
+cc_binary(
+    name = "method_cast",
+    srcs = ["method_cast.cc"],
     copts = ["-std=c++17"],
 )
