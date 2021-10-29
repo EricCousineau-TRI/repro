@@ -26,14 +26,71 @@ _download_drake() { (
     echo ${dir}/${base}
 ) }
 
-_preprocess_sdf() { (
+_build_gazebo_plugin() { (
+
+    # We need to generate the gazebo plugin for
+    # IoU testing of joints
+    cd $1
+    git clone https://github.com/marcoag/ModelPhotoShoot.git
+    cd ModelPhotoShoot
+    mkdir build
+    cd build
+    cmake ..
+    make
+
+) }
+
+_test_models() { (
+
+    # Generate model pics using the gazebo plugin
+    # Default pose pics:
+    cd "$1"
+    mkdir -p $3/visual/pics/default_pose/
+    GAZEBO_PLUGIN_PATH=$3/ModelPhotoShoot/build/:$GAZEBO_PLUGIN_PATH gzserver -s libmodelphotoshoot.so worlds/blank.world --propshop-save $3/visual/pics/default_pose/ --propshop-model "$1/$2" --data-file $3/visual/pics/default_pose/poses.txt
+    # Random joint positions pics:
+    mkdir -p $3/visual/pics/random_pose/
+    GAZEBO_PLUGIN_PATH=$3/ModelPhotoShoot/build/:$GAZEBO_PLUGIN_PATH gzserver -s libmodelphotoshoot.so worlds/blank.world --propshop-save $3/visual/pics/random_pose/ --propshop-model "$1/$2" --data-file $3/visual/pics/random_pose/poses.txt --random-joints
+
+    #Generate model pics using drake, run 
+    #IoU tests and extra checks
+    cd ${_cur_dir}
+    ./test_models.py "$1" "$2" "$3/visual/"
+
+    # Test collision part:
+    # Create a model that exchanges visual and collision
+    # meshes in order to take pics of the collision mesh
+    # and compare them
+    cd "$3"
+    mkdir -p collisions/model/
+    cp -r "$1"/* collisions/model/
+    cd collisions/model/
+    find . -name "*.mtl" | xargs rm
+    sed -i 's/collision/temporalname/g' "$2"
+    sed -i 's/visual/ignore:collision/g' "$2"
+    sed -i 's/temporalname/visual/g' "$2"
+    mkdir -p $3/collisions/pics/default_pose/
+    GAZEBO_PLUGIN_PATH=$3/ModelPhotoShoot/build/:$GAZEBO_PLUGIN_PATH gzserver -s libmodelphotoshoot.so worlds/blank.world --propshop-save "$3/collisions/pics/default_pose/" --propshop-model "$3/collisions/model/$2" --data-file "$3/collisions/pics/default_pose/poses.txt"
+    mkdir -p $3/collisions/pics/random_pose/
+    GAZEBO_PLUGIN_PATH=$3/ModelPhotoShoot/build/:$GAZEBO_PLUGIN_PATH gzserver -s libmodelphotoshoot.so worlds/blank.world --propshop-save "$3/collisions/pics/random_pose/" --propshop-model "$3/collisions/model/$2" --data-file "$3/collisions/pics/random_pose/poses.txt" --random-joints
+
+    cd ${_cur_dir}
+    ./test_models.py "$3/collisions/model/" "$2" "$3/collisions/"
+) }
+
+_preprocess_sdf_and_materials() { (
     #convert .stl and .dae entries to .obj
     sed -i 's/.stl/.obj/g' "$1$2"
+    sed -i 's/.dae/.obj/g' "$1$2"
     # Some sdfs have a comment before the xml tag
     # this makes the parser fail, since the tag is optional
     # we'll remove it as safety workaround
     sed -i '/<?xml*/d' "$1$2"
 
+    find . -name '*.jpg' -type f -exec bash -c 'convert "$0" "${0%.jpg}.png"' {} \;
+    find . -name '*.jpeg' -type f -exec bash -c 'convert "$0" "${0%.jpeg}.png"' {} \;
+
+    find . -type f -name '*.mtl' -exec sed -i 's/.jpg/.png/g' '{}' \;
+    find . -type f -name '*.mtl' -exec sed -i 's/.jpeg/.png/g' '{}' \;
 ) }
 
 _provision_repos() { (
@@ -45,7 +102,7 @@ _provision_repos() { (
 
     if [[ "$2" == *\.sdf ]]
     then
-        _preprocess_sdf "$1" "$2"
+        _preprocess_sdf_and_materials "$1" "$2"
         ./render_ur_urdfs.py "$1" "$2"
     else
         if [[ -f ${completion_file} && "$(cat ${completion_file})" == "${completion_token}" ]]; then
@@ -105,13 +162,20 @@ if [  $# -lt "2" ]
     exit 1
 fi
 
+temp_directory=$(mktemp -d)
+echo "Saving temporal test files to: ${temp_directory}"
+
+_build_gazebo_plugin "$temp_directory"
+
 _setup_venv && source ${_venv_dir}/bin/activate
 
 _provision_repos "$1" "$2"
 
+_test_models "$1" "$2" "$temp_directory"
+
 if [[ ${0} == ${BASH_SOURCE} ]]; then
     # This was executed, *not* sourced. Run arguments directly.
     set -eux
-    env
+    #env
     exec "${@:3}"
 fi
