@@ -105,7 +105,9 @@ def perform_IoT_testing(model_file, temp_directory, pose_directory):
     depth_camera = DepthRenderCamera(
         RenderCameraCore(
             renderer_name,
-            CameraInfo(width=960, height=540, fov_y=np.pi/4),
+            #CameraInfo(width=960, height=540, fov_y=np.pi/4),
+            #CameraInfo(width=960, height=540, fov_y=0.62803)
+            CameraInfo(width=960, height=540, focal_x=831.382036787, focal_y=831.382036787, center_x=480, center_y=270).
             ClippingRange(0.01, 10.0),
             RigidTransform()), 
         DepthRange(0.01, 10.0))
