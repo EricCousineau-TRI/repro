@@ -486,3 +486,9 @@ cc_binary(
     srcs = ["method_cast.cc"],
     copts = ["-std=c++17"],
 )
+
+cc_binary(
+    name = "constants",
+    srcs = ["constants.cc"],
+    copts = ["-std=c++17"],
+)
