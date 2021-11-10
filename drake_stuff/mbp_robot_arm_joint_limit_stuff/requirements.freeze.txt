@@ -222,7 +222,7 @@ ubuntu-drivers-common==0.0.0
 ufw==0.36
 unattended-upgrades==0.1
 uritemplate==0.6
-urllib3==1.26.3
+urllib3==1.26.5
 usb-creator==0.3.3
 vcstool==0.2.15
 virtualenv==15.1.0
