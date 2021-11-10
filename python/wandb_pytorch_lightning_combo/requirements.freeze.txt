@@ -61,7 +61,7 @@ torch==1.7.1
 tqdm==4.57.0
 traitlets==4.3.3
 typing-extensions==3.7.4.3
-urllib3==1.26.3
+urllib3==1.26.5
 wandb==0.10.19
 wcwidth==0.2.5
 Werkzeug==1.0.1
