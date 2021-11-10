@@ -9,7 +9,7 @@ jupyterlab == 3.0.3
 # we fix these according to a working version of `info-req.txt` in older archives.
 ipykernel == 5.4.3
 ipywidgets == 7.6.3
-notebook == 6.1.6
+notebook == 6.4.1
 widgetsnbextension == 3.5.1
 # TODO(eric, andres): Remove this once the following issue is resolved:
 # https://github.com/ipython/ipython/issues/12740

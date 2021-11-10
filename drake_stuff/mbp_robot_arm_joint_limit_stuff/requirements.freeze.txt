@@ -119,7 +119,7 @@ networkx==1.11
 nine==1.0.0
 nose==1.3.7
 nose2==0.7.4
-notebook==6.1.6
+notebook==6.4.1
 notify2==0.3
 numexpr==2.6.4
 numpy==1.13.3
