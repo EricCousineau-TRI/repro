@@ -54,7 +54,7 @@ _test_models() { (
     #Generate model pics using drake, run 
     #IoU tests and extra checks
     cd ${_cur_dir}
-    ./test_models.py "$1" "$2" "$3/visual/"
+    ./test_models.py "$1/" "$2" "$3/visual/"
 
     # Test collision part:
     # Create a model that exchanges visual and collision

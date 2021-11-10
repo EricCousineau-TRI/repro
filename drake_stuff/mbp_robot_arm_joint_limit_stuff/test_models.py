@@ -26,6 +26,8 @@ from pydrake.geometry import (
     DrakeVisualizer,
     HalfSpace,
     FrameId,
+    GeometrySet,
+    CollisionFilterDeclaration,
 )
 from pydrake.systems.sensors import (
     CameraInfo,
@@ -107,7 +109,7 @@ def perform_IoT_testing(model_file, temp_directory, pose_directory):
             renderer_name,
             #CameraInfo(width=960, height=540, fov_y=np.pi/4),
             #CameraInfo(width=960, height=540, fov_y=0.62803)
-            CameraInfo(width=960, height=540, focal_x=831.382036787, focal_y=831.382036787, center_x=480, center_y=270).
+            CameraInfo(width=960, height=540, focal_x=831.382036787, focal_y=831.382036787, center_x=480, center_y=270),
             ClippingRange(0.01, 10.0),
             RigidTransform()), 
         DepthRange(0.01, 10.0))
@@ -152,7 +154,14 @@ def perform_IoT_testing(model_file, temp_directory, pose_directory):
 
     DrakeVisualizer.AddToBuilder(builder, scene_graph)
 
+    #Remove gravity to avoid extra movements of the model when running the simulation
     plant.gravity_field().set_gravity_vector(np.array([0,0,0], dtype = np.float64))
+
+    #Switch off collisions to avoid problems with random positions
+    collision_filter_manager = scene_graph.collision_filter_manager()
+    model_inspector = scene_graph.model_inspector()
+    geometry_ids = GeometrySet(model_inspector.GetAllGeometryIds())
+    collision_filter_manager.Apply(CollisionFilterDeclaration().ExcludeWithin(geometry_ids))
 
     plant.Finalize()
     diagram = builder.Build()
@@ -167,6 +176,8 @@ def perform_IoT_testing(model_file, temp_directory, pose_directory):
     if (pose_directory == 'random_pose'):
         joint_positions = [0] * dofs
         for joint_name, pose in random_poses.items():
+            if (pose!=pose):
+                pose=0
             joint = plant.GetJointByName(joint_name)
             joint_positions[joint.position_start()] = pose
 
