@@ -43,18 +43,25 @@ _build_gazebo_plugin() { (
 _test_models() { (
 
     # Generate model pics using the gazebo plugin
+
+    cd "$3"
+    mkdir -p visual/model/
+    cp -r "$1"/* visual/model/
+    cd visual/model/
+    sed -i 's/'"'"'/"/g' "$2"
+    MODEL_NAME=`grep 'model name' model.sdf|cut -f2 -d '"'`
+    sed -i "s,model://$MODEL_NAME/,,g" "$2"
     # Default pose pics:
-    cd "$1"
     mkdir -p $3/visual/pics/default_pose/
-    GAZEBO_PLUGIN_PATH=$3/ModelPhotoShoot/build/:$GAZEBO_PLUGIN_PATH gzserver -s libmodelphotoshoot.so worlds/blank.world --propshop-save $3/visual/pics/default_pose/ --propshop-model "$1/$2" --data-file $3/visual/pics/default_pose/poses.txt
+    GAZEBO_MODEL_PATH="$3/visual/model/" GAZEBO_PLUGIN_PATH=$3/ModelPhotoShoot/build/:$GAZEBO_PLUGIN_PATH gzserver -s libmodelphotoshoot.so worlds/blank.world --propshop-save $3/visual/pics/default_pose/ --propshop-model "$3/visual/model/$2" --data-file $3/visual/pics/default_pose/poses.txt
     # Random joint positions pics:
     mkdir -p $3/visual/pics/random_pose/
-    GAZEBO_PLUGIN_PATH=$3/ModelPhotoShoot/build/:$GAZEBO_PLUGIN_PATH gzserver -s libmodelphotoshoot.so worlds/blank.world --propshop-save $3/visual/pics/random_pose/ --propshop-model "$1/$2" --data-file $3/visual/pics/random_pose/poses.txt --random-joints
+    GAZEBO_MODEL_PATH="$3/visual/model/" GAZEBO_PLUGIN_PATH=$3/ModelPhotoShoot/build/:$GAZEBO_PLUGIN_PATH gzserver -s libmodelphotoshoot.so worlds/blank.world --propshop-save $3/visual/pics/random_pose/ --propshop-model "$3/visual/model/$2" --data-file $3/visual/pics/random_pose/poses.txt --random-joints
 
     #Generate model pics using drake, run 
     #IoU tests and extra checks
     cd ${_cur_dir}
-    ./test_models.py "$1/" "$2" "$3/visual/"
+    ./test_models.py "$1" "$2" "$3/visual/"
 
     # Test collision part:
     # Create a model that exchanges visual and collision
@@ -68,10 +75,16 @@ _test_models() { (
     sed -i 's/collision/temporalname/g' "$2"
     sed -i 's/visual/ignore:collision/g' "$2"
     sed -i 's/temporalname/visual/g' "$2"
+
+    sed -i 's/'"'"'/"/g' "$2"
+    sed -i "s,model://$MODEL_NAME/,,g" "$2"
+
+    # Default pose pics:
     mkdir -p $3/collisions/pics/default_pose/
-    GAZEBO_PLUGIN_PATH=$3/ModelPhotoShoot/build/:$GAZEBO_PLUGIN_PATH gzserver -s libmodelphotoshoot.so worlds/blank.world --propshop-save "$3/collisions/pics/default_pose/" --propshop-model "$3/collisions/model/$2" --data-file "$3/collisions/pics/default_pose/poses.txt"
+    GAZEBO_MODEL_PATH="$3/collisions/model/" GAZEBO_PLUGIN_PATH=$3/ModelPhotoShoot/build/:$GAZEBO_PLUGIN_PATH gzserver -s libmodelphotoshoot.so worlds/blank.world --propshop-save "$3/collisions/pics/default_pose/" --propshop-model "$3/collisions/model/$2" --data-file "$3/collisions/pics/default_pose/poses.txt"
+
     mkdir -p $3/collisions/pics/random_pose/
-    GAZEBO_PLUGIN_PATH=$3/ModelPhotoShoot/build/:$GAZEBO_PLUGIN_PATH gzserver -s libmodelphotoshoot.so worlds/blank.world --propshop-save "$3/collisions/pics/random_pose/" --propshop-model "$3/collisions/model/$2" --data-file "$3/collisions/pics/random_pose/poses.txt" --random-joints
+    GAZEBO_MODEL_PATH="$3/collisions/model/" GAZEBO_PLUGIN_PATH=$3/ModelPhotoShoot/build/:$GAZEBO_PLUGIN_PATH gzserver -s libmodelphotoshoot.so worlds/blank.world --propshop-save "$3/collisions/pics/random_pose/" --propshop-model "$3/collisions/model/$2" --data-file "$3/collisions/pics/random_pose/poses.txt" --random-joints
 
     cd ${_cur_dir}
     ./test_models.py "$3/collisions/model/" "$2" "$3/collisions/"

@@ -178,7 +178,11 @@ def perform_IoT_testing(model_file, temp_directory, pose_directory):
         for joint_name, pose in random_poses.items():
             if (pose!=pose):
                 pose=0
-            joint = plant.GetJointByName(joint_name)
+            #drake will add '_joint' when there's a name collision
+            if (plant.HasJointNamed(joint_name)):
+                joint = plant.GetJointByName(joint_name)
+            else:
+                joint = plant.GetJointByName(joint_name + '_joint')
             joint_positions[joint.position_start()] = pose
 
         sim_plant_context = plant.GetMyContextFromRoot(simulator.get_mutable_context())
