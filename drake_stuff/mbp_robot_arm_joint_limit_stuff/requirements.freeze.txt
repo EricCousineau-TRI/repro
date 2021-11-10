@@ -187,7 +187,7 @@ requests-unixsocket==0.1.5
 roman==2.0.0
 rosdistro-modules==0.8.3
 rospkg-modules==1.2.10
-rsa==3.4.2
+rsa==4.7
 Rtree==0.8.3
 ruamel.yaml==0.15.34
 s3transfer==0.3.3
