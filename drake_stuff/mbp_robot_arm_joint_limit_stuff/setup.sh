@@ -17,7 +17,7 @@ _download_drake() { (
     # Download and echo path to stdout for capture.
     set -eux
 
-    base=drake-latest-focal.tar.gz
+    base=drake-20211111-focal.tar.gz
     dir=~/Downloads
     uri=https://drake-packages.csail.mit.edu/drake/nightly
     if [[ ! -f ${dir}/${base} ]]; then
@@ -27,6 +27,7 @@ _download_drake() { (
 ) }
 
 _build_gazebo_plugin() { (
+    source /usr/share/gazebo/setup.bash
 
     # We need to generate the gazebo plugin for
     # IoU testing of joints
@@ -41,6 +42,7 @@ _build_gazebo_plugin() { (
 ) }
 
 _test_models() { (
+    source /usr/share/gazebo/setup.bash
 
     # Generate model pics using the gazebo plugin
 
@@ -153,18 +155,17 @@ _setup_venv() { (
     mkdir -p ${_venv_dir}
     tar -xzf $(_download_drake) -C ${_venv_dir} --strip-components=1
 
-    # See: https://drake.mit.edu/python_bindings.html#inside-virtualenv
+    # See: https://drake.mit.edu/from_binary.html#stable-releases
     python3 -m venv ${_venv_dir} --system-site-packages
     cd ${_venv_dir}
-    ./bin/pip install -I pip wheel
-    ./bin/pip install -I -r ${_cur_dir}/requirements.txt
+    ./bin/pip install -U pip wheel
+    ./bin/pip install -r ${_cur_dir}/requirements.txt
     ./bin/pip freeze > ${_cur_dir}/requirements.freeze.txt
 
     echo "${completion_token}" > ${completion_file}
 ) }
 
-if [  $# -lt "2" ]
-    then
+if [[ $# -lt "2" ]]; then
     echo "Please provide path to model directory and model file name."
     echo "      Usage:"
     echo "                  $./setup.sh <model_directory_path> <model_file_name> ./[executable]"
@@ -172,7 +173,7 @@ if [  $# -lt "2" ]
     echo "                  $source ./setup.sh <model_directory_path> <model_file_name>"
     echo "                  $./[executable]"
 
-    exit 1
+    return 1
 fi
 
 temp_directory=$(mktemp -d)
@@ -191,4 +192,6 @@ if [[ ${0} == ${BASH_SOURCE} ]]; then
     set -eux
     #env
     exec "${@:3}"
+else
+    source /usr/share/gazebo/setup.bash
 fi
