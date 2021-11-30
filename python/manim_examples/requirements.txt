@@ -1,0 +1,7 @@
+# N.B. These versions may be old, but work on my (Eric) machine.
+ipywidgets == 7.6.5
+widgetsnbextension == 3.5.2
+jupyterlab == 3.2.4
+jedi == 0.18.1
+
+manim == 0.12.0
