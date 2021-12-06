@@ -5,3 +5,7 @@ jedi == 0.17.2
 matplotlib == 3.4.3
 
 torch == 1.7.1
+
+einops == 0.3.0
+moviepy == 2.0.0.dev2
+numpy == 1.17.4
