@@ -28,7 +28,7 @@ _setup_venv() { (
     python3 -m venv ${_venv_dir}
     cd ${_venv_dir}
     ./bin/pip install -U pip wheel
-    ./bin/pip install -r ${_cur_dir}/requirements.txt
+    ./bin/pip install --use-deprecated=legacy-resolver -r ${_cur_dir}/requirements.txt
     ./bin/pip freeze > ${_cur_dir}/requirements.freeze.txt
 
     echo "${completion_token}" > ${completion_file}

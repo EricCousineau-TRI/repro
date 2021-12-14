@@ -9,3 +9,6 @@ torch == 1.7.1
 einops == 0.3.0
 moviepy == 2.0.0.dev2
 numpy == 1.17.4
+
+tensorflow == 2.6.0
+keras == 2.6.0
