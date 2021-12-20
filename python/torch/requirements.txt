@@ -4,11 +4,12 @@ jupyterlab == 3.0.12
 jedi == 0.17.2
 matplotlib == 3.4.3
 
-torch == 1.7.1
-
 einops == 0.3.0
 moviepy == 2.0.0.dev2
 numpy == 1.17.4
 
 tensorflow == 2.6.0
 keras == 2.6.0
+
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch == 1.7.1+cu110
