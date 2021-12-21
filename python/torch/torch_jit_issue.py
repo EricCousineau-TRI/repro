@@ -1,72 +1,59 @@
 import time
 
-import numpy as np
-
 import torch
-from torch import nn
 
 
-class TorchFakeLangevin(nn.Module):
+class TorchFakeLangevin(torch.nn.Module):
     # Since we can't pass a net as argument, just wrap it into a module...
     def __init__(self, net):
         super().__init__()
         self.net = net
 
-    def _gradient(self, yhs):
-        out = self.net(yhs).sum()
-        dy, = torch.autograd.grad([out], [yhs])
-        assert dy is not None
-        return dy.detach()
+    def _gradient(self, x):
+        y = self.net(x).sum()
+        dy_dx, = torch.autograd.grad([y], [x])
+        assert dy_dx is not None
+        return dy_dx.detach()
 
-    def forward(self, yhs, num_iter: int):
+    def forward(self, x, num_iter: int):
         step_size = 0.001
         # WRONG (I think) - should detach in each loop.
-        yhs = yhs.detach().requires_grad_(True)
+        x = x.detach().requires_grad_(True)
         for i in range(num_iter):
-            de_dact = self._gradient(yhs)
-            yhs = yhs + de_dact * step_size
-        return yhs
+            de_dact = self._gradient(x)
+            x = x + de_dact * step_size
+        return x
 
 
-class TorchFakeLangevinPrint(nn.Module):
+class TorchFakeLangevinPrint(torch.nn.Module):
     # Same as above, but w/ print. Dunno how to make diff s.t. jit analysis will
     # use it.
     def __init__(self, net):
         super().__init__()
         self.net = net
 
-    def _gradient(self, yhs):
-        out = self.net(yhs).sum()
-        dy, = torch.autograd.grad([out], [yhs])
-        assert dy is not None
-        return dy.detach()
+    def _gradient(self, x):
+        y = self.net(x).sum()
+        dy_dx, = torch.autograd.grad([y], [x])
+        assert dy_dx is not None
+        return dy_dx.detach()
 
-    def forward(self, yhs, num_iter: int):
+    def forward(self, x, num_iter: int):
         step_size = 0.001
-        yhs = yhs.detach().requires_grad_(True)
+        x = x.detach().requires_grad_(True)
         for i in range(num_iter):
             print(i)
-            de_dact = self._gradient(yhs)
-            yhs = yhs + de_dact * step_size
-        return yhs
+            de_dact = self._gradient(x)
+            x = x + de_dact * step_size
+        return x
 
 
 @torch.no_grad()
 def run(num_iter, use_print):
     print(f"num_iter={num_iter}, use_print={use_print}")
 
-    N = 1
-    L = 1
-    DimY = 1
-    hidden_sizes = []
-
-    np.random.seed(0)
-    yhs_init = np.random.rand(N * L, DimY).astype(np.float32)
-
-    device = torch.device("cpu")
-    net = nn.Linear(1, 1)
-    net.eval().to(device)
-    yhs = torch.from_numpy(yhs_init).to(device)
+    x = torch.ones(1, 1)
+    net = torch.nn.Linear(1, 1).eval()
 
     if use_print:
         fast = TorchFakeLangevinPrint(net)
@@ -77,16 +64,15 @@ def run(num_iter, use_print):
 
     def work():
         with torch.set_grad_enabled(True):
-            return fast(yhs, num_iter).detach().cpu()
+            return fast(x, num_iter).detach().cpu()
 
     try:
         # Warmup; needs >=2 for jit on first usage?
         for _ in range(2):
-            yhs_new = work()
+            work()
 
         t_start = time.time()
-        # Simulate device transfer to flush graph.
-        yhs_new = work().detach().cpu()
+        work()
         dt = time.time() - t_start
 
         print(f"  Success: {dt:.3g}s")
