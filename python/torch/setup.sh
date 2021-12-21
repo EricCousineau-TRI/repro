@@ -18,9 +18,9 @@ _setup_venv() { (
     completion_token="$(cat ./requirements.txt)"
     completion_file=${_venv_dir}/.completion-token
 
-    if [[ -f ${completion_file} && "$(cat ${completion_file})" == "${completion_token}" ]]; then
-        return 0
-    fi
+    # if [[ -f ${completion_file} && "$(cat ${completion_file})" == "${completion_token}" ]]; then
+    #     return 0
+    # fi
 
     set -x
     rm -rf ${_venv_dir}
