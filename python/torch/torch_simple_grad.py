@@ -14,29 +14,6 @@ def torch_col_zero(A, mask):
     return A
 
 
-def torch_forward_diff_old(net, x, dx=None):
-    # Imperative.
-    if dx is None:
-        N, L = x.shape
-        dx = torch.eye(L, device=x.device, dtype=x.dtype)
-        dx = dx.repeat(N, 1, 1)
-    if isinstance(net, nn.Sequential):
-        count = len(net)
-        for i, net_i in enumerate(net):
-            dx = torch_forward_diff_old(net_i, x, dx)
-            # Don't compute for last.
-            if i + 1 < count:
-                x = net_i(x)
-    elif isinstance(net, nn.Linear):
-        A = net.weight
-        dx = dx @ A.T
-    elif isinstance(net, nn.ReLU):
-        torch_col_zero(dx, x <= 0)
-    else:
-        assert False, type(net)
-    return dx
-
-
 _registered = []
 
 def register(cls):
@@ -78,15 +55,11 @@ class LinearFwdDiff(FwdDiff):
     @classmethod
     def create(cls, net):
         if isinstance(net, nn.Linear):
-            return cls(net, net.weight)
+            return cls(net)
         return None
 
-    def __init__(self, net, A):
-        super().__init__(net)
-        self.A = A
-
     def dual(self, x, dx):
-        dx = dx @ self.A.T
+        dx = dx @ self.net.weight.T
         x = self.net(x)
         return x, dx
 
