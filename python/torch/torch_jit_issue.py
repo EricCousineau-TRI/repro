@@ -65,6 +65,7 @@ def run(num_iter, cls, use_jit=True):
         print(f"  Success")
     except RuntimeError as e:
         if "differentiated Tensors" in str(e):
+            # print(e)
             print(f"  Error: Unused diff'able param")
         else:
             raise
@@ -80,3 +81,20 @@ def main():
 
 assert __name__ == "__main__"
 main()
+
+
+"""
+Output:
+
+num_iter=8, cls=TorchFakeLangevinCorrect, use_jit=True
+  Success
+num_iter=7, cls=TorchFakeLangevin, use_jit=True
+  Success
+num_iter=8, cls=TorchFakeLangevin, use_jit=True
+  Error: Unused diff'able param
+num_iter=8, cls=TorchFakeLangevin, use_jit=False
+  Success
+num_iter=8, cls=TorchFakeLangevinPrint, use_jit=True
+<trimmed>
+  Success
+"""
