@@ -1,4 +1,8 @@
-# Transforms a simple network to use *very* basic forward auto diff.
+"""
+Transforms a simple network to use *very* basic forward auto diff.
+
+Of course, this suffers when matrix dim grows too large.
+"""
 
 import torch
 from torch import nn
@@ -15,6 +19,7 @@ def torch_col_zero(A, mask):
 
 
 _registered = []
+
 
 def register(cls):
     _registered.append(cls)
@@ -80,17 +85,17 @@ class ReLUFwdDiff(FwdDiff):
 
 @register
 class SequentialFwdDiff(FwdDiff):
-#     __constants__ = ["fwds"]
     @classmethod
     def create(cls, net):
         if isinstance(net, nn.Sequential):
-            fwds = nn.ModuleList([torch_forward_diff(net_i) for net_i in net])
-            return cls(net, fwds)
+            return cls(net)
         return None
     
-    def __init__(self, net, fwds):
+    def __init__(self, net):
         super().__init__(net)
-        self.fwds = fwds
+        self.fwds = nn.ModuleList(
+            [torch_forward_diff(net_i) for net_i in net]
+        )
 
     def dual(self, x, dx):
         for fwd in self.fwds:

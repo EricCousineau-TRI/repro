@@ -47,3 +47,23 @@ class ProfilingCProfile(ProfilingWallClock):
             yield self
         pr.disable()
         self.stats = pstats.Stats(pr)
+
+
+@dc.dataclass
+class ProfilingTorch(ProfilingWallClock):
+    prof: object = None
+
+    def save_to_file(self, *, base):
+        # To preview, see:
+        # https://pytorch.org/tutorials/recipes/recipes/profiler_recipe.html#using-tracing-functionality  # noqa
+        trace_file = f"{base}_trace.json"
+        self.prof.export_chrome_trace(trace_file)
+        return [trace_file]
+
+    @contextmanager
+    def context(self):
+        with profiler.profile(use_cuda=True) as prof:
+            with profiler.record_function("timing"):
+                with super().context():
+                    yield self
+        self.prof = prof
