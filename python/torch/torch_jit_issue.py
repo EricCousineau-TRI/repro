@@ -8,74 +8,61 @@ class TorchFakeLangevin(torch.nn.Module):
     def __init__(self, net):
         super().__init__()
         self.net = net
+        self._step_size = 0.001
+
+    def _on_iter(self, i: int):
+        pass
 
     def _gradient(self, x):
-        y = self.net(x).sum()
-        dy_dx, = torch.autograd.grad([y], [x])
+        y = self.net(x)
+        dy_dx, = torch.autograd.grad([y.sum()], [x])
         assert dy_dx is not None
         return dy_dx.detach()
 
     def forward(self, x, num_iter: int):
-        step_size = 0.001
-        # WRONG (I think) - should detach in each loop.
+        # Bad?
         x = x.detach().requires_grad_(True)
         for i in range(num_iter):
-            de_dact = self._gradient(x)
-            x = x + de_dact * step_size
+            self._on_iter(i)
+            dy_dx = self._gradient(x)
+            x = x + dy_dx * self._step_size
         return x
 
 
-class TorchFakeLangevinPrint(torch.nn.Module):
-    # Same as above, but w/ print. Dunno how to make diff s.t. jit analysis will
-    # use it.
-    def __init__(self, net):
-        super().__init__()
-        self.net = net
+class TorchFakeLangevinPrint(TorchFakeLangevin):
+    # Same as above, but w/ print.
+    # Dunno how to pass a func / bool without it affecting this behavior.
+    def _on_iter(self, i: int):
+        print(i)
 
-    def _gradient(self, x):
-        y = self.net(x).sum()
-        dy_dx, = torch.autograd.grad([y], [x])
-        assert dy_dx is not None
-        return dy_dx.detach()
 
+class TorchFakeLangevinCorrect(TorchFakeLangevin):
     def forward(self, x, num_iter: int):
-        step_size = 0.001
-        x = x.detach().requires_grad_(True)
         for i in range(num_iter):
-            print(i)
-            de_dact = self._gradient(x)
-            x = x + de_dact * step_size
+            self._on_iter(i)
+            # Better?
+            x_tmp = x.detach().requires_grad_(True)
+            dy_dx = self._gradient(x_tmp)
+            x = x + dy_dx * self._step_size
         return x
 
 
 @torch.no_grad()
-def run(num_iter, use_print):
-    print(f"num_iter={num_iter}, use_print={use_print}")
-
+def run(num_iter, cls, use_jit=True):
+    print(f"num_iter={num_iter}, cls={cls.__name__}, use_jit={use_jit}")
     x = torch.ones(1, 1)
     net = torch.nn.Linear(1, 1).eval()
-
-    if use_print:
-        fast = TorchFakeLangevinPrint(net)
-    else:
-        fast = TorchFakeLangevin(net)
-
-    fast = torch.jit.script(fast)
+    fast = cls(net)
+    if use_jit:
+        fast = torch.jit.script(fast)
 
     def work():
         with torch.set_grad_enabled(True):
-            return fast(x, num_iter).detach().cpu()
+            return fast(x, num_iter)
 
     try:
-        # Warmup; needs >=2 for jit on first usage?
-        for _ in range(2):
-            work()
-
-        t_start = time.time()
         work()
-        dt = time.time() - t_start
-
-        print(f"  Success: {dt:.3g}s")
+        print(f"  Success")
     except RuntimeError as e:
         if "differentiated Tensors" in str(e):
             print(f"  Error: Unused diff'able param")
@@ -84,9 +71,11 @@ def run(num_iter, use_print):
 
 
 def main():
-    run(7, False)  # <=7 does not throw.
-    run(8, False)  # >=8 throws.
-    run(8, True)   # Does not throw.
+    run(8, TorchFakeLangevinCorrect)  # Does not throw
+    run(7, TorchFakeLangevin)  # <=7 does not throw.
+    run(8, TorchFakeLangevin)  # >=8 throws, confusing why it's senstive.
+    run(8, TorchFakeLangevin, use_jit=False)
+    run(8, TorchFakeLangevinPrint)   # Does not throw.
 
 
 assert __name__ == "__main__"
