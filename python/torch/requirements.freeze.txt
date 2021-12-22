@@ -43,7 +43,7 @@ jupyter-packaging==0.7.12
 jupyter-server==1.13.1
 jupyterlab==3.0.12
 jupyterlab-pygments==0.1.2
-jupyterlab-server==2.9.0
+jupyterlab-server==2.10.1
 keras==2.6.0
 Keras-Preprocessing==1.1.2
 kiwisolver==1.3.2
@@ -97,7 +97,7 @@ tensorflow-estimator==2.7.0
 termcolor==1.1.0
 terminado==0.12.1
 testpath==0.5.0
-torch==1.10.1+cu111
+torch==1.7.1+cu110
 tornado==6.1
 tqdm==4.62.3
 traitlets==5.1.1

@@ -18,7 +18,7 @@ _setup_venv() { (
     completion_token="$(cat ./requirements.txt)"
     completion_file=${_venv_dir}/.completion-token
 
-    if [[ -f ${completion_file} ]]; then # && "$(cat ${completion_file})" == "${completion_token}" ]]; then
+    if [[ -f ${completion_file} && "$(cat ${completion_file})" == "${completion_token}" ]]; then
         return 0
     fi
 
