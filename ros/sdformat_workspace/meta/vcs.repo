@@ -3,20 +3,20 @@ repositories:
   ign_cmake:
     type: git
     url: https://github.com/ignitionrobotics/ign-cmake
-    version: ign-cmake2
+    version: ign-cmake2  # TODO(eric): Fix.
   ign_math:
     type: git
     url: https://github.com/ignitionrobotics/ign-math
-    version: ign-math6
+    version: ign-math6  # TODO(eric): Fix.
   sdformat:
     type: git
     url: https://github.com/osrf/sdformat
-    version: sdformat11_11.1.0
+    version: sdformat12_12.3.0
   ign_tools:
     type: git
     url: https://github.com/ignitionrobotics/ign-tools
-    version: ign-tools1
+    version: ign-tools1  # TODO(eric): Fix.
   ign_utils:
     type: git
     url: https://github.com/ignitionrobotics/ign-utils
-    version: ignition-utils1_1.0.0
+    version: ignition-utils1_1.0.0  # TODO(eric): Fix.
