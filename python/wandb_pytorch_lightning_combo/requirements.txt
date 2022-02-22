@@ -1,6 +1,8 @@
-pytorch-lightning == 1.2.0
-torch == 1.7.1
-wandb == 0.10.19
+git+https://github.com/PytorchLightning/pytorch-lightning.git@60fe1520fd8ac8fa9006237f31045465200c9803
+#pytorch-lightning == 1.5.8
+
+torch == 1.10.2
+wandb == 0.12.10
 
 # Sigh.
 pystuck == 0.8.5

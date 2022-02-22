@@ -78,10 +78,10 @@ def main():
         max_epochs=5,
         num_processes=2,
 
-        # # Freezes.
-        # accelerator="ddp_cpu",
+        # Freezes w/ old version.
+        accelerator="ddp_cpu",
 
-        # # Freezes.
+        # # Freezes w/ old version.
         # accelerator="ddp_spawn",
         # gpus=[0, 1],
 
@@ -89,11 +89,11 @@ def main():
         # accelerator="ddp",
         # gpus=[0, 1],
 
-        # this doesn't work either...
-        plugins=[DDPPlugin(
-            parallel_devices=[cpu, cpu],
-            num_nodes=2,
-        )],
+        # this doesn't work either with old version...
+        # plugins=[DDPPlugin(
+        #     parallel_devices=[cpu, cpu],
+        #    num_nodes=2,
+        # )],
     )
     trainer.fit(model, dataloader_train, dataloader_val)
 
