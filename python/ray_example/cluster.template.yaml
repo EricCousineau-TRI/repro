@@ -1,0 +1,85 @@
+# Derived from @thduynguyen's setup in Anzu.
+#
+# See  https://docs.ray.io/en/releases-1.9.2/cluster/config.html for details.
+#
+# Link to full configuration with comments:
+# https://docs.ray.io/en/releases-1.9.2/cluster/config.html#full-configuration
+
+cluster_name: example
+
+max_workers: 2
+
+upscaling_speed: 1.0
+
+idle_timeout_minutes: 5
+
+provider:
+    type: aws
+    # etc.
+    cache_stopped_nodes: False
+    # Undocumented, but you can't use private subnets without it.
+    use_internal_ips: True
+auth:
+    ssh_user: ubuntu
+    # Other things.
+
+available_node_types:
+    ray.head.default:
+        min_workers: 0
+        max_workers: 0
+        # Here we follow https://docs.ray.io/en/releases-1.9.2/cluster/guide.html#configuring-the-head-node
+        # and set to use 0 CPU to avoid scheduling any task on head node due to
+        # its heavy network load.
+        resources: {"CPU": 0}
+        node_config:
+            InstanceType: &type c5.2xlarge
+            ImageId: &image_id ami-04505e74c0741db8d  # ubuntu-focal-20.04-amd64-server-20211129
+            BlockDeviceMappings: &mappings
+                - DeviceName: /dev/sda1
+                  Ebs:
+                      VolumeSize: 10
+            # other config...
+
+    ray.worker.default:
+        min_workers: 1
+        resources: {}
+        node_config:
+            InstanceType: *type
+            ImageId: *image_id
+            BlockDeviceMappings: *mappings
+            # other config...
+
+head_node_type: ray.head.default
+
+file_mounts: {
+    "/home/ubuntu/.aws": "~/.aws",
+    "/home/ubuntu/ray_stuff": "$PWD",
+}
+
+file_mounts_sync_continuously: False
+
+rsync_exclude:
+    - "**/.git"
+    - "**/.git/**"
+    - "**/venv/**"
+
+rsync_filter:
+    - ".gitignore"
+
+setup_commands:
+  - ~/ray_stuff/install_prereqs.sh
+  # Setup virtualenv.
+  - ~/ray_stuff/setup.sh
+
+# WARNING: If these are not explicitly set to empty, then ray will attempt to
+# `pip install boto3`, possibly polluting ~/.local!
+head_setup_commands: []
+worker_setup_commands: []
+
+head_start_ray_commands:
+    - ~/ray_stuff/setup.sh ray stop
+    - ~/ray_stuff/setup.sh ray start --head ... # etc.
+
+worker_start_ray_commands:
+    - ~/ray_stuff/setup.sh ray stop
+    - ~/ray_stuff/setup.sh ray start ... # etc.
