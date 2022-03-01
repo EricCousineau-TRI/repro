@@ -7,8 +7,9 @@ import ray
 
 
 @ray.remote(num_cpus=2)
-def simple_job():
+def simple_job(i):
     time.sleep(5)
+    print(f"Completed: {i}")
     return 1
 
 
@@ -26,8 +27,8 @@ def main():
 
     ray.get(
         [
-            simple_job.remote()
-            for _ in range(10)
+            simple_job.remote(i)
+            for i in range(10)
         ]
     )
 

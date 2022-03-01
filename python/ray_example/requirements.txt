@@ -1,2 +1,2 @@
-ray[default] == 1.9.2
-boto3 == 1.21.4
+ray[default] == 1.10.0
+boto3 == 1.21.7

@@ -7,7 +7,7 @@
 
 cluster_name: example
 
-max_workers: 2
+max_workers: 1
 
 upscaling_speed: 1.0
 
@@ -16,7 +16,7 @@ idle_timeout_minutes: 5
 provider:
     type: aws
     # etc.
-    cache_stopped_nodes: False
+    cache_stopped_nodes: True
     # Undocumented, but you can't use private subnets without it.
     use_internal_ips: True
 auth:
@@ -67,9 +67,7 @@ rsync_filter:
     - ".gitignore"
 
 setup_commands:
-  - ~/ray_stuff/install_prereqs.sh
-  # Setup virtualenv.
-  - ~/ray_stuff/setup.sh
+  - ~/ray_stuff/node_setup.sh
 
 # WARNING: If these are not explicitly set to empty, then ray will attempt to
 # `pip install boto3`, possibly polluting ~/.local!
@@ -77,9 +75,9 @@ head_setup_commands: []
 worker_setup_commands: []
 
 head_start_ray_commands:
-    - ~/ray_stuff/setup.sh ray stop
-    - ~/ray_stuff/setup.sh ray start --head ... # etc.
+    - ray stop
+    - ulimit -n 65536; ray start --head --port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml
 
 worker_start_ray_commands:
-    - ~/ray_stuff/setup.sh ray stop
-    - ~/ray_stuff/setup.sh ray start ... # etc.
+    - ray stop
+    - ulimit -n 65536; ray start --address=$RAY_HEAD_IP:6379 --object-manager-port=8076
