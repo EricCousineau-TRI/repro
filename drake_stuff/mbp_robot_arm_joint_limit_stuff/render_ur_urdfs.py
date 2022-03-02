@@ -87,20 +87,6 @@ def get_transformed_vertices(node, v_list):
 
 def get_mesh_extent(scene, mesh_file, filetype='obj'):
     # Return geometric center and size.
-
-    # def check_identity(node):
-    #     np.testing.assert_equal(
-    #         node.transformation,
-    #         np.eye(4),
-    #         err_msg=mesh_file,
-    #     )
-    #     for child in node.children:
-    #         check_identity(child)
-
-    # assert len(scene.meshes) > 0, mesh_file
-    # # Meshes should not have transforms.
-    # check_identity(scene.rootnode)
-
     v_list = []
 
     if(filetype == '.dae'):
@@ -208,6 +194,29 @@ def remove_gazebo_specific_scripts(description_file):
     n = text_file.write(data)
     text_file.close()
 
+# Welding in drake sets the model in the origin by default
+# this will ignore any pose in the inital link of the model
+# to avoid this we add a fixed joint to the world
+def add_fixed_joint(description_file):
+    root = etree.parse(description_file)
+    model_element = root.find('.//model')
+    joints = model_element.findall('joint')
+    found_fixed_joint = False
+    for j in joints:
+        if (j.find('parent').text == 'world' and j.get('type') == 'fixed'):
+            found_fixed_joint = True
+
+    if (not found_fixed_joint):
+        frame_name = model_element.findall('link')[0].get('name')
+
+        element_string = '<joint name="World" type="fixed">\n<child>' + frame_name +'</child>\n<parent>world</parent>\n</joint>'
+        world_joint = etree.fromstring(element_string)
+        model_element.append(world_joint)
+    data = etree.tostring(root, pretty_print=True).decode("utf-8")
+    text_file = open(description_file, "w")
+    n = text_file.write(data)
+    text_file.close()
+
 # Some models use pacakge based uri but don't contain a
 # pacakge.xml so we create one to make sure they can be
 # resolved
@@ -249,6 +258,7 @@ def main(model_directory, description_file):
         print('Found SDF as description file, making arrangements to ensure compatibility')
         remove_gazebo_specific_scripts(description_file)
         create_pacakge_xml(description_file)
+        add_fixed_joint(description_file)
     else:
         print('Found URDF as description file, translating through ros launch')
         cd(source_tree)
