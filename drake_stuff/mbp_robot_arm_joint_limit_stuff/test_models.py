@@ -36,10 +36,9 @@ from pydrake.systems.sensors import (
 from pydrake.math import RigidTransform, RollPitchYaw
 import pydrake.multibody as mb
 import multibody_extras as me
-#import xml.etree.ElementTree as ET
 
 def xyz_rpy_deg(xyz, rpy_deg):
-  """Shorthand for defining a pose."""
+  #Shorthand for defining a pose.
   rpy_deg = np.asarray(rpy_deg)
   return RigidTransform(RollPitchYaw(rpy_deg * np.pi / 180), xyz)
 
@@ -125,7 +124,7 @@ def perform_IoT_testing(model_file, temp_directory, pose_directory):
   frame_W = plant.world_frame()
   frame_B = model_bodies[0].body_frame()
   if (len(plant.GetBodiesWeldedTo(plant.world_body())) <2):
-    plant.WeldFrames(frame_W, frame_B)
+    plant.WeldFrames(frame_W, frame_B, X_PC=plant.GetDefaultFreeBodyPose(frame_B.body()))
 
   #Creating cameras:
   renderer_name = 'renderer'

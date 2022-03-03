@@ -21,294 +21,269 @@ import yaml
 
 from process_util import CapturedProcess, bind_print_prefixed
 
-
 class UserError(RuntimeError):
-    pass
+  pass
 
 
 def eprint(s):
-    print(s, file=sys.stderr)
+  print(s, file=sys.stderr)
 
 
 def shell(cmd, check=True):
-    """Executes a shell command."""
-    eprint(f"+ {cmd}")
-    return run(cmd, shell=True, check=check)
+  """Executes a shell command."""
+  eprint(f"+ {cmd}")
+  return run(cmd, shell=True, check=check)
 
 
 def subshell(cmd, check=True, stderr=None, strip=True):
-    """Executs a subshell in a capture."""
-    eprint(f"+ $({cmd})")
-    result = run(cmd, shell=True, stdout=PIPE, stderr=stderr, encoding="utf8")
-    if result.returncode != 0 and check:
-        if stderr == PIPE:
-            eprint(result.stderr)
-        eprint(result.stdout)
-        raise UserError(f"Exit code {result.returncode}: {cmd}")
-    out = result.stdout
-    if strip:
-        out = out.strip()
-    return out
+  """Executes a subshell in a capture."""
+  eprint(f"+ $({cmd})")
+  result = run(cmd, shell=True, stdout=PIPE, stderr=stderr, encoding="utf8")
+  if result.returncode != 0 and check:
+    if stderr == PIPE:
+      eprint(result.stderr)
+    eprint(result.stdout)
+    raise UserError(f"Exit code {result.returncode}: {cmd}")
+  out = result.stdout
+  if strip:
+    out = out.strip()
+  return out
 
 
 def cd(p):
-    eprint(f"+ cd {p}")
-    os.chdir(p)
+  eprint(f"+ cd {p}")
+  os.chdir(p)
 
 
 def parent_dir(p, *, count):
-    for _ in range(count):
-        p = dirname(p)
-    return p
+  for _ in range(count):
+    p = dirname(p)
+  return p
 
 
 def load_mesh(mesh_file):
-    assert isfile(mesh_file), mesh_file
-    scene = pyassimp.load(mesh_file)
-    assert scene is not None, mesh_file
-    return scene
+  assert isfile(mesh_file), mesh_file
+  scene = pyassimp.load(mesh_file)
+  assert scene is not None, mesh_file
+  return scene
 
 
 def get_transformed_vertices(node, v_list):
-    for child in node.children:
-        get_transformed_vertices(child, v_list)
+  for child in node.children:
+    get_transformed_vertices(child, v_list)
 
-        # add current node meshes to the list
-        for mesh in child.meshes:
-            for j in range(mesh.vertices.shape[0]):
-                v_list.append(child.transformation.dot(
-                    np.append(mesh.vertices[j], 1))[0:3])
+    #add current node meshes to the list
+    for mesh in child.meshes:
+      for j in range(mesh.vertices.shape[0]):
+        v_list.append(child.transformation.dot(
+          np.append(mesh.vertices[j], 1))[0:3])
 
-        # apply current transformation to vertices
-        for i in range(len(v_list)):
-            v_list[i] = node.transformation.dot(
-                np.append(v_list[i], 1)).A[0, 0:3]
+    #apply current transformation to vertices
+    for i in range(len(v_list)):
+      v_list[i] = node.transformation.dot(
+        np.append(v_list[i], 1)).A[0, 0:3]
 
 
 def get_mesh_extent(scene, mesh_file, filetype='obj'):
-    # Return geometric center and size.
-    v_list = []
+#Return geometric center and size.
+  v_list = []
 
-    if(filetype == '.dae'):
-        rotation = np.matrix(
-            [[1,  0,  0, 0], [0,  0,  -1, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
-    else:
-        rotation = np.matrix(
-            [[1,  0,  0, 0], [0,  1,  0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+  if(filetype == '.dae'):
+    rotation = np.matrix(
+      [[1,  0,  0, 0], [0,  0,  -1, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
+  else:
+    rotation = np.matrix(
+      [[1,  0,  0, 0], [0,  1,  0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
 
-    scene.rootnode.transformation = rotation.dot(scene.rootnode.transformation)
-    get_transformed_vertices(scene.rootnode, v_list)
+  scene.rootnode.transformation = rotation.dot(scene.rootnode.transformation)
+  get_transformed_vertices(scene.rootnode, v_list)
 
-    lb = np.min(v_list, axis=0)
-    ub = np.max(v_list, axis=0)
-    size = ub - lb
-    center = (ub + lb) / 2
-    return np.array([center, size])
+  lb = np.min(v_list, axis=0)
+  ub = np.max(v_list, axis=0)
+  size = ub - lb
+  center = (ub + lb) / 2
+  return np.array([center, size])
 
 
 def convert_file_to_obj(mesh_file, suffix, scale=1):
-    assert mesh_file.endswith(suffix), mesh_file
-    obj_file = mesh_file[:-len(suffix)] + ".obj"
-    print(f"Convert Mesh: {mesh_file} -> {obj_file}")
-    if isfile(obj_file):
-        return
-    scene = load_mesh(mesh_file)
+  assert mesh_file.endswith(suffix), mesh_file
+  obj_file = mesh_file[:-len(suffix)] + ".obj"
+  print(f"Convert Mesh: {mesh_file} -> {obj_file}")
+  if isfile(obj_file):
+    return
+  scene = load_mesh(mesh_file)
 
-    # workaround for issue https://github.com/assimp/assimp/issues/849
-    if(suffix == ".dae"):
-        rotation = np.matrix(
-            [[1,  0,  0, 0], [0,  0, -1, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
-        transformed = rotation.dot(scene.rootnode.transformation)
-        scene.mRootNode.contents.mTransformation .a1 = transformed.item(0)
-        scene.mRootNode.contents.mTransformation .a2 = transformed.item(1)
-        scene.mRootNode.contents.mTransformation .a3 = transformed.item(2)
-        scene.mRootNode.contents.mTransformation .a4 = transformed.item(3)
-        scene.mRootNode.contents.mTransformation .b1 = transformed.item(4)
-        scene.mRootNode.contents.mTransformation .b2 = transformed.item(5)
-        scene.mRootNode.contents.mTransformation .b3 = transformed.item(6)
-        scene.mRootNode.contents.mTransformation .b4 = transformed.item(7)
-        scene.mRootNode.contents.mTransformation .c1 = transformed.item(8)
-        scene.mRootNode.contents.mTransformation .c2 = transformed.item(9)
-        scene.mRootNode.contents.mTransformation .c3 = transformed.item(10)
-        scene.mRootNode.contents.mTransformation .c4 = transformed.item(11)
-        scene.mRootNode.contents.mTransformation .d1 = transformed.item(12)
-        scene.mRootNode.contents.mTransformation .d2 = transformed.item(13)
-        scene.mRootNode.contents.mTransformation .d3 = transformed.item(14)
-        scene.mRootNode.contents.mTransformation .d4 = transformed.item(15)
+  # Workaround for issue https: // github.com/assimp/assimp/issues/849.
+  if(suffix == ".dae"):
+    rotation = np.matrix(
+      [[1,  0,  0, 0], [0,  0, -1, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
+    transformed = rotation.dot(scene.rootnode.transformation)
+    scene.mRootNode.contents.mTransformation .a1 = transformed.item(0)
+    scene.mRootNode.contents.mTransformation .a2 = transformed.item(1)
+    scene.mRootNode.contents.mTransformation .a3 = transformed.item(2)
+    scene.mRootNode.contents.mTransformation .a4 = transformed.item(3)
+    scene.mRootNode.contents.mTransformation .b1 = transformed.item(4)
+    scene.mRootNode.contents.mTransformation .b2 = transformed.item(5)
+    scene.mRootNode.contents.mTransformation .b3 = transformed.item(6)
+    scene.mRootNode.contents.mTransformation .b4 = transformed.item(7)
+    scene.mRootNode.contents.mTransformation .c1 = transformed.item(8)
+    scene.mRootNode.contents.mTransformation .c2 = transformed.item(9)
+    scene.mRootNode.contents.mTransformation .c3 = transformed.item(10)
+    scene.mRootNode.contents.mTransformation .c4 = transformed.item(11)
+    scene.mRootNode.contents.mTransformation .d1 = transformed.item(12)
+    scene.mRootNode.contents.mTransformation .d2 = transformed.item(13)
+    scene.mRootNode.contents.mTransformation .d3 = transformed.item(14)
+    scene.mRootNode.contents.mTransformation .d4 = transformed.item(15)
 
-    pyassimp.export(scene, obj_file, file_type="obj")
+  pyassimp.export(scene, obj_file, file_type="obj")
 
-    # TODO (marcoag) skip sanity check for now
-    # find a way to do one
-    extent = get_mesh_extent(scene, mesh_file, suffix)
-    scene_obj = load_mesh(obj_file)
-    extent_obj = get_mesh_extent(scene_obj, mesh_file)
-    np.testing.assert_allclose(
-        extent, extent_obj, rtol=1e-05, atol=1e-07,
-        err_msg=repr((mesh_file, obj_file)),
-    )
+  #TODO(marcoag) skip sanity check for now
+  #find a way to do one
+  extent = get_mesh_extent(scene, mesh_file, suffix)
+  scene_obj = load_mesh(obj_file)
+  extent_obj = get_mesh_extent(scene_obj, mesh_file)
+  np.testing.assert_allclose(
+    extent, extent_obj, rtol=1e-05, atol=1e-07,
+    err_msg=repr((mesh_file, obj_file)),
+  )
 
 
 def replace_text_to_obj(content, suffix):
-    # Not robust, but meh.
-    return content.replace(suffix, ".obj")
+  #Not robust, but meh.
+  return content.replace(suffix, ".obj")
 
 
 def find_mesh_files(d, suffix):
-    files = subshell(f"find . -name '*{suffix}'").strip().split()
-    files.sort()
-    return files
+  files = subshell(f"find . -name '*{suffix}'").strip().split()
+  files.sort()
+  return files
 
-# Workaround for https://github.com/assimp/assimp/issues/3367
-# remove this once all consumers have an assimp release
-# incorporating the fix available on their distribution
+#Workaround for https: // github.com/assimp/assimp/issues/3367
+#remove this once all consumers have an assimp release
+#incorporating the fix available on their distribution
 def remove_empty_tags(dae_file, root):
 
-    #root = etree.fromstring(data)
-    for element in root.xpath(".//*[not(node())]"):
-        if(len(element.attrib) == 0):
-            element.getparent().remove(element)
+  #root = etree.fromstring(data)
+  for element in root.xpath(".//*[not(node())]"):
+    if(len(element.attrib) == 0):
+      element.getparent().remove(element)
 
-    data = etree.tostring(root, pretty_print=True).decode("utf-8")
-    text_file = open(dae_file, "w")
-    n = text_file.write(data)
-    text_file.close()
+  data = etree.tostring(root, pretty_print=True).decode("utf-8")
+  text_file = open(dae_file, "w")
+  n = text_file.write(data)
+  text_file.close()
 
 def obtain_scale(root):
-    return float(root.xpath("//*[local-name() = 'unit']")[0].get('meter'))
+  return float(root.xpath("//*[local-name() = 'unit']")[0].get('meter'))
 
-# Some models contain materials that use gazebo specifics scripts
-# remove them so they don't fail
+#Some models contain materials that use gazebo specifics scripts
+#remove them so they don't fail
 def remove_gazebo_specific_scripts(description_file):
-    root = etree.parse(description_file)
+  root = etree.parse(description_file)
 
-    for material_element in root.findall('.//material'):
-        script_element = material_element.find('script')
-        if(script_element is not None):
-            print(script_element.find('name').text)
-            if(script_element.find('name').text.startswith('Gazebo')):
-                material_element.remove(script_element)
+  for material_element in root.findall('.//material'):
+    script_element = material_element.find('script')
+    if(script_element is not None):
+      print(script_element.find('name').text)
+      if(script_element.find('name').text.startswith('Gazebo')):
+        material_element.remove(script_element)
 
-    data = etree.tostring(root, pretty_print=True).decode("utf-8")
-    text_file = open(description_file, "w")
-    n = text_file.write(data)
-    text_file.close()
+  data = etree.tostring(root, pretty_print=True).decode("utf-8")
+  text_file = open(description_file, "w")
+  n = text_file.write(data)
+  text_file.close()
 
-# Welding in drake sets the model in the origin by default
-# this will ignore any pose in the inital link of the model
-# to avoid this we add a fixed joint to the world
-def add_fixed_joint(description_file):
+#Some models use pacakge based uri but don't contain a
+#pacakge.xml so we create one to make sure they can be
+#resolved
+def create_pacakge_xml(description_file):
+  if(os.path.isfile('package.xml') == False):
     root = etree.parse(description_file)
     model_element = root.find('.//model')
-    joints = model_element.findall('joint')
-    found_fixed_joint = False
-    for j in joints:
-        if (j.find('parent').text == 'world' and j.get('type') == 'fixed'):
-            found_fixed_joint = True
-
-    if (not found_fixed_joint):
-        frame_name = model_element.findall('link')[0].get('name')
-
-        element_string = '<joint name="World" type="fixed">\n<child>' + frame_name +'</child>\n<parent>world</parent>\n</joint>'
-        world_joint = etree.fromstring(element_string)
-        model_element.append(world_joint)
-    data = etree.tostring(root, pretty_print=True).decode("utf-8")
-    text_file = open(description_file, "w")
-    n = text_file.write(data)
-    text_file.close()
-
-# Some models use pacakge based uri but don't contain a
-# pacakge.xml so we create one to make sure they can be
-# resolved
-def create_pacakge_xml(description_file):
-    if(os.path.isfile('package.xml') == False):
-        root = etree.parse(description_file)
-        model_element = root.find('.//model')
-        package_name = model_element.attrib['name']
-        with open('package.xml', 'w') as f:
-            f.write('<package format="2">\n <name>'
-            + package_name + '</name>\n</package>')
+    package_name = model_element.attrib['name']
+    with open('package.xml', 'w') as f:
+      f.write('<package format="2">\n <name>'
+      + package_name + '</name>\n</package>')
 
 FLAVORS = [
-    "ur3",
-    "ur3e",
-    "ur5",
-    "ur5e",
+  "ur3",
+  "ur3e",
+  "ur5",
+  "ur5e",
 ]
 
 
 def main(model_directory, description_file):
-    source_tree = parent_dir(abspath(__file__), count=1)
+  source_tree = parent_dir(abspath(__file__), count=1)
+  cd(source_tree)
+
+  print(pyassimp.__file__)
+  print(pyassimp.core._assimp_lib.dll)
+
+  cd(model_directory)
+  print(f"[ Convert Meshes for Drake :( ]")
+  for dae_file in find_mesh_files(".", ".dae"):
+    root = etree.parse(dae_file)
+    remove_empty_tags(dae_file, root)
+    scale = obtain_scale(root)
+    convert_file_to_obj(dae_file, ".dae", scale)
+  for stl_file in find_mesh_files(".", ".stl"):
+    convert_file_to_obj(stl_file, ".stl")
+
+  if (description_file.endswith('.sdf')):
+    print('Found SDF as description file, making arrangements to ensure compatibility')
+    remove_gazebo_specific_scripts(description_file)
+    create_pacakge_xml(description_file)
+  else:
+    print('Found URDF as description file, translating through ros launch')
     cd(source_tree)
+    cd("repos/universal_robot")
+    if "ROS_DISTRO" not in os.environ:
+      raise UserError("Please run under `./ros_setup.bash`, or whatevs")
 
-    print(pyassimp.__file__)
-    print(pyassimp.core._assimp_lib.dll)
+    #Use URI that is unlikely to be used.
+    os.environ["ROS_MASTER_URI"] = "http://localhost:11321"
+    os.environ[
+      "ROS_PACKAGE_PATH"
+    ] = f"{os.getcwd()}:{os.environ['ROS_PACKAGE_PATH']}"
 
-    cd(model_directory)
-    print(f"[ Convert Meshes for Drake :( ]")
-    for dae_file in find_mesh_files(".", ".dae"):
-        root = etree.parse(dae_file)
-        remove_empty_tags(dae_file, root)
-        scale = obtain_scale(root)
-        convert_file_to_obj(dae_file, ".dae", scale)
-    for stl_file in find_mesh_files(".", ".stl"):
-        convert_file_to_obj(stl_file, ".stl")
+    cd("ur_description")
 
-    if (description_file.endswith('.sdf')):
-        print('Found SDF as description file, making arrangements to ensure compatibility')
-        remove_gazebo_specific_scripts(description_file)
-        create_pacakge_xml(description_file)
-        add_fixed_joint(description_file)
-    else:
-        print('Found URDF as description file, translating through ros launch')
-        cd(source_tree)
-        cd("repos/universal_robot")
-        if "ROS_DISTRO" not in os.environ:
-            raise UserError("Please run under `./ros_setup.bash`, or whatevs")
+    print()
 
-        # Use URI that is unlikely to be used.
-        os.environ["ROS_MASTER_URI"] = "http://localhost:11321"
-        os.environ[
-            "ROS_PACKAGE_PATH"
-        ] = f"{os.getcwd()}:{os.environ['ROS_PACKAGE_PATH']}"
+    urdf_files = []
+    #Start a roscore, 'cause blech.
+    roscore = CapturedProcess(
+      ["roscore", "-p", "11321"],
+      on_new_text=bind_print_prefixed("[roscore] "),
+    )
+    with closing(roscore):
+      #Blech.
+      while "started core service" not in roscore.output.get_text():
+        assert roscore.poll() is None
 
-        cd("ur_description")
+      for flavor in FLAVORS:
+        shell(f"roslaunch ur_description load_{flavor}.launch")
+        urdf_file = f"urdf/{flavor}.urdf"
+        output = subshell(f"rosparam get /robot_description")
+        #Blech : (
+        content = yaml.load(output)
+        content = replace_text_to_obj(content, ".stl")
+        content = replace_text_to_obj(content, ".dae")
+        with open(urdf_file, "w") as f:
+          f.write(content)
+        urdf_files.append(urdf_file)
 
-        print()
-
-        urdf_files = []
-        # Start a roscore, 'cause blech.
-        roscore = CapturedProcess(
-            ["roscore", "-p", "11321"],
-            on_new_text=bind_print_prefixed("[roscore] "),
-        )
-        with closing(roscore):
-            # Blech.
-            while "started core service" not in roscore.output.get_text():
-                assert roscore.poll() is None
-
-            for flavor in FLAVORS:
-                shell(f"roslaunch ur_description load_{flavor}.launch")
-                urdf_file = f"urdf/{flavor}.urdf"
-                output = subshell(f"rosparam get /robot_description")
-                # Blech :(
-                content = yaml.load(output)
-                content = replace_text_to_obj(content, ".stl")
-                content = replace_text_to_obj(content, ".dae")
-                with open(urdf_file, "w") as f:
-                    f.write(content)
-                urdf_files.append(urdf_file)
-
-            print("\n\n")
-            print("Generated URDF files:")
-            print(indent("\n".join(urdf_files), "  "))
+      print("\n\n")
+      print("Generated URDF files:")
+      print(indent("\n".join(urdf_files), "  "))
 
 
 if __name__ == "__main__":
-    try:
-        main(sys.argv[1], sys.argv[2])
-        print()
-        print("[ Done ]")
-    except UserError as e:
-        eprint(e)
-        sys.exit(1)
+  try:
+    main(sys.argv[1], sys.argv[2])
+    print()
+    print("[ Done ]")
+  except UserError as e:
+    eprint(e)
+    sys.exit(1)
