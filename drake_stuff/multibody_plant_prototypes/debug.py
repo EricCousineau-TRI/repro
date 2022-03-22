@@ -3,6 +3,11 @@ Utilities that should be synchronized with:
 https://drake.mit.edu/python_bindings.html#debugging-with-the-python-bindings
 """
 
+from contextlib import contextmanager
+import pdb
+import sys
+import traceback
+
 
 def reexecute_if_unbuffered():
     """Ensures that output is immediately flushed (e.g. for segfaults).
@@ -36,3 +41,36 @@ def traced(func, ignoredirs=None):
         return tracer.runfunc(func, *args, **kwargs)
 
     return wrapped
+
+
+@contextmanager
+def launch_pdb_on_exception():
+    """
+    Provides a context that will launch interactive pdb console automatically
+    if an exception is raised.
+
+    Example usage with @iex decorator below:
+
+        @iex
+        def my_bad_function():
+            x = 1
+            assert False
+
+        my_bad_function()
+        # Should bring up debugger at `assert` statement.
+    """
+    # Adapted from:
+    # https://github.com/gotcha/ipdb/blob/fc83b4f5f/ipdb/__main__.py#L219-L232
+
+    try:
+        yield
+    except Exception:
+        traceback.print_exc()
+        _, _, tb = sys.exc_info()
+        pdb.post_mortem(tb)
+        # Resume original execution.
+        raise
+
+
+# See docs for `launch_pdb_on_exception()`.
+iex = launch_pdb_on_exception()

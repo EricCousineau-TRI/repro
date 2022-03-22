@@ -579,7 +579,7 @@ class TestWorkflows(unittest.TestCase):
             role = Role.kIllustration
             DrakeVisualizer.AddToBuilder(
                 builder, scene_graph, params=DrakeVisualizerParams(role=role))
-            ConnectContactResultsToDrakeVisualizer(builder, plant)
+            ConnectContactResultsToDrakeVisualizer(builder, plant, scene_graph)
         diagram = builder.Build()
         # Set up context.
         d_context = diagram.CreateDefaultContext()
@@ -637,7 +637,9 @@ class TestWorkflows(unittest.TestCase):
             DrakeVisualizer.AddToBuilder(
                 builder_new, scene_graph_new,
                 params=DrakeVisualizerParams(role=role))
-            ConnectContactResultsToDrakeVisualizer(builder_new, plant_new)
+            ConnectContactResultsToDrakeVisualizer(
+                builder_new, plant_new, scene_graph_new
+            )
         diagram_new = builder_new.Build()
         # Remap state.
         d_context_new = diagram_new.CreateDefaultContext()

@@ -662,15 +662,15 @@ class MultibodyPlantSubgraph:
     Defines the subgraph of a *single* source MultibodyPlant (and possibly
     SceneGraph). This subgraph can then be copied onto *any* unfinalized
     destination MultibodyPlant (and possibly SceneGraph), and return the
-    associations between the source (MBP, *SG) and a given destination (MBP,
+    associations between the source (MbP, *SG) and a given destination (MbP,
     *SG).
 
-    Note: The abbreviation "(MBP, *SG)" is intended to imply a MultibodyPlant
+    Note: The abbreviation "(MbP, *SG)" is intended to imply a MultibodyPlant
     and possibly SceneGraph; if the SceneGraph is specified, it *must* be
     registered with the given plant.
 
     This MultibodyPlantSubgraph only identifies topology; computations
-    themselves are only done by (MBP, *SG).
+    themselves are only done by (MbP, *SG).
 
     For more information about workflows, see the module-level docstring.
 
@@ -688,7 +688,7 @@ class MultibodyPlantSubgraph:
     "tagged" with this instance.
 
     As used here, the term "subgraph" is purely conceptual. The vertices of the
-    graph are (MBP, *SG) elements (e.g., bodies, frames, joints, geometries,
+    graph are (MbP, *SG) elements (e.g., bodies, frames, joints, geometries,
     etc.) and model instances, and graph itself is directed. A directed edge is
     deemed to exist from one vertex A to another vertex B iff A refers to B in
     a way that is required for A to "exist" specific to the MultibodyPlant. For
@@ -791,7 +791,14 @@ class MultibodyPlantSubgraph:
         raise NotImplemented
 
     def remove_model_instance(self, model_instance):
-        raise NotImplemented
+        elem_src = self._elem_src
+        elem_removed = self.make_empty_elements()
+        elem_src.model_instances.remove(model_instance)
+        elem_removed.model_instances.add(model_instance)
+        for body in me.get_bodies(self.plant_src):
+            if body.model_instance() == model_instance:
+                elem_removed += self.remove_body(body)
+        return elem_removed
 
     def add_body(self, body, include_dependents=False):
         raise NotImplemented

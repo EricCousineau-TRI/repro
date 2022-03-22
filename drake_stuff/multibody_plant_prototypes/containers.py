@@ -1,5 +1,6 @@
-"""Provides simple extension containers."""
+"""Provides simple extension containers and analysis."""
 
+from collections import Counter
 from contextlib import contextmanager
 import itertools
 
@@ -100,12 +101,19 @@ def dict_items_zip(*items):
         yield k, values
 
 
-def strict_zip(a, b):
-    # Ensures that both containers have the same length. Normal `zip()`
-    # functionality will stop when it reached the end of the shortest
-    # container.
-    assert len(a) == len(b)
-    return zip(a, b)
+def strict_zip(*items):
+    """
+    Ensures that all containers have the same length. Normal `zip()`
+    functionality will stop when it reached the end of the shortest
+    container.
+    """
+    # TODO(eric.cousineau): Remove once `zip(*, strict=True)` is available:
+    # https://www.python.org/dev/peps/pep-0618/
+    assert len(items) >= 1
+    count = len(items[0])
+    for i, x in enumerate(items):
+        assert len(x) == count, f"len(items[{i}]) = {len(x)} != {count}"
+    return zip(*items)
 
 
 def take_first(iterable):
