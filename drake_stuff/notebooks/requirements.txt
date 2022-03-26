@@ -1,10 +1,12 @@
-matplotlib == 3.3.4; python_version == "3.6"  # 3.4.x doesn't support Python 3.6
-matplotlib == 3.4.3; python_version > "3.6"
+drake == 1.0.0
 
+matplotlib == 3.4.3
+
+# Jupyter, for interactive workflows.
+jupyter == 1.0.0
+jupyterlab == 3.3.0
 # N.B. These versions may be old, but work on my (Eric) machine.
-ipywidgets == 7.6.3
-widgetsnbextension == 3.5.1
-jupyterlab == 3.0.12
-# TODO(eric): Remove this once the following issue is resolved:
-# https://github.com/ipython/ipython/issues/12740
-jedi == 0.17.2
+ipykernel == 6.9.1
+ipywidgets == 7.6.5
+notebook == 6.4.8
+widgetsnbextension == 3.5.2
