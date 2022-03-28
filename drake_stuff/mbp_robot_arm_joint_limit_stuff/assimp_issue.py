@@ -13,7 +13,6 @@ def load_mesh(mesh_file):
 
 
 def get_mesh_vertices(scene):
-
     def print_transforms(node, prefix=""):
         print(indent(str(node.transformation), prefix))
         for child in node.children:
