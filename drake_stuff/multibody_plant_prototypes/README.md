@@ -1,5 +1,18 @@
 # Prototype `MultibodyPlant` Functionality for Drake
 
+## Running
+
+Tested on Ubuntu 20.04, CPython 3.8, requires `sudo apt install python3-venv`.
+
+To setup, run:
+
+```sh
+./setup.sh
+```
+
+To use env, either prefix command with `./setup.sh`, or for the full session,
+run `source ./setup.sh`.
+
 ## `MultibodyPlantSubgraph`
 
 Taken from prototype code in Anzu. See:
