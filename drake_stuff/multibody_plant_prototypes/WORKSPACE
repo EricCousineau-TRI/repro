@@ -1,3 +1,6 @@
+# TODO(eric): Fix or delete this.
+fail("Presently unsupported. See update instructions.")
+
 workspace(name = "multibody_plant_prototypes")
 
 # Adapted from:

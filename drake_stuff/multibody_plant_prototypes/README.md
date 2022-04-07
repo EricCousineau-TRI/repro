@@ -1,17 +1,6 @@
 # Prototype `MultibodyPlant` Functionality for Drake
 
-## Running
-
 Tested on Ubuntu 20.04, CPython 3.8, requires `sudo apt install python3-venv`.
-
-To setup, run:
-
-```sh
-./setup.sh
-```
-
-To use env, either prefix command with `./setup.sh`, or for the full session,
-run `source ./setup.sh`.
 
 ## `MultibodyPlantSubgraph`
 
@@ -31,15 +20,19 @@ To visualize the test cases:
 ```sh
 cd .../multibody_plant_prototypes
 
-# Build
-bazel build //... @drake_artifacts//...
+# Source setup (run `pip install` insdie virtualenv if necessary)
+# Run for each terminal
+source ./setup.sh
 
 # Terminal 1
-./bazel-bin/external/drake_artifacts/drake_visualizer
+python -m pydrake.visualization.meldis -w
 
 # Terminal 2
-./bazel-bin/multibody_plant_subgraph_test --visualize --verbose
+python ./test/multibody_plant_subgraph_test --visualize --verbose
 ```
+
+WARNING: The visualization in `meshcat` (via `meldis`) is presently
+(2022-04-07) a bit awkward when reloading due to over-the-wire delay.
 
 ## `generate_poses_sink_clutter.py`
 
