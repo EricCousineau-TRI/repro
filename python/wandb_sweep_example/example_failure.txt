@@ -1,0 +1,122 @@
+$ ./repro.py {entity}
+Create sweep with ID: {sweep}
+Sweep URL: https://wandb.ai/{entity}/test/sweeps/{sweep}
+Run failing agent
+2022-04-08 18:20:58,603 - wandb.wandb_agent - INFO - Running runs: []
+2022-04-08 18:20:58,884 - wandb.wandb_agent - INFO - Agent received command: run
+2022-04-08 18:20:58,884 - wandb.wandb_agent - INFO - Agent starting run with config:
+        custom_toggle: True
+2022-04-08 18:20:58,885 - wandb.wandb_agent - INFO - About to run command: ./simple_main.py --wandb_sweep_json "{"custom_toggle": true}"
+wandb: Currently logged in as: {entity} (use `wandb login --relogin` to force relogin)
+wandb: wandb version 0.12.14 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.12.10
+wandb: Syncing run fancy-sweep-1
+wandb: ⭐️ View project at https://wandb.ai/{entity}/test
+wandb: 🧹 View sweep at https://wandb.ai/{entity}/test/sweeps/{sweep}
+wandb: 🚀 View run at https://wandb.ai/{entity}/test/runs/{run_1}
+wandb: Run data is saved locally in /tmp/wandb/run-20220408_182059-{run_1}
+wandb: Run `wandb offline` to turn off syncing.
+
+Failing on purpose
+
+wandb: Waiting for W&B process to finish, PID 159688... (failed 1). Press ctrl-c to abort syncing.
+2022-04-08 18:21:03,891 - wandb.wandb_agent - INFO - Running runs: ['{run_1}']
+wandb:
+wandb: Run history:
+wandb:   val/loss ▁
+wandb:
+wandb: Run summary:
+wandb:   val/loss 1.0
+wandb:
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Synced fancy-sweep-1: https://wandb.ai/{entity}/test/runs/{run_1}
+wandb: Find logs at: /tmp/wandb/run-20220408_182059-{run_1}/logs/debug.log
+wandb:
+2022-04-08 18:21:09,064 - wandb.wandb_agent - INFO - Cleaning up finished run: {run_1}
+2022-04-08 18:21:09,781 - wandb.wandb_agent - INFO - Agent received command: exit
+2022-04-08 18:21:09,781 - wandb.wandb_agent - INFO - Received exit command. Killing runs and quitting.
+wandb: Terminating and syncing runs. Press ctrl-c to kill.
+Reset for success
+restart sweep
+Will delete following runs:
+  id={run_1}, name='fancy-sweep-1', state=failed
+wandb: Resuming sweep {entity}/test/{sweep}.
+Traceback (most recent call last):
+  File ".../wandb_sweep_example/venv/bin/wandb", line 8, in <module>
+    sys.exit(cli())
+  File ".../wandb_sweep_example/venv/lib/python3.8/site-packages/click/core.py", line 1130, in __call__
+    return self.main(*args, **kwargs)
+  File ".../wandb_sweep_example/venv/lib/python3.8/site-packages/click/core.py", line 1055, in main
+    rv = self.invoke(ctx)
+  File ".../wandb_sweep_example/venv/lib/python3.8/site-packages/click/core.py", line 1657, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+  File ".../wandb_sweep_example/venv/lib/python3.8/site-packages/click/core.py", line 1404, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File ".../wandb_sweep_example/venv/lib/python3.8/site-packages/click/core.py", line 760, in invoke
+    return __callback(*args, **kwargs)
+  File ".../wandb_sweep_example/venv/lib/python3.8/site-packages/click/decorators.py", line 26, in new_func
+    return f(get_current_context(), *args, **kwargs)
+  File ".../wandb_sweep_example/venv/lib/python3.8/site-packages/wandb/cli/cli.py", line 86, in wrapper
+    return func(*args, **kwargs)
+  File ".../wandb_sweep_example/venv/lib/python3.8/site-packages/wandb/cli/cli.py", line 735, in sweep
+    getattr(api, "%s_sweep" % state)(sweep_id, entity=entity, project=project)
+  File ".../wandb_sweep_example/venv/lib/python3.8/site-packages/wandb/apis/internal.py", line 117, in resume_sweep
+    return self.api.resume_sweep(*args, **kwargs)
+  File ".../wandb_sweep_example/venv/lib/python3.8/site-packages/wandb/sdk/internal/internal_api.py", line 2651, in resume_sweep
+    self.set_sweep_state(
+  File ".../wandb_sweep_example/venv/lib/python3.8/site-packages/wandb/sdk/internal/internal_api.py", line 2586, in set_sweep_state
+    raise Exception("Cannot resume %s sweep." % curr_state.lower())
+Exception: Cannot resume finished sweep.
+
+
+WARNING! At time of writing (2022-03-08), `wandb sweep --resume` via CLI may fail.
+https://github.com/wandb/client/issues/3344
+
+As workaround, go to sweep controls page:
+    https://wandb.ai/{entity}/test/sweeps/{sweep}/controls
+And manually click "Resume"
+
+400 response executing GraphQL.
+{"errors":[{"message":"Sweep {entity}/test/{sweep} is not running","path":["createAgent"]}],"data":{"createAgent":null}}
+wandb: ERROR Error while calling W&B API: Sweep {entity}/test/{sweep} is not running (<Response [400]>)
+Please open sweep url and manually resume
+Press ENTER when done
+
+Rerunning
+2022-04-08 18:21:26,943 - wandb.wandb_agent - INFO - Running runs: []
+2022-04-08 18:21:27,257 - wandb.wandb_agent - INFO - Agent received command: run
+2022-04-08 18:21:27,258 - wandb.wandb_agent - INFO - Agent starting run with config:
+        custom_toggle: True
+2022-04-08 18:21:27,260 - wandb.wandb_agent - INFO - About to run command: ./simple_main.py --wandb_sweep_json "{"custom_toggle": true}"
+wandb: Currently logged in as: {entity} (use `wandb login --relogin` to force relogin)
+wandb: wandb version 0.12.14 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.12.10
+wandb: Syncing run celestial-sweep-1
+wandb: ⭐️ View project at https://wandb.ai/{entity}/test
+wandb: 🧹 View sweep at https://wandb.ai/{entity}/test/sweeps/{sweep}
+wandb: 🚀 View run at https://wandb.ai/{entity}/test/runs/{run_2}
+wandb: Run data is saved locally in /tmp/wandb/run-20220408_182128-{run_2}
+wandb: Run `wandb offline` to turn off syncing.
+
+Success
+
+wandb: Waiting for W&B process to finish, PID 159937... (success).
+2022-04-08 18:21:32,276 - wandb.wandb_agent - INFO - Running runs: ['{run_2}']
+wandb:
+wandb: Run history:
+wandb:   val/loss ▁
+wandb:
+wandb: Run summary:
+wandb:   val/loss 1.0
+wandb:
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Synced celestial-sweep-1: https://wandb.ai/{entity}/test/runs/{run_2}
+wandb: Find logs at: /tmp/wandb/run-20220408_182128-{run_2}/logs/debug.log
+wandb:
+2022-04-08 18:21:37,463 - wandb.wandb_agent - INFO - Cleaning up finished run: {run_2}
+2022-04-08 18:21:38,038 - wandb.wandb_agent - INFO - Agent received command: exit
+2022-04-08 18:21:38,038 - wandb.wandb_agent - INFO - Received exit command. Killing runs and quitting.
+wandb: Terminating and syncing runs. Press ctrl-c to kill.
+[ Done ]
