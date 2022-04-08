@@ -15,7 +15,7 @@ _venv_dir=${_cur_dir}/venv
 _setup_venv() { (
     set -eu
     cd ${_cur_dir}
-    completion_token="2022-04-08.2"
+    completion_token="2022-04-08.3"
     completion_file=${_venv_dir}/.completion-token
 
     if [[ -f ${completion_file} && "$(cat ${completion_file})" == "${completion_token}" ]]; then
