@@ -2,8 +2,11 @@
 
 import numpy as np
 import sys
+import os
 import argparse
 from PIL import Image
+import shutil
+from lxml import etree
 
 from pydrake.all import (
     FindResourceOrThrow,
@@ -60,7 +63,7 @@ def create_camera(builder, world_id, X_WB, depth_camera, scene_graph):
     return sensor
 
 
-def generate_images_and_IoT(simulator, sensor, temp_directory, poses_dir, num_image):
+def generate_images_and_iou(simulator, sensor, temp_directory, poses_dir, num_image):
 
     context = simulator.get_context()
     sensor_context = sensor.GetMyMutableContextFromRoot(context)
@@ -98,14 +101,72 @@ def remove_tag(tag, current):
     for element in list(current):
         remove_tag(tag, element)
 
+def generate_sdf(model, poses_file, random, file_name):
+  sdf_text = '''<sdf version="1.6">
+  <world name="default">
+      <plugin
+      filename="ignition-gazebo-physics-system"
+      name="ignition::gazebo::systems::Physics">
+      </plugin>
+      <plugin
+      filename="ignition-gazebo-sensors-system"
+      name="ignition::gazebo::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+      <background_color>0, 1, 0</background_color>
+      </plugin>
+      <plugin
+          filename="ignition-gazebo-user-commands-system"
+          name="ignition::gazebo::systems::UserCommands">
+      </plugin>
+      <plugin
+      filename="ignition-gazebo-scene-broadcaster-system"
+      name="ignition::gazebo::systems::SceneBroadcaster">
+      </plugin>
+      <include>
+      <uri>''' + model + '''</uri>
+      <plugin
+          filename="ignition-gazebo-model-photo-shoot-system"
+          name="ignition::gazebo::systems::ModelPhotoShoot">
+          <translation_data_file>''' + poses_file + '''</translation_data_file>
+          <random_joints_pose>''' + random + '''</random_joints_pose>
+      </plugin>
+      </include>
+      <model name="photo_shoot">
+      <pose>2.2 0 0 0 0 -3.14</pose>
+      <link name="link">
+          <pose>0 0 0 0 0 0</pose>
+          <sensor name="camera" type="camera">
+          <camera>
+              <horizontal_fov>1.047</horizontal_fov>
+              <image>
+              <width>960</width>
+              <height>540</height>
+              </image>
+              <clip>
+              <near>0.1</near>
+              <far>100</far>
+              </clip>
+          </camera>
+          <always_on>1</always_on>
+          <update_rate>30</update_rate>
+          <visualize>true</visualize>
+          <topic>camera</topic>
+          </sensor>
+      </link>
+      <static>true</static>
+      </model>
+  </world>
+</sdf>'''
+  with open(file_name, 'w') as f:
+    f.write(sdf_text)
 
-def perform_IoT_testing(model_file, temp_directory, pose_directory):
+def perform_iou_testing(model_file, test_specific_temp_directory, pose_directory):
 
     random_poses = {}
     # Read camera translation calculated and applied on gazebo
     # we read the random positions file as it contains everything:
     with open(
-        temp_directory + "/pics/" + pose_directory + "/poses.txt", "r"
+        test_specific_temp_directory + "/pics/" + pose_directory + "/poses.txt", "r"
     ) as datafile:
         for line in datafile:
             if line.startswith("Translation:"):
@@ -237,20 +298,66 @@ def perform_IoT_testing(model_file, temp_directory, pose_directory):
 
         simulator.AdvanceTo(1)
 
-    generate_images_and_IoT(
-        simulator, sensor_perspective, temp_directory, pose_directory, 1
+    generate_images_and_iou(
+        simulator, sensor_perspective, test_specific_temp_directory, pose_directory, 1
     )
-    generate_images_and_IoT(simulator, sensor_top, temp_directory, pose_directory, 2)
-    generate_images_and_IoT(simulator, sensor_front, temp_directory, pose_directory, 3)
-    generate_images_and_IoT(simulator, sensor_side, temp_directory, pose_directory, 4)
-    generate_images_and_IoT(simulator, sensor_back, temp_directory, pose_directory, 5)
+    generate_images_and_iou(simulator, sensor_top, test_specific_temp_directory, pose_directory, 2)
+    generate_images_and_iou(simulator, sensor_front, test_specific_temp_directory, pose_directory, 3)
+    generate_images_and_iou(simulator, sensor_side, test_specific_temp_directory, pose_directory, 4)
+    generate_images_and_iou(simulator, sensor_back, test_specific_temp_directory, pose_directory, 5)
 
 
-def main(model_directory, description_file, temp_directory):
-    model_file = model_directory + "/" + description_file
-    perform_IoT_testing(model_file, temp_directory, "default_pose")
-    perform_IoT_testing(model_file, temp_directory, "random_pose")
+def setup_temporal_model_description_file(model_directory, description_file, temp_directory, mesh_type):
+  # Setup model temporal files
+  temp_test_model_path = temp_directory + '/' + mesh_type + '/model/'
+  model_file_path = temp_test_model_path + '/' + description_file
+  shutil.copytree(model_directory, temp_test_model_path)
+  root = etree.parse(model_file_path)
+  model_name = root.find('model').attrib['name']
+  for uri in root.findall('.//uri'):
+    uri.text = uri.text.replace('model://' + model_name + '/', '')
 
+
+  if( mesh_type == 'collision'):
+    collision_tags = root.findall('.//collision')
+    visual_tags = root.findall('.//visual')
+    for collision_tag in collision_tags:
+      collision_tag.tag = 'visual'
+    for visual_tag in visual_tags:
+      visual_tag.tag = 'collision'
+
+  data = etree.tostring(root, pretty_print=True).decode("utf-8")
+  text_file = open(model_file_path, "w")
+  text_file.write(data)
+  text_file.close()
+
+  return model_file_path
+
+def run_test(model_file_path, temp_directory, mesh_type, type_joint_positions, poses_filename = 'poses.txt'):
+  # Setup temporal pics and metadata directory
+  temp_default_pics_path =  temp_directory + '/' + mesh_type + '/pics/' + type_joint_positions + '/'
+  os.makedirs(temp_default_pics_path)
+  os.chdir(temp_default_pics_path)
+  plugin_config_path = temp_default_pics_path + 'plugin_config.sdf'
+  if (type_joint_positions == 'default_pose'):
+    generate_sdf(model_file_path, temp_default_pics_path + poses_filename, 'false', plugin_config_path)
+  else:
+    generate_sdf(model_file_path, temp_default_pics_path + poses_filename, 'true', plugin_config_path)
+
+  os.system('ign gazebo -s -r ' + plugin_config_path + ' --iterations 50')
+  perform_iou_testing(model_file_path, temp_directory + '/' + mesh_type, type_joint_positions)
+
+def main(original_model_directory, description_file, temp_directory):
+
+  mesh_type = 'visual'
+  tmp_model_file_path = setup_temporal_model_description_file(original_model_directory, description_file, temp_directory, mesh_type)
+  run_test(tmp_model_file_path, temp_directory, mesh_type, 'default_pose')
+  run_test(tmp_model_file_path, temp_directory, mesh_type, 'random_pose')
+
+  mesh_type = 'collision'
+  tmp_model_file_path = setup_temporal_model_description_file(original_model_directory, description_file, temp_directory, mesh_type)
+  run_test(tmp_model_file_path, temp_directory, mesh_type, 'default_pose')
+  run_test(tmp_model_file_path, temp_directory, mesh_type, 'random_pose')
 
 if __name__ == "__main__":
     try:

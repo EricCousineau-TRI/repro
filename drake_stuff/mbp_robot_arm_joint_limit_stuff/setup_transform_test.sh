@@ -1,18 +1,11 @@
 #!/bin/bash
 
-# Either source this, or use it as a prefix:
-#
-#   source ./setup.sh
-#   ./my_program
-#
-# or
-#
-#   ./setup.sh ./my_program
-
 if [[ $# -lt "2" ]]; then
     echo "Please provide path to model directory and model file name."
     echo "      Usage:"
-    echo "                  $bash model_transform.sh <model_directory_path> <model_file_name> "
+    echo "                  bash model_transform.sh <model_directory_path> <model_file_name> "
+    echo "                  or to tranform the universal_robot provide a valid empty path:"
+    echo "                  bash model_transform.sh <model_directory_path>"
     return 1
 fi
 

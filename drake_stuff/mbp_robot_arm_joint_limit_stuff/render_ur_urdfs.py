@@ -173,14 +173,13 @@ def find_mesh_files(d, suffix):
 # incorporating the fix available on their distribution
 def remove_empty_tags(dae_file, root):
 
-    # root = etree.fromstring(data)
     for element in root.xpath(".//*[not(node())]"):
         if len(element.attrib) == 0:
             element.getparent().remove(element)
 
     data = etree.tostring(root, pretty_print=True).decode("utf-8")
     text_file = open(dae_file, "w")
-    n = text_file.write(data)
+    text_file.write(data)
     text_file.close()
 
 
@@ -202,7 +201,7 @@ def remove_gazebo_specific_scripts(description_file):
 
     data = etree.tostring(root, pretty_print=True).decode("utf-8")
     text_file = open(description_file, "w")
-    n = text_file.write(data)
+    text_file.write(data)
     text_file.close()
 
 
@@ -219,14 +218,12 @@ def create_pacakge_xml(description_file):
                 '<package format="2">\n <name>' + package_name + "</name>\n</package>"
             )
 
-
 FLAVORS = [
     "ur3",
     "ur3e",
     "ur5",
     "ur5e",
 ]
-
 
 def main(model_directory, description_file):
     source_tree = parent_dir(abspath(__file__), count=1)
