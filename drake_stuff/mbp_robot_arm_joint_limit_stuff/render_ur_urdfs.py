@@ -19,6 +19,9 @@ import numpy as np
 import pyassimp
 import yaml
 import argparse
+import re
+import fileinput
+from PIL import Image
 
 from process_util import CapturedProcess, bind_print_prefixed
 
@@ -225,7 +228,35 @@ FLAVORS = [
     "ur5e",
 ]
 
+def preprocess_sdf_and_materials(model_directory, description_file):
+  description_file_path = os.path.join(model_directory, description_file)
+  for line in fileinput.input(description_file_path, inplace = True):
+    # Some sdfs have a comment before the xml tag
+    # this makes the parser fail, since the tag is optional
+    # we'll remove it as safety workaround
+    if not re.search(r'^\<\?xml.*', line):
+      # Change the reference of the mesh file
+      line = re.sub('\.stl|\.dae', '.obj', line)
+      print(line, end="")
+
+  for root, subdirs, files in os.walk(model_directory):
+    for filename in files:
+      # Convert jpg/jpeg files to png
+      if filename.endswith(".jpg") or filename.endswith(".jpeg"):
+          im = Image.open(os.path.join(root, filename))
+          filename = re.sub('\.jpg|\.jpeg', '.png', filename)
+          rgb_im = im.convert('RGB')
+          rgb_im.save(os.path.join(root, filename))
+          print("Convert jpg/jpeg: ", os.path.join(root, filename))
+      # Change jpg/jpeg renferences on mtl files to png
+      if filename.endswith(".mtl"):
+        for line in fileinput.input(os.path.join(root, filename), inplace = True):
+          line = re.sub('\.jpg|\.jpeg', '.png', line)
+          print(line, end="")
+
 def main(model_directory, description_file):
+
+    #preprocess_sdf_and_materials(model_directory, description_file)
     source_tree = parent_dir(abspath(__file__), count=1)
     cd(source_tree)
 

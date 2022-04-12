@@ -2,22 +2,6 @@
 
 _cur_dir=$(cd $(dirname ${BASH_SOURCE}) && pwd)
 
-_preprocess_sdf_and_materials() { (
-    #convert .stl and .dae entries to .obj
-    sed -i 's/.stl/.obj/g' "$1/$2"
-    sed -i 's/.dae/.obj/g' "$1/$2"
-    # Some sdfs have a comment before the xml tag
-    # this makes the parser fail, since the tag is optional
-    # we'll remove it as safety workaround
-    sed -i '/<?xml*/d' "$1/$2"
-
-    find . -name '*.jpg' -type f -exec bash -c 'convert "$0" "${0%.jpg}.png"' {} \;
-    find . -name '*.jpeg' -type f -exec bash -c 'convert "$0" "${0%.jpeg}.png"' {} \;
-
-    find . -type f -name '*.mtl' -exec sed -i 's/.jpg/.png/g' '{}' \;
-    find . -type f -name '*.mtl' -exec sed -i 's/.jpeg/.png/g' '{}' \;
-) }
-
 _provision_repos() { (
     set -eu
     cd ${_cur_dir}
@@ -27,7 +11,6 @@ _provision_repos() { (
 
     if [[ "$2" == *\.sdf ]]
     then
-        _preprocess_sdf_and_materials "$1" "$2"
         ./render_ur_urdfs.py "$1" "$2"
     else
         if [[ -f ${completion_file} && "$(cat ${completion_file})" == "${completion_token}" ]]; then
