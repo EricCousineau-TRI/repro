@@ -1,8 +1,8 @@
 method: grid
 parameters:
-  custom_toggle:
+  buggy:
     distribution: categorical
-    values: [true]
+    values: [false, true]
 
 command:
 - ./simple_main.py

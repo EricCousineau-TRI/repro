@@ -8,16 +8,21 @@ import wandb
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--wandb_sweep_json", type=str, default=None)
+    parser.add_argument("--wandb_sweep_json", type=str, required=True)
     args = parser.parse_args()
 
-    assert args.wandb_sweep_json is not None
     sweep_args = json.loads(args.wandb_sweep_json)
-    assert sweep_args == {"custom_toggle": True}
+    assert len(sweep_args) == 1
+    buggy = sweep_args["buggy"]
 
-    wandb.init()
+    if buggy:
+        resume = "must"
+    else:
+        resume = None
 
-    wandb.log({"val/loss": 1.0})
+    wandb.init(resume=resume)
+
+    wandb.log({"fake_loss": 1.0})
     print("Done")
 
 
