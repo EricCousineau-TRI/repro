@@ -63,36 +63,45 @@ def create_camera(builder, world_id, X_WB, depth_camera, scene_graph):
     return sensor
 
 
+def intersection_over_union(
+    image1, image2, background1=(255, 255, 255), background2=(255, 255, 255)
+):
+    union_count = 0
+    intersection = 0
+    for i in range(image1.size[0]):
+        for j in range(image1.size[1]):
+            if (
+                image1.getpixel((i, j)) != background1
+                or image2.getpixel((i, j)) != background2
+            ):
+                union_count += 1
+                if (
+                    image1.getpixel((i, j)) != background1
+                    and image2.getpixel((i, j)) != background2
+                ):
+                    intersection += 1
+
+    print(intersection / union_count)
+
+
 def generate_images_and_iou(simulator, sensor, temp_directory, poses_dir, num_image):
 
     context = simulator.get_context()
     sensor_context = sensor.GetMyMutableContextFromRoot(context)
 
     color = sensor.color_image_output_port().Eval(sensor_context).data
-    image = Image.frombytes("RGBA", (960, 540), color)
+    image_drake = Image.fromarray(color, "RGBA")
 
-    image.save(
+    image_drake.save(
         temp_directory + "/pics/" + poses_dir + "/" + str(num_image) + "_drake.png"
     )
 
     with Image.open(
         temp_directory + "/pics/" + poses_dir + "/" + str(num_image) + ".png"
-    ) as im:
-        px1 = im.load()
-
-    with image as im:
-        px2 = im.load()
-
-    union_count = 0
-    intersection = 0
-    for i in range(960):
-        for j in range(540):
-            if px1[i, j] != (0, 255, 0) or px2[i, j] != (204, 229, 255, 255):
-                union_count += 1
-                if px1[i, j] != (0, 255, 0) and px2[i, j] != (204, 229, 255, 255):
-                    intersection += 1
-
-    print(intersection / union_count)
+    ) as image_ignition:
+        intersection_over_union(
+            image_ignition, image_drake, (0, 255, 0), (204, 229, 255, 255)
+        )
 
 
 def remove_tag(tag, current):
@@ -101,8 +110,9 @@ def remove_tag(tag, current):
     for element in list(current):
         remove_tag(tag, element)
 
+
 def generate_sdf(model, poses_file, random, file_name):
-  sdf_text = '''<sdf version="1.6">
+    sdf_text = f"""<sdf version="1.6">
   <world name="default">
       <plugin
       filename="ignition-gazebo-physics-system"
@@ -123,12 +133,12 @@ def generate_sdf(model, poses_file, random, file_name):
       name="ignition::gazebo::systems::SceneBroadcaster">
       </plugin>
       <include>
-      <uri>''' + model + '''</uri>
+      <uri>{model}</uri>
       <plugin
           filename="ignition-gazebo-model-photo-shoot-system"
           name="ignition::gazebo::systems::ModelPhotoShoot">
-          <translation_data_file>''' + poses_file + '''</translation_data_file>
-          <random_joints_pose>''' + random + '''</random_joints_pose>
+          <translation_data_file>{poses_file}</translation_data_file>
+          <random_joints_pose>{random}</random_joints_pose>
       </plugin>
       </include>
       <model name="photo_shoot">
@@ -156,9 +166,10 @@ def generate_sdf(model, poses_file, random, file_name):
       <static>true</static>
       </model>
   </world>
-</sdf>'''
-  with open(file_name, 'w') as f:
-    f.write(sdf_text)
+</sdf>"""
+    with open(file_name, "w") as f:
+        f.write(sdf_text)
+
 
 def perform_iou_testing(model_file, test_specific_temp_directory, pose_directory):
 
@@ -301,67 +312,104 @@ def perform_iou_testing(model_file, test_specific_temp_directory, pose_directory
     generate_images_and_iou(
         simulator, sensor_perspective, test_specific_temp_directory, pose_directory, 1
     )
-    generate_images_and_iou(simulator, sensor_top, test_specific_temp_directory, pose_directory, 2)
-    generate_images_and_iou(simulator, sensor_front, test_specific_temp_directory, pose_directory, 3)
-    generate_images_and_iou(simulator, sensor_side, test_specific_temp_directory, pose_directory, 4)
-    generate_images_and_iou(simulator, sensor_back, test_specific_temp_directory, pose_directory, 5)
+    generate_images_and_iou(
+        simulator, sensor_top, test_specific_temp_directory, pose_directory, 2
+    )
+    generate_images_and_iou(
+        simulator, sensor_front, test_specific_temp_directory, pose_directory, 3
+    )
+    generate_images_and_iou(
+        simulator, sensor_side, test_specific_temp_directory, pose_directory, 4
+    )
+    generate_images_and_iou(
+        simulator, sensor_back, test_specific_temp_directory, pose_directory, 5
+    )
 
 
-def setup_temporal_model_description_file(model_directory, description_file, temp_directory, mesh_type):
-  # Setup model temporal files
-  temp_test_model_path = temp_directory + '/' + mesh_type + '/model/'
-  model_file_path = temp_test_model_path + '/' + description_file
-  shutil.copytree(model_directory, temp_test_model_path)
-  root = etree.parse(model_file_path)
-  model_name = root.find('model').attrib['name']
-  for uri in root.findall('.//uri'):
-    uri.text = uri.text.replace('model://' + model_name + '/', '')
+def setup_temporal_model_description_file(
+    model_directory, description_file, temp_directory, mesh_type
+):
+    # Setup model temporal files
+    temp_test_model_path = temp_directory + "/" + mesh_type + "/model/"
+    model_file_path = temp_test_model_path + "/" + description_file
+    shutil.copytree(model_directory, temp_test_model_path)
+    root = etree.parse(model_file_path)
+    model_name = root.find("model").attrib["name"]
+    for uri in root.findall(".//uri"):
+        uri.text = uri.text.replace("model://" + model_name + "/", "")
 
-  if( mesh_type == 'collision'):
-    # Create ignore namespace so lxml don't complain
-    #os.system("sed -i 's/visual/ignore:collision/g' " + model_file_path)
-    MY_NAMESPACES={'ignore': 'http://ignore'}
-    namespace = etree.Element('namespace', nsmap=MY_NAMESPACES)
-    namespace.append(root.getroot())
-    collision_tags = root.findall('.//collision')
-    visual_tags = root.findall('.//visual')
-    for collision_tag in collision_tags:
-      collision_tag.tag = 'visual'
-    for visual_tag in visual_tags:
-      visual_tag.tag = "{%s}visual" % MY_NAMESPACES['ignore']
+    if mesh_type == "collision":
+        # Create ignore namespace so lxml don't complain
+        # os.system("sed -i 's/visual/ignore:collision/g' " + model_file_path)
+        MY_NAMESPACES = {"ignore": "http://ignore"}
+        namespace = etree.Element("namespace", nsmap=MY_NAMESPACES)
+        namespace.append(root.getroot())
+        collision_tags = root.findall(".//collision")
+        visual_tags = root.findall(".//visual")
+        for collision_tag in collision_tags:
+            collision_tag.tag = "visual"
+        for visual_tag in visual_tags:
+            visual_tag.tag = "{%s}visual" % MY_NAMESPACES["ignore"]
 
-  data = etree.tostring(root, pretty_print=True).decode("utf-8")
-  text_file = open(model_file_path, "w")
-  text_file.write(data)
-  text_file.close()
+    data = etree.tostring(root, pretty_print=True).decode("utf-8")
+    text_file = open(model_file_path, "w")
+    text_file.write(data)
+    text_file.close()
 
-  return model_file_path
+    return model_file_path
 
-def run_test(model_file_path, temp_directory, mesh_type, type_joint_positions, poses_filename = 'poses.txt'):
-  # Setup temporal pics and metadata directory
-  temp_default_pics_path =  temp_directory + '/' + mesh_type + '/pics/' + type_joint_positions + '/'
-  os.makedirs(temp_default_pics_path)
-  os.chdir(temp_default_pics_path)
-  plugin_config_path = temp_default_pics_path + 'plugin_config.sdf'
-  if (type_joint_positions == 'default_pose'):
-    generate_sdf(model_file_path, temp_default_pics_path + poses_filename, 'false', plugin_config_path)
-  else:
-    generate_sdf(model_file_path, temp_default_pics_path + poses_filename, 'true', plugin_config_path)
 
-  os.system('ign gazebo -s -r ' + plugin_config_path + ' --iterations 50')
-  perform_iou_testing(model_file_path, temp_directory + '/' + mesh_type, type_joint_positions)
+def run_test(
+    model_file_path,
+    temp_directory,
+    mesh_type,
+    type_joint_positions,
+    poses_filename="poses.txt",
+):
+    # Setup temporal pics and metadata directory
+    temp_default_pics_path = (
+        temp_directory + "/" + mesh_type + "/pics/" + type_joint_positions + "/"
+    )
+    os.makedirs(temp_default_pics_path)
+    os.chdir(temp_default_pics_path)
+    plugin_config_path = temp_default_pics_path + "plugin_config.sdf"
+    if type_joint_positions == "default_pose":
+        generate_sdf(
+            model_file_path,
+            temp_default_pics_path + poses_filename,
+            "false",
+            plugin_config_path,
+        )
+    else:
+        generate_sdf(
+            model_file_path,
+            temp_default_pics_path + poses_filename,
+            "true",
+            plugin_config_path,
+        )
+
+    os.system("ign gazebo -s -r " + plugin_config_path + " --iterations 50")
+    perform_iou_testing(
+        model_file_path, temp_directory + "/" + mesh_type, type_joint_positions
+    )
+
 
 def main(original_model_directory, description_file, temp_directory):
 
-  mesh_type = 'visual'
-  tmp_model_file_path = setup_temporal_model_description_file(original_model_directory, description_file, temp_directory, mesh_type)
-  run_test(tmp_model_file_path, temp_directory, mesh_type, 'default_pose')
-  run_test(tmp_model_file_path, temp_directory, mesh_type, 'random_pose')
+    mesh_type = "visual"
+    tmp_model_file_path = setup_temporal_model_description_file(
+        original_model_directory, description_file, temp_directory, mesh_type
+    )
+    run_test(tmp_model_file_path, temp_directory, mesh_type, "default_pose")
+    run_test(tmp_model_file_path, temp_directory, mesh_type, "random_pose")
 
-  mesh_type = 'collision'
-  tmp_model_file_path = setup_temporal_model_description_file(original_model_directory, description_file, temp_directory, mesh_type)
-  run_test(tmp_model_file_path, temp_directory, mesh_type, 'default_pose')
-  run_test(tmp_model_file_path, temp_directory, mesh_type, 'random_pose')
+    mesh_type = "collision"
+    tmp_model_file_path = setup_temporal_model_description_file(
+        original_model_directory, description_file, temp_directory, mesh_type
+    )
+    run_test(tmp_model_file_path, temp_directory, mesh_type, "default_pose")
+    run_test(tmp_model_file_path, temp_directory, mesh_type, "random_pose")
+
 
 if __name__ == "__main__":
     try:

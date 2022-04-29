@@ -108,11 +108,8 @@ def get_mesh_extent(scene, mesh_file, filetype="obj"):
     return np.array([center, size])
 
 
-# Adds a 90 degrees rotation on X.
-# Used to undo the rotation added because of
-# https://github.com/assimp/assimp/issues/849.
-def rotate_ninety_model(scene):
-    rotation = np.matrix([[1, 0, 0, 0], [0, 0, -1, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
+# Aplies a rotation to the root node
+def rotate_root_node(scene, rotation):
     transformed = rotation.dot(scene.rootnode.transformation)
     scene.mRootNode.contents.mTransformation.a1 = transformed.item(0)
     scene.mRootNode.contents.mTransformation.a2 = transformed.item(1)
@@ -142,7 +139,8 @@ def convert_file_to_obj(mesh_file, suffix, scale=1):
 
     # Workaround for issue https://github.com/assimp/assimp/issues/849.
     if suffix == ".dae":
-        rotate_ninety_model(scene)
+        ROT_X_90 = np.matrix([[1, 0, 0, 0], [0, 0, -1, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
+        rotate_root_node(scene, ROT_X_90)
 
     pyassimp.export(scene, obj_file, file_type="obj")
 
@@ -203,23 +201,23 @@ def remove_gazebo_specific_scripts(description_file):
                 material_element.remove(script_element)
 
     data = etree.tostring(root, pretty_print=True).decode("utf-8")
-    text_file = open(description_file, "w")
-    text_file.write(data)
-    text_file.close()
+    with open(description_file, "w") as text_file:
+        text_file.write(data)
 
 
 # Some models use pacakge based uri but don't contain a
 # pacakge.xml so we create one to make sure they can be
 # resolved
 def create_pacakge_xml(description_file):
-    if os.path.isfile("package.xml") == False:
+    if not os.path.isfile("package.xml"):
         root = etree.parse(description_file)
         model_element = root.find(".//model")
         package_name = model_element.attrib["name"]
         with open("package.xml", "w") as f:
             f.write(
-                '<package format="2">\n <name>' + package_name + "</name>\n</package>"
+                """<package format="2">\n <name>{package_name}</name>\n</package>"""
             )
+
 
 FLAVORS = [
     "ur3",
@@ -228,35 +226,37 @@ FLAVORS = [
     "ur5e",
 ]
 
-def preprocess_sdf_and_materials(model_directory, description_file):
-  description_file_path = os.path.join(model_directory, description_file)
-  for line in fileinput.input(description_file_path, inplace = True):
-    # Some sdfs have a comment before the xml tag
-    # this makes the parser fail, since the tag is optional
-    # we'll remove it as safety workaround
-    if not re.search(r'^\<\?xml.*', line):
-      # Change the reference of the mesh file
-      line = re.sub('\.stl|\.dae', '.obj', line)
-      print(line, end="")
 
-  for root, subdirs, files in os.walk(model_directory):
-    for filename in files:
-      # Convert jpg/jpeg files to png
-      if filename.endswith(".jpg") or filename.endswith(".jpeg"):
-          im = Image.open(os.path.join(root, filename))
-          filename = re.sub('\.jpg|\.jpeg', '.png', filename)
-          rgb_im = im.convert('RGB')
-          rgb_im.save(os.path.join(root, filename))
-          print("Convert jpg/jpeg: ", os.path.join(root, filename))
-      # Change jpg/jpeg renferences on mtl files to png
-      if filename.endswith(".mtl"):
-        for line in fileinput.input(os.path.join(root, filename), inplace = True):
-          line = re.sub('\.jpg|\.jpeg', '.png', line)
-          print(line, end="")
+def preprocess_sdf_and_materials(model_directory, description_file):
+    description_file_path = os.path.join(model_directory, description_file)
+    for line in fileinput.input(description_file_path, inplace=True):
+        # Some sdfs have a comment before the xml tag
+        # this makes the parser fail, since the tag is optional
+        # we'll remove it as safety workaround
+        if not re.search(r"^\<\?xml.*", line):
+            # Change the reference of the mesh file
+            line = re.sub(r"\.stl|\.dae", ".obj", line)
+            print(line, end="")
+
+    for root, subdirs, files in os.walk(model_directory):
+        for filename in files:
+            # Convert jpg/jpeg files to png
+            if filename.endswith(".jpg") or filename.endswith(".jpeg"):
+                im = Image.open(os.path.join(root, filename))
+                filename = re.sub(r"\.jpg|\.jpeg", ".png", filename)
+                rgb_im = im.convert("RGB")
+                rgb_im.save(os.path.join(root, filename))
+                print("Convert jpg/jpeg: ", os.path.join(root, filename))
+            # Change jpg/jpeg renferences on mtl files to png
+            if filename.endswith(".mtl"):
+                for line in fileinput.input(os.path.join(root, filename), inplace=True):
+                    line = re.sub(r"\.jpg|\.jpeg", ".png", line)
+                    print(line, end="")
+
 
 def main(model_directory, description_file):
 
-    #preprocess_sdf_and_materials(model_directory, description_file)
+    preprocess_sdf_and_materials(model_directory, description_file)
     source_tree = parent_dir(abspath(__file__), count=1)
     cd(source_tree)
 
@@ -325,16 +325,14 @@ def main(model_directory, description_file):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("model_directory", help="Directory location of the model files")
+    parser.add_argument("description_file", help="Model description file name")
+    args = parser.parse_args()
     try:
-        parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "model_directory", help="Directory location of the model files"
-        )
-        parser.add_argument("description_file", help="Model description file name")
-        args = parser.parse_args()
         main(args.model_directory, args.description_file)
-        print()
-        print("[ Done ]")
     except UserError as e:
         eprint(e)
         sys.exit(1)
+    print()
+    print("[ Done ]")

@@ -31,8 +31,6 @@ _setup_venv() { (
     rm -rf ${_venv_dir}
 
     mkdir -p ${_venv_dir}
-#     tar -xzf $(_download_drake) -C ${_venv_dir} --strip-components=1
-    # See: https://drake.mit.edu/from_binary.html#stable-releases
     python3 -m venv ${_venv_dir} --system-site-packages
     cd ${_venv_dir}
     ./bin/pip install -U pip wheel

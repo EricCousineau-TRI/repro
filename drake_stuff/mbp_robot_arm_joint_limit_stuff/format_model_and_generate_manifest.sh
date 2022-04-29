@@ -32,7 +32,7 @@ _provision_repos() { (
     echo "${completion_token}" > ${completion_file}
 ) }
 
-if [[ $# -lt "2" ]]; then
+if [[ $# -lt 1 || $# -gt 2 ]]; then
     echo "Please provide path to model directory and model file name."
     echo "      Usage:"
     echo "                  $bash format_model_and_generate_manifest.sh <model_directory_path> <model_file_name> "
