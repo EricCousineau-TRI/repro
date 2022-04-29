@@ -341,15 +341,15 @@ def setup_temporal_model_description_file(
     if mesh_type == "collision":
         # Create ignore namespace so lxml don't complain
         # os.system("sed -i 's/visual/ignore:collision/g' " + model_file_path)
-        MY_NAMESPACES = {"ignore": "http://ignore"}
-        namespace = etree.Element("namespace", nsmap=MY_NAMESPACES)
+        my_namespaces = {"ignore": "http://ignore"}
+        namespace = etree.Element("namespace", nsmap=my_namespaces)
         namespace.append(root.getroot())
         collision_tags = root.findall(".//collision")
         visual_tags = root.findall(".//visual")
         for collision_tag in collision_tags:
             collision_tag.tag = "visual"
         for visual_tag in visual_tags:
-            visual_tag.tag = "{%s}visual" % MY_NAMESPACES["ignore"]
+            visual_tag.tag = "{%s}visual" % my_namespaces["ignore"]
 
     data = etree.tostring(root, pretty_print=True).decode("utf-8")
     text_file = open(model_file_path, "w")
