@@ -63,25 +63,16 @@ def create_camera(builder, world_id, X_WB, depth_camera, scene_graph):
     return sensor
 
 
-def intersection_over_union(
-    image1, image2, background1=(255, 255, 255), background2=(255, 255, 255)
-):
-    union_count = 0
-    intersection = 0
-    for i in range(image1.size[0]):
-        for j in range(image1.size[1]):
-            if (
-                image1.getpixel((i, j)) != background1
-                or image2.getpixel((i, j)) != background2
-            ):
-                union_count += 1
-                if (
-                    image1.getpixel((i, j)) != background1
-                    and image2.getpixel((i, j)) != background2
-                ):
-                    intersection += 1
+def infer_mask(image, bg_pixel=[255, 255, 255]):
+    image_array = np.array(image)
+    mask_bg1 = np.all(image_array == np.full(image_array.shape, bg_pixel), axis=2)
+    return ~mask_bg1
 
-    print(intersection / union_count)
+
+def intersection_over_union(mask_a, mask_b):
+    intersection = np.logical_and(mask_a, mask_b).sum()
+    union = np.logical_or(mask_a, mask_b).sum()
+    print(intersection / union)
 
 
 def generate_images_and_iou(simulator, sensor, temp_directory, poses_dir, num_image):
@@ -95,13 +86,12 @@ def generate_images_and_iou(simulator, sensor, temp_directory, poses_dir, num_im
     image_drake.save(
         temp_directory + "/pics/" + poses_dir + "/" + str(num_image) + "_drake.png"
     )
-
     with Image.open(
         temp_directory + "/pics/" + poses_dir + "/" + str(num_image) + ".png"
     ) as image_ignition:
-        intersection_over_union(
-            image_ignition, image_drake, (0, 255, 0), (204, 229, 255, 255)
-        )
+        mask_a = infer_mask(image_drake, image_drake.getpixel((0, 0)))
+        mask_b = infer_mask(image_ignition, image_ignition.getpixel((0, 0)))
+        intersection_over_union(mask_a, mask_b)
 
 
 def remove_tag(tag, current):
