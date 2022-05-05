@@ -2,44 +2,39 @@
 
 ## Prereqs
 
-Tested on Ubuntu 18.04 (Bionic). Needs ROS1 Melodic, Drake prereqs, and
-pyassimp.
+Tested on Ubuntu 20.04 (Focal).
 
-## Setup
+- Install Ignition Gazebo (Model Photo Shoot plugin is needed):
+  <https://ignitionrobotics.org/docs/latest/install>
+- Ensure Drake prereqs are installed:
+  <https://drake.mit.edu/from_binary.html#stable-releases>
+- Install additional packages:
+  `sudo apt install imagemagick`
 
-You can just run this:
+## Example
 
-```sh
-./setup.sh
-```
+For rendering CERBERUS:
+<https://app.ignitionrobotics.org/OpenRobotics/fuel/models/CERBERUS_ANYMAL_C_SENSOR_CONFIG_2/6>
 
-This will:
-
-* Set up a small `virtualenv` with Drake and JupyterLab
-* Clone `ur_description` and, uh, convert it to format that Drake can use :(
-
-## Running
+Download archive to `/tmp/CERBERUS_ANYMAL_C_SENSOR_CONFIG_2.zip`.
 
 ```sh
-./setup.sh jupyter lab ./joint_limits.ipynb
+# Download data.
+mkdir -p repos && cd repos
+# Manually download archive to /tmp/CERBERUS_ANYMAL_C_SENSOR_CONFIG_2.zip
+unzip /tmp/CERBERUS_ANYMAL_C_SENSOR_CONFIG_2.zip -d ./CERBERUS_ANYMAL_C_SENSOR_CONFIG_2/
+
+# You can run the setup, transformation and tests through:
+cd ..
+./setup_transform_test.sh ${PWD}/repos/CERBERUS_ANYMAL_C_SENSOR_CONFIG_2/ model.sdf
+
+# Or you can run each step separately:
+cd ..
+source setup.sh
+
+./format_model_and_generate_manifest.sh ${PWD}/repos/CERBERUS_ANYMAL_C_SENSOR_CONFIG_2/ model.sdf
+
+./compare_model_via_drake_and_ingition_images.sh ${PWD}/repos/CERBERUS_ANYMAL_C_SENSOR_CONFIG_2/ model.sdf
+
 ```
 
-## PyAssimp hacks
-
-```sh
-cd assimp
-# In assimp source tree.
-git clone https://github.com/assimp/assimp -b v5.0.1
-src_dir=${PWD}
-# install_dir=${src_dir}/build/install
-install_dir=~/proj/tri/repo/repro/drake_stuff/mbp_robot_arm_joint_limit_stuff/venv
-mkdir -p build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=${install_dir} -GNinja
-ninja install
-
-cd ${src_dir}/port/PyAssimp/
-python3 ./setup.py install --prefix ${install_dir}
-
-cd ${install_dir}/lib/python3.6/site-packages/pyassimp
-ln -s ../../../libassimp.so ./
-```

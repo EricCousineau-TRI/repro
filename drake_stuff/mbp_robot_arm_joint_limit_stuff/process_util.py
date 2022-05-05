@@ -98,7 +98,7 @@ class StreamCollector(object):
     def clear(self):
         self._text = ""
 
-    def get_text(self, timeout=0.):
+    def get_text(self, timeout=0.0):
         """
         Gets current text.
         @param timeout Timeout for polling each stream. If None, will not
@@ -132,9 +132,10 @@ class CapturedProcess(object):
     controlling realtime stuff.
     For complex state machine process interaction, use `pexpect`.
     """
+
     def __init__(
-            self, args, stderr=STDOUT, on_new_text=None, simple_encoding=True,
-            **kwargs):
+        self, args, stderr=STDOUT, on_new_text=None, simple_encoding=True, **kwargs
+    ):
         # Python processes don't like buffering by default.
         args = ["env", "PYTHONUNBUFFERED=1", "stdbuf", "-o0"] + args
         self._args = args

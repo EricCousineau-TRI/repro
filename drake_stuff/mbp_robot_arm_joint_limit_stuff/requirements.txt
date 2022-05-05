@@ -1,4 +1,4 @@
-dataclasses == 0.8
+dataclasses
 
 # Following adapted from a portion of TRI Anzu code.
 # Jupyter, for interactive workflows.
@@ -14,3 +14,4 @@ widgetsnbextension == 3.5.1
 # TODO(eric, andres): Remove this once the following issue is resolved:
 # https://github.com/ipython/ipython/issues/12740
 jedi == 0.17.2
+drake == 1.1.0

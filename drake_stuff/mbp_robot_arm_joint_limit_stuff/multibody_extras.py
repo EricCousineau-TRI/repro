@@ -19,20 +19,22 @@ def _get_plant_aggregate(num_func, get_func, index_cls, model_instances=None):
 def get_model_instances(plant):
     # TODO(eric.cousineau): Hoist this somewhere?
     return _get_plant_aggregate(
-        plant.num_model_instances, lambda x: x,
-        ModelInstanceIndex)
+        plant.num_model_instances, lambda x: x, ModelInstanceIndex
+    )
 
 
 def get_bodies(plant, model_instances=None):
     # TODO(eric.cousineau): Hoist this somewhere?
     return _get_plant_aggregate(
-        plant.num_bodies, plant.get_body, BodyIndex, model_instances)
+        plant.num_bodies, plant.get_body, BodyIndex, model_instances
+    )
 
 
 def get_frames(plant, model_instances=None):
     # TODO(eric.cousineau): Hoist this somewhere?
     return _get_plant_aggregate(
-        plant.num_frames, plant.get_frame, FrameIndex, model_instances)
+        plant.num_frames, plant.get_frame, FrameIndex, model_instances
+    )
 
 
 def get_frames_attached_to(plant, bodies):
@@ -47,7 +49,8 @@ def get_frames_attached_to(plant, bodies):
 def get_joints(plant, model_instances=None):
     # TODO(eric.cousineau): Hoist this somewhere?
     return _get_plant_aggregate(
-        plant.num_joints, plant.get_joint, JointIndex, model_instances)
+        plant.num_joints, plant.get_joint, JointIndex, model_instances
+    )
 
 
 def is_joint_solely_connected_to(joint, bodies):
@@ -60,15 +63,17 @@ def is_joint_solely_connected_to(joint, bodies):
 def get_joints_solely_connected_to(plant, bodies):
     # TODO(eric.cousineau): Hoist this somewhere?
     return [
-        joint for joint in get_joints(plant)
-        if is_joint_solely_connected_to(joint, bodies)]
+        joint
+        for joint in get_joints(plant)
+        if is_joint_solely_connected_to(joint, bodies)
+    ]
 
 
 def get_joint_actuators(plant, model_instances=None):
     # TODO(eric.cousineau): Hoist this somewhere?
     return _get_plant_aggregate(
-        plant.num_actuators, plant.get_joint_actuator,
-        JointActuatorIndex)
+        plant.num_actuators, plant.get_joint_actuator, JointActuatorIndex
+    )
 
 
 def get_joint_actuators_affecting_joints(plant, joints):
@@ -105,7 +110,7 @@ def get_joint_positions(plant, context, joint):
     q = plant.GetPositions(context)
     start = joint.position_start()
     count = joint.num_positions()
-    return q[start:start + count].copy()
+    return q[start : start + count].copy()
 
 
 def set_joint_positions(plant, context, joint, qj):
@@ -113,7 +118,7 @@ def set_joint_positions(plant, context, joint, qj):
     q = plant.GetPositions(context)
     start = joint.position_start()
     count = joint.num_positions()
-    q[start:start + count] = qj
+    q[start : start + count] = qj
     plant.SetPositions(context, q)
 
 
@@ -122,7 +127,7 @@ def get_joint_velocities(plant, context, joint):
     v = plant.GetVelocities(context)
     start = joint.velocity_start()
     count = joint.num_velocities()
-    return v[start:start + count].copy()
+    return v[start : start + count].copy()
 
 
 def set_joint_velocities(plant, context, joint, vj):
@@ -130,5 +135,5 @@ def set_joint_velocities(plant, context, joint, vj):
     v = plant.GetVelocities(context)
     start = joint.velocity_start()
     count = joint.num_velocities()
-    v[start:start + count] = vj
+    v[start : start + count] = vj
     plant.SetVelocities(context, v)
