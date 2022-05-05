@@ -420,8 +420,7 @@ class MultibodyPlantElementsMap(_MultibodyPlantElementsBase):
                 name=joint_src.name(),
                 frame_on_parent=frame_on_parent_dest,
                 frame_on_child=frame_on_child_dest,
-                # TODO(eric.cousineau): Bind this?
-                # damping=joint_src.damping(),
+                damping=joint_src.damping(),
             )
         elif type(joint_src) == PrismaticJoint:
             joint_dest = PrismaticJoint(

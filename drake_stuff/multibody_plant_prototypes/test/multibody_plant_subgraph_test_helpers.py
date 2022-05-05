@@ -375,8 +375,13 @@ def assert_plant_equals(plant_a, scene_graph_a, plant_b, scene_graph_b):
         assert_array_equal(
             joint_a.default_positions(),
             joint_b.default_positions())
-        # TODO(eric.cousineau): Fix damping for BallRpyJoint.
-        if type(joint_a) in [PrismaticJoint, RevoluteJoint, UniversalJoint]:
+        joints_with_damping = (
+            PrismaticJoint,
+            RevoluteJoint,
+            BallRpyJoint,
+            UniversalJoint,
+        )
+        if type(joint_a) in joints_with_damping:
             assert joint_a.damping() == joint_b.damping()
         if type(joint_a) == PrismaticJoint:
             assert_array_equal(
