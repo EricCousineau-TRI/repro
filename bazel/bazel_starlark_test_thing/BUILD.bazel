@@ -1,0 +1,3 @@
+load(":my_macro_test.bzl", "run_my_macro_tests")
+
+run_my_macro_tests()
