@@ -1,4 +1,6 @@
-workspace(name = "bazel_starlark_test_thing")
+workspace(name = "formal")
+
+# Using code from https://github.com/bazelbuild/bazel-skylib/releases/tag/1.2.1
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 http_archive(
