@@ -18,4 +18,4 @@ repositories:
   sdformat:
     type: git
     url: https://github.com/osrf/sdformat
-    version: 3d8147b89c6c17bd6fe531fdada00570c504a0bf
+    version: 4b83e96562eb6e28696a608bc70c2c03cc299773
