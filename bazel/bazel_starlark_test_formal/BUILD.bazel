@@ -1,0 +1,3 @@
+load(":my_macro_test.bzl", "my_macro_test_suite")
+
+my_macro_test_suite(name = "my_macro_test_suite")
