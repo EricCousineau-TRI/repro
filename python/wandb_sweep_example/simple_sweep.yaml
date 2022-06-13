@@ -1,0 +1,10 @@
+method: grid
+parameters:
+  custom_toggle:
+    distribution: categorical
+    values: [true]
+
+command:
+- ./simple_main.py
+- --wandb_sweep_json
+- ${args_json}
