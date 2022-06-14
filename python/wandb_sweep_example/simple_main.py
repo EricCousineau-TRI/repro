@@ -2,11 +2,8 @@
 
 import argparse
 import json
-import sys
 
 import wandb
-
-from wandb_sweep_example import defs
 
 
 def main():
@@ -21,10 +18,6 @@ def main():
     wandb.init()
 
     wandb.log({"val/loss": 1.0})
-
-    if defs.should_fail():
-        print("Failing on purpose")
-        sys.exit(1)
 
     print("Success")
 
