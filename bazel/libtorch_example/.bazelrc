@@ -1,0 +1,14 @@
+# Default to an optimized build to match Drake.
+build -c opt
+
+# C++17
+build --cxxopt=-std=c++17
+build --host_cxxopt=-std=c++17
+
+# Default build options to match Drake.
+build --force_pic
+build --strip=never
+build --strict_system_includes
+
+# Do not double-build for the host.
+build --distinct_host_configuration=false

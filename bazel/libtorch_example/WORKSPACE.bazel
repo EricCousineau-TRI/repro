@@ -1,0 +1,4 @@
+workspace(name = "libtorch_example")
+
+load(":libtorch.repository.bzl", "libtorch_repository")
+libtorch_repository(name = "libtorch")

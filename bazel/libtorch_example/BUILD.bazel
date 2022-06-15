@@ -1,0 +1,5 @@
+cc_binary(
+    name = "libtorch_test",
+    srcs = ["libtorch_test.cc"],
+    deps = ["@libtorch"],
+)

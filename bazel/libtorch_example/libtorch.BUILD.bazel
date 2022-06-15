@@ -1,0 +1,25 @@
+# -*- mode: python -*-
+# vi: set ft=python :
+
+package(default_visibility = ["@//:__pkg__"])
+
+_libs = glob(["lib/lib*.so*"], exclude = [
+    "lib/libtorch_python.so",
+    # "lib/libnnapi_backend.so",
+    # "lib/libnvrtc-builtins-4730a239.so.11.3",
+])
+
+filegroup(
+    name = "install_libs",
+    srcs = _libs,
+)
+
+cc_library(
+    name = "libtorch",
+    srcs = _libs,
+    hdrs = glob(["include/**/*.h"]),
+    includes = [
+        "include",
+        "include/torch/csrc/api/include",
+    ],
+)
