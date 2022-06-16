@@ -1,0 +1,32 @@
++ bazel build -j 1 -s //:example
+Starting local Bazel server and connecting to it...
+INFO: Invocation ID: {hex}
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //:example (1 packages loaded, 0 targets configured)
+Analyzing: target //:example (33 packages loaded, 127 targets configured)
+INFO: Analyzed target //:example (37 packages loaded, 158 targets configured).
+INFO: Found 1 target...
+[0 / 1] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+SUBCOMMAND: # //:example [action 'Compiling example.cc', configuration: {hex}, execution platform: @local_config_platform//:host]
+(cd {execroot}/bazel_asan_features && \
+  exec env - \
+    PATH=/usr/local/bin:/usr/bin:/bin \
+    PWD=/proc/self/cwd \
+  /usr/bin/gcc -U_FORTIFY_SOURCE -fstack-protector -Wall -Wunused-but-set-parameter -Wno-free-nonheap-object -fno-omit-frame-pointer -g0 -O2 '-D_FORTIFY_SOURCE=1' -DNDEBUG -ffunction-sections -fdata-sections '-std=c++0x' -MD -MF bazel-out/k8-opt/bin/_objs/example/example.pic.d '-frandom-seed=bazel-out/k8-opt/bin/_objs/example/example.pic.o' -fPIC -iquote . -iquote bazel-out/k8-opt/bin -iquote external/bazel_tools -iquote bazel-out/k8-opt/bin/external/bazel_tools '-std=c++17' -fdiagnostics-color -fno-canonical-system-headers -Wno-builtin-macro-redefined '-D__DATE__="redacted"' '-D__TIMESTAMP__="redacted"' '-D__TIME__="redacted"' -c example.cc -o bazel-out/k8-opt/bin/_objs/example/example.pic.o)
+# Configuration: {hex}
+# Execution platform: @local_config_platform//:host
+SUBCOMMAND: # //:example [action 'Linking example', configuration: {hex}, execution platform: @local_config_platform//:host]
+(cd {execroot}/bazel_asan_features && \
+  exec env - \
+    PATH=/usr/local/bin:/usr/bin:/bin \
+    PWD=/proc/self/cwd \
+  /usr/bin/gcc @bazel-out/k8-opt/bin/example-2.params)
+# Configuration: {hex}
+# Execution platform: @local_config_platform//:host
+Target //:example up-to-date:
+  bazel-bin/example
+INFO: Elapsed time: 4.222s, Critical Path: 0.07s
+INFO: 6 processes: 2 disk cache hit, 4 internal.
+INFO: Build completed successfully, 6 total actions
+INFO: Build completed successfully, 6 total actions
