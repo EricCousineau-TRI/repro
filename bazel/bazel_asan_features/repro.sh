@@ -1,9 +1,6 @@
 #!/bin/bash
 set -eux
 
-# Build with Bazel.
-bazel clean --expunge --async
-
 scrub() {
     sed -E \
         -e "s#${PWD}#{proj}#g" \
@@ -12,6 +9,20 @@ scrub() {
         -e "s#/.*?/execroot/#{execroot}/#g"
 }
 
+bazel_() {
+    bazel --nohome_rc "$@"
+}
+
+bazel_ clean --expunge --async
 (
-    bazel build -j 1 -s //:example
-) 2>&1 | scrub | tee repro.output.txt
+    bazel version
+    bazel_ build -j 1 -s //:example
+) 2>&1 | scrub | tee repro.without.txt
+
+bazel_ clean --expunge --async
+(
+    bazel version
+    bazel_ build --features=asan -j 1 -s //:example
+) 2>&1 | scrub | tee repro.with.txt
+
+git --no-pager diff --no-index repro.*.txt | tee repro.diff
