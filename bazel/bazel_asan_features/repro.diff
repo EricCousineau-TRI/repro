@@ -1,5 +1,5 @@
 diff --git a/repro.with.txt b/repro.without.txt
-index 6f123ce..b6bde50 100644
+index 09014da..438c0ff 100644
 --- a/repro.with.txt
 +++ b/repro.without.txt
 @@ -5,8 +5,8 @@ Build target: bazel-out/k8-opt/bin/src/main/java/com/google/devtools/build/lib/b
@@ -13,12 +13,21 @@ index 6f123ce..b6bde50 100644
  Loading: 
  Loading: 0 packages loaded
  Analyzing: target //:example (1 packages loaded, 0 targets configured)
-@@ -32,7 +32,7 @@ SUBCOMMAND: # //:example [action 'Linking example', configuration: {hex}, execut
+@@ -14,7 +14,7 @@ Analyzing: target //:example (33 packages loaded, 127 targets configured)
+ Analyzing: target //:example (33 packages loaded, 127 targets configured)
+ INFO: Analyzed target //:example (37 packages loaded, 159 targets configured).
+ INFO: Found 1 target...
+-[0 / 1] checking cached actions
++[0 / 1] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+ SUBCOMMAND: # //:example [action 'Compiling example.cc', configuration: {hex}, execution platform: @local_config_platform//:host]
+ (cd {execroot}/bazel_asan_features && \
+   exec env - \
+@@ -37,7 +37,7 @@ SUBCOMMAND: # //:example [action 'Linking example', configuration: {hex}, execut
  # Execution platform: @local_config_platform//:host
  Target //:example up-to-date:
    bazel-bin/example
--INFO: Elapsed time: 2.999s, Critical Path: 0.44s
-+INFO: Elapsed time: 3.079s, Critical Path: 0.46s
- INFO: 6 processes: 4 internal, 2 linux-sandbox.
- INFO: Build completed successfully, 6 total actions
- INFO: Build completed successfully, 6 total actions
+-INFO: Elapsed time: 5.907s, Critical Path: 0.50s
++INFO: Elapsed time: 5.805s, Critical Path: 0.46s
+ INFO: 8 processes: 6 internal, 2 linux-sandbox.
+ INFO: Build completed successfully, 8 total actions
+ INFO: Build completed successfully, 8 total actions

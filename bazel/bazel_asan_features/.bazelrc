@@ -12,3 +12,8 @@ build --strict_system_includes
 
 # Do not double-build for the host.
 build --distinct_host_configuration=false
+
+common --repo_env=CC=clang-12
+common --repo_env=CXX=clang++-12
+build --action_env=CC=clang-12
+build --action_env=CXX=clang++-12
