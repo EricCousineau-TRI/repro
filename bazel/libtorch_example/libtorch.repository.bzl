@@ -10,7 +10,7 @@ def libtorch_repository(
         name = name,
         build_file = "//:libtorch.BUILD.bazel",
         strip_prefix = "libtorch",
-        sha256 = "8d9e829ce9478db4f35bdb7943308cf02e8a2f58cf9bb10f742462c1d57bf287",  # noqa
-        urls = ["https://download.pytorch.org/libtorch/cu113/libtorch-cxx11-abi-shared-with-deps-1.11.0%2Bcu113.zip"],  # noqa
+        sha256 = "2557943af80ec93f8249f6c5c829db6c6688842afa25a7d848f5c471473eb898",  # noqa
+        urls = ["https://download.pytorch.org/libtorch/cu113/libtorch-cxx11-abi-shared-with-deps-1.10.2%2Bcu113.zip"],  # noqa
         **kwargs
     )

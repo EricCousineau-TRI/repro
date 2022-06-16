@@ -2,7 +2,7 @@
 bazel-bin/libtorch_test: error while loading shared libraries: libcudart.so.11.0: cannot open shared object file: No such file or directory
 + echo
 
-+ ldd bazel-libtorch_example/external/libtorch/lib/libbackend_with_compiler.so bazel-libtorch_example/external/libtorch/lib/libc10.so bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so bazel-libtorch_example/external/libtorch/lib/libc10d_cuda_test.so bazel-libtorch_example/external/libtorch/lib/libcaffe2_nvrtc.so bazel-libtorch_example/external/libtorch/lib/libjitbackend_test.so bazel-libtorch_example/external/libtorch/lib/libnnapi_backend.so bazel-libtorch_example/external/libtorch/lib/libshm.so bazel-libtorch_example/external/libtorch/lib/libtorch.so bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so bazel-libtorch_example/external/libtorch/lib/libtorch_cuda.so bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cpp.so bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cu.so bazel-libtorch_example/external/libtorch/lib/libtorch_global_deps.so bazel-libtorch_example/external/libtorch/lib/libtorch_python.so bazel-libtorch_example/external/libtorch/lib/libtorchbind_test.so bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 bazel-libtorch_example/external/libtorch/lib/libnvrtc-1ea278b5.so.11.2 bazel-libtorch_example/external/libtorch/lib/libnvrtc-builtins-4730a239.so.11.3
++ ldd bazel-libtorch_example/external/libtorch/lib/libbackend_with_compiler.so bazel-libtorch_example/external/libtorch/lib/libc10.so bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so bazel-libtorch_example/external/libtorch/lib/libc10d_cuda_test.so bazel-libtorch_example/external/libtorch/lib/libcaffe2_detectron_ops_gpu.so bazel-libtorch_example/external/libtorch/lib/libcaffe2_module_test_dynamic.so bazel-libtorch_example/external/libtorch/lib/libcaffe2_nvrtc.so bazel-libtorch_example/external/libtorch/lib/libcaffe2_observers.so bazel-libtorch_example/external/libtorch/lib/libjitbackend_test.so bazel-libtorch_example/external/libtorch/lib/libnnapi_backend.so bazel-libtorch_example/external/libtorch/lib/libshm.so bazel-libtorch_example/external/libtorch/lib/libtorch.so bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so bazel-libtorch_example/external/libtorch/lib/libtorch_cuda.so bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cpp.so bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cu.so bazel-libtorch_example/external/libtorch/lib/libtorch_global_deps.so bazel-libtorch_example/external/libtorch/lib/libtorch_python.so bazel-libtorch_example/external/libtorch/lib/libtorchbind_test.so bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 bazel-libtorch_example/external/libtorch/lib/libnvrtc-1ea278b5.so.11.2 bazel-libtorch_example/external/libtorch/lib/libnvrtc-builtins-4730a239.so.11.3
 bazel-libtorch_example/external/libtorch/lib/libbackend_with_compiler.so:
 	linux-vdso.so.1 (0x{hex})
 	libtorch.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch.so (0x{hex})
@@ -11,18 +11,18 @@ bazel-libtorch_example/external/libtorch/lib/libbackend_with_compiler.so:
 	libtorch_cpu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so (0x{hex})
 	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
 	libc10.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10.so (0x{hex})
-	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
 	libtorch_cuda_cu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cu.so (0x{hex})
 	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
-	/lib64/ld-linux-x86-64.so.2 (0x{hex})
-	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
+	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libnvToolsExt-24de1d56.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 (0x{hex})
 	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
+	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
 	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x{hex})
 	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
+	/lib64/ld-linux-x86-64.so.2 (0x{hex})
 bazel-libtorch_example/external/libtorch/lib/libc10.so:
 	linux-vdso.so.1 (0x{hex})
 	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
@@ -35,9 +35,8 @@ bazel-libtorch_example/external/libtorch/lib/libc10.so:
 	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
 bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so:
 	linux-vdso.so.1 (0x{hex})
+	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
 	libc10.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10.so (0x{hex})
-	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
-	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
 	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
 	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x{hex})
 	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
@@ -45,25 +44,67 @@ bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so:
 	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
 	/lib64/ld-linux-x86-64.so.2 (0x{hex})
+	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
+	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
 bazel-libtorch_example/external/libtorch/lib/libc10d_cuda_test.so:
 	linux-vdso.so.1 (0x{hex})
+	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
 	libtorch_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda.so (0x{hex})
 	libtorch_cuda_cpp.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cpp.so (0x{hex})
 	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libc10.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10.so (0x{hex})
 	libtorch_cpu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so (0x{hex})
-	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
-	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
 	libtorch_cuda_cu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cu.so (0x{hex})
-	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
 	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
 	/lib64/ld-linux-x86-64.so.2 (0x{hex})
-	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
+	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
+	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
+	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
 	libnvToolsExt-24de1d56.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 (0x{hex})
 	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x{hex})
 	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
+bazel-libtorch_example/external/libtorch/lib/libcaffe2_detectron_ops_gpu.so:
+	linux-vdso.so.1 (0x{hex})
+	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
+	libtorch.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch.so (0x{hex})
+	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
+	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
+	libtorch_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda.so (0x{hex})
+	libtorch_cuda_cpp.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cpp.so (0x{hex})
+	libtorch_cpu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so (0x{hex})
+	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
+	libc10.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10.so (0x{hex})
+	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
+	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
+	libtorch_cuda_cu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cu.so (0x{hex})
+	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x{hex})
+	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
+	/lib64/ld-linux-x86-64.so.2 (0x{hex})
+	libnvToolsExt-24de1d56.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 (0x{hex})
+bazel-libtorch_example/external/libtorch/lib/libcaffe2_module_test_dynamic.so:
+	linux-vdso.so.1 (0x{hex})
+	libtorch.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch.so (0x{hex})
+	libtorch_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda.so (0x{hex})
+	libtorch_cuda_cpp.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cpp.so (0x{hex})
+	libtorch_cpu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so (0x{hex})
+	libc10.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10.so (0x{hex})
+	libtorch_cuda_cu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cu.so (0x{hex})
+	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
+	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
+	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
+	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
+	libnvToolsExt-24de1d56.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 (0x{hex})
+	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
+	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
+	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x{hex})
+	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
+	/lib64/ld-linux-x86-64.so.2 (0x{hex})
 bazel-libtorch_example/external/libtorch/lib/libcaffe2_nvrtc.so:
 	linux-vdso.so.1 (0x{hex})
 	libcuda.so.1 => /lib/x86_64-linux-gnu/libcuda.so.1 (0x{hex})
@@ -77,6 +118,26 @@ bazel-libtorch_example/external/libtorch/lib/libcaffe2_nvrtc.so:
 	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
 	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
 	/lib64/ld-linux-x86-64.so.2 (0x{hex})
+bazel-libtorch_example/external/libtorch/lib/libcaffe2_observers.so:
+	linux-vdso.so.1 (0x{hex})
+	libtorch.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch.so (0x{hex})
+	libtorch_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda.so (0x{hex})
+	libtorch_cuda_cpp.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cpp.so (0x{hex})
+	libtorch_cpu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so (0x{hex})
+	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
+	libc10.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10.so (0x{hex})
+	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
+	libtorch_cuda_cu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cu.so (0x{hex})
+	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
+	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
+	/lib64/ld-linux-x86-64.so.2 (0x{hex})
+	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
+	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
+	libnvToolsExt-24de1d56.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 (0x{hex})
+	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x{hex})
+	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
 bazel-libtorch_example/external/libtorch/lib/libjitbackend_test.so:
 	linux-vdso.so.1 (0x{hex})
 	libtorch.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch.so (0x{hex})
@@ -88,15 +149,15 @@ bazel-libtorch_example/external/libtorch/lib/libjitbackend_test.so:
 	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
-	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
+	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libnvToolsExt-24de1d56.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 (0x{hex})
 	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
 	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
 	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
 	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x{hex})
-	/lib64/ld-linux-x86-64.so.2 (0x{hex})
 	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
+	/lib64/ld-linux-x86-64.so.2 (0x{hex})
 bazel-libtorch_example/external/libtorch/lib/libnnapi_backend.so:
 	linux-vdso.so.1 (0x{hex})
 	libtorch_python.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_python.so (0x{hex})
@@ -132,21 +193,21 @@ bazel-libtorch_example/external/libtorch/lib/libshm.so:
 	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
-	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
+	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libnvToolsExt-24de1d56.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 (0x{hex})
 	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
 	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x{hex})
-	/lib64/ld-linux-x86-64.so.2 (0x{hex})
 	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
+	/lib64/ld-linux-x86-64.so.2 (0x{hex})
 bazel-libtorch_example/external/libtorch/lib/libtorch.so:
 	linux-vdso.so.1 (0x{hex})
 	libtorch_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda.so (0x{hex})
 	libtorch_cuda_cpp.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cpp.so (0x{hex})
 	libtorch_cpu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so (0x{hex})
 	libtorch_cuda_cu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cu.so (0x{hex})
-	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
+	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libnvToolsExt-24de1d56.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 (0x{hex})
 	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
 	libc10.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10.so (0x{hex})
@@ -154,20 +215,20 @@ bazel-libtorch_example/external/libtorch/lib/libtorch.so:
 	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
 	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
 	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x{hex})
+	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
 	/lib64/ld-linux-x86-64.so.2 (0x{hex})
-	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
 bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so:
 	linux-vdso.so.1 (0x{hex})
 	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
 	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
-	libc10.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10.so (0x{hex})
 	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
 	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
 	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x{hex})
 	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
+	libc10.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10.so (0x{hex})
 	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
 	/lib64/ld-linux-x86-64.so.2 (0x{hex})
@@ -176,8 +237,8 @@ bazel-libtorch_example/external/libtorch/lib/libtorch_cuda.so:
 	libtorch_cuda_cpp.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cpp.so (0x{hex})
 	libtorch_cpu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so (0x{hex})
 	libtorch_cuda_cu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cu.so (0x{hex})
-	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
+	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libnvToolsExt-24de1d56.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 (0x{hex})
 	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
 	libc10.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10.so (0x{hex})
@@ -185,14 +246,14 @@ bazel-libtorch_example/external/libtorch/lib/libtorch_cuda.so:
 	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
 	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
 	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x{hex})
+	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
 	/lib64/ld-linux-x86-64.so.2 (0x{hex})
-	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
 bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cpp.so:
 	linux-vdso.so.1 (0x{hex})
-	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
+	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libnvToolsExt-24de1d56.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 (0x{hex})
 	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
 	libc10.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10.so (0x{hex})
@@ -201,10 +262,10 @@ bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cpp.so:
 	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
 	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
 	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x{hex})
+	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
 	/lib64/ld-linux-x86-64.so.2 (0x{hex})
-	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
 bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cu.so:
 	linux-vdso.so.1 (0x{hex})
 	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
@@ -237,10 +298,10 @@ bazel-libtorch_example/external/libtorch/lib/libtorch_global_deps.so:
 bazel-libtorch_example/external/libtorch/lib/libtorch_python.so:
 	linux-vdso.so.1 (0x{hex})
 	libshm.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libshm.so (0x{hex})
+	libnvToolsExt-24de1d56.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 (0x{hex})
 	libtorch.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch.so (0x{hex})
 	libtorch_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda.so (0x{hex})
 	libtorch_cuda_cpp.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cpp.so (0x{hex})
-	libnvToolsExt-24de1d56.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 (0x{hex})
 	libtorch_cpu.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so (0x{hex})
 	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
 	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
@@ -252,8 +313,8 @@ bazel-libtorch_example/external/libtorch/lib/libtorch_python.so:
 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
 	/lib64/ld-linux-x86-64.so.2 (0x{hex})
-	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
 	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x{hex})
+	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
 	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
 bazel-libtorch_example/external/libtorch/lib/libtorchbind_test.so:
 	linux-vdso.so.1 (0x{hex})
@@ -266,15 +327,15 @@ bazel-libtorch_example/external/libtorch/lib/libtorchbind_test.so:
 	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
-	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libcudart-a7b20f20.so.11.0 => {proj}/bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
+	libc10_cuda.so => {proj}/bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
 	libnvToolsExt-24de1d56.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 (0x{hex})
 	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
 	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
 	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
 	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x{hex})
-	/lib64/ld-linux-x86-64.so.2 (0x{hex})
 	libgomp-52f2fd74.so.1 => {proj}/bazel-libtorch_example/external/libtorch/lib/libgomp-52f2fd74.so.1 (0x{hex})
+	/lib64/ld-linux-x86-64.so.2 (0x{hex})
 bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0:
 	linux-vdso.so.1 (0x{hex})
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
@@ -321,7 +382,10 @@ bazel-libtorch_example/external/libtorch/lib/libnvrtc-builtins-4730a239.so.11.3:
 	libc10.so => {proj}/bazel-bin/_solib_k8/_U@libtorch_S_S_Clibtorch___Ulib/libc10.so (0x{hex})
 	libc10_cuda.so => {proj}/bazel-bin/_solib_k8/_U@libtorch_S_S_Clibtorch___Ulib/libc10_cuda.so (0x{hex})
 	libc10d_cuda_test.so => {proj}/bazel-bin/_solib_k8/_U@libtorch_S_S_Clibtorch___Ulib/libc10d_cuda_test.so (0x{hex})
+	libcaffe2_detectron_ops_gpu.so => {proj}/bazel-bin/_solib_k8/_U@libtorch_S_S_Clibtorch___Ulib/libcaffe2_detectron_ops_gpu.so (0x{hex})
+	libcaffe2_module_test_dynamic.so => {proj}/bazel-bin/_solib_k8/_U@libtorch_S_S_Clibtorch___Ulib/libcaffe2_module_test_dynamic.so (0x{hex})
 	libcaffe2_nvrtc.so => {proj}/bazel-bin/_solib_k8/_U@libtorch_S_S_Clibtorch___Ulib/libcaffe2_nvrtc.so (0x{hex})
+	libcaffe2_observers.so => {proj}/bazel-bin/_solib_k8/_U@libtorch_S_S_Clibtorch___Ulib/libcaffe2_observers.so (0x{hex})
 	libcudart.so.11.0 => not found
 	libgomp.so.1 => /lib/x86_64-linux-gnu/libgomp.so.1 (0x{hex})
 	libjitbackend_test.so => {proj}/bazel-bin/_solib_k8/_U@libtorch_S_S_Clibtorch___Ulib/libjitbackend_test.so (0x{hex})
@@ -342,40 +406,76 @@ bazel-libtorch_example/external/libtorch/lib/libnvrtc-builtins-4730a239.so.11.3:
 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
 	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x{hex})
-	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
-	/lib64/ld-linux-x86-64.so.2 (0x{hex})
 	libgomp-52f2fd74.so.1 => {proj}/bazel-bin/_solib_k8/_U@libtorch_S_S_Clibtorch___Ulib/libgomp-52f2fd74.so.1 (0x{hex})
+	/lib64/ld-linux-x86-64.so.2 (0x{hex})
+	libcudart-a7b20f20.so.11.0 => {proj}/bazel-bin/_solib_k8/_U@libtorch_S_S_Clibtorch___Ulib/libcudart-a7b20f20.so.11.0 (0x{hex})
+	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
 	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
 	libcuda.so.1 => /lib/x86_64-linux-gnu/libcuda.so.1 (0x{hex})
 	libnvrtc-1ea278b5.so.11.2 => {proj}/bazel-bin/_solib_k8/_U@libtorch_S_S_Clibtorch___Ulib/libnvrtc-1ea278b5.so.11.2 (0x{hex})
 	libtorch_python.so => not found
-	libcudart-a7b20f20.so.11.0 => {proj}/bazel-bin/_solib_k8/_U@libtorch_S_S_Clibtorch___Ulib/libcudart-a7b20f20.so.11.0 (0x{hex})
 	libnvToolsExt-24de1d56.so.1 => {proj}/bazel-bin/_solib_k8/_U@libtorch_S_S_Clibtorch___Ulib/libnvToolsExt-24de1d56.so.1 (0x{hex})
 + echo
 
 + build_direct/libtorch_test
-terminate called after throwing an instance of 'c10::Error'
-  what():  PyTorch is not linked with support for cuda devices
-Exception raised from getDeviceGuardImpl at ../c10/core/impl/DeviceGuardImplInterface.h:318 (most recent call first):
-frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libc10.so)
-frame #1: c10::detail::torchCheckFail(char const*, char const*, unsigned int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libc10.so)
-frame #2: <unknown function> + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
-frame #3: at::native::to(at::Tensor const&, c10::optional<c10::ScalarType>, c10::optional<c10::Layout>, c10::optional<c10::Device>, c10::optional<bool>, bool, bool, c10::optional<c10::MemoryFormat>) + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
-frame #4: <unknown function> + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
-frame #5: at::_ops::to_dtype_layout::call(at::Tensor const&, c10::optional<c10::ScalarType>, c10::optional<c10::Layout>, c10::optional<c10::Device>, c10::optional<bool>, bool, bool, c10::optional<c10::MemoryFormat>) + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
-frame #6: at::Tensor::to(c10::TensorOptions, bool, bool, c10::optional<c10::MemoryFormat>) const + 0x{hex} (0x{hex} in build_direct/libtorch_test)
-frame #7: <unknown function> + 0x{hex} (0x{hex} in build_direct/libtorch_test)
-frame #8: <unknown function> + 0x{hex} (0x{hex} in build_direct/libtorch_test)
-frame #9: __libc_start_main + 0x{hex} (0x{hex} in /lib/x86_64-linux-gnu/libc.so.6)
-frame #10: <unknown function> + 0x{hex} (0x{hex} in build_direct/libtorch_test)
+terminate called after throwing an instance of 'c10::NotImplementedError'
+  what():  Could not run 'aten::empty_strided' with arguments from the 'CUDA' backend. This could be because the operator doesn't exist for this backend, or was omitted during the selective/custom build process (if using custom build). If you are a Facebook employee using PyTorch on mobile, please visit https://fburl.com/ptmfixes for possible resolutions. 'aten::empty_strided' is only available for these backends: [CPU, Meta, BackendSelect, Python, Named, Conjugate, Negative, ADInplaceOrView, AutogradOther, AutogradCPU, AutogradCUDA, AutogradXLA, AutogradLazy, AutogradXPU, AutogradMLC, AutogradHPU, AutogradNestedTensor, AutogradPrivateUse1, AutogradPrivateUse2, AutogradPrivateUse3, Tracer, UNKNOWN_TENSOR_TYPE_ID, Autocast, Batched, VmapMode].
 
-./repro.sh: line 64: 338792 Aborted                 (core dumped) build_direct/libtorch_test
+CPU: registered at aten/src/ATen/RegisterCPU.cpp:18433 [kernel]
+Meta: registered at aten/src/ATen/RegisterMeta.cpp:12703 [kernel]
+BackendSelect: registered at aten/src/ATen/RegisterBackendSelect.cpp:665 [kernel]
+Python: registered at ../aten/src/ATen/core/PythonFallbackKernel.cpp:47 [backend fallback]
+Named: registered at ../aten/src/ATen/core/NamedRegistrations.cpp:7 [backend fallback]
+Conjugate: fallthrough registered at ../aten/src/ATen/ConjugateFallback.cpp:22 [kernel]
+Negative: fallthrough registered at ../aten/src/ATen/native/NegateFallback.cpp:22 [kernel]
+ADInplaceOrView: fallthrough registered at ../aten/src/ATen/core/VariableFallbackKernel.cpp:64 [backend fallback]
+AutogradOther: registered at ../torch/csrc/autograd/generated/VariableType_2.cpp:10483 [autograd kernel]
+AutogradCPU: registered at ../torch/csrc/autograd/generated/VariableType_2.cpp:10483 [autograd kernel]
+AutogradCUDA: registered at ../torch/csrc/autograd/generated/VariableType_2.cpp:10483 [autograd kernel]
+AutogradXLA: registered at ../torch/csrc/autograd/generated/VariableType_2.cpp:10483 [autograd kernel]
+AutogradLazy: registered at ../torch/csrc/autograd/generated/VariableType_2.cpp:10483 [autograd kernel]
+AutogradXPU: registered at ../torch/csrc/autograd/generated/VariableType_2.cpp:10483 [autograd kernel]
+AutogradMLC: registered at ../torch/csrc/autograd/generated/VariableType_2.cpp:10483 [autograd kernel]
+AutogradHPU: registered at ../torch/csrc/autograd/generated/VariableType_2.cpp:10483 [autograd kernel]
+AutogradNestedTensor: registered at ../torch/csrc/autograd/generated/VariableType_2.cpp:10483 [autograd kernel]
+AutogradPrivateUse1: registered at ../torch/csrc/autograd/generated/VariableType_2.cpp:10483 [autograd kernel]
+AutogradPrivateUse2: registered at ../torch/csrc/autograd/generated/VariableType_2.cpp:10483 [autograd kernel]
+AutogradPrivateUse3: registered at ../torch/csrc/autograd/generated/VariableType_2.cpp:10483 [autograd kernel]
+Tracer: registered at ../torch/csrc/autograd/generated/TraceType_2.cpp:11423 [kernel]
+UNKNOWN_TENSOR_TYPE_ID: fallthrough registered at ../aten/src/ATen/autocast_mode.cpp:466 [backend fallback]
+Autocast: fallthrough registered at ../aten/src/ATen/autocast_mode.cpp:305 [backend fallback]
+Batched: registered at ../aten/src/ATen/BatchingRegistrations.cpp:1016 [backend fallback]
+VmapMode: fallthrough registered at ../aten/src/ATen/VmapModeRegistrations.cpp:33 [backend fallback]
+
+Exception raised from reportError at ../aten/src/ATen/core/dispatch/OperatorEntry.cpp:431 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libc10.so)
+frame #1: c10::impl::OperatorEntry::reportError(c10::DispatchKey) const + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
+frame #2: <unknown function> + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
+frame #3: at::_ops::empty_strided::call(c10::ArrayRef<long>, c10::ArrayRef<long>, c10::optional<c10::ScalarType>, c10::optional<c10::Layout>, c10::optional<c10::Device>, c10::optional<bool>) + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
+frame #4: at::native::_to_copy(at::Tensor const&, c10::optional<c10::ScalarType>, c10::optional<c10::Layout>, c10::optional<c10::Device>, c10::optional<bool>, bool, c10::optional<c10::MemoryFormat>) + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
+frame #5: <unknown function> + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
+frame #6: <unknown function> + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
+frame #7: at::_ops::_to_copy::redispatch(c10::DispatchKeySet, at::Tensor const&, c10::optional<c10::ScalarType>, c10::optional<c10::Layout>, c10::optional<c10::Device>, c10::optional<bool>, bool, c10::optional<c10::MemoryFormat>) + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
+frame #8: <unknown function> + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
+frame #9: <unknown function> + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
+frame #10: at::_ops::_to_copy::call(at::Tensor const&, c10::optional<c10::ScalarType>, c10::optional<c10::Layout>, c10::optional<c10::Device>, c10::optional<bool>, bool, c10::optional<c10::MemoryFormat>) + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
+frame #11: at::native::to(at::Tensor const&, c10::optional<c10::ScalarType>, c10::optional<c10::Layout>, c10::optional<c10::Device>, c10::optional<bool>, bool, bool, c10::optional<c10::MemoryFormat>) + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
+frame #12: <unknown function> + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
+frame #13: at::_ops::to_dtype_layout::call(at::Tensor const&, c10::optional<c10::ScalarType>, c10::optional<c10::Layout>, c10::optional<c10::Device>, c10::optional<bool>, bool, bool, c10::optional<c10::MemoryFormat>) + 0x{hex} (0x{hex} in {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so)
+frame #14: at::Tensor::to(c10::TensorOptions, bool, bool, c10::optional<c10::MemoryFormat>) const + 0x{hex} (0x{hex} in build_direct/libtorch_test)
+frame #15: <unknown function> + 0x{hex} (0x{hex} in build_direct/libtorch_test)
+frame #16: <unknown function> + 0x{hex} (0x{hex} in build_direct/libtorch_test)
+frame #17: __libc_start_main + 0x{hex} (0x{hex} in /lib/x86_64-linux-gnu/libc.so.6)
+frame #18: <unknown function> + 0x{hex} (0x{hex} in build_direct/libtorch_test)
+
+./repro.sh: line 69: 344422 Aborted                 (core dumped) build_direct/libtorch_test
 + echo
 
 + ldd build_direct/libtorch_test
 	linux-vdso.so.1 (0x{hex})
 	libc10.so => {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libc10.so (0x{hex})
 	libtorch_cpu.so => {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cpu.so (0x{hex})
+	libtorch_cuda_cpp.so => {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libtorch_cuda_cpp.so (0x{hex})
 	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x{hex})
 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x{hex})
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x{hex})
@@ -386,3 +486,5 @@ frame #10: <unknown function> + 0x{hex} (0x{hex} in build_direct/libtorch_test)
 	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x{hex})
 	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x{hex})
 	libcudart-a7b20f20.so.11.0 => {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libcudart-a7b20f20.so.11.0 (0x{hex})
+	libc10_cuda.so => {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libc10_cuda.so (0x{hex})
+	libnvToolsExt-24de1d56.so.1 => {proj}/build_direct/../bazel-libtorch_example/external/libtorch/lib/libnvToolsExt-24de1d56.so.1 (0x{hex})
