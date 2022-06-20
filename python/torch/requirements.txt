@@ -1,7 +1,4 @@
-jupyterlab == 3.0.12
-# TODO(eric): Remove this once the following issue is resolved:
-# https://github.com/ipython/ipython/issues/12740
-jedi == 0.17.2
+jupyterlab == 3.3.0
 matplotlib == 3.4.3
 
 einops == 0.3.0
