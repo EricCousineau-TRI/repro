@@ -1,0 +1,8 @@
+./simple.py(12)func_2()
+-> pass
+  ./simple.py(22)<module>()
+-> main()
+  ./simple.py(17)main()
+-> func_2()
+./simple.py(12)func_2()
+-> pass
