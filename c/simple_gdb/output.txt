@@ -1,0 +1,8 @@
+
+Program received signal SIGSEGV, Segmentation fault.
+0x0000555555555155 in bad_thing () at main.c:11
+11	  *px = 0xbadf00d;
+#0  0x0000555555555155 in bad_thing () at main.c:11
+#1  0x000055555555517a in main () at main.c:16
+#1  0x000055555555517a in main () at main.c:16
+16	  bad_thing();
