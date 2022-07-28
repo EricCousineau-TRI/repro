@@ -1,0 +1,26 @@
+py_library(
+    name = "runfiles_py",
+    srcs = ["runfiles.py"],
+    deps = ["@bazel_tools//tools/python/runfiles"],
+)
+
+py_binary(
+    name = "indirectly_built",
+    srcs = ["indirectly_built.py"],
+    data = ["some_data.txt"],
+    deps = [":runfiles_py"],
+)
+
+py_binary(
+    name = "directly_built",
+    srcs = ["directly_built.py"],
+    deps = [
+        ":indirectly_built",
+        ":runfiles_py",
+    ],
+)
+
+alias(
+    name = "alias",
+    actual = ":directly_built",
+)

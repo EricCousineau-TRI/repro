@@ -1,0 +1,28 @@
++ bazel build :directly_built :alias
+Starting local Bazel server and connecting to it...
+INFO: Invocation ID: {hex}
+Loading: 
+Loading: 0 packages loaded
+Analyzing: 2 targets (1 packages loaded, 0 targets configured)
+Analyzing: 2 targets (34 packages loaded, 127 targets configured)
+INFO: Analyzed 2 targets (41 packages loaded, 321 targets configured).
+INFO: Found 2 targets...
+[0 / 6] [Prepa] Expanding template directly_built ... (5 actions, 0 running)
+INFO: Elapsed time: 4.082s, Critical Path: 0.04s
+INFO: 6 processes: 6 internal.
+INFO: Build completed successfully, 6 total actions
+INFO: Build completed successfully, 6 total actions
++ ./bazel-bin/directly_built
+Wrap
+Read: Hey.
++ ./bazel-bin/alias
+./repro.sh: line 23: ./bazel-bin/alias: No such file or directory
++ ./bazel-bin/indirectly_built
+Tr{hex}k (most recent call last):
+  File "./bazel-bin/indirectly_built", line 392, in <module>
+    Main()
+  File "./bazel-bin/indirectly_built", line 292, in Main
+    module_space = FindModuleSpace()
+  File "./bazel-bin/indirectly_built", line 122, in FindModuleSpace
+    raise AssertionError('Cannot find .runfiles directory for %s' % sys.argv[0])
+AssertionError: Cannot find .runfiles directory for ./bazel-bin/indirectly_built
