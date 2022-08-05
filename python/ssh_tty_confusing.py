@@ -20,10 +20,14 @@ def dumb_run(args, *, redirect):
 def main():
     # todo: need something that relies on "weird" tty behavior... like `bazel build` or `tshark` :(
     command = dedent(r"""
+    tput sc
     for i in $(seq 5); do
-        echo -en '\rStep '${i}
+        tput rc
+        tput el
+        echo -n "Step ${i}"
         sleep 0.1
     done
+    tput ed
     echo
     """)
     dumb_run(["bash", "-c", command], redirect=False)
@@ -31,7 +35,7 @@ def main():
     user_host = os.environ["USER"] + "@localhost"
     ssh_args = [
         "ssh",
-        # "-tt",
+        "-tt",
         "-o",
         "BatchMode=yes",
         "-o",
