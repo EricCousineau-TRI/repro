@@ -16,3 +16,5 @@ print_vars()
 my_exec("def my_func(x): return x + b")
 print_vars()
 my_exec("print(my_func(2))")
+
+# see: https://stackoverflow.com/questions/28950735/closure-lost-during-callback-defined-in-exec
