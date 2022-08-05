@@ -498,3 +498,9 @@ cc_binary(
     srcs = ["member_pointer_cast.cc"],
     copts = ["-std=c++17"],
 )
+
+cc_binary(
+    name = "default_arg_eval_time",
+    srcs = ["default_arg_eval_time.cc"],
+    copts = ["-std=c++17"],
+)
