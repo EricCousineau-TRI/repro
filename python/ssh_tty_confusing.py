@@ -32,7 +32,6 @@ def main():
     """)
     dumb_run(["bash", "-c", command], redirect=False)
     dumb_run(["bash", "-c", command], redirect=True)
-    user_host = os.environ["USER"] + "@localhost"
     ssh_args = [
         "ssh",
         "-tt",
@@ -40,7 +39,7 @@ def main():
         "BatchMode=yes",
         "-o",
         "LogLevel=ERROR",
-        user_host,
+        "localhost",
     ]
     dumb_run(ssh_args + [command], redirect=False)
     dumb_run(ssh_args + [command], redirect=True)
