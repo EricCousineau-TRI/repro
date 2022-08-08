@@ -504,3 +504,9 @@ cc_binary(
     srcs = ["default_arg_eval_time.cc"],
     copts = ["-std=c++17"],
 )
+
+cc_binary(
+    name = "float_to_int_nan",
+    srcs = ["float_to_int_nan.cc"],
+    copts = ["-std=c++17"],
+)
