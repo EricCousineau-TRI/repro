@@ -4,6 +4,6 @@ cc_binary(
 )
 
 cc_binary(
-    name = "chrono_nanosleep",
-    srcs = ["chrono_nanosleep.cc"],
+    name = "nanosleep_chrono",
+    srcs = ["nanosleep_chrono.cc"],
 )

@@ -4,7 +4,7 @@
 #include <chrono>
 #include <stdexcept>
 
-void sleep_high_resolution(std::chrono::nanoseconds amount) {
+void nanosleep_chrono(std::chrono::nanoseconds amount) {
   timespec amount_c{
     .tv_sec = amount.count() / std::nano::den,
     .tv_nsec = amount.count() % std::nano::den
@@ -17,8 +17,8 @@ void sleep_high_resolution(std::chrono::nanoseconds amount) {
 int main() {
   using namespace std::literals::chrono_literals;
 
-  sleep_high_resolution(50us);
-  sleep_high_resolution(50ms);
+  nanosleep_chrono(50us);
+  nanosleep_chrono(50ms);
 
   printf("finished sleep\n");
 
