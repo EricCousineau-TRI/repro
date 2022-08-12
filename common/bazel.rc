@@ -1,0 +1,16 @@
+# Disable ccache due to incompatibility with Bazel.
+build --action_env=CCACHE_DISABLE=1
+build --cxxopt=-std=c++17
+build --host_cxxopt=-std=c++17
+
+# Default to an optimized build.
+build -c opt
+
+# Default build options.
+build --strip=never
+
+# Only show warnings from local, not from externals.
+build --output_filter="^//"
+
+# Default test options.
+test --test_output=errors

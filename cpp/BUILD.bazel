@@ -154,7 +154,6 @@ cc_binary(
 cc_binary(
     name = "check_for_type",
     srcs = ["check_for_type.cc", "name_trait.h"],
-    copts = ["-std=c++17"],
 )
 
 cc_binary(
@@ -438,25 +437,21 @@ cc_binary(
 cc_binary(
     name = "scalar_functor_set",
     srcs = ["scalar_functor_set.cc"],
-    copts = ["-std=c++14"],
 )
 
 cc_binary(
     name = "lambda_recursive",
     srcs = ["lambda_recursive.cc"],
-    copts = ["-std=c++14"],
 )
 
 cc_binary(
     name = "function_or_method",
     srcs = ["function_or_method.cc"],
-    copts = ["-std=c++14"],
 )
 
 cc_binary(
     name = "map_unique_ptr",
     srcs = ["map_unique_ptr.cc"],
-    copts = ["-std=c++14"],
 )
 
 cc_binary(
@@ -466,47 +461,39 @@ cc_binary(
         ":name_trait",
         ":type_pack",
     ],
-    copts = ["-std=c++17"],
 )
 
 cc_binary(
     name = "tpl_spec_out_of_namespace",
     srcs = ["tpl_spec_out_of_namespace.cc"],
-    copts = ["-std=c++11"],
 )
 
 cc_binary(
     name = "tpl_spec_str",
     srcs = ["tpl_spec_str.cc"],
-    copts = ["-std=c++17"],
 )
 
 cc_binary(
     name = "method_cast",
     srcs = ["method_cast.cc"],
-    copts = ["-std=c++17"],
 )
 
 cc_binary(
     name = "constants",
     srcs = ["constants.cc"],
-    copts = ["-std=c++17"],
 )
 
 cc_binary(
     name = "member_pointer_cast",
     srcs = ["member_pointer_cast.cc"],
-    copts = ["-std=c++17"],
 )
 
 cc_binary(
     name = "default_arg_eval_time",
     srcs = ["default_arg_eval_time.cc"],
-    copts = ["-std=c++17"],
 )
 
 cc_binary(
     name = "float_to_int_nan",
     srcs = ["float_to_int_nan.cc"],
-    copts = ["-std=c++17"],
 )
