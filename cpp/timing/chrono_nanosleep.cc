@@ -1,4 +1,4 @@
-#include <cassert>
+#include <cstdio>
 #include <ctime>
 
 #include <chrono>
@@ -19,4 +19,8 @@ int main() {
 
   sleep_high_resolution(50us);
   sleep_high_resolution(50ms);
+
+  printf("finished sleep\n");
+
+  return 0;
 }
