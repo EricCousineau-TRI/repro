@@ -14,6 +14,9 @@ void nanosleep_chrono(std::chrono::nanoseconds amount) {
   }
 }
 
+// er... seems like at least for linux, std::this_thread::sleep_for/sleep_until
+// uses nanosleep under the hood hehe
+
 int main() {
   using namespace std::literals::chrono_literals;
 
