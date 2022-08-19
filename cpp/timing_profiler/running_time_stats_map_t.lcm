@@ -1,0 +1,11 @@
+package timing_profiler;
+
+// Variable-size map for dictating timing stats within a loop.
+struct running_time_stats_map_t {
+  // In microseconds.
+  int64_t timestamp;
+
+  int64_t count;
+  string names[count];
+  running_time_stats_t stats[count];
+}

@@ -1,0 +1,96 @@
+py_library(
+    name = "module_py",
+    srcs = ["__init__.py"],
+)
+
+cc_library(
+    name = "profiler",
+    srcs = ["profiler.cc"],
+    hdrs = ["profiler.h"],
+    deps = [
+        ":running_stats",
+        "@drake//common:type_safe_index",
+    ],
+)
+
+cc_googletest(
+    name = "profiler_test",
+    deps = [":profiler"],
+)
+
+cc_library(
+    name = "running_stats",
+    srcs = ["running_stats.cc"],
+    hdrs = ["running_stats.h"],
+    deps = ["@drake//common:essential"],
+)
+
+cc_googletest(
+    name = "running_stats_test",
+    deps = [
+        ":running_stats",
+        "@eigen",
+    ],
+)
+
+cc_library(
+    name = "profiler_lcm_stats",
+    srcs = ["profiler_lcm_stats.cc"],
+    hdrs = ["profiler_lcm_stats.h"],
+    deps = [
+        ":profiler",
+        ":running_stats",
+        ":time",
+        ":lcmtypes_cc",
+        "@lcm",
+    ],
+)
+
+py_binary(
+    name = "profiler_lcm_reset",
+    srcs = ["profiler_lcm_reset.py"],
+    deps = [
+        ":lcmtypes_py",
+        "@lcm//:lcm-python",
+    ],
+)
+
+py_library(
+    name = "running_stats_py",
+    srcs = ["running_stats.py"],
+    deps = [":module_py"],
+)
+
+py_library(
+    name = "profiler_py",
+    srcs = ["profiler.py"],
+    deps = [
+        ":module_py",
+        ":running_stats_py",
+        ":lcmtypes_py",
+    ],
+)
+
+py_test(
+    name = "running_stats_py_test",
+    deps = [":running_stats_py"],
+)
+
+py_binary(
+    name = "lcm_running_stats",
+    srcs = ["lcm_running_stats.py"],
+    deps = [
+        ":running_stats_py",
+        "//common:lcm_util_py",
+    ],
+)
+
+py_binary(
+    name = "lcm_running_stats_from_messages",
+    srcs = ["lcm_running_stats_from_messages.py"],
+    deps = [
+        ":running_stats_py",
+        "//common:lcm_util_py",
+        ":lcmtypes_py",
+    ],
+)

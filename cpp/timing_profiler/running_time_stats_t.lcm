@@ -1,0 +1,19 @@
+package timing_profiler;
+
+// A message encoding running time statistics.
+// Using notation from:
+// https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
+struct running_time_stats_t {
+  // In microseconds.
+  int64_t timestamp;
+
+  int64_t count;
+  // State for running statistics.
+  // All times reported in seconds.
+  float mean;  // Mean, μₙ
+  float m2;  // Sum of square differences, m₂ = ∑(xᵢ − μₙ)²
+  float min;
+  float max;
+  // Derived quantities (for ease of inspection).
+  float norm_stddev;  // σₙ / μₙ, or 0 if μₙ == 0
+}
