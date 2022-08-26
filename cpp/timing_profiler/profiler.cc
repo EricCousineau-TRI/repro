@@ -9,7 +9,7 @@ namespace timing_profiler {
 std::string GetTimersSummary(const LapTimersView& timers) {
   std::stringstream ss;
   ss << fmt::format(
-      "{:<25}{:>15}{:>15}{:>10}{:>15}{:>15}",
+      "{:<30}{:>15}{:>15}{:>10}{:>15}{:>15}",
       "Label",
       "Mean Time (s)",
       "Norm stddev",
@@ -20,7 +20,7 @@ std::string GetTimersSummary(const LapTimersView& timers) {
     const LapTimer& timer = *timers[i];
     const timing_profiler::RunningStats<double> stats = timer.running_stats();
     ss << fmt::format(
-        "{:<25}{:>15.7g}{:>15.7g}{:>10}{:>15.7g}{:>15.7g}",
+        "{:<30}{:>15.7g}{:>15.7g}{:>10}{:>15.7g}{:>15.7g}",
         timer.label(),
         stats.mean(),
         stats.stddev() / stats.mean(),

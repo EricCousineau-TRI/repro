@@ -1,0 +1,36 @@
++ cat /proc/cpuinfo
++ grep 'model name'
++ uniq
+model name	: Intel(R) Xeon(R) W-10855M CPU @ 2.80GHz
++ nproc
+12
++ ../bazel-bin/timing_profiler/sleep_compare --timerslack_usec=0
+Label                           Mean Time (s)    Norm stddev   Samples        Min (s)        Max (s)
+clock_nanosleep_chrono.10us      6.155163e-05     0.06735959     10000     1.5693e-05     0.00010714
+nanosleep_chrono.10us            6.154703e-05     0.04489307     10000     1.2545e-05    0.000110898
+sleep_for.10us                   6.152429e-05      0.0277393     10000      4.282e-05    0.000101524
++ ../bazel-bin/timing_profiler/sleep_compare --timerslack_usec=5
+Label                           Mean Time (s)    Norm stddev   Samples        Min (s)        Max (s)
+clock_nanosleep_chrono.10us      1.662885e-05     0.03021395     10000     1.1992e-05      5.268e-05
+nanosleep_chrono.10us            1.670888e-05     0.02190149     10000     1.2294e-05     5.1401e-05
+sleep_for.10us                   1.677988e-05      0.1819034     10000     1.3409e-05    0.000308388
++ chrt -r 20 ../bazel-bin/timing_profiler/sleep_compare --timerslack_usec=0
+Label                           Mean Time (s)    Norm stddev   Samples        Min (s)        Max (s)
+clock_nanosleep_chrono.10us      1.158078e-05     0.03994079     10000     1.1361e-05     2.5051e-05
+nanosleep_chrono.10us            1.159437e-05     0.02494014     10000     1.1375e-05     2.5088e-05
+sleep_for.10us                   1.159451e-05    0.006064998     10000     1.1372e-05     1.2993e-05
++ chrt -r 20 ../bazel-bin/timing_profiler/sleep_compare --timerslack_usec=5
+Label                           Mean Time (s)    Norm stddev   Samples        Min (s)        Max (s)
+clock_nanosleep_chrono.10us      1.152882e-05     0.03533696     10000     1.1302e-05     2.4676e-05
+nanosleep_chrono.10us            1.161291e-05     0.02919406     10000     1.1343e-05     2.3974e-05
+sleep_for.10us                   1.157715e-05    0.005794959     10000     1.1357e-05     1.3114e-05
++ taskset -c 0,6 chrt -r 20 ../bazel-bin/timing_profiler/sleep_compare --timerslack_usec=0
+Label                           Mean Time (s)    Norm stddev   Samples        Min (s)        Max (s)
+clock_nanosleep_chrono.10us      1.156949e-05      0.0438143     10000     1.1309e-05     3.1929e-05
+nanosleep_chrono.10us            1.169645e-05     0.07059693     10000     1.1387e-05     3.5644e-05
+sleep_for.10us                   1.159519e-05     0.02693721     10000     1.1347e-05     2.5545e-05
++ taskset -c 0,6 chrt -r 20 ../bazel-bin/timing_profiler/sleep_compare --timerslack_usec=5
+Label                           Mean Time (s)    Norm stddev   Samples        Min (s)        Max (s)
+clock_nanosleep_chrono.10us      1.154056e-05     0.03575396     10000     1.1295e-05     2.4889e-05
+nanosleep_chrono.10us            1.159295e-05     0.01860644     10000     1.1356e-05     2.4816e-05
+sleep_for.10us                   1.159118e-05     0.01267867     10000     1.1393e-05     2.0814e-05

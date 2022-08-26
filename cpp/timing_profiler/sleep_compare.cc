@@ -6,69 +6,77 @@
 #include <stdexcept>
 #include <thread>
 
+#include <gflags/gflags.h>
+
+#include "drake/common/drake_assert.h"
 #include "timing_profiler/profiler.h"
+
+DEFINE_int32(count, 10000, "Number of iterations to measure");
+DEFINE_int32(warmup_count, 1000, "Number of warmup iterations");
+DEFINE_int32(usec, 10, "Nubmer of microseconds to sleep");
+DEFINE_int32(timerslack_usec, 0, "Use prctrl for timerslack. Unused if 0.");
 
 namespace timing_profiler {
 namespace {
 
-// Ah derp: https://stackoverflow.com/a/18086173/7829525
-inline void nanosleep_chrono(std::chrono::nanoseconds amount) {
-  timespec amount_c{
+timespec to_timespec(std::chrono::nanoseconds amount) {
+  return {
     .tv_sec = amount.count() / std::nano::den,
     .tv_nsec = amount.count() % std::nano::den
   };
-  if (nanosleep(&amount_c, nullptr) != 0) {
-    throw std::runtime_error("bad sleep");
-  }
+}
+
+// Ah derp: https://stackoverflow.com/a/18086173/7829525
+inline void nanosleep_chrono(std::chrono::nanoseconds amount) {
+  timespec amount_c = to_timespec(amount);
+  int result = nanosleep(&amount_c, nullptr);
+  DRAKE_DEMAND(result == 0);
+}
+
+inline void clock_nanosleep_chrono(std::chrono::nanoseconds amount) {
+  using clock = std::chrono::steady_clock;
+  auto t_sleep = clock::now() + amount;
+  timespec amount_c = to_timespec(t_sleep.time_since_epoch());
+  int result = clock_nanosleep(
+      CLOCK_MONOTONIC, TIMER_ABSTIME, &amount_c, nullptr);
+  DRAKE_DEMAND(result == 0);
 }
 
 void sleep_for(std::chrono::nanoseconds amount) {
   std::this_thread::sleep_for(amount);
 }
 
-void sleep_chunks(std::chrono::nanoseconds amount) {
-  using clock = std::chrono::steady_clock;
-  using namespace std::literals::chrono_literals;
-
-  auto t_next = clock::now() + amount;
-  while (clock::now() < t_next) {
-    sleep_for(10us);
-  }
-}
-
 int DoMain() {
-  // https://stackoverflow.com/a/60153370/7829525
-  prctl(PR_SET_TIMERSLACK, 5000U, 0, 0, 0);
+  if (FLAGS_timerslack_usec > 0) {
+    const uint64_t timerslack_nsec = 1000 * FLAGS_timerslack_usec;
+    // https://stackoverflow.com/a/60153370/7829525
+    prctl(PR_SET_TIMERSLACK, timerslack_nsec, 0, 0, 0);
+  }
 
-  const int count = 100000;
   using namespace std::literals::chrono_literals;
 
   Profiler profiler;
 
-  auto check_sleep_for = [&](std::string name, auto sleep_func) {
-    LapTimer& timer_10us = profiler.AddTimer(name + ".10us");
-    // LapTimer& timer_100us = profiler.AddTimer(name + "."100us");
-    // LapTimer& timer_1ms = profiler.AddTimer(name + "."1ms");
+  auto benchmark = [&](std::string name, auto sleep_func) {
+    LapTimer& timer =
+        profiler.AddTimer(name + "." + std::to_string(FLAGS_usec) + "us");
+    const auto amount = 1us * FLAGS_usec;
 
-    for (int i = 0; i < count; ++i) {
-      timer_10us.start();
-      sleep_func(10us);
-      timer_10us.stop();
+    for (int i = 0; i < FLAGS_warmup_count; ++i) {
+      sleep_func(amount);
+    }
 
-      // timer_100us.start();
-      // sleep_func(100us);
-      // timer_100us.stop();
-
-      // timer_1ms.start();
-      // sleep_func(1ms);
-      // timer_1ms.stop();
+    for (int i = 0; i < FLAGS_count; ++i) {
+      timer.start();
+      sleep_func(amount);
+      timer.stop();
     }
   };
 
-  check_sleep_for("sleep_for", sleep_for);
-  check_sleep_for("nanosleep_chrono", nanosleep_chrono);
-  // check_sleep_for("clock_nanosleep_chrono", clock_nanosleep_chrono);
-  // check_sleep_for("sleep_chunks", sleep_chunks);
+  // ordering here matters! first will generally perform worst.
+  benchmark("clock_nanosleep_chrono", clock_nanosleep_chrono);
+  benchmark("nanosleep_chrono", nanosleep_chrono);
+  benchmark("sleep_for", sleep_for);
 
   std::cout << GetTimersSummary(profiler.get_timers()) << std::endl;
 
@@ -78,6 +86,7 @@ int DoMain() {
 }  // namespace
 }  // namespace timing_profiler
 
-int main() {
+int main(int argc, char** argv) {
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
   return timing_profiler::DoMain();
 }

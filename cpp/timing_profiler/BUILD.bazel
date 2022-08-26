@@ -23,7 +23,10 @@ cc_googletest(
 cc_binary(
     name = "sleep_compare",
     srcs = ["sleep_compare.cc"],
-    deps = [":profiler"],
+    deps = [
+        ":profiler",
+        "@gflags",
+    ],
 )
 
 cc_library(
