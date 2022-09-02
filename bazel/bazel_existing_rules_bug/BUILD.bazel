@@ -1,0 +1,11 @@
+load(":analysis.bzl", "print_rule_deps")
+
+cc_library(
+    name = "workspace_lib",
+    deps = [
+        "@a//:a_lib",
+        "@b//:b_lib",
+    ],
+)
+
+print_rule_deps()

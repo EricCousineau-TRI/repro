@@ -1,0 +1,5 @@
+workspace(name = "workspace")
+
+load(":repositories.bzl", "make_a", "make_b")
+make_a(name = "a")
+make_b(name = "b")
