@@ -1,0 +1,4 @@
+# Empty pkg.
+
+load(":defs.bzl", "test_stuff")
+test_stuff()
