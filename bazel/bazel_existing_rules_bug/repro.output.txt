@@ -1,8 +1,9 @@
-Build label: 5.1.0
+Starting local Bazel server and connecting to it...
+Build label: 5.3.0
 Build target: bazel-out/k8-opt/bin/src/main/java/com/google/devtools/build/lib/bazel/BazelServer_deploy.jar
-Build time: Thu Mar 24 14:02:30 2022 (1648130550)
-Build timestamp: 1648130550
-Build timestamp as int: 1648130550
+Build time: Tue Aug 23 00:45:53 2022 (1661215553)
+Build timestamp: 1661215553
+Build timestamp as int: 1661215553
 DEBUG: ${PWD}/analysis.bzl:5:14: workspace_lib: (":a_lib", ":b_lib")
 DEBUG: ${PWD}/analysis.bzl:5:14: b_lib: (":a_lib",)
 DEBUG: ${PWD}/analysis.bzl:5:14: a_lib: ()
