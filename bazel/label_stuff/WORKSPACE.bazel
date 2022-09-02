@@ -1,1 +1,4 @@
 workspace(name = "test")
+
+load("//:defs.bzl", "make_repo")
+make_repo(name = "repo")

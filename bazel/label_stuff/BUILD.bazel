@@ -1,4 +1,3 @@
-# Empty pkg.
-
-load(":defs.bzl", "test_stuff")
-test_stuff()
+load("//:defs.bzl", "test_labels", "test_scopes")
+# test_labels()
+test_scopes("In //")

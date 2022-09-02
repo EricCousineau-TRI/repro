@@ -1,0 +1,2 @@
+load("//:defs.bzl", "test_scopes")
+test_scopes("In //pkg")
