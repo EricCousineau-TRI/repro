@@ -29,9 +29,14 @@ $ bazel build :main_via_object_files
 Can we avoid any object files that may come in through dependencies? (e.g.
 dreaded diamond dependency thing)
 
-```
+```sh
 $ bazel run :ex2_main -- libex2_b_bad.so.1 libex2_c_bad.so.1
-# Fails
+wrapped_b: 1
+wrapped_c: 1
+FAIL! Separate memory for counter() -> ODR violation!
 
 $ bazel run :ex2_main -- libex2_b_good.so.1 libex2_c_good.so.1
+wrapped_b: 1
+wrapped_c: 2
+Success!
 ```
