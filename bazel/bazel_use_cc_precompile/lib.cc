@@ -1,0 +1,3 @@
+#warning "hai"
+
+void func() {}

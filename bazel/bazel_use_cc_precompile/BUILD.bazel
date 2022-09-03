@@ -1,0 +1,10 @@
+cc_library(
+    name = "lib_1",
+    srcs = ["lib.cc"],
+)
+
+cc_library(
+    name = "lib_2",
+    srcs = ["lib.cc"],
+)
+
