@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <string>
 
-#include "load_symbol.h"
+#include "ex2_load_symbol.h"
 
 int main(int argc, char** argv) {
   assert(argc == 3);

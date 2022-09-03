@@ -7,43 +7,43 @@ load(
 # Experiment 1
 
 cc_library(
-    name = "lib_1",
-    srcs = ["lib.cc"],
+    name = "ex1_lib",
+    srcs = ["ex1_lib.cc"],
 )
 
 extract_cc_object_files(
-    name = "lib_1_object_files",
-    deps = [":lib_1"],
+    name = "ex1_lib_object_files",
+    deps = [":ex1_lib"],
 )
 
 filegroup(
-    name = "data",
-    # just so we trigger build
-    srcs = [":lib_1"],
+    name = "ex1_data",
+    # just so we trigger build of original.
+    srcs = [":ex1_lib"],
 )
 
 cc_library(
-    name = "lib_2_via_recompile",
-    srcs = ["lib.cc"],
-    data = [":data"],
+    name = "ex1_lib_again_via_recompile",
+    srcs = ["ex1_lib.cc"],
+    data = [":ex1_data"],
 )
 
 cc_binary(
-    name = "main_via_recompile",
-    deps = [":lib_2_via_recompile"],
-    srcs = ["main.cc"],
+    name = "ex1_main_via_recompile",
+    deps = [":ex1_lib_again_via_recompile"],
+    srcs = ["ex1_main.cc"],
 )
 
 cc_library(
-    name = "lib_2_via_object_files",
-    srcs = [":lib_1_object_files"],
-    data = [":data"],
+    name = "ex1_lib_again_via_object_files",
+    srcs = [":ex1_lib_object_files"],
+    data = [":ex1_data"],
 )
 
 cc_binary(
-    name = "main_via_object_files",
-    deps = [":lib_2_via_object_files"],
-    srcs = ["main.cc"],
+    name = "ex1_main_via_object_files",
+    deps = [":ex1_lib_again_via_object_files"],
+    srcs = ["ex1_main.cc"],
 )
 
 # Experiment 2
@@ -115,17 +115,17 @@ cc_shared_library(
 # - Test fixture.
 
 cc_library(
-    name = "load_symbol",
+    name = "ex2_load_symbol",
     deps = ["@bazel_tools//tools/cpp/runfiles"],
-    srcs = ["load_symbol.cc"],
-    hdrs = ["load_symbol.h"],
+    srcs = ["ex2_load_symbol.cc"],
+    hdrs = ["ex2_load_symbol.h"],
     linkopts = ["-ldl"],
 )
 
 cc_binary(
     name = "ex2_main",
     srcs = ["ex2_main.cc"],
-    deps = [":load_symbol"],
+    deps = [":ex2_load_symbol"],
     data = [
         ":ex2_b_bad",
         ":ex2_c_bad",

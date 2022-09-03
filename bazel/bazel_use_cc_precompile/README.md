@@ -17,10 +17,10 @@ Answer: yes. yay!
 
 ```sh
 $ bazel clean
-$ bazel build :main_via_recompile
+$ bazel build :ex1_main_via_recompile
 # Should see two warnings indicating two recompilations.
 $ bazel clean
-$ bazel build :main_via_object_files
+$ bazel build :ex1_main_via_object_files
 # Should see only one warning.
 ```
 
@@ -28,6 +28,8 @@ $ bazel build :main_via_object_files
 
 Can we avoid any object files that may come in through dependencies? (e.g.
 dreaded diamond dependency thing)
+
+Answer: double yes. double yay!
 
 ```sh
 $ bazel run :ex2_main -- libex2_b_bad.so.1 libex2_c_bad.so.1
