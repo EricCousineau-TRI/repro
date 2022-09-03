@@ -40,6 +40,6 @@ def cc_shared_library(
         name = name,
         hdrs = hdrs,
         srcs = [solib],
-        deps = deps,
+        # deps = deps,
         **kwargs
     )

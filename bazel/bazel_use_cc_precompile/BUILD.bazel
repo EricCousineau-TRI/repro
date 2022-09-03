@@ -54,24 +54,76 @@ cc_library(
 )
 
 cc_shared_library(
+    name = "ex2_a_shared",
+    srcs = ["ex2_a.cc"],
+)
+
+cc_library(
     name = "ex2_b",
     srcs = ["ex2_b.cc"],
     deps = [":ex2_a"],
 )
 
-cc_shared_library(
+cc_library(
     name = "ex2_c",
     srcs = ["ex2_c.cc"],
     deps = [":ex2_a"],
 )
 
+#  - Case 1: ODR Violation. B and C link against static A.
+# dlopen shows that they have separate memory.
+cc_shared_library(
+    name = "ex2_b_bad",
+    deps = [":ex2_b"],
+)
+
+cc_shared_library(
+    name = "ex2_c_bad",
+    srcs = ["ex2_c"],
+)
+
+# # - Case 2: Extract subset of object files. Motivate effective diamond, but
+# # define extraction s.t. we can replace it w/ shared object.
+
+# extract_cc_object_files(
+#     name = "ex2_b_object_files",
+#     deps = [":ex2_b"],
+# )
+
+# cc_shared_library(
+#     name = "ex2_b_good",
+#     srcs = ["ex2_b_object_files"],
+#     deps = [":ex2_a_shared"],
+# )
+
+# extract_cc_object_files(
+#     name = "ex2_c_object_files",
+#     deps = [":ex2_c"],
+# )
+
+# cc_shared_library(
+#     name = "ex2_c_good",
+#     srcs = ["ex2_c_object_files"],
+#     deps = [":ex2_a_shared"],
+# )
+
+# - Text fixture.
+
+cc_library(
+    name = "load_symbol",
+    deps = ["@bazel_tools//tools/cpp/runfiles"],
+    srcs = ["load_symbol.cc"],
+    hdrs = ["load_symbol.h"],
+    linkopts = ["-ldl"],
+)
+
 cc_binary(
     name = "ex2_main",
     srcs = ["ex2_main.cc"],
-    deps = ["@bazel_tools//tools/cpp/runfiles"],
+    deps = [":load_symbol"],
     data = [
-        ":ex2_b",
-        ":ex2_c",
+        ":ex2_b_bad",
+        ":ex2_c_bad",
     ],
-    linkopts = ["-ldl"],
 )
+

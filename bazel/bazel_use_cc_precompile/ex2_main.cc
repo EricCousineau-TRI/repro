@@ -1,47 +1,27 @@
-#include <stdio.h>
-#include <dlfcn.h>
-#include <assert.h>
-
-#include <filesystem>
+#include <cassert>
+#include <cstdio>
 #include <string>
 
-#include "tools/cpp/runfiles/runfiles.h"
-using bazel::tools::cpp::runfiles::Runfiles;
+#include "load_symbol.h"
 
-typedef int (*func_t)();
-func_t wrapped_b = nullptr;
-func_t wrapped_c = nullptr;
+int main(int argc, char** argv) {
+  assert(argc == 3);
+  const std::string base_b = argv[1];
+  const std::string base_c = argv[2];
+  func_t wrapped_b = LoadSymbol(
+      Rlocation("workspace/" + base_b), "wrapped_b");
+  func_t wrapped_c = LoadSymbol(
+      Rlocation("workspace/" + base_c), "wrapped_c");
 
-func_t load_func(
-    const std::string& path,
-    const std::string& func_name) {
-  void* lib = dlopen(path.c_str(), RTLD_LAZY);
-  assert(lib != nullptr);
-  func_t func = (func_t)dlsym(lib, func_name.c_str());
-  assert(dlerror() == nullptr);
-  return func;
-}
-
-void init() {
-  const std::string& argv0 = std::filesystem::read_symlink({
-        "/proc/self/exe"}).string();
-  std::unique_ptr<Runfiles> runfiles(Runfiles::Create(argv0));
-  assert(runfiles != nullptr);
-  wrapped_b = load_func(
-      runfiles->Rlocation("workspace/libex2_b.so.1"), "wrapped_b");
-  wrapped_c = load_func(
-    runfiles->Rlocation("workspace/libex2_c.so.1"), "wrapped_c");
-}
-
-void call() {
-  printf("wrapped_b: %d\n", (*wrapped_b)());
-  printf("wrapped_c: %d\n", (*wrapped_c)());
-  printf("\n");
-}
-
-int main() {
-  init();
-  call();
-  call();
-  return 0;
+  const int b = (*wrapped_b)();
+  const int c = (*wrapped_c)();
+  printf("wrapped_b: %d\n", b);
+  printf("wrapped_c: %d\n", c);
+  if (b == c) {
+    printf("FAIL! Separate memory for counter() -> ODR violation!\n");
+    return 1;
+  } else {
+    printf("Success!\n");
+    return 0;
+  }
 }
