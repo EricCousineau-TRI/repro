@@ -1,3 +1,3 @@
 #warning "hai"
 
-void func() {}
+int func() { return 3; }

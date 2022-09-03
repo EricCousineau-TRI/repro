@@ -1,10 +1,24 @@
+load(":defs.bzl", "extract_cc_object_files")
+
 cc_library(
     name = "lib_1",
     srcs = ["lib.cc"],
 )
 
-cc_library(
-    name = "lib_2",
-    srcs = ["lib.cc"],
+extract_cc_object_files(
+    name = "lib_1_object_files",
+    deps = [":lib_1"],
 )
 
+cc_library(
+    name = "lib_2",
+    # srcs = ["lib.cc"],
+    srcs = [":lib_1_object_files"],
+)
+
+cc_binary(
+    name = "main",
+    data = [":lib_1"],  # just so we trigger build
+    srcs = ["main.cc"],
+    deps = [":lib_2"],
+)
