@@ -1,0 +1,5 @@
+# Disable caching so we can see recompilation after `bazel clean`.
+fetch --repository_cache ''
+fetch --disk_cache ''
+build --repository_cache ''
+build --disk_cache ''

@@ -10,15 +10,32 @@ extract_cc_object_files(
     deps = [":lib_1"],
 )
 
+filegroup(
+    name = "data",
+    # just so we trigger build
+    srcs = [":lib_1"],
+)
+
 cc_library(
-    name = "lib_2",
-    # srcs = ["lib.cc"],
-    srcs = [":lib_1_object_files"],
+    name = "lib_2_via_recompile",
+    srcs = ["lib.cc"],
+    data = [":data"],
 )
 
 cc_binary(
-    name = "main",
-    data = [":lib_1"],  # just so we trigger build
+    name = "main_via_recompile",
+    deps = [":lib_2_via_recompile"],
     srcs = ["main.cc"],
-    deps = [":lib_2"],
+)
+
+cc_library(
+    name = "lib_2_via_object_files",
+    srcs = [":lib_1_object_files"],
+    data = [":data"],
+)
+
+cc_binary(
+    name = "main_via_object_files",
+    deps = [":lib_2_via_object_files"],
+    srcs = ["main.cc"],
 )
