@@ -20,3 +20,26 @@ extract_cc_object_files = rule(
         "deps": attr.label_list(),
     },
 )
+
+def cc_shared_library(
+        name,
+        hdrs = [],
+        srcs = [],
+        deps = [],
+        **kwargs):
+    solib = "lib{}.so.1".format(name)
+    native.cc_binary(
+        name = solib,
+        srcs = srcs + hdrs,
+        linkshared = 1,
+        linkstatic = 1,
+        deps = deps,
+        **kwargs
+    )
+    native.cc_library(
+        name = name,
+        hdrs = hdrs,
+        srcs = [solib],
+        deps = deps,
+        **kwargs
+    )

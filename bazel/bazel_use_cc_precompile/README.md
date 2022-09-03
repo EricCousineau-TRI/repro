@@ -28,3 +28,4 @@ $ bazel build :main_via_object_files
 
 Can we avoid any object files that may come in through dependencies? (e.g.
 dreaded diamond dependency thing)
+

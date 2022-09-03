@@ -3,3 +3,7 @@ fetch --repository_cache ''
 fetch --disk_cache ''
 build --repository_cache ''
 build --disk_cache ''
+
+# C++ opts.
+build --cxxopt=-std=c++17
+build --distinct_host_configuration=false

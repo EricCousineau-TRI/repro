@@ -1,4 +1,10 @@
-load(":defs.bzl", "extract_cc_object_files")
+load(
+    ":defs.bzl",
+    "extract_cc_object_files",
+    "cc_shared_library",
+)
+
+# Experiment 1
 
 cc_library(
     name = "lib_1",
@@ -38,4 +44,34 @@ cc_binary(
     name = "main_via_object_files",
     deps = [":lib_2_via_object_files"],
     srcs = ["main.cc"],
+)
+
+# Experiment 2
+
+cc_library(
+    name = "ex2_a",
+    srcs = ["ex2_a.cc"],
+)
+
+cc_shared_library(
+    name = "ex2_b",
+    srcs = ["ex2_b.cc"],
+    deps = [":ex2_a"],
+)
+
+cc_shared_library(
+    name = "ex2_c",
+    srcs = ["ex2_c.cc"],
+    deps = [":ex2_a"],
+)
+
+cc_binary(
+    name = "ex2_main",
+    srcs = ["ex2_main.cc"],
+    deps = ["@bazel_tools//tools/cpp/runfiles"],
+    data = [
+        ":ex2_b",
+        ":ex2_c",
+    ],
+    linkopts = ["-ldl"],
 )
