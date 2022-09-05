@@ -6,7 +6,7 @@ bazel-test() {
     # shift
     # targets="$@"
 
-    echo "$ bazel test $@"
+    echo "+ bazel test $@"
     bazel test "$@" \
         2>&1 \
         | grep '//.*FAILED' \
@@ -19,6 +19,9 @@ bazel-test //tests/...
 bazel-test //tests/... --test_tag_filters=a
 bazel-test //tests/... --test_tag_filters=-b
 
-bazel-test //suites:all_tests
-bazel-test //suites:all_tests --test_tag_filters=a
-bazel-test //suites:all_tests --test_tag_filters=-b
+bazel-test //suites:no_tags
+bazel-test //suites:no_tags --test_tag_filters=a
+bazel-test //suites:no_tags --test_tag_filters=-b
+
+bazel-test //suites:a_tag
+bazel-test //suites:minus_b_tag

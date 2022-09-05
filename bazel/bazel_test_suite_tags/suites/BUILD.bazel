@@ -1,8 +1,22 @@
+TESTS = [
+    "//tests:a_test",
+    "//tests:b_test",
+    "//tests:c_test",
+]
+
 test_suite(
-    name = "all_tests",
-    tests = [
-        "//tests:a_test",
-        "//tests:b_test",
-        "//tests:c_test",
-    ],
+    name = "no_tags",
+    tests = TESTS,
+)
+
+test_suite(
+    name = "a_tag",
+    tests = TESTS,
+    tags = ["a"],
+)
+
+test_suite(
+    name = "minus_b_tag",
+    tests = TESTS,
+    tags = ["-b"],
 )
