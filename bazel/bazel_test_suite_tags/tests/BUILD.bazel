@@ -1,0 +1,17 @@
+sh_test(
+    name = "a_test",
+    srcs = ["fail.sh"],
+    tags = ["a"],
+)
+
+sh_test(
+    name = "b_test",
+    srcs = ["fail.sh"],
+    tags = ["b"],
+)
+
+sh_test(
+    name = "c_test",
+    srcs = ["fail.sh"],
+    tags = ["c"],
+)
