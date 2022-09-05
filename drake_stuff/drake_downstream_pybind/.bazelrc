@@ -1,0 +1,6 @@
+build --cxxopt=-std=c++17
+build --distinct_host_configuration=false
+build -c opt
+
+# Default test options.
+test --test_output=errors

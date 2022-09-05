@@ -1,0 +1,25 @@
+load(
+    "//tools:anzu_pybind.bzl",
+    "anzu_cc_shared_library",
+)
+
+cc_library(
+    name = "c",
+    srcs = ["c.cc"],
+    hdrs = ["c.h"],
+    deps = [
+        "//common:b",
+        "@drake//common:essential",
+    ],
+)
+
+anzu_cc_shared_library(
+    name = "shared_library",
+    package_deps = [
+        ":c",
+    ],
+    deps = [
+        "//common:shared_library",
+        "@drake//:drake_shared_library",
+    ],
+)

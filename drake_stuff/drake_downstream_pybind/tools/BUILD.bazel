@@ -1,0 +1,5 @@
+cc_library(
+    name = "extract_cc_empty",
+    srcs = ["extract_cc_empty.cc"],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,12 @@
+workspace(name = "example")
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "drake",
+    urls = ["https://github.com/RobotLocomotion/drake/archive/v1.7.0.tar.gz"],
+    sha256 = "98ed3c672b5a8dad97f598f1bc3d364b0b8851b819b26e1d48d530e5a1b218d2",
+    strip_prefix = "drake-1.7.0",
+)
+
+load("@drake//tools/workspace:default.bzl", "add_default_workspace")
+add_default_workspace()

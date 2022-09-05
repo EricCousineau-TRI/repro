@@ -1,0 +1,64 @@
+load(
+    "//tools:anzu_pybind.bzl",
+    "anzu_cc_shared_library",
+    "anzu_pybind_py_library",
+)
+
+package(
+    default_visibility = ["//:__subpackages__"],
+)
+
+py_library(
+    name = "module_py",
+    srcs = ["__init__.py"],
+    deps = ["//:module_py"],
+)
+
+cc_library(
+    name = "a",
+    srcs = ["a.cc"],
+    hdrs = ["a.h"],
+    deps = [
+        "@drake//common:essential",
+    ],
+)
+
+cc_library(
+    name = "b",
+    srcs = ["b.cc"],
+    hdrs = ["b.h"],
+    deps = [
+        ":a",
+        "@drake//common:essential",
+    ],
+)
+
+anzu_cc_shared_library(
+    name = "shared_library",
+    package_deps = [
+        ":a",
+        ":b",
+    ],
+    deps = [
+        "@drake//:drake_shared_library",
+    ],
+)
+
+anzu_pybind_py_library(
+    name = "cc_py",
+    cc_deps = [
+        ":shared_library",
+    ],
+    cc_so_name = "cc",
+    cc_srcs = ["cc_py.cc"],
+    py_deps = [
+        ":module_py",
+        "@drake//bindings/pydrake",
+    ],
+)
+
+py_test(
+    name = "cc_py_test",
+    srcs = ["test/cc_py_test.py"],
+    deps = [":cc_py"],
+)
