@@ -36,10 +36,14 @@ def _my_rule_impl(ctx):
     print(lib_b_via_map)
     print(lib_a_via_map)
 
-    lib_b[MyAspectInfo]
-    # Fails here.
-    lib_b_via_map[MyAspectInfo]
-    lib_a_via_map[MyAspectInfo]
+    check_providers(lib_b)
+    # Fails here, specifically on MyAspectInfo.
+    check_providers(lib_b_via_map)
+    check_providers(lib_a_via_map)
+
+def check_providers(target):
+    target[CcInfo]
+    target[MyAspectInfo]
 
 my_rule = rule(
     implementation = _my_rule_impl,
