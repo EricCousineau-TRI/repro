@@ -21,6 +21,17 @@ my_aspect = aspect(
     attr_aspects = ["deps"],
 )
 
+OtherAspectInfo = provider(fields = ["meh"])
+
+def _other_aspect_impl(target, ctx):
+    return [
+        OtherAspectInfo(meh = None)
+    ]
+
+other_aspect = aspect(
+    implementation = _other_aspect_impl,
+)
+
 def demand(good, msg = ""):
     if not good:
         fail(msg)
@@ -46,13 +57,17 @@ def _my_rule_impl(ctx):
 def check_providers(target):
     target[CcInfo]
     target[MyAspectInfo]
+    # This doesn't work :/
+    # Would need to couple using `aspect(required_aspect_providers)`, which
+    # makes things less ideal.
+    target[OtherAspectInfo]
 
 _my_rule = rule(
     implementation = _my_rule_impl,
     attrs = {
         "deps": attr.label_list(
             providers = [CcInfo],
-            aspects = [my_aspect],
+            aspects = [my_aspect, other_aspect],
         ),
     },
 )
