@@ -1,0 +1,8 @@
+test_suite(
+    name = "all_tests",
+    tests = [
+        "//tests:a_test",
+        "//tests:b_test",
+        "//tests:c_test",
+    ],
+)
