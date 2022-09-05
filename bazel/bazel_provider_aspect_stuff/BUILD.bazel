@@ -1,0 +1,15 @@
+load(":defs.bzl", "my_rule")
+
+cc_library(
+    name = "lib_a",
+)
+
+cc_library(
+    name = "lib_b",
+    deps = [":lib_a"],
+)
+
+my_rule(
+    name = "lib_b_rule",
+    deps = [":lib_b"],
+)
