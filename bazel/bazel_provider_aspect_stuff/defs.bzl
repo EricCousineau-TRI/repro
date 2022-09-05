@@ -1,19 +1,15 @@
-MyAspectInfo = provider(fields = ["dep_label_to_target"])
+MyAspectInfo = provider(fields = ["dep_label_to_info"])
 
 def _my_aspect_impl(target, ctx):
     deps = ctx.rule.attr.deps
 
-    dep_label_to_target = {}
+    dep_label_to_info = {}
     for dep in deps:
         info = dep[MyAspectInfo]
-        dep_label_to_target.update(info.dep_label_to_target)
-        # this *does* have the info we want.
-        dep_label_to_target[dep.label] = dep
-
-    # this does not yet have MyAspectInfo
-    # dep_label_to_target[target.label] = target
+        dep_label_to_info[dep.label] = info
+        dep_label_to_info.update(info.dep_label_to_info)
     return [
-        MyAspectInfo(dep_label_to_target = dep_label_to_target)
+        MyAspectInfo(dep_label_to_info = dep_label_to_info)
     ]
 
 my_aspect = aspect(
@@ -42,19 +38,20 @@ def _my_rule_impl(ctx):
     # see if we can reach into `:lib_a` aspects via `:lib_b`.
     (lib_b,) = ctx.attr.deps
     demand(lib_b.label == lib_b_label)
-    label_to_target = dict(lib_b[MyAspectInfo].dep_label_to_target)
-    label_to_target[lib_b.label] = lib_b
+    info = lib_b[MyAspectInfo]
+    label_to_info = dict(info.dep_label_to_info)
+    label_to_info[lib_b.label] = info
 
-    lib_a_via_map = label_to_target[lib_a_label]
-    lib_b_via_map = label_to_target[lib_b_label]
-    print(lib_b)
+    lib_a_via_map = label_to_info[lib_a_label]
+    lib_b_via_map = label_to_info[lib_b_label]
+    # print(lib_b)
     print(lib_b_via_map)
     print(lib_a_via_map)
 
-    check_providers(lib_b)
-    # Fails here, specifically on MyAspectInfo.
-    check_providers(lib_b_via_map)
-    check_providers(lib_a_via_map)
+    # check_providers(lib_b)
+    # # Fails here, specifically on MyAspectInfo.
+    # check_providers(lib_b_via_map)
+    # check_providers(lib_a_via_map)
 
 def check_providers(target):
     target[CcInfo]
