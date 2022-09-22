@@ -8,20 +8,23 @@ https://drake.mit.edu/from_binary.html#stable-releases
 git clone https://github.com/sloretz/apptainer-ros
 
 # build *.sif
-apptainer build --fakeroot repro.sif \
+base=jammy-ros-humble-desktop
+apptainer build --fakeroot ${base}.sif \
     ./apptainer-ros/jammy-ros-humble-desktop/Apptainer
 # generate writeable / persistent sandbox
-apptainre build --sandbox repro.sif.sandbox repro.sif
+apptainre build --sandbox ${base}.sif.sandbox ${base}.sif
 
 # execute with minimal containment
 # - as root
-apptainer exec \
+apptainer --silent exec \
     --fakeroot --nv --writable \
-    repro.sif.sandbox bash
+    --pwd ${PWD} \
+    jammy-ros-humble-desktop.sif.sandbox bash
 # - as user
-apptainer exec \
+apptainer --silent exec \
     --nv --writable \
-    repro.sif.sandbox bash
+    --pwd ${PWD} \
+    jammy-ros-humble-desktop.sif.sandbox bash
 ```
 
 ### workarounds
@@ -35,6 +38,6 @@ alias sudo=""  # pty failure?!
 
 as user
 ```sh
-export PS1="(a) ${PS1}"
+
 # sudo fails tho
 ```
