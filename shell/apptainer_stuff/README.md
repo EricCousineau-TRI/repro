@@ -1,6 +1,5 @@
 https://gist.github.com/EricCousineau-TRI/df9777773c6a6c07c06ddef2f4f82fa3
 
-https://gist.github.com/sloretz/074541edfe098c56ff42836118d94a8d
 but to install Drake, just do binary
 https://drake.mit.edu/from_binary.html#stable-releases
 
@@ -40,4 +39,28 @@ as user
 ```sh
 
 # sudo fails tho
+```
+
+### drake-ros specifics
+
+https://gist.github.com/sloretz/074541edfe098c56ff42836118d94a8d
+
+```sh
+# as root
+mkdir /opt/drake
+tar -xvzf ~/Downloads/drake-20220822-jammy.tar.gz -C /opt/drake --strip-components=1
+
+/opt/drake/share/drake/setup/install_prereqs
+
+cd .../ros_ws
+mkdir src
+ln -s .../drake-ros ./src/
+
+source /opt/ros/humble/setup.bash
+rosdep update
+rosdep install --from-paths src -ryi
+
+# as user
+source /opt/ros/humble/setup.bash
+colcon build --packages-up-to drake_ros_examples
 ```
