@@ -26,6 +26,13 @@ apptainer --silent exec \
     jammy-ros-humble-desktop.sif.sandbox bash
 ```
 
+or using `bash_extra.sh` in whatevs dir
+
+```sh
+apptainer-ros-jammy --fakeroot
+apptainer-ros-jammy
+```
+
 ### workarounds
 
 as root
