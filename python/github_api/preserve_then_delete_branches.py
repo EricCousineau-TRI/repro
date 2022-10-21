@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+"""
+Preserves repo branches by opening a PR against, them, closing PR, then deleting
+said branch.
+
+Example:
+    ./preserve_then_delete_branches.py --repo EricCousineau-TRI/test_github_api
+"""
+
 import argparse
 import os
 import subprocess
@@ -124,6 +132,8 @@ def main():
         for branch in branches_to_delete:
             # TODO(eric.cousineau): How to use github API?
             shell(f"git push origin :{branch.name}")
+
+    print("[ Done ]")
 
 
 assert __name__ == "__main__"

@@ -15,8 +15,8 @@ def main():
     args = parser.parse_args()
 
     gh = base.login(args)
-
-    
+    assert False
+    # TODO: Fill out.
 
 
 assert __name__ == "__main__"
