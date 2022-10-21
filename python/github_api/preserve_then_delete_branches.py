@@ -5,9 +5,9 @@ import subprocess
 import base
 
 
-def shell(cmd):
+def shell(cmd, *, check=True, shell=True):
     print(f"+ {cmd}")
-    subprocess.run(cmd, shell=True, check=True)
+    return subprocess.run(cmd, shell=shell, check=check)
 
 
 def is_same_repo(a, b):
@@ -36,29 +36,14 @@ def main():
     owner, repo_name = base.parse_repo(args.repo)
     repo = gh.repository(owner, repo_name)
 
+    skip_branches = {"main", "master"}
+
     branch_has_pr = []
     prs = repo.pull_requests(state="all")
     for pr in prs:
         if is_same_repo(pr.repository, repo):
             branch_name = pr.head.ref
             branch_has_pr.append(branch_name)
-
-    skip_branches = {"main"}
-
-    cur_branches = []
-
-    for branch in repo.branches():
-        if branch.name in skip_branches:
-            continue
-        if branch.name in branch_has_pr:
-            continue
-        cur_branches.append(branch)
-
-    for branch in cur_branches:
-        print(branch.name)
-
-    print("Press ENTER to open PR, close, then delete branch")
-    input()
 
     https_url = repo.clone_url
     ssh_url = infer_ssh_url(https_url)
@@ -71,7 +56,25 @@ def main():
         shell(f"git clone {ssh_url}")
     os.chdir(repo_name)
 
+    branches_to_pr = []
+    for branch in repo.branches():
+        if branch.name in skip_branches:
+            continue
+        if branch.name in branch_has_pr:
+            continue
+        if 
+        branches_to_pr.append(branch)
+
+    print("Branches to 
     for branch in cur_branches:
+        print(branch.name)
+
+    print("Press ENTER to open PR, close, then delete branch")
+    input()
+
+    for branch in cur_branches:
+
+
         new_pr = repo.create_pull(
             title=f"Preserve branch '{branch.name}'",
             base="main",
@@ -82,6 +85,14 @@ def main():
             ),
         )
         new_pr.close()
+        print(f"Made PR: {new_pr}")
+
+    print("Press ENTER to delete branches:")
+    for branch in cur_branches:
+        print(f"  {branch.name}")
+    input()
+
+    for branch in cur_branches:
         shell(f"git push origin :{branch.name}")
 
 
