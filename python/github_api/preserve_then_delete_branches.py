@@ -69,12 +69,16 @@ def main():
     main_branch = "main"
     skip_branches = {main_branch}
 
-    branches_with_pr = []
+    branches_with_open_pr = []
+    branches_with_closed_pr = []
     prs = repo.pull_requests(state="all")
     for pr in prs:
         if is_same_repo(pr.repository, repo):
             branch_name = pr.head.ref
-            branches_with_pr.append(branch_name)
+            if pr.state == "open":
+                branches_with_open_pr.append(branch_name)
+            elif pr.state == "closed":
+                branches_with_closed_pr.append(branch_name)
 
     https_url = repo.clone_url
     ssh_url = infer_ssh_url(https_url)
@@ -92,10 +96,17 @@ def main():
     branches_to_delete = []
     branches_to_pr = []
     for branch in repo.branches():
-        if branch.name in skip_branches or branch.name in branches_with_pr:
+        if branch.name in skip_branches:
             continue
+        if branch.name in branches_with_open_pr:
+            continue
+
         branches_to_delete.append(branch)
-        if not is_branch_merged(branch.name, main_branch):
+
+        if (
+            branch.name not in branches_with_closed_pr and
+            not is_branch_merged(branch.name, main_branch)
+        ):
             branches_to_pr.append(branch)
 
     if len(branches_to_pr) > 0:

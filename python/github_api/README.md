@@ -11,14 +11,12 @@ source ./setup.sh
 
 ## Create Token
 
-Go to <https://github.com/settings/tokens?type=beta>, and use fine-grained
-permissions:
+Go to <https://github.com/settings/tokens>, and use classic token.
+Beta token w/ granular access didn't seem to work at time of writing
+(2022-10-21) :(
 
 - Generate new token
-- Do "Only select repositories", give it only access to your relevant repository.
-- Repository permissions:
-    - Issues: "Read and write"
-    - Pull requests: "Read and write"
+- Check entire "repo" box.
 - Create tokekn, then paste text into `~/.config/readwrite_github_api_token.txt`,
   or wherever.
 
