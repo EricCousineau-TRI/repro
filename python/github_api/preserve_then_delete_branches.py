@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 import os
 import subprocess
@@ -10,6 +12,14 @@ def shell(cmd, *, check=True, shell=True):
     return subprocess.run(cmd, shell=shell, check=check)
 
 
+def subshell(cmd):
+    print(f"+ $({cmd})")
+    result = subprocess.run(
+        cmd, shell=True, check=True, text=True, stdout=subprocess.PIPE
+    )
+    return result.stdout.strip()
+
+
 def is_same_repo(a, b):
     return a.url == b.url
 
@@ -20,6 +30,18 @@ def infer_ssh_url(url):
     if not url.endswith(".git"):
         url += ".git"
     return url
+
+
+def is_branch_merged(branch, main):
+    remote = "origin"
+    branch_ref = f"{remote}/{branch}"
+    main_ref = f"{remote}/{main}"
+    # This seems to work when both commits are the same too.
+    result = shell(
+        f"git merge-base --is-ancestor {branch_ref} {main_ref}",
+        check=False,
+    )
+    return result.returncode == 0
 
 
 def main():
@@ -36,18 +58,20 @@ def main():
     owner, repo_name = base.parse_repo(args.repo)
     repo = gh.repository(owner, repo_name)
 
-    skip_branches = {"main", "master"}
+    main_branch = "main"
+    skip_branches = {main_branch}
 
-    branch_has_pr = []
+    branches_with_pr = []
     prs = repo.pull_requests(state="all")
     for pr in prs:
         if is_same_repo(pr.repository, repo):
             branch_name = pr.head.ref
-            branch_has_pr.append(branch_name)
+            branches_with_pr.append(branch_name)
 
     https_url = repo.clone_url
     ssh_url = infer_ssh_url(https_url)
 
+    # TODO(eric.cousineau): I dunno how to make github3.py do this.
     tmp_dir = "/tmp/github_api_meh"
     os.makedirs(tmp_dir, exist_ok=True)
     os.chdir(tmp_dir)
@@ -55,46 +79,55 @@ def main():
         print(ssh_url)
         shell(f"git clone {ssh_url}")
     os.chdir(repo_name)
+    shell("git fetch origin")
 
+    branches_to_delete = []
     branches_to_pr = []
     for branch in repo.branches():
-        if branch.name in skip_branches:
+        if branch.name in skip_branches or branch.name in branches_with_pr:
             continue
-        if branch.name in branch_has_pr:
-            continue
-        if 
-        branches_to_pr.append(branch)
+        branches_to_delete.append(branch)
+        if not is_branch_merged(branch.name, main_branch):
+            branches_to_pr.append(branch)
 
-    print("Branches to 
-    for branch in cur_branches:
-        print(branch.name)
+    if len(branches_to_pr) > 0:
+        print("Branches to open / close PR")
+        for branch in branches_to_pr:
+            print(f"  {branch.name}")
 
-    print("Press ENTER to open PR, close, then delete branch")
-    input()
+        print()
+        print("Press ENTER to continue")
+        input()
 
-    for branch in cur_branches:
+        for branch in branches_to_pr:
+            new_pr = repo.create_pull(
+                title=f"Preserve branch '{branch.name}'",
+                base="main",
+                head=branch.name,
+                body=(
+                    f"This is an automated PR to preserve {branch.name} before "
+                    f"deleting it."
+                ),
+            )
+            new_pr.close()
+            print(f"  Opened/Closed PR: {new_pr.url}")
 
+    if len(branches_to_delete) > 0:
+        print("Branches to delete:")
+        for branch in branches_to_delete:
+            print(f"  {branch.name}")
 
-        new_pr = repo.create_pull(
-            title=f"Preserve branch '{branch.name}'",
-            base="main",
-            head=branch.name,
-            body=(
-                f"This is an automated PR to preserve {branch.name} before "
-                f"deleting it."
-            ),
-        )
-        new_pr.close()
-        print(f"Made PR: {new_pr}")
+        print()
+        print("Press ENTER to continue")
+        input()
 
-    print("Press ENTER to delete branches:")
-    for branch in cur_branches:
-        print(f"  {branch.name}")
-    input()
-
-    for branch in cur_branches:
-        shell(f"git push origin :{branch.name}")
+        for branch in branches_to_delete:
+            # TODO(eric.cousineau): How to use github API?
+            shell(f"git push origin :{branch.name}")
 
 
 assert __name__ == "__main__"
-main()
+try:
+    main()
+except KeyboardInterrupt:
+    pass
