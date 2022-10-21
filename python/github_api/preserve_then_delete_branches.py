@@ -1,6 +1,25 @@
 import argparse
+import os
+import subprocess
 
 import base
+
+
+def shell(cmd):
+    print(f"+ {cmd}")
+    subprocess.run(cmd, shell=True, check=True)
+
+
+def is_same_repo(a, b):
+    return a.url == b.url
+
+
+def infer_ssh_url(url):
+    base = "github.com"
+    url = url.replace(f"https://{base}/", f"git@{base}:")
+    if not url.endswith(".git"):
+        url += ".git"
+    return url
 
 
 def main():
@@ -17,16 +36,53 @@ def main():
     owner, repo_name = base.parse_repo(args.repo)
     repo = gh.repository(owner, repo_name)
 
+    branch_has_pr = []
     prs = repo.pull_requests(state="all")
-    pr_branches = [pr.head for pr in prs]
-    print(pr_branches)
+    for pr in prs:
+        if is_same_repo(pr.repository, repo):
+            branch_name = pr.head.ref
+            branch_has_pr.append(branch_name)
 
     skip_branches = {"main"}
+
+    cur_branches = []
 
     for branch in repo.branches():
         if branch.name in skip_branches:
             continue
+        if branch.name in branch_has_pr:
+            continue
+        cur_branches.append(branch)
+
+    for branch in cur_branches:
         print(branch.name)
+
+    print("Press ENTER to open PR, close, then delete branch")
+    input()
+
+    https_url = repo.clone_url
+    ssh_url = infer_ssh_url(https_url)
+
+    tmp_dir = "/tmp/github_api_meh"
+    os.makedirs(tmp_dir, exist_ok=True)
+    os.chdir(tmp_dir)
+    if not os.path.isdir(repo_name):
+        print(ssh_url)
+        shell(f"git clone {ssh_url}")
+    os.chdir(repo_name)
+
+    for branch in cur_branches:
+        new_pr = repo.create_pull(
+            title=f"Preserve branch '{branch.name}'",
+            base="main",
+            head=branch.name,
+            body=(
+                f"This is an automated PR to preserve {branch.name} before "
+                f"deleting it."
+            ),
+        )
+        new_pr.close()
+        shell(f"git push origin :{branch.name}")
 
 
 assert __name__ == "__main__"
