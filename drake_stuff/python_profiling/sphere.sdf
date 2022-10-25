@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<sdf version="1.10">
+  <model name="sphere">
+    <link name="body">
+      <visual name="visual">
+        <geometry>
+          <sphere>
+            <radius>0.025</radius>
+          </sphere>
+        </geometry>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <sphere>
+            <radius>0.025</radius>
+          </sphere>
+        </geometry>
+        <!-- N.B. Naively estimated properties. -->
+        <drake:proximity_properties>
+          <drake:mu_dynamic>0.5</drake:mu_dynamic>
+          <drake:mu_static>0.5</drake:mu_static>
+          <drake:hunt_crossley_dissipation>1.25</drake:hunt_crossley_dissipation>
+          <drake:rigid_hydroelastic/>
+          <drake:mesh_resolution_hint>0.005</drake:mesh_resolution_hint>
+        </drake:proximity_properties>
+      </collision>
+    </link>
+  </model>
+</sdf>
