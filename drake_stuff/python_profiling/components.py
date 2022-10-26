@@ -2,14 +2,8 @@ import dataclasses as dc
 
 import numpy as np
 
-from pydrake.common.cpp_param import List as DrakeList
-from pydrake.common.eigen_geometry import AngleAxis
-from pydrake.common.value import Value
-from pydrake.math import RigidTransform, RotationMatrix
-from pydrake.multibody.math import SpatialForce, SpatialVelocity
-from pydrake.multibody.plant import ExternallyAppliedSpatialForce
-from pydrake.multibody.tree import JacobianWrtVariable, SpatialInertia
-from pydrake.systems.framework import LeafSystem
+# Prototyping and hacking.
+from pydrake.all import *
 
 
 def rotation_matrix_to_axang3(R):
@@ -17,34 +11,6 @@ def rotation_matrix_to_axang3(R):
     axang = AngleAxis(R.matrix())
     axang3 = axang.angle() * axang.axis()
     return axang3
-
-
-def get_frame_spatial_velocity(plant, context, frame_T, frame_F, frame_E=None):
-    """
-    Returns:
-        SpatialVelocity of frame F's origin w.r.t. frame T, expressed in E
-        (which is frame T if unspecified).
-    """
-    if frame_E is None:
-        frame_E = frame_T
-    Jv_TF_E = plant.CalcJacobianSpatialVelocity(
-        context,
-        with_respect_to=JacobianWrtVariable.kV,
-        frame_B=frame_F,
-        p_BP=[0, 0, 0],
-        frame_A=frame_T,
-        frame_E=frame_E,
-    )
-    v = plant.GetVelocities(context)
-    V_TF_E = SpatialVelocity(Jv_TF_E @ v)
-    return V_TF_E
-
-
-def set_default_frame_pose(plant, frame_F, X_WF):
-    assert frame_F.body().is_floating()
-    X_FB = frame_F.GetFixedPoseInBodyFrame().inverse()
-    X_WB = X_WF @ X_FB
-    plant.SetDefaultFreeBodyPose(frame_F.body(), X_WB)
 
 
 def reexpress_to_matrix(R_AE, I_BP_E):
@@ -101,6 +67,27 @@ class FloatingBodyFeedforward:
         p_PcmP_W = -p_PoPcm_W
         F_P_W_feedforward = F_Pcm_W.Shift(p_PcmP_W)
         return F_P_W_feedforward
+
+
+def get_frame_spatial_velocity(plant, context, frame_T, frame_F, frame_E=None):
+    """
+    Returns:
+        SpatialVelocity of frame F's origin w.r.t. frame T, expressed in E
+        (which is frame T if unspecified).
+    """
+    if frame_E is None:
+        frame_E = frame_T
+    Jv_TF_E = plant.CalcJacobianSpatialVelocity(
+        context,
+        with_respect_to=JacobianWrtVariable.kV,
+        frame_B=frame_F,
+        p_BP=[0, 0, 0],
+        frame_A=frame_T,
+        frame_E=frame_E,
+    )
+    v = plant.GetVelocities(context)
+    V_TF_E = SpatialVelocity(Jv_TF_E @ v)
+    return V_TF_E
 
 
 class FloatingBodyPoseController(LeafSystem):
@@ -214,7 +201,7 @@ class FloatingBodyPoseController(LeafSystem):
             external_force = control_math(plant_state, X_TPdes, V_TPdes)
             output.set_value([external_force])
 
-        forces_cls = Value[DrakeList[ExternallyAppliedSpatialForce]]
+        forces_cls = Value[List[ExternallyAppliedSpatialForce]]
         self.forces_output = self.DeclareAbstractOutputPort(
             "forces_output", alloc=forces_cls, calc=control_calc,
         )
@@ -250,13 +237,3 @@ class FloatingBodyPoseController(LeafSystem):
                 plant.get_applied_spatial_force_input_port(),
             )
         return controller
-
-
-def fix_port(parent_context, port, value):
-    context = port.get_system().GetMyContextFromRoot(parent_context)
-    return port.FixValue(context, value)
-
-
-def eval_port(port, parent_context):
-    context = port.get_system().GetMyContextFromRoot(parent_context)
-    return port.Eval(context)

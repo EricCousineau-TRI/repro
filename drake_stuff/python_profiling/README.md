@@ -56,3 +56,8 @@ x-www-browser /tmp/pyspy*.svg
 
 **WARNING**: I (Eric) couldn't get `py-spy` to work thorugh Bazel and
 `drake-ros` generated wrappers, even using `--subprocesses`. Unsure why.
+
+## Transcribing Python to C++
+
+Compare `components.py` and `components_cc_py.cc` for a very hacky example of
+low-effort transcription. This attempts to maintain similar idioms in the code.

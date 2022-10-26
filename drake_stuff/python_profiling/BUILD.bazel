@@ -1,0 +1,23 @@
+load("@drake//tools/skylark:pybind.bzl", "pybind_py_library")
+
+# WARNNIG: This won't actually build. Just an example.
+
+cc_library(
+    name = "drake_all",
+    srcs = ["drake_all.cc"],
+    hdrs = ["drake_all.h"],
+    deps = ["@drake//:drake_shared_library"],
+)
+
+pybind_py_library(
+    name = "components_cc_py",
+    cc_deps = [
+        ":drake_all",
+        "@drake//:drake_shared_library",
+    ],
+    cc_so_name = "components_cc",
+    cc_srcs = ["components_cc_py.cc"],
+    py_deps = [
+        "@drake//bindings/pydrake",
+    ],
+)

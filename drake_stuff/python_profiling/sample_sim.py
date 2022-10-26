@@ -1,17 +1,7 @@
 """
-Different profiling modes:
+See README for more details.
 
-    # cprofile
-    python ./sample_sim.py --cprofile /tmp/cprofile.stats
-    python ./sample_sim.py --cprofile /tmp/cprofile_no_control.stats --no_control
-    snakeviz /tmp/cprofile.stats
-    snakeviz /tmp/cprofile_no_control.stats
-
-    # py-spy
-    py-spy record -o /tmp/pyspy.svg -- python ./sample_sim.py
-    py-spy record -o /tmp/pyspy_no_control.svg -- python ./sample_sim.py --no_control
-    x-www-browser /tmp/pyspy*.svg
-
+Can use --use_cc to check profiling with C++ components.
 """
 
 import argparse
@@ -45,12 +35,32 @@ from pydrake.systems.framework import (
     LeafSystem,
 )
 
-from components import (
-    FloatingBodyPoseController,
-    fix_port,
-    get_frame_spatial_velocity,
-    set_default_frame_pose,
-)
+from components import get_frame_spatial_velocity, set_default_frame_pose
+
+
+def _use_cc():
+    import argparse, sys
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--use_cc", action="store_true")
+    args, argv = parser.parse_known_args()
+    sys.argv = [sys.argv[0]] + argv
+    return args.use_cc
+
+
+if _use_cc():
+    from components_cc import FloatingBodyPoseController
+else:
+    from components import FloatingBodyPoseController
+
+
+def fix_port(parent_context, port, value):
+    context = port.get_system().GetMyContextFromRoot(parent_context)
+    return port.FixValue(context, value)
+
+
+def eval_port(port, parent_context):
+    context = port.get_system().GetMyContextFromRoot(parent_context)
+    return port.Eval(context)
 
 
 class FloatingObject:
