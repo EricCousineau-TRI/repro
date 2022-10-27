@@ -284,9 +284,21 @@ def use_cprofile(output_file):
 
 
 @contextmanager
-def use_py_spy(output_file, *, sudo=False):
+def use_py_spy(output_file, *, native=True, sudo=False):
     """Use py-spy in specific context."""
-    args = ["py-spy", "record", "-o", output_file, "--pid", str(os.getpid())]
+    args = [
+        "py-spy",
+        "record",
+        "-o", output_file,
+        "--pid", str(os.getpid()),
+    ]
+    if native:
+        # This will include C++ symbols as well, which will help determine if
+        # there which C++ functions may be slowing things down. However, you
+        # will need to dig or Ctrl+F to find out what Python code is going
+        # slow. Using Ctrl+F, searching for ".py:" should highlight Python
+        # code.
+        args += ["--native"]
     if sudo:
         args = ["sudo"] + args
     p = subprocess.Popen(args)
@@ -304,6 +316,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--cprofile", type=str)
     parser.add_argument("--py_spy", type=str)
+    parser.add_argument(
+        "--py_spy_no_native", dest="py_spy_native", action="store_false",
+    )
     parser.add_argument(
         "--no_control", dest="add_control", action="store_false"
     )
@@ -323,7 +338,7 @@ def main(argv=None):
         with use_cprofile(args.cprofile):
             setup.simulator.AdvanceTo(t_sim)
     if args.py_spy is not None:
-        with use_py_spy(args.py_spy):
+        with use_py_spy(args.py_spy, native=args.py_spy_native):
             setup.simulator.AdvanceTo(t_sim)
     else:
         setup.simulator.AdvanceTo(t_sim)

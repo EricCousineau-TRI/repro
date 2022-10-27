@@ -6,6 +6,8 @@ To setup, in relevant terminals:
 source ./setup.sh
 ```
 
+Posted in <https://stackoverflow.com/q/74201118/7829525>
+
 ## cprofile
 
 https://docs.python.org/3.8/library/profile.html
@@ -53,6 +55,9 @@ py-spy record -o /tmp/pyspy.svg -- python ./sample_sim.py
 py-spy record -o /tmp/pyspy_no_control.svg -- python ./sample_sim.py --no_control
 x-www-browser /tmp/pyspy*.svg
 ```
+
+With `py-spy --native` (default), in Firefox, you can press Ctrl+F (Find) and
+type `.py:` and have it highlight the specific Python portions.
 
 **WARNING**: I (Eric) couldn't get `py-spy` to work thorugh Bazel and
 `drake-ros` generated wrappers, even using `--subprocesses`. Unsure why.
