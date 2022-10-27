@@ -90,6 +90,13 @@ def get_frame_spatial_velocity(plant, context, frame_T, frame_F, frame_E=None):
     return V_TF_E
 
 
+def set_default_frame_pose(plant, frame_F, X_WF):
+    assert frame_F.body().is_floating()
+    X_FB = frame_F.GetFixedPoseInBodyFrame().inverse()
+    X_WB = X_WF @ X_FB
+    plant.SetDefaultFreeBodyPose(frame_F.body(), X_WB)
+
+
 class FloatingBodyPoseController(LeafSystem):
     """
     Controls for the pose of a single-body floating model using frame P w.r.t.

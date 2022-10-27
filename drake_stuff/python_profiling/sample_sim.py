@@ -274,11 +274,13 @@ def use_cprofile(output_file):
     """
     pr = profile.Profile()
     pr.enable()
-    yield
-    pr.disable()
-    stats = pstats.Stats(pr)
-    stats.sort_stats("tottime", "cumtime")
-    stats.dump_stats(output_file)
+    try:
+        yield
+    finally:
+        pr.disable()
+        stats = pstats.Stats(pr)
+        stats.sort_stats("tottime", "cumtime")
+        stats.dump_stats(output_file)
 
 
 @contextmanager
@@ -291,9 +293,11 @@ def use_py_spy(output_file, *, sudo=False):
     # TODO(eric.cousineau): Startup time of py-spy may lag behind other
     # instructions. However, maybe can assume this isn't critical for profiling
     # purposes?
-    yield
-    p.send_signal(signal.SIGINT)
-    p.wait()
+    try:
+        yield
+    finally:
+        p.send_signal(signal.SIGINT)
+        p.wait()
 
 
 def main(argv=None):
