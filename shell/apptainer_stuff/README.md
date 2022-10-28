@@ -1,8 +1,12 @@
 # AppTainer
 
 Shane Loretz told me about this, and I have been liking it a bit more than
-Docker (no server, very easy to use with NVidia, less mysterious `sudo` stuff,
-etc.).
+Docker:
+
+- No server
+- Very easy to use with NVidia
+- No crazy permission changes for mounted files, etc.
+- Less mysterious `sudo` stuff (though still figuring that out)
 
 However, I'm still getting a hold of it. This is me documenting my steps /
 tools.

@@ -16,8 +16,17 @@ $ sudo echo Hey
 sudo: unable to allocate pty: Operation not permitted
 
 # Resume as user
-$ apptainer --silent exec --writable image.sif.sandbox bash -c 'sudo echo Hello'
+$ apptainer --silent exec --writable image.sif.sandbox \
+    env -i bash -c 'sudo echo Hello'
 sudo: /etc/sudo.conf is owned by uid 1002, should be 0
 sudo: The "no new privileges" flag is set, which prevents sudo from running as root.
 sudo: If sudo is running in a container, you may need to adjust the container configuration to disable the flag.
 ```
+
+Questions:
+
+* Should I just stub out `sudo`, e.g. make it do `exec "$@"`?
+  That won't change permissions.
+* Perhaps I always use `--fakeroot`, but then somehow fake out `$USER` /
+  `whomai`?
+
