@@ -52,23 +52,26 @@ https://drake.mit.edu/from_binary.html#stable-releases
 git clone https://github.com/sloretz/apptainer-ros
 
 # Build *.sif
-base=jammy-ros-humble-desktop
-apptainer build --fakeroot ${base}.sif \
+image=jammy-ros-humble-desktop
+apptainer build --fakeroot ${image}.sif \
     ./apptainer-ros/jammy-ros-humble-desktop/Apptainer
 # Generate writeable sandbox
-apptainre build --sandbox ${base}.sif.sandbox ${base}.sif
+apptainer build --sandbox ${image}.sif.sandbox ${image}.sif
 
 # Execute with minimal containment
 # - as root, for install prereqs.
 apptainer --silent exec \
-    --fakeroot --nv --writable \
+    --nv --writable \
     --pwd ${PWD} \
-    jammy-ros-humble-desktop.sif.sandbox bash
+    --fakeroot \
+    ${image}.sif.sandbox \
+    bash
 # - as user, for nominal usage.
 apptainer --silent exec \
     --nv --writable \
     --pwd ${PWD} \
-    jammy-ros-humble-desktop.sif.sandbox bash
+    ${image}.sif.sandbox \
+    bash
 # TODO(eric.cousineau): See below for wanting to simplify usage of `sudo`.
 ```
 
