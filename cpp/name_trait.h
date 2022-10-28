@@ -51,7 +51,7 @@ std::string nice_type_name() {
 // when name_trait is called on the default version of itself
 template<typename T, typename Cond = void>
 struct name_trait {
-  static std::string name() { return "T"; }
+  static std::string name() { return nice_type_name<T>(); }
 };
 template<typename T, typename ... Args>
 struct name_trait_list {

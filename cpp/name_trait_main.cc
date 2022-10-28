@@ -9,6 +9,8 @@ using std::string;
 
 // NAME_TRAIT_TPL(std::decay_t);
 
+struct MyType {};
+
 int main() {
   cout
     << PRINT(name_trait<int>::name())
@@ -27,6 +29,7 @@ int main() {
     << PRINT(name_trait<int[]>::name())
     << PRINT(name_trait<std::decay_t<const char&>>::name())
     << PRINT(name_trait<std::decay_t<const char*&>>::name())
+    << PRINT(name_trait<std::decay_t<const MyType*>>::name())
     << PRINT(nice_type_name<std::iostream>());
     // << PRINT(name_trait<std::decay_t<std::remove_reference<const char*&>>>::name());
   return 0;
