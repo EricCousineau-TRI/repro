@@ -1,0 +1,22 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+%files
+  ./figure_out_sudo/fake_sudo.sh /usr/bin/sudo
+
+%post
+  export DEBIAN_FRONTEND=noninteractive
+
+  apt-get update
+  apt-get install -y locales
+  locale-gen en_US en_US.UTF-8
+  update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+  export LANG=en_US.UTF-8
+
+  # TODO(eric.cousineau): How do I plumb in USER as arg?
+  export fake_user=eacousineau
+  ln -s /root /home/${fake_user}
+
+%environment
+  export LANG=en_US.UTF-8
+  export HOME=${HOME}

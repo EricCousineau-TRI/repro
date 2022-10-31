@@ -44,6 +44,13 @@ cd apptainer
 ln -s ~/.local/opt/apptainer/bin/apptainer ~/.local/bin/
 ```
 
+## Jammy
+
+```sh
+$ apptainer build --fakeroot jammy.sif jammy.Apptainer
+$ apptainer build --fakeroot --sandbox jammy.sif.sandbox jammy.sif
+```
+
 ## Drake and ROS 2
 
 Below based on \
