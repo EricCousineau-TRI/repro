@@ -59,8 +59,9 @@ git clone https://github.com/sloretz/apptainer-ros
 image=jammy-ros-humble-desktop
 apptainer build --fakeroot ${image}.sif \
     ./apptainer-ros/jammy-ros-humble-desktop/Apptainer
-# Generate writeable sandbox
-apptainer build --sandbox ${image}.sif.sandbox ${image}.sif
+# Generate writeable sandbox with modifications.
+image_ext=jammy-ros-humble-desktop-ext
+apptainer build --fakeroot --sandbox ${image_ext}.sif.sandbox ${image_ext}.Apptainer
 
 # Execute with minimal containment
 # - as root, for install prereqs.
@@ -82,22 +83,9 @@ apptainer --silent exec \
 or using `./bash_extra.sh` in whatevs dir
 
 ```sh
-apptainer-ros-jammy --fakeroot
 apptainer-ros-jammy
+# apptainer-ros-jammy --fakeroot
 ```
-
-### Workarounds
-
-As root:
-
-```sh
-ln -s /root /home/<user>
-alias sudo=""  # pty failure?!
-```
-
-**TODO(eric.cousineau)**: Figure out more elegant solution.
-
-As user, nothing seems necessary.
 
 ### drake-ros specifics
 

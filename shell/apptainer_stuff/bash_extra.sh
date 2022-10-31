@@ -7,10 +7,11 @@
 _apptainer_stuff=$(cd $(dirname ${BASH_SOURCE}) && pwd)
 
 apptainer-ros-jammy() {
-    image=jammy-ros-humble-desktop
+    image_ext=jammy-ros-humble-desktop-ext
     apptainer --silent exec \
         --nv --writable \
+        --fakeroot \
         "$@" \
-        ${_apptainer_stuff}/${image}.sif.sandbox \
+        ${_apptainer_stuff}/${image_ext}.sif.sandbox \
         bash
 }
