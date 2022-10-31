@@ -1,9 +1,13 @@
 # Figure out how to make `sudo` work in `apptainer` without host root permissions
 
+## Old Setup
+
+When trying to install `sudo` package
+
 ```sh
 # Skip using .sif, just go straight to persistent writeable sandbox.
 # Generate writeable sandbox
-$ apptainer build --fakeroot --sandbox image.sif.sandbox ./Apptainer
+$ apptainer build --force --fakeroot --sandbox image.sif.sandbox ./Apptainer
 
 # As root
 $ apptainer --silent exec --writable --fakeroot image.sif.sandbox \
@@ -24,3 +28,15 @@ Questions:
   That won't change permissions.
 * Perhaps I always use `--fakeroot`, but then somehow fake out `$USER` /
   `whomai`?
+
+## Stubbing `sudo` with `fake_sudo.sh`
+
+Seems OK if always running via `--fakeroot`:
+
+```sh
+$ apptainer build --force --fakeroot --sandbox image.sif.sandbox ./Apptainer
+$ apptainer --silent exec --writable --fakeroot image.sif.sandbox \
+    env -i bash -c 'sudo echo Hey'
+```
+
+Good enough for testing user workflows with installs :shrug:

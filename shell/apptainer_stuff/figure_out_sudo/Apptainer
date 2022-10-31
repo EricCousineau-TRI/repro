@@ -4,6 +4,9 @@ From: ubuntu:22.04
 %help
   For debugging sudo stuff.
 
+%files
+  ./fake_sudo.sh /usr/bin/sudo
+
 %post
   export DEBIAN_FRONTEND=noninteractive
 
@@ -13,7 +16,10 @@ From: ubuntu:22.04
   update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
   export LANG=en_US.UTF-8
 
-  apt-get install -y sudo
+  # TODO(eric.cousineau): How do I plumb this in?
+  export fake_user=eacousineau
+  ln -s /root /home/${fake_user}
 
 %environment
   export LANG=en_US.UTF-8
+  export HOME=${HOME}
