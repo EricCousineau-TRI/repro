@@ -13,5 +13,7 @@ From: ubuntu:22.04
   update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
   export LANG=en_US.UTF-8
 
+  apt-get install -y sudo
+
 %environment
   export LANG=en_US.UTF-8

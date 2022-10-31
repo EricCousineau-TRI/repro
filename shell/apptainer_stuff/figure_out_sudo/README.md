@@ -5,17 +5,12 @@
 # Generate writeable sandbox
 $ apptainer build --fakeroot --sandbox image.sif.sandbox ./Apptainer
 
-# Starting as user
-$ apptainer --silent exec --writable image.sif.sandbox bash -c 'sudo echo Hello'
-/usr/bin/bash: line 1: sudo: command not found
-
-# Debugging
-$ apptainer --silent exec --writable --fakeroot image.sif.sandbox bash --norc
-$ apt install sudo
-$ sudo echo Hey
+# As root
+$ apptainer --silent exec --writable --fakeroot image.sif.sandbox \
+    env -i bash -c 'sudo echo Hey'
 sudo: unable to allocate pty: Operation not permitted
 
-# Resume as user
+# As user
 $ apptainer --silent exec --writable image.sif.sandbox \
     env -i bash -c 'sudo echo Hello'
 sudo: /etc/sudo.conf is owned by uid 1002, should be 0
@@ -29,4 +24,3 @@ Questions:
   That won't change permissions.
 * Perhaps I always use `--fakeroot`, but then somehow fake out `$USER` /
   `whomai`?
-
