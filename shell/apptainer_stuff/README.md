@@ -97,9 +97,14 @@ apptainer-ros-jammy
 ### drake-ros specifics
 
 ```sh
+# Host
+cd ~/Downloads
+wget https://drake-packages.csail.mit.edu/drake/nightly/drake-20221031-jammy.tar.gz
+
 # As root
 mkdir /opt/drake
-tar -xvzf ~/Downloads/drake-20220822-jammy.tar.gz -C /opt/drake --strip-components=1
+tar -xzf ~/Downloads/drake-20221031-jammy.tar.gz -C /opt/drake \
+    --strip-components=1
 
 /opt/drake/share/drake/setup/install_prereqs
 
