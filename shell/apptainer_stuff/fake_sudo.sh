@@ -1,6 +1,9 @@
 #!/bin/bash
 set -eu
 
+# For motivation, see:
+# https://github.com/apptainer/apptainer/issues/847
+
 # Extract the `[command]` portion of `sudo [opts] [command]`, then execute.
 
 while [[ $# -gt 0 ]]; do

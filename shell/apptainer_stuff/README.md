@@ -6,14 +6,12 @@ Docker:
 - No server
 - Very easy to use with NVidia
 - No crazy permission changes for mounted files, etc.
-- Less mysterious `sudo` stuff (though still figuring that out)
-
-However, I'm still getting a hold of it. This is me documenting my steps /
-tools.
+- Less mysterious `sudo` stuff (through some hacks mentioned in
+  [apptainer#847](https://github.com/apptainer/apptainer/issues/847)
 
 ## Build and Install Apptainer
 
-Build Apptainer to not need root prvi
+Build Apptainer to not need root privileges
 
 ```sh
 cd ~/tmp/apptainer_stuff
@@ -71,7 +69,7 @@ apptainer-ros-jammy
 cd ~/Downloads
 wget https://drake-packages.csail.mit.edu/drake/nightly/drake-20221116-jammy.tar.gz
 
-# Containre.
+# Container.
 rm -rf /opt/drake
 mkdir /opt/drake
 tar -xzf ~/Downloads/drake-20221116-jammy.tar.gz -C /opt/drake \
