@@ -1,4 +1,4 @@
-# AppTainer
+# Apptainer
 
 Shane Loretz told me about this, and I have been liking it a bit more than
 Docker:
@@ -11,44 +11,34 @@ Docker:
 However, I'm still getting a hold of it. This is me documenting my steps /
 tools.
 
-## Building `apptainer`
+## Build and Install Apptainer
 
-Building apptainer to run / administer without privilege: \
-https://gist.github.com/EricCousineau-TRI/df9777773c6a6c07c06ddef2f4f82fa3
+Build Apptainer to not need root prvi
 
 ```sh
-# See https://apptainer.org/docs/user/1.0/quick_start.html#quick-installation-steps
-
-# From docs.
-sudo apt install \
-   build-essential \
-   libseccomp-dev \
-   pkg-config \
-   squashfs-tools \
-   cryptsetup \
-   curl wget git
-# For not needing `sudo` - uidmap needed for --fakeroot to work
-sudo apt install uidmap
-
-wget https://golang.org/dl/go1.18.linux-amd64.tar.gz -O /tmp/go.tar.gz
-tar -xzf /tmp/go.tar.gz -C ~/.local/opt
-ln -sf ~/.local/opt/go/bin/go ~/.local/bin
-
-cd ~/devel/
-git clone https://github.com/apptainer/apptainer -b v1.0.0
-cd apptainer
-
-./mconfig --without-suid -p ~/.local/opt/apptainer \
-    && make -C builddir \
-    && make -C builddir install -j 8
-ln -s ~/.local/opt/apptainer/bin/apptainer ~/.local/bin/
+cd ~/tmp/apptainer_stuff
+./build_and_install_apptainer.sh
 ```
+
+Place `~/.local/bin` on your `PATH`. Concretely, open up `~/.bash_aliases` (**not** `~/.bashrc`), and add
+
+```sh
+export PATH=~/.local/bin:${PATH}
+```
+
+Please **do not** place this in `~/.bashrc`. Everything that puts junk here is
+wrong, IMO.
+
+If you are not confident in wrangling `PATH` / environment variable issues,
+then be sure to comment out newly added stuff.
+
+Also, if you have exiting `~/.local/bin`, please inspect to see if you have any
+potential shadowing issues. If you do, fix it.
 
 ## Jammy
 
 ```sh
-$ apptainer build --fakeroot jammy.sif jammy.Apptainer
-$ apptainer build --fakeroot --sandbox jammy.sif.sandbox jammy.sif
+$ ./build_image.sh jammy
 ```
 
 ## Drake and ROS 2
@@ -68,7 +58,7 @@ git clone https://github.com/sloretz/apptainer-ros
 ./build_image.sh jammy-ros-rolling-desktop-ext
 ```
 
-Should use `./bash_extra.sh` to launch containers.
+Should use `./bash_apptainer.sh` to launch containers using functions.
 
 ```sh
 apptainer-ros-jammy
