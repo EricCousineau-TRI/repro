@@ -99,24 +99,25 @@ apptainer-ros-jammy
 ```sh
 # Host
 cd ~/Downloads
-wget https://drake-packages.csail.mit.edu/drake/nightly/drake-20221031-jammy.tar.gz
+wget https://drake-packages.csail.mit.edu/drake/nightly/drake-20221116-jammy.tar.gz
 
-# As root
+# Containre.
+rm -rf /opt/drake
 mkdir /opt/drake
-tar -xzf ~/Downloads/drake-20221031-jammy.tar.gz -C /opt/drake \
+tar -xzf ~/Downloads/drake-20221116-jammy.tar.gz -C /opt/drake \
     --strip-components=1
 
 /opt/drake/share/drake/setup/install_prereqs
 
 cd .../ros_ws
-mkdir src
-ln -s .../drake-ros ./src/
+rm -rf build/ install/ log/
+mkdir -p src
+ln -sf .../drake-ros ./src/
 
 source /opt/ros/humble/setup.bash
 rosdep update
 rosdep install --from-paths src -ryi
 
-# As user
 source /opt/ros/humble/setup.bash
 colcon build --packages-up-to drake_ros_examples
 colcon test --packages-up-to drake_ros_examples

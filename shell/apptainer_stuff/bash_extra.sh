@@ -11,6 +11,7 @@ apptainer-ros-jammy() {
     apptainer --silent exec \
         --nv --writable \
         --fakeroot \
+        --bind /mnt \
         "$@" \
         ${_apptainer_stuff}/${image_ext}.sif.sandbox \
         bash
