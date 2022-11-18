@@ -17,8 +17,8 @@ From: ubuntu:22.04
   export LANG=en_US.UTF-8
 
   # TODO(eric.cousineau): How do I plumb in USER as arg?
-  export fake_user=eacousineau
-  ln -s /root /home/${fake_user}
+  export expected_user=eacousineau
+  ln -s /root /home/${expected_user}
 
 %environment
   export LANG=en_US.UTF-8

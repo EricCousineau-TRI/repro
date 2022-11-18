@@ -1,0 +1,54 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+%help
+  This definition file makes a container with ros-humble-desktop already installed.
+  It also has tools for building packages against ROS Humble.
+
+
+%labels
+  MAINTAINER Shane Loretz <sloretz@openrobotics.org>
+
+
+%post
+  export DEBIAN_FRONTEND=noninteractive
+
+  apt-get update
+  apt-get install -y \
+    locales \
+    curl \
+    gnupg2 \
+    lsb-release \
+    vim \
+    software-properties-common \
+    build-essential \
+    tzdata
+
+  locale-gen en_US en_US.UTF-8
+  update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+  export LANG=en_US.UTF-8
+
+  apt-add-repository universe
+  apt-add-repository "deb http://security.ubuntu.com/ubuntu `lsb_release -cs`-security main restricted universe multiverse"
+
+  curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
+
+  echo "deb http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2.list
+
+  apt-get update
+  apt-get install -y \
+    python3-rosdep \
+    python3-rosinstall-generator \
+    python3-vcstool \
+    python3-colcon-common-extensions
+
+  rosdep init
+
+  apt-get install -y ros-rolling-desktop
+
+  rm -rf /var/lib/apt/lists/*
+  apt-get clean
+
+
+%environment
+  export LANG=en_US.UTF-8

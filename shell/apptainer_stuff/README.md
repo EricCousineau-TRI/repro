@@ -62,32 +62,13 @@ https://drake.mit.edu/from_binary.html#stable-releases
 ```sh
 git clone https://github.com/sloretz/apptainer-ros
 
-# Build *.sif
-image=jammy-ros-humble-desktop
-apptainer build --fakeroot ${image}.sif \
-    ./apptainer-ros/jammy-ros-humble-desktop/Apptainer
-# Generate writeable sandbox with modifications.
-image_ext=jammy-ros-humble-desktop-ext
-apptainer build --fakeroot --sandbox ${image_ext}.sif.sandbox ${image_ext}.Apptainer
-
-# Execute with minimal containment
-# - as root, for install prereqs.
-apptainer --silent exec \
-    --nv --writable \
-    --pwd ${PWD} \
-    --fakeroot \
-    ${image}.sif.sandbox \
-    bash
-# - as user, for nominal usage.
-apptainer --silent exec \
-    --nv --writable \
-    --pwd ${PWD} \
-    ${image}.sif.sandbox \
-    bash
-# TODO(eric.cousineau): See below for wanting to simplify usage of `sudo`.
+./build_image.sh jammy-ros-humble-desktop
+./build_image.sh jammy-ros-humble-desktop-ext
+./build_image.sh jammy-ros-rolling-desktop
+./build_image.sh jammy-ros-rolling-desktop-ext
 ```
 
-or using `./bash_extra.sh` in whatevs dir
+Should use `./bash_extra.sh` to launch containers.
 
 ```sh
 apptainer-ros-jammy
@@ -110,16 +91,15 @@ tar -xzf ~/Downloads/drake-20221116-jammy.tar.gz -C /opt/drake \
 /opt/drake/share/drake/setup/install_prereqs
 
 cd .../ros_ws
-rm -rf build/ install/ log/
 mkdir -p src
 ln -sf .../drake-ros ./src/
+rm -rf build/ install/ log/
 
 source /opt/ros/humble/setup.bash
 rosdep update
 rosdep install --from-paths src -ryi
 
-source /opt/ros/humble/setup.bash
-colcon build --packages-up-to drake_ros_examples
-colcon test --packages-up-to drake_ros_examples
-colcon test-results --verbose
+colcon build --packages-up-to drake_ros_core
+colcon test --packages-up-to drake_ros_core
+colcon test-result --verbose
 ```

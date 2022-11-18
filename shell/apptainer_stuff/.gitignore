@@ -1,3 +1,9 @@
 *.sif
 *.sif.sandbox/
 /apptainer-ros
+
+# Generated.
+#   ls *.in -1 | sed -E -e 's#^#/##g' -e 's#\.in$##g'
+/jammy.Apptainer
+/jammy-ros-humble-desktop-ext.Apptainer
+/jammy-ros-rolling-desktop-ext.Apptainer

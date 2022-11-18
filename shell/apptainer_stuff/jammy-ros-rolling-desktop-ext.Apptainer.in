@@ -1,0 +1,13 @@
+Bootstrap: localimage
+From: ./jammy-ros-rolling-desktop.sif
+
+%files
+  ./fake_sudo.sh /usr/bin/sudo
+
+%post
+  export expected_user=@USER@
+  ln -s /root /home/${expected_user}
+
+%environment
+  export LANG=en_US.UTF-8
+  export HOME=${HOME}
