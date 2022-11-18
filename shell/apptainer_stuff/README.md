@@ -62,7 +62,6 @@ Should use `./bash_apptainer.sh` to launch containers using functions.
 
 ```sh
 apptainer-ros-jammy
-# apptainer-ros-jammy --fakeroot
 ```
 
 ### drake-ros specifics
@@ -78,7 +77,8 @@ mkdir /opt/drake
 tar -xzf ~/Downloads/drake-20221116-jammy.tar.gz -C /opt/drake \
     --strip-components=1
 
-/opt/drake/share/drake/setup/install_prereqs
+export DEBIAN_FRONTEND=noninteractive
+yes | /opt/drake/share/drake/setup/install_prereqs
 
 cd .../ros_ws
 mkdir -p src
@@ -87,6 +87,7 @@ rm -rf build/ install/ log/
 
 source /opt/ros/humble/setup.bash
 rosdep update
+# Be sure `./bazel-*` stuff isn't present!
 rosdep install --from-paths src -ryi
 
 colcon build --packages-up-to drake_ros_core
