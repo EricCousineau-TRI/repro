@@ -11,11 +11,13 @@ Docker:
 
 ## Build and Install Apptainer
 
-Build Apptainer to not need root privileges
+Build Apptainer to not need root privileges; also build improvement per docs
+(see script for more details)
 
 ```sh
 cd ~/tmp/apptainer_stuff
 ./build_and_install_apptainer.sh
+./build_and_install_squashfuse_improvement.sh
 ```
 
 Place `~/.local/bin` on your `PATH`. Concretely, open up `~/.bash_aliases` (**not** `~/.bashrc`), and add
