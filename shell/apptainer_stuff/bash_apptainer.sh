@@ -11,7 +11,8 @@ _expected_user="<user>"
 
 # Update some config based on apptainer usage.
 apptainer-setup() {
-    if [[ -v APPTAINER_NAME && -d "/home/${_expected_user}" ]]; then
+    if [[ -v APPTAINER_NAME && ! -v _APPTAINER_WRAP && -d "/home/${_expected_user}" ]]; then
+        export _APPTAINER_WRAP=1
         if [[ "${HOME}" == "/root" ]]; then
             export _APPTAINER_ROOT=1
             export HOME="/home/${_expected_user}"
@@ -20,11 +21,11 @@ apptainer-setup() {
             _new_pwd=$(echo ${PWD} | sed -E 's#^/root#/home/'${_expected_user}'#g')
             cd ${_new_pwd}
         fi
-        if [[ -v _APPTAINER_ROOT ]]; then
-            export PS1="(appt root) ${PS1}"
-        else
-            export PS1="(appt) ${PS1}"
-        fi
+    fi
+    if [[ -v _APPTAINER_ROOT ]]; then
+        export PS1="(appt root) ${PS1}"
+    else
+        export PS1="(appt) ${PS1}"
     fi
 }
 
