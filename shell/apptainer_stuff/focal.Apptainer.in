@@ -1,0 +1,21 @@
+Bootstrap: docker
+From: ubuntu:20.04
+
+%files
+  ./fake_sudo.sh /usr/bin/sudo
+
+%post
+  export DEBIAN_FRONTEND=noninteractive
+
+  apt-get update
+  apt-get install -y locales
+  locale-gen en_US en_US.UTF-8
+  update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+  export LANG=en_US.UTF-8
+
+  export expected_user=@USER@
+  ln -s /root /home/${expected_user}
+
+%environment
+  export LANG=en_US.UTF-8
+  export HOME=${HOME}
