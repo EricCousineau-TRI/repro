@@ -10,9 +10,12 @@ _apptainer_stuff=$(cd $(dirname ${BASH_SOURCE}) && pwd)
 _expected_user="<user>"
 
 # Update some config based on apptainer usage.
-_apptainer-handle-root() {
+apptainer-setup() {
+    if [[ ! -v APPTAINER_NAME ]]; then
+        return
+    fi
     # Redirect stuff from /root to user under --fakeroot.
-    if [[ ! -v _APPTAINER_WRAP && -d "/home/${_expected_user}" ]]; then
+    if [[ ! -v _APPTAINER_WRAP && -e "/home/${_expected_user}" ]]; then
         export _APPTAINER_WRAP=1
         if [[ "${HOME}" == "/root" ]]; then
             export _APPTAINER_ROOT=1
@@ -24,22 +27,17 @@ _apptainer-handle-root() {
         fi
     fi
 }
-_apptainer-set-prompt() {
+apptainer-set-prompt() {
+    # Requires apptainer-setup.
+    if [[ ! -v APPTAINER_NAME ]]; then
+        return
+    fi
     if [[ -v _APPTAINER_ROOT ]]; then
         export PS1="(appt root) ${PS1}"
     else
         export PS1="(appt) ${PS1}"
     fi
 }
-apptainer-setup() {
-    if [[ -v APPTAINER_NAME ]]; then
-        _apptainer-handle-root
-        _apptainer-set-prompt
-    fi
-}
-
-# Run setup.
-apptainer-setup
 
 # General execution.
 # This just wraps the command with some command flags.

@@ -59,6 +59,15 @@ git clone https://github.com/sloretz/apptainer-ros
 ```
 
 Should use `./bash_apptainer.sh` to launch containers using functions.
+In your `~/.bash_aliases`:
+
+```
+source /path/to/apptainre_stuff/bash_apptainer.sh
+apptainer-setup
+apptainer-set-prompt
+```
+
+Then, once you have a refreshed session:
 
 ```sh
 apptainer-ros-jammy
