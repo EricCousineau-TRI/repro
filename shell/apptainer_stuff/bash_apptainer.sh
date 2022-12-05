@@ -45,7 +45,7 @@ apptainer-set-prompt() {
 apptainer-exec() { (
     set -eu
     # Minimal containment. Allows access to home directory etc.
-    # Use --fakeroot so that you can `apt install` stuff.
+    # You should add --fakeroot if you want to `apt install` stuff.
     # Image includes stubbed out `sudo` so scripts won't fail.
 
     # WARNING: You may need to add / adjust --bind to leverage any secondary
@@ -55,9 +55,8 @@ apptainer-exec() { (
     shift
     apptainer --silent exec \
         --nv --writable \
-        --fakeroot \
         --bind /mnt \
-        "$@" \
+        $@ \
         ${image} \
         bash
 ) }
@@ -65,11 +64,11 @@ apptainer-exec() { (
 # Specific executions.
 
 apptainer-jammy() {
-    apptainer-exec ${_apptainer_stuff}/jammy.sif.sandbox
+    apptainer-exec ${_apptainer_stuff}/jammy.sif.sandbox $@
 }
 
 apptainer-jammy-ros() {
-    apptainer-exec ${_apptainer_stuff}/jammy-ros-humble-desktop-ext.sif.sandbox
+    apptainer-exec ${_apptainer_stuff}/jammy-ros-humble-desktop-ext.sif.sandbox $@
 }
 
 # Extra.
@@ -79,5 +78,5 @@ apptainer-jammy-ros() {
 apptainer-container-install() {
     apt install bash-completion git git-gui gitk wget xclip tmux
     apt install python-is-python3
-    apt install nvidia-utils-470
+    apt install nvidia-utils-520
 }
