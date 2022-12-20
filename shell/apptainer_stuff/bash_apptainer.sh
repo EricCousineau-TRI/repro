@@ -79,4 +79,5 @@ apptainer-container-install() {
     apt install bash-completion git git-gui gitk wget xclip tmux
     apt install python-is-python3
     apt install nvidia-utils-520
+    ln -sf ${_apptainer_stuff}/fake_sudo.sh /usr/bin/sudo
 }

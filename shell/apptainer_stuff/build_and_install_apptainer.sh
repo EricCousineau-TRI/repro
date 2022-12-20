@@ -37,7 +37,7 @@ cd ${tmp_dir}
 # Install go.
 if ! which go ; then
     if [[ ! -f ./go.tar.gz ]]; then
-        GOVERSION=1.18.4
+        GOVERSION=1.19.3
         OS=linux
         ARCH=amd64
         wget \
@@ -55,7 +55,8 @@ if ! which apptainer ; then
         git clone https://github.com/apptainer/apptainer
     fi
     cd apptainer
-    git checkout v1.1.3
+    git fetch
+    git checkout v1.1.4
     ./mconfig --without-suid -p ~/.local/opt/apptainer
     make -C builddir -j
     make -C builddir install -j
