@@ -497,3 +497,8 @@ cc_binary(
     name = "float_to_int_nan",
     srcs = ["float_to_int_nan.cc"],
 )
+
+cc_binary(
+    name = "lambda_const_this_capture",
+    srcs = ["lambda_const_this_capture.cc"],
+)
