@@ -30,12 +30,12 @@ mkdir -p ~/.local/bin ~/.local/opt
 
 export PATH=~/.local/bin:${PATH}
 
-tmp_dir=/tmp/apptainer_provision
+tmp_dir=~/devel/apptainer_provision
 mkdir -p ${tmp_dir}
-cd ${tmp_dir}
 
 # Install go.
 if ! which go ; then
+    cd ${tmp_dir}
     if [[ ! -f ./go.tar.gz ]]; then
         GOVERSION=1.19.3
         OS=linux
@@ -49,16 +49,25 @@ if ! which go ; then
     ln -sf ~/.local/opt/go/bin/go ~/.local/bin
 fi
 
-if ! which apptainer ; then
+apptainer_version=v1.1.4
+install_prefix=~/.local/opt/apptainer/${apptainer_version}
+apptainer_bin=${install_prefix}/bin/apptainer
+
+if [[ ! -f ${apptainer_bin} ]]; then
+    cd ${tmp_dir}
     # Install apptainer.
     if [[ ! -d ./apptainer ]]; then
         git clone https://github.com/apptainer/apptainer
     fi
     cd apptainer
     git fetch
-    git checkout v1.1.4
-    ./mconfig --without-suid -p ~/.local/opt/apptainer
+    git checkout ${apptainer_version}
+    ./mconfig --without-suid -p ${install_prefix}
     make -C builddir -j
     make -C builddir install -j
-    ln -sf ~/.local/opt/apptainer/bin/apptainer ~/.local/bin/
+    ln -sf ${apptainer_bin} ~/.local/bin/apptainer-${apptainer_version}
+fi
+
+if ! which apptainer ; then
+    ln -sf ${apptainer_bin} ~/.local/bin/
 fi
