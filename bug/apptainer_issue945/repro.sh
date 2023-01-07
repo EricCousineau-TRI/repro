@@ -2,15 +2,18 @@
 set -eux
 
 cd $(dirname ${BASH_SOURCE})
-cat > ./repro.Apptainer <<'EOF'
-Bootstrap: docker
-From: ubuntu:20.04
 
-%post
-  export DEBIAN_FRONTEND=noninteractive
-  apt-get update
-  apt-get -y install mesa-utils nvidia-utils-520
-EOF
+apptainer_bin=apptainer
+# apptainer_bin=apptainer-v1.1.4  # Same
+# apptainer_bin=apptainer-v1.0.0  # Same
+# apptainer_bin=apptainer-v0.1.1  # Same
 
-apptainer build --fakeroot --sandbox ./repro.sandbox ./repro.Apptainer
-apptainer exec --writable --nv ./repro.sandbox glxgears
+test_script=./glxgears_short.sh
+
+${apptainer_bin} build --fakeroot --sandbox ./repro.sandbox ./repro.Apptainer
+
+# Succeeds.
+${apptainer_bin} exec ./repro.sandbox ${test_script}
+
+# Fails.
+${apptainer_bin} exec --nv ./repro.sandbox ${test_script}

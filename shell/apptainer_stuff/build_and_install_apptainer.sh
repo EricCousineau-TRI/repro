@@ -49,7 +49,7 @@ if ! which go ; then
     ln -sf ~/.local/opt/go/bin/go ~/.local/bin
 fi
 
-apptainer_versions="v1.1.4 v1.0.0"
+apptainer_versions="v1.1.4 v1.0.0 v0.1.1"
 for apptainer_version in ${apptainer_versions}; do
     install_prefix=~/.local/opt/apptainer/${apptainer_version}
     apptainer_bin=${install_prefix}/bin/apptainer
