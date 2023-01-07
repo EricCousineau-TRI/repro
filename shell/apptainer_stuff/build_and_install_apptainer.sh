@@ -67,6 +67,14 @@ for apptainer_version in ${apptainer_versions}; do
         make -C builddir -j
         make -C builddir install -j
         ln -sf ${apptainer_bin} ~/.local/bin/apptainer-${apptainer_version}
+
+        set +x
+        echo
+        echo "WARNING: You may need to edit nvliblist.conf. See"
+        echo "https://github.com/apptainer/apptainer/issues/945#issuecomment-1374524681"
+        echo "for more details."
+        echo
+        set -x
     fi
 
     if ! which apptainer ; then
