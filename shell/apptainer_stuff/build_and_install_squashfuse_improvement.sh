@@ -29,4 +29,9 @@ done
 ./autogen.sh
 FLAGS=-std=c99 ./configure --enable-multithreading
 make squashfuse_ll -j
-cp squashfuse_ll ~/.local/opt/apptainer/libexec/apptainer/bin
+
+apptainer_versions="v1.1.4 v1.0.0"
+for apptainer_version in ${apptainer_versions}; do
+    install_prefix=~/.local/opt/apptainer/${apptainer_version}
+    cp squashfuse_ll ${install_prefix}/libexec/apptainer/bin
+done

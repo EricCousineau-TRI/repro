@@ -49,25 +49,27 @@ if ! which go ; then
     ln -sf ~/.local/opt/go/bin/go ~/.local/bin
 fi
 
-apptainer_version=v1.1.4
-install_prefix=~/.local/opt/apptainer/${apptainer_version}
-apptainer_bin=${install_prefix}/bin/apptainer
+apptainer_versions="v1.1.4 v1.0.0"
+for apptainer_version in ${apptainer_versions}; do
+    install_prefix=~/.local/opt/apptainer/${apptainer_version}
+    apptainer_bin=${install_prefix}/bin/apptainer
 
-if [[ ! -f ${apptainer_bin} ]]; then
-    cd ${tmp_dir}
-    # Install apptainer.
-    if [[ ! -d ./apptainer ]]; then
-        git clone https://github.com/apptainer/apptainer
+    if [[ ! -f ${apptainer_bin} ]]; then
+        cd ${tmp_dir}
+        # Install apptainer.
+        if [[ ! -d ./apptainer ]]; then
+            git clone https://github.com/apptainer/apptainer
+        fi
+        cd apptainer
+        git fetch
+        git checkout ${apptainer_version}
+        ./mconfig --without-suid -p ${install_prefix}
+        make -C builddir -j
+        make -C builddir install -j
+        ln -sf ${apptainer_bin} ~/.local/bin/apptainer-${apptainer_version}
     fi
-    cd apptainer
-    git fetch
-    git checkout ${apptainer_version}
-    ./mconfig --without-suid -p ${install_prefix}
-    make -C builddir -j
-    make -C builddir install -j
-    ln -sf ${apptainer_bin} ~/.local/bin/apptainer-${apptainer_version}
-fi
 
-if ! which apptainer ; then
-    ln -sf ${apptainer_bin} ~/.local/bin/
-fi
+    if ! which apptainer ; then
+        ln -sf ${apptainer_bin} ~/.local/bin/
+    fi
+done
