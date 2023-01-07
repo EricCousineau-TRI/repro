@@ -5,3 +5,7 @@ From: ubuntu:20.04
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
   apt-get -y install mesa-utils nvidia-utils-525
+
+# # Does not work?
+# %environment
+#   export LD_PRELOAD=/lib/x86_64-linux-gnu/libc.so.6
