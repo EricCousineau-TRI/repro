@@ -1,0 +1,1 @@
+workspace(name = "fake_bazel_workspace")
