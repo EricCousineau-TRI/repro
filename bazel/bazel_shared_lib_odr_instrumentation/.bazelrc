@@ -7,3 +7,9 @@ build --disk_cache ''
 # C++ opts.
 build --cxxopt=-std=c++17
 build --distinct_host_configuration=false
+
+# Same as Drake
+# https://github.com/RobotLocomotion/drake/blob/v1.11.0/tools/bazel.rc#L12-L15
+build --force_pic
+build --strip=never
+build --strict_system_includes

@@ -1,0 +1,6 @@
+cc_library(
+    name = "empty",
+    srcs = ["empty.cc"],
+    # Even with this, -fPIC is still present.
+    linkstatic = True,
+)
