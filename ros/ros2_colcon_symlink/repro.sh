@@ -6,10 +6,10 @@ source /opt/ros/humble/setup.bash
 set -ux
 
 cd $(dirname ${BASH_SOURCE})
-colcon build --symlink-install
+colcon build
 
-if [[ -f $(readlink install/my_pkg/share/my_pkg/package.xml) ]]; then
-    echo "Good"
+if [[ -L install/my_pkg/share/my_pkg/package.xml ]]; then
+    echo "Bad! We want copy of file, not symlink"
 else
-    echo "Bad"
+    echo "Good"
 fi
