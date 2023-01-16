@@ -1,12 +1,12 @@
-drake == 1.0.0
+drake == 1.12.0
 
-matplotlib == 3.4.3
+matplotlib # == 3.4.3
 
 # Jupyter, for interactive workflows.
-jupyter == 1.0.0
-jupyterlab == 3.3.0
+# jupyter == 1.0.0
+jupyterlab # == 3.3.0
 # N.B. These versions may be old, but work on my (Eric) machine.
-ipykernel == 6.9.1
-ipywidgets == 7.6.5
-notebook == 6.4.8
-widgetsnbextension == 3.5.2
+ipykernel # == 6.9.1
+ipywidgets # == 7.6.5
+notebook # == 6.4.8
+widgetsnbextension # == 3.5.2
