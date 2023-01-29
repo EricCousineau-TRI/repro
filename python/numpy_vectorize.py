@@ -1,13 +1,21 @@
+import functools
+
 import numpy as np
 
 
+def vectorize(**kwargs):
+    # Decorator form of `np.vectorize`.
+    return functools.partial(np.vectorize, **kwargs)
+
+
+@vectorize(cache=True)
 def op_binary(a, b):
     print(a, b)
     return a + b
 
 
 def main():
-    op = np.vectorize(op_binary, cache=True)
+    op = op_binary
     a = [1, 2, 3]
     b = [10, 20, 30]
     c = op(a, b)
