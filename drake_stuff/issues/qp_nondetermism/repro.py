@@ -3,7 +3,11 @@ import pickle
 
 import numpy as np
 
-from pydrake.solvers import MathematicalProgram, OsqpSolver
+from pydrake.solvers import (
+    MathematicalProgram,
+    OsqpSolver,
+    SolverOptions,
+)
 
     
 def load_pickle(filename):
@@ -11,7 +15,8 @@ def load_pickle(filename):
         return pickle.load(f)
 
 
-def main():
+def check(adaptive_rho):
+    print(f"[ adaptive_rho={adaptive_rho} ]")
     workspace = load_pickle("./workspace.pkl")
     u_set = set()
 
@@ -51,7 +56,12 @@ def main():
         prog.AddBoundingBoxConstraint(vd_min, vd_max, vd_star)
         prog.AddBoundingBoxConstraint(u_min, u_max, u_star)
 
-        result = solver.Solve(prog)
+        solver_options = SolverOptions()
+        solver_options.SetOption(
+            solver.solver_id(), "adaptive_rho", adaptive_rho
+        )
+
+        result = solver.Solve(prog, None, solver_options)
         assert result.is_success()
         u = result.GetSolution(u_star)
         u_set.add(tuple(u))
@@ -63,6 +73,15 @@ def main():
     u0 = us[0]
     for u in us[1:]:
         print(u - u0)
+
+
+def main():
+    count = 5
+    for i in range(count):
+        check(adaptive_rho=1)
+    print()
+    for i in range(count):
+        check(adaptive_rho=0)
 
 
 if __name__ == "__main__":
