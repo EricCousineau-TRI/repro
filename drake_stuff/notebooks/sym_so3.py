@@ -41,14 +41,11 @@ def derivatives_1st(A, xs, xds):
     return Ad
 
 
-def derivatives_2nd(A, xs, xds, xdds):
-    Ad = np.zeros_like(A)
-    Add = np.zeros_like(A)
-    for x, xd, xdd in zip(xs, xds, xdds):
-        J = differentiate(A, x)
-        Ad += J * xd
-        Jd = differentiate(J, x) * xd
-        Add += J * xdd + Jd * xd
+def derivatives_1st_and_2nd(A, xs, xds, xdds):
+    Ad = derivatives_1st(A, xs, xds)
+    vs = cat(xs, xds)
+    vds = cat(xds, xdds)
+    Add = derivatives_1st(Ad, vs, vds)
     return Ad, Add
 
 
