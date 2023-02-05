@@ -1,4 +1,6 @@
 drake == 1.12.0
 
+sympy == 1.11.1
+
 matplotlib == 3.6.3
 jupyterlab == 3.5.2
