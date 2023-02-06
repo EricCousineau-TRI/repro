@@ -16,9 +16,10 @@ def skew(r):
 
 
 def unskew(R, *, tol=1e-10):
-    # Note: This is non-symbolic.
-    dR = R + R.T
-    assert np.all(np.max(np.abs(dR)) < tol)
+    if tol is not None:
+        # Note: This is non-symbolic.
+        dR = R + R.T
+        assert np.all(np.max(np.abs(dR)) < tol)
     r1 = R[2, 1]
     r2 = R[0, 2]
     r3 = R[1, 0]
