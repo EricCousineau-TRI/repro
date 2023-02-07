@@ -64,7 +64,7 @@ def make_drake_to_sympy(drake_vars):
 def drake_to_sympy(expr, to_sympy):
     """
     Convert a drake symbolic expression to sympy
-    
+
     @param expr The drake expression to convert
     @param vardict Dictionary which corresponds drake variables to sympy Symbols
     @return The sympy expression
@@ -111,3 +111,21 @@ def pretty_trig(expr, syms, *, simplify=True):
         subs[s_r] = s_r_short
     expr = expr.subs(subs)
     return expr
+
+
+def drake_sym_replace(expr, old, new):
+
+    def recurse(sub):
+        return drake_sym_replace(sub, old, new)
+
+    if isinstance(expr, np.ndarray):
+        recurse = np.vectorize(recurse)
+        return recurse(expr)
+
+    if not isinstance(expr, sym.Expression):
+        return expr
+    if expr.EqualTo(old):
+        return new
+    ctor, old_args = expr.Unapply()
+    new_args = [recurse(x) for x in old_args]
+    return ctor(*new_args)
