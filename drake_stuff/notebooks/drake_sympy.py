@@ -27,6 +27,7 @@ _DRAKE_TO_SYMPY_FUNCS = {
     sym.ExpressionKind.Abs: sympy.Abs,
     sym.ExpressionKind.Exp: sympy.exp,
     sym.ExpressionKind.Pow: _fastpow,
+    sym.ExpressionKind.Sqrt: sympy.sqrt,
     sym.ExpressionKind.Sin: sympy.sin,
     sym.ExpressionKind.Cos: sympy.cos,
     sym.ExpressionKind.Tan: sympy.tan,
