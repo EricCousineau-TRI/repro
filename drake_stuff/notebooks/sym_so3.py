@@ -94,35 +94,3 @@ class SecondOrderWorkspace:
             values=values,
             env=env,
         )
-
-
-def make_rotation_symbolics():
-    workspace = SecondOrderWorkspace(["r", "p", "y"])
-    r, rd, rdd = workspace.syms
-
-    R = RollPitchYaw_[Expression](r).ToRotationMatrix().matrix()
-    Rd, Rdd = derivatives_2nd(R, r, rd, rdd)
-    wh = R.T @ Rd
-    # WARNING: This expression does not seem reliable :(
-    ah_bad = Rd.T @ Rd + R.T @ Rdd
-    # This one is at least skew symmetric?
-    ah = derivatives_1st(wh, cat(r, rd), cat(rd, rdd))
-
-    # Make an environment bound by reference.
-    instant_sym = (r, rd, rdd)
-    instant_values = (r_v, rd_v, rdd_v)
-    env = make_aliased_env(instant_sym, instant_values)
-
-    def calc(r_e, rd_e, rdd_e):
-        r_v[:] = r_e
-        rd_v[:] = rd_e
-        rdd_v[:] = rdd_e
-        R_e = sym.Evaluate(R, env)
-        wh_e = sym.Evaluate(wh, env)
-        w_e = unskew(wh_e)
-        ah_e = sym.Evaluate(ah, env)
-        ah_bad_e = sym.Evaluate(ah_bad, env)
-        a_e = unskew(ah_e)
-        return RotationMatrix(R_e), w_e, a_e
-
-    return calc
