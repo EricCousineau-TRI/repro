@@ -156,3 +156,12 @@ cc_binary(
     srcs = ["reductions.cc"],
     deps = ["@eigen//:eigen"],
 )
+
+cc_binary(
+    name = "aliases",
+    srcs = ["aliases.cc"],
+    deps = [
+        "@eigen//:eigen",
+        "@fmt",
+    ],
+)
