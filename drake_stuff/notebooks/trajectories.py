@@ -10,15 +10,9 @@ from pydrake.all import (
     Evaluate,
     Expression,
     Jacobian,
-    LeafSystem,
     Quaternion_,
-    RigidTransform,
     RollPitchYaw_,
-    RotationMatrix,
     RotationMatrix_,
-    SpatialAcceleration,
-    SpatialVelocity,
-    Value,
     Variable,
 )
 import pydrake.math as drake_math
@@ -171,7 +165,7 @@ def make_rot_info_rpy_sym():
         w_e = unskew(wh_e, tol=tol)
         ah_e = evaluate(ah_s, env)
         a_e = unskew(ah_e, tol=tol)
-        return RotationMatrix_[T](R_e), w_e, a_e
+        return R_e, w_e, a_e
 
     def project_values(r_e, rd_e, rdd_e):
         # For now, we're ignoring non-uniqueness of rpy.
@@ -235,7 +229,7 @@ def make_rot_info_quat_sym():
         w_e = unskew(wh_e, tol=tol)
         ah_e = evaluate(ah_s, env)
         a_e = unskew(ah_e, tol=tol)
-        return RotationMatrix_[T](R_e), w_e, a_e
+        return R_e, w_e, a_e
 
     def project_values(q_e, qd_e, qdd_e):
         T, evaluate, tol = infer_sym_dtype_stuff(q_e)
@@ -311,9 +305,15 @@ def min_jerk(s):
     return f, fd, fdd
 
 
+@dc.dataclass
 class Sinusoid:
     Ts: np.ndarray
     T0_ratios: np.ndarray = None
+
+    def __post_init__(self):
+        self.Ts = np.asarray(self.Ts)
+        if self.T0_ratios is not None:
+            self.T0_ratios = np.asarray(self.T0_ratios)
 
     def __call__(self, t):
         ws = 2 * np.pi / self.Ts
@@ -327,15 +327,35 @@ class Sinusoid:
         return y, yd, ydd
 
 
-class Blend:
+@dc.dataclass
+class Mult:
     """Second-order multiplication."""
-    blend: object
-    func: object
+    a: object
+    b: object
 
     def __call__(self, t):
-        s, sd, sdd = self.blend(t)
-        y, yd, ydd = self.func(t)
-        z = s * y
-        zd = s * yd + sd y
-        zdd = s * ydd + 2 * (sd * yd) + sdd * y
-        return z, zd, zdd
+        a, ad, add = self.a(t)
+        b, bd, bdd = self.b(t)
+        c = a * b
+        cd = a * bd + ad * b
+        cdd = a * bdd + 2 * (ad * bd) + add * b
+        return c, cd, cdd
+
+
+@dc.dataclass
+class So3:
+    R: object
+    w: object
+    wd: object
+
+    def __iter__(self):
+        return iter((self.R, self.w, self.wd))
+
+@dc.dataclass
+class Coord:
+    r: object
+    rd: object
+    rdd: object
+
+    def __iter__(self):
+        return iter((self.r, self.rd, self.rdd))
