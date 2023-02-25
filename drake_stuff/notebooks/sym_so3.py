@@ -1,3 +1,5 @@
+# TODO(eric.cousineau): Replace this with `trajectories` and `so2_so3_helpers`.
+
 import dataclasses as dc
 
 import numpy as np
