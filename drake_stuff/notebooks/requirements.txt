@@ -5,3 +5,5 @@ scipy == 1.10.1
 
 matplotlib == 3.6.3
 jupyterlab == 3.5.2
+
+einops == 0.6.0
