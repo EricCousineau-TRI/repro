@@ -49,7 +49,22 @@ py_binary(
     deps = ["@repo//:repo_py"],
 )
 EOF
+cat > print_paths.py <<EOF
+
+EOF
 cat > example_consuming_repo.py <<EOF
+# print paths
+import os, re, sys
+
+def reformat(x):
+    source = os.path.dirname(os.path.realpath(__file__))
+    x = x.replace(source, "{source}")
+    x = re.sub(r"^/.*?\.runfiles", "{runfiles}", x)
+    return x
+
+print("\n".join(reformat(x) for x in sys.path))
+
+# try import
 from repo import my_special_symbol
 EOF
 
