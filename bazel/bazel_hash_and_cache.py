@@ -17,6 +17,10 @@ Examples:
 
     ./bazel_hash_and_cache.py drake@HEAD
 
+* Pattern for drake-ros source
+
+    ./bazel_hash_and_cache.py drake-ros@main
+
 * Pattern for Drake nightly
 
     ./bazel_hash_and_cache.py drake-nightly@latest
@@ -55,6 +59,8 @@ def parse_size_bytes(s):
 _URL_PATTERNS = (
     (r"drake@([\w\.]+)",
         r"https://github.com/RobotLocomotion/drake/archive/\1.tar.gz"),
+    (r"drake-ros@([\w\.]+)",
+        r"https://github.com/RobotLocomotion/drake-ros/archive/refs/heads/\1.tar.gz"),
     (r"drake-nightly@([\w\.]+)",
         r"https://drake-packages.csail.mit.edu/drake/nightly/drake-\1-focal.tar.gz"),  # noqa
     (r"pybind11@([\w.]+)",
