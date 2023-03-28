@@ -5,7 +5,6 @@ from torch import nn
 
 
 def param_in(p_check, params):
-    # TODO(eric.cousineau): Why is this necessary?
     ids = [id(p) for p in params]
     return id(p_check) in ids
 
@@ -18,6 +17,7 @@ class Test(unittest.TestCase):
             param in others
             # others.__contains__(param)  # Alternative spelling
         # Is this a PyTorch bug?
+        # https://github.com/pytorch/pytorch/issues/97823
         self.assertIn("non-singleton dimension", str(cm.exception))
         self.assertFalse(param_in(param, others))
         self.assertTrue(param_in(others[0], others))
