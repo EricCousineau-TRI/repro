@@ -65,6 +65,8 @@ class DrakeTorchFunction(torch.autograd.Function):
     @torch.autograd.function.once_differentiable
     def backward(ctx, dL_df):
         # Chain rule against the entire gradient.
+        # Flatten ∂L/∂f in the case that f(x) has a dimension greater than 1.
+        # TODO(eric.cousineau): Figure out why this works.
         dL_df = dL_df.reshape(-1)
         (df_dx,) = ctx.saved_tensors
         dL_dx = dL_df @ df_dx
@@ -134,6 +136,10 @@ def torch_function_args_to_autodiff(args):
                 args_ad.append(arg)
             else:
                 arg_new = arg.detach().cpu().numpy()
+                if arg_new.dtype in [np.float32, np.float64]:
+                    # Convert to non-gradient AutoDiffXd so we choose the right
+                    # overloads.
+                    arg_new = to_autodiff(arg_new)
                 args_new[i] = arg_new
             if device is None:
                 device = arg.device
@@ -154,6 +160,12 @@ def torch_function_reshape_grads(dL_dx, nargs, indices_ad, shapes_ad):
     for i, grad_ad in zip(indices_ad, grads_ad):
         grads_all[i] = grad_ad
     return tuple(grads_all)
+
+
+@np.vectorize
+def to_autodiff(v):
+    """Convert to AutoDiffXd (with effectively zero gradient)."""
+    return AutoDiffXd(v)
 
 
 def autodiff_to_value(v):
@@ -206,7 +218,6 @@ def unflatten_arrays(vs_flat, shapes):
     """
     Reverse of flatten_tensors(), but for NumPy arrays.
     """
-    lens = [int(np.prod(shape)) for shape in shapes]
     vs = []
     i = 0
     for shape in shapes:

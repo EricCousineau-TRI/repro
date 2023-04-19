@@ -11,7 +11,8 @@ from pydrake.autodiffutils import (
 )
 import pydrake.math as drake_math
 
-from my_package.drake_torch_autodiff import (
+from anzu.not_exported_soz.containers import take_first
+from anzu.drake_torch_autodiff import (
     drake_torch_function,
 )
 
@@ -20,7 +21,11 @@ def my_sin_torch(
     str_nograd, float_nograd, vector_nograd, matrix_grad, vector_grad
 ):
     assert str_nograd == "str_nograd"
-    return float_nograd * torch.sin(matrix_grad + vector_grad) + vector_nograd
+    return (
+        float_nograd * torch.sin(matrix_grad)
+        + vector_grad**2
+        + vector_nograd
+    )
 
 
 @np.vectorize
@@ -28,12 +33,31 @@ def drake_sin(x):
     return drake_math.sin(x)
 
 
+def is_autodiff(x):
+    assert x.size > 0
+    if x.dtype != object:
+        return False
+    x0 = take_first(x.flat)
+    return isinstance(x0, AutoDiffXd)
+
+
 @drake_torch_function
 def my_sin_drake(
     str_nograd, float_nograd, vector_nograd, matrix_grad, vector_grad
 ):
     assert str_nograd == "str_nograd"
-    return float_nograd * drake_sin(matrix_grad + vector_grad) + vector_nograd
+    # Normally, you can write your Drake function to operation on
+    # `T in [float, AutoDiffXd, Expression]`. We add these asserts just to
+    # confirm that routing through `my_sin_drake.torch` converts all tensors,
+    # regardless of whether they need gradients.
+    assert is_autodiff(vector_nograd)
+    assert is_autodiff(matrix_grad)
+    assert is_autodiff(vector_grad)
+    return (
+        float_nograd * drake_sin(matrix_grad)
+        + vector_grad**2
+        + vector_nograd
+    )
 
 
 def my_sin_drake_batched(
