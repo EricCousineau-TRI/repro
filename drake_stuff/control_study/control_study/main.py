@@ -188,6 +188,8 @@ def make_panda_limits(plant):
     plant_limits = PlantLimits.from_plant(plant)
     # Avoid elbow lock.
     plant_limits.q.upper[3] = np.deg2rad(-15.0)
+    # Scale down velocities.
+    plant_limits.v = plant_limits.v.scaled(0.9)
     return plant_limits
 
 
@@ -235,9 +237,9 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
 @debug.iex
 def main():
     scenarios = {
-        "slow": run_slow_waypoints,
-        "rot": run_rotation_coupling,
-        "fast": run_fast_waypoints,
+        # "slow": run_slow_waypoints,
+        # "rot": run_rotation_coupling,
+        # "fast": run_fast_waypoints,
         "fast singular": run_fast_waypoints_singular,
     }
     make_controllers = {
