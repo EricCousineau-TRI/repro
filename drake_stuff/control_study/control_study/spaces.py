@@ -23,13 +23,7 @@ class SpatialMotionInputPorts:
     V: InputPort
     A: InputPort
 
-    def assert_valid(self):
-        assert self.X is not None
-        assert self.V is not None
-        assert self.A is not None
-
     def eval(self, sys_context):
-        self.assert_valid()
         return SpatialMotionInstant(
             X=self.X.Eval(sys_context),
             V=self.V.Eval(sys_context),
@@ -44,7 +38,6 @@ class SpatialMotionOutputPorts:
     A: OutputPort
 
     def eval(self, sys_context):
-        self.assert_valid()
         X = self.X.Eval(sys_context)
         V = self.V.Eval(sys_context)
         A = self.A.Eval(sys_context)
@@ -58,8 +51,6 @@ def connect_spatial_motion_ports(
     *,
     zoh_dt: float = None,
 ):
-    outputs.assert_valid()
-    inputs.assert_valid()
     output_X = maybe_attach_zoh(builder, outputs.X, zoh_dt)
     builder.Connect(output_X, inputs.X)
     output_V = maybe_attach_zoh(builder, outputs.V, zoh_dt)
@@ -111,6 +102,7 @@ def declare_spatial_motion_outputs(
 ):
     alloc_X = Value[RigidTransform]
     alloc_V = Value[SpatialVelocity]
+    alloc_A = Value[SpatialAcceleration]
     if prerequisites_of_calc is None:
         prerequisites_of_calc = {system.all_sources_ticket()}
     ports = SpatialMotionOutputPorts(
@@ -126,12 +118,11 @@ def declare_spatial_motion_outputs(
             calc=calc_V,
             prerequisites_of_calc=prerequisites_of_calc,
         ),
-    )
-    alloc_A = Value[SpatialAcceleration]
-    ports.A = system.DeclareAbstractOutputPort(
-        name_A,
-        alloc=alloc_A,
-        calc=calc_A,
-        prerequisites_of_calc=prerequisites_of_calc,
+        A=system.DeclareAbstractOutputPort(
+            name_A,
+            alloc=alloc_A,
+            calc=calc_A,
+            prerequisites_of_calc=prerequisites_of_calc,
+        ),
     )
     return ports

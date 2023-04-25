@@ -37,7 +37,7 @@ class BaseController(LeafSystem):
         self.num_q = plant.num_positions()
         self.num_x = 2 * self.num_q
         assert plant.num_velocities() == self.num_q
-        self.state_input = self.DeclareVectorInputPort("state", self.num_q)
+        self.state_input = self.DeclareVectorInputPort("state", self.num_x)
         self.inputs_motion_desired = declare_spatial_motion_inputs(
             self,
             name_X="X_des",
@@ -46,7 +46,7 @@ class BaseController(LeafSystem):
         )
         self.torques_output = self.DeclareVectorOutputPort(
             "torques",
-            size=self.q,
+            size=self.num_q,
             calc=self.calc_torques,
         )
         self.get_init_state = declare_simple_init(
@@ -93,7 +93,7 @@ class OscGains:
     posture: Gains
 
     @staticmethod
-    def critical_damped(kp_t, kp_p):
+    def critically_damped(kp_t, kp_p):
         return OscGains(
             Gains.critically_damped(kp_t),
             Gains.critically_damped(kp_p),
@@ -146,9 +146,11 @@ class Osc(BaseController):
         gains_t = self.gains.task
         X, V, Jt, Jtdot_v = pose_actual
         X_des, V_des, A_des = pose_desired
+        V_des = V_des.get_coeffs()
+        A_des = A_des.get_coeffs()
         e = se3_vector_minus(X, X_des)
-        ed = (V - V_des).get_coeffs()
-        edd_c = A_des.get_coeffs() - gains_t.kp * e - gains_t.kd * ed
+        ed = V - V_des
+        edd_c = A_des - gains_t.kp * e - gains_t.kd * ed
         Mt, _, Jt, _, Nt_T = reproject_mass(Minv, Jt)
         Ft = Mt @ (edd_c - Jtdot_v)
 

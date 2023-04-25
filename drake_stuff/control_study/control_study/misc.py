@@ -56,7 +56,6 @@ class PoseTraj(LeafSystem):
         cache_entry = declare_simple_cache(self, calc_cache)
         self.motion_outputs = declare_spatial_motion_outputs(
             self,
-            frames=None,
             name_X="X",
             calc_X=lambda context, output: (
                 output.set_value(cache_entry.Eval(context).X)
@@ -117,14 +116,14 @@ def make_sim_setup(time_step):
         params=DrakeVisualizerParams(role=Role.kIllustration),
     )
     parser = Parser(plant)
-    parser.AddModels(
+    parser.AddModelsFromUrl(
         "package://drake/manipulation/models/franka_description/urdf/panda_arm.urdf"
     )
-    plant.Finalize()
     plant.WeldFrames(
         plant.world_frame(),
         plant.GetFrameByName("panda_link0"),
     )
-    frame_G = plant.GetFrameByName("panda_link8")
+    plant.Finalize()
 
+    frame_G = plant.GetFrameByName("panda_link8")
     return builder, plant, scene_graph, frame_G

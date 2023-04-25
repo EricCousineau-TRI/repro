@@ -13,6 +13,7 @@ from pydrake.multibody.tree import ModelInstanceIndex
 from pydrake.systems.analysis import Simulator
 from pydrake.systems.framework import DiagramBuilder, LeafSystem
 
+from control_study import debug
 from control_study.controllers import Osc, OscGains
 from control_study.multibody_extras import (
     get_frame_spatial_velocity,
@@ -65,7 +66,13 @@ def run_spatial_waypoints(
     controller = builder.AddSystem(
         make_controller(plant, frame_W, frame_G)
     )
-    torques_output = maybe_attach_zoh(controller.torques_output, control_dt)
+    builder.Connect(
+        plant.get_state_output_port(),
+        controller.state_input,
+    )
+    torques_output = maybe_attach_zoh(
+        builder, controller.torques_output, control_dt
+    )
     # Meh
     model = ModelInstanceIndex(2)
     builder.Connect(
@@ -162,6 +169,7 @@ def run_fast_waypoints_singular():
     )
 
 
+@debug.iex
 def main():
     run_rotation_coupling()
     run_slow_waypoints()
