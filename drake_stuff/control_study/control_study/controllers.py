@@ -337,6 +337,7 @@ class QpWithDirConstraint(BaseController):
         plant_limits,
         acceleration_bounds_dt,
         posture_weight,
+        use_natural_weights,
     ):
         super().__init__(plant, frame_W, frame_G)
         self.gains = gains
@@ -344,11 +345,13 @@ class QpWithDirConstraint(BaseController):
         self.solver, self.solver_options = make_osqp_solver_and_options()
         self.acceleration_bounds_dt = acceleration_bounds_dt
         self.posture_weight = posture_weight
+        self.use_natural_weights = use_natural_weights
 
     def calc_control(self, pose_actual, pose_desired, q0):
         q = self.plant.GetPositions(self.context)
         v = self.plant.GetVelocities(self.context)
         M, C, tau_g = calc_dynamics(self.plant, self.context)
+        Minv = inv(M)
 
         # Base QP formulation.
         Iv = np.eye(self.num_q)
@@ -399,11 +402,19 @@ class QpWithDirConstraint(BaseController):
         prog.AddLinearEqualityConstraint(
             task_A, task_b, task_vars
         ).evaluator().set_description("task")
+
+        Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
+
         # Try to optimizer towards scale=1.
+        if self.use_natural_weights:
+            _, s, _ = np.linalg.svd(Jt)
+            scale_weight = s[0]
+        else:
+            scale_weight = 1.0
         desired_scales = np.ones(num_scales)
         prog.Add2NormSquaredCost(
-            np.eye(num_scales),
-            desired_scales,
+            scale_weight * np.eye(num_scales),
+            scale_weight * desired_scales,
             scale_vars,
         )
 
@@ -414,7 +425,10 @@ class QpWithDirConstraint(BaseController):
         edd_c = -gains_p.kp * e - gains_p.kd * ed
         # Same as above, but lower weight.
         weight = self.posture_weight
-        task_proj = weight * Iv
+        if self.use_natural_weights:
+            task_proj = weight * Minv @ Nt_T
+        else:
+            task_proj = weight * Iv
         task_A = task_proj @ Iv
         task_b = task_proj @ edd_c
         prog.Add2NormSquaredCost(task_A, task_b, vd_star)

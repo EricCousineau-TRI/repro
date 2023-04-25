@@ -219,16 +219,18 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
         gains=make_osc_gains(),
         plant_limits=PlantLimits.from_plant(plant),
         acceleration_bounds_dt=CONTROL_DT,
-        posture_weight=0.01,
+        # posture_weight=0.01,
+        posture_weight=1.0,
+        use_natural_weights=True,
     )
 
 
 @debug.iex
 def main():
     scenarios = {
-        "slow": run_slow_waypoints,
-        "rot": run_rotation_coupling,
-        "fast": run_fast_waypoints,
+        # "slow": run_slow_waypoints,
+        # "rot": run_rotation_coupling,
+        # "fast": run_fast_waypoints,
         "fast singular": run_fast_waypoints_singular,
     }
     make_controllers = {
