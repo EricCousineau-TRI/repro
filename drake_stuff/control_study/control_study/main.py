@@ -199,7 +199,7 @@ def make_controller_qp_costs(plant, frame_W, frame_G):
 @debug.iex
 def main():
     scenarios = {
-        # "rot": run_rotation_coupling,
+        "rot": run_rotation_coupling,
         # "slow": run_slow_waypoints,
         "fast": run_fast_waypoints,
         # "fast singular": run_fast_waypoints_singular,

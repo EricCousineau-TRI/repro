@@ -208,7 +208,7 @@ def solve_or_die(solver, solver_options, prog):
         solver.Solve(prog, solver_options=solver_options)
         print("\n".join(result.GetInfeasibleConstraintNames(prog)))
         print(result.get_solution_result())
-        assert False, "Bad solution"
+        raise RuntimeError("Bad solution")
     return result
 
 
