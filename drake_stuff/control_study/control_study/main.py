@@ -218,9 +218,11 @@ def make_controller_qp_costs(plant, frame_W, frame_G):
         gains=make_osc_gains(),
         plant_limits=make_panda_limits(plant),
         acceleration_bounds_dt=CONTROL_DT,
-        posture_weight=0.01,
-        # split_costs=[1.0, 1.0],
-        split_costs=None,
+        # posture_weight=0.01,
+        split_costs=[1.0, 1.0],
+        # split_costs=None,
+        posture_weight=1.0,
+        use_torque_weights=True,
     )
 
 
@@ -232,10 +234,10 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
         gains=make_osc_gains(),
         plant_limits=make_panda_limits(plant),
         acceleration_bounds_dt=CONTROL_DT,
-        posture_weight=0.01,
-        use_torque_weights=False,
-        # posture_weight=1.0,
-        # use_torque_weights=True,
+        # posture_weight=0.01,
+        # use_torque_weights=False,
+        posture_weight=1.0,
+        use_torque_weights=True,
     )
     # controller.check_limits = False
     return controller
@@ -244,15 +246,15 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
 @debug.iex
 def main():
     scenarios = {
-        # "slow": run_slow_waypoints,
-        # "rot": run_rotation_coupling,
-        # "fast": run_fast_waypoints,
-        "fast singular": run_fast_waypoints_singular,
+        "slow": run_slow_waypoints,
+        "rot": run_rotation_coupling,
+        "fast": run_fast_waypoints,
+        # "fast singular": run_fast_waypoints_singular,
     }
     make_controllers = {
         # "osc": make_controller_osc,
         "qp costs": make_controller_qp_costs,
-        "qp constr": make_controller_qp_constraints,
+        # "qp constr": make_controller_qp_constraints,
     }
     for scenario_name, scenario in scenarios.items():
         print(scenario_name)

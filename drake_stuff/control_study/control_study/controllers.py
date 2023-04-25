@@ -309,6 +309,10 @@ class QpWithCosts(BaseController):
         e = se3_vector_minus(X, X_des)
         ed = V - V_des
         edd_c = A_des - gains_t.kp * e - gains_t.kd * ed
+
+        Minv = inv(M)
+        Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
+
         # Drive towards desired tracking, |(J*vdot + Jdot*v) - (edd_c)|^2
         task_A = Jt
         task_b = -Jtdot_v + edd_c
@@ -316,12 +320,15 @@ class QpWithCosts(BaseController):
         num_t = 6
         It = np.eye(num_t)
         if self.use_torque_weights:
+            # task_proj = Jt.T @ Mt
             task_proj = Mt
         else:
             task_proj = It
         task_A = task_proj @ task_A
         task_b = task_proj @ task_b
-        if self.split_costs is not None:
+        if self.split_costs is None:
+            prog.Add2NormSquaredCost(task_A, task_b, vd_star)
+        else:
             slices = [slice(0, 3), slice(3, 6)]
             for weight_i, slice_i in zip(self.split_costs, slices):
                 prog.Add2NormSquaredCost(
@@ -329,8 +336,6 @@ class QpWithCosts(BaseController):
                     weight_i* task_b[slice_i],
                     vd_star,
                 )
-        else:
-            prog.Add2NormSquaredCost(task_A, task_b, vd_star)
 
         # Compute posture feedback.
         gains_p = self.gains.posture
