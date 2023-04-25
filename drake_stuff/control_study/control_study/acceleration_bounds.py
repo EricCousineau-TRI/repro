@@ -18,9 +18,9 @@ from control_study.limits import PlantLimits, VectorLimits
 STRICT = False
 
 
-def _acceleration_bounds_from_naive_position_limits(q, v, q_limits, dt):
+def _acceleration_bounds_from_naive_position_limits(q, v, q_limits, dt, dt2):
     sub = q + v * dt
-    scale = 2 / (dt * dt)
+    scale = 2 / dt2
     vd_limits = VectorLimits(
         lower=scale * (q_limits.lower - sub),
         upper=scale * (q_limits.upper - sub),
@@ -35,11 +35,10 @@ def vectorize(**kwargs):
     return functools.partial(np.vectorize, **kwargs)
 
 
-def _acceleration_bounds_from_position_limits(q, v, q_limits, dt):
+def _acceleration_bounds_from_position_limits(q, v, q_limits, dt, dt2):
     # Algorithm 1: "accBoundsFromPosLimits".
     num = len(v)
     v2 = v * v
-    dt2 = dt * dt
     q_min, q_max = q_limits
 
     dq_max = q_max - q
@@ -85,12 +84,11 @@ def _acceleration_bounds_from_position_limits_vectorized(
     return vd_min, vd_max
 
 
-def _acceleration_bounds_from_viability(q, v, q_limits, vd_limits, dt):
+def _acceleration_bounds_from_viability(q, v, q_limits, vd_limits, dt, dt2):
     # Algorithm 2: "accBoundsFromViability".
     q_min, q_max = q_limits
     vd_min_const, vd_max_const = vd_limits
     v2 = v * v
-    dt2 = dt * dt
     # Compute for upper limits.
     a = dt2
     b = dt * (2 * v + vd_max_const * dt)
@@ -218,10 +216,12 @@ def compute_acceleration_bounds(
     v,
     plant_limits,
     dt,
+    dt2=None,
     check=True,
     bounding_method=BoundingMethod.Naive,
     # bounding_method=BoundingMethod.Prete2018,
     resolution_method=ResolutionMethod.Nothing,
+    # resolution_method=ResolutionMethod.SetInvalidToMax,
 ):
     """
     Provides acceleration bounds that are modulated according to Algorithm 3
@@ -239,13 +239,16 @@ def compute_acceleration_bounds(
     # to acceleration limits, either naively or via incorporation into the QP.
     # This may be related to control barrier functions.
     vd_limits_nominal = plant_limits.vd
+    if dt2 is None:
+        # dt2 = dt * dt
+        dt2 = dt * dt
 
     if bounding_method == BoundingMethod.Naive:
         limits = [vd_limits_nominal]
         if plant_limits.q.any_finite():
             limits.append(
                 _acceleration_bounds_from_naive_position_limits(
-                    q, v, plant_limits.q, dt
+                    q, v, plant_limits.q, dt, dt2
                 )
             )
         if plant_limits.v.any_finite():
@@ -260,19 +263,19 @@ def compute_acceleration_bounds(
         if plant_limits.q.any_finite():
             limits.append(
                 _acceleration_bounds_from_position_limits(
-                    q, v, plant_limits.q, dt
+                    q, v, plant_limits.q, dt, dt2
                 )
             )
         if plant_limits.v.any_finite():
             limits.append(
                 _acceleration_bounds_from_velocity_limits(
-                    v, plant_limits.v, dt
+                    v, plant_limits.v, dt,
                 )
             )
         if plant_limits.q.any_finite() and vd_limits_nominal.any_finite():
             limits.append(
                 _acceleration_bounds_from_viability(
-                    q, v, plant_limits.q, vd_limits_nominal, dt
+                    q, v, plant_limits.q, vd_limits_nominal, dt, dt2
                 )
             )
         # N.B. These are provided in order as described in Algorithm 3.
