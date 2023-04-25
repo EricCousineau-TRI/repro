@@ -171,6 +171,8 @@ def make_controller_osc(plant, frame_W, frame_G):
 
 
 def make_controller_qp_costs(plant, frame_W, frame_G):
+    # Good with singularity and speed.
+    # Bad with rotation / maintaining direction.
     gains = OscGains.critically_damped(100.0, 10.0)
     plant_limits = PlantLimits.from_plant(plant)
     acceleration_bounds_dt = 10 * CONTROL_DT
@@ -186,10 +188,23 @@ def make_controller_qp_costs(plant, frame_W, frame_G):
 
 @debug.iex
 def main():
-    make_controller = make_controller_qp_costs
-    run_rotation_coupling(make_controller)
-    run_slow_waypoints(make_controller)
-    run_fast_waypoints_singular(make_controller)
+    scenarios = {
+        # "rot": run_rotation_coupling,
+        # "slow": run_slow_waypoints,
+        "fast": run_fast_waypoints_singular,
+    }
+    make_controllers = {
+        "osc": make_controller_osc,
+        "qp costs": make_controller_qp_costs,
+    }
+    for scenario_name, scenario in scenarios.items():
+        print(scenario_name)
+        for controller_name, make_controller in make_controllers.items():
+            print(f"  {controller_name}")
+            try:
+                scenario(make_controller)
+            except RuntimeError as e:
+                print(e)
 
 
 if __name__ == "__main__":
