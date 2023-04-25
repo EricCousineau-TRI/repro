@@ -265,7 +265,6 @@ class QpWithCosts(BaseController):
         self.posture_weight = posture_weight
         self.split_costs = split_costs
         self.use_torque_weights = use_torque_weights
-        self.p
 
     def calc_control(self, pose_actual, pose_desired, q0):
         M, C, tau_g = calc_dynamics(self.plant, self.context)
@@ -425,11 +424,16 @@ class QpWithDirConstraint(BaseController):
         # Constrain along desired tracking, J*vdot + Jdot*v = s*edd_c
         # For simplicity, allow each direction to have its own scaling.
         num_t = 6
-        scale_A = np.eye(num_t)
+        # scale_A = np.eye(num_t)
+        # scale_A = np.ones((num_t, 1))
+        scale_A = np.array([
+            [1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1],
+        ]).T
         num_scales = scale_A.shape[1]
 
         task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
-        scale_vars = prog.NewContinuousVariables(num_t, "scale")
+        scale_vars = prog.NewContinuousVariables(num_scales, "scale")
         task_vars = np.concatenate([vd_star, scale_vars])
         task_A = np.hstack([Jt, -scale_A * task_bias_rep])
         task_b = -Jtdot_v
@@ -440,8 +444,14 @@ class QpWithDirConstraint(BaseController):
         Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
 
         # Try to optimize towards scale=1.
-        if self.use_torque_weights:
-            proj = Mt @ scale_A
+        if False: #self.use_torque_weights:
+            # proj = Jt.T @ Mt @ scale_A
+            # _, s, _ = np.linalg.svd(Mt)
+            # _, s, _ = np.linalg.svd(Jt)
+            # proj = s[0] * scale_A
+            # proj = Jt.T @ scale_A
+            proj = scale_A
+            # proj = M @ Jt.T @ scale_A
         else:
             proj = np.eye(num_scales)
         desired_scales = np.ones(num_scales)
@@ -461,6 +471,8 @@ class QpWithDirConstraint(BaseController):
             task_proj = Nt_T
         else:
             task_proj = Iv
+
+        # TODO(eric.cousineau): Maybe I need to constrain these error dynamics?
 
         weight = self.posture_weight
         task_proj = weight * task_proj

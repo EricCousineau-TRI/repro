@@ -214,6 +214,8 @@ def make_controller_qp_costs(plant, frame_W, frame_G):
 
 
 def make_controller_qp_constraints(plant, frame_W, frame_G):
+    # at present, elbow oscillates at limit; could either be secondary task, or
+    # something else.
     controller = QpWithDirConstraint(
         plant,
         frame_W,
