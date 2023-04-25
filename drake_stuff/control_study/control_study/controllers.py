@@ -258,6 +258,7 @@ class QpWithCosts(BaseController):
         acceleration_bounds_dt,
         posture_weight,
         split_costs=None,
+        use_torque_weights=False,
     ):
         super().__init__(plant, frame_W, frame_G)
         self.gains = gains
@@ -266,6 +267,7 @@ class QpWithCosts(BaseController):
         self.acceleration_bounds_dt = acceleration_bounds_dt
         self.posture_weight = posture_weight
         self.split_costs = split_costs
+        self.use_torque_weights = use_torque_weights
 
     def calc_control(self, pose_actual, pose_desired, q0):
         M, C, tau_g = calc_dynamics(self.plant, self.context)
@@ -310,6 +312,15 @@ class QpWithCosts(BaseController):
         # Drive towards desired tracking, |(J*vdot + Jdot*v) - (edd_c)|^2
         task_A = Jt
         task_b = -Jtdot_v + edd_c
+
+        num_t = 6
+        It = np.eye(num_t)
+        if self.use_torque_weights:
+            task_proj = Mt
+        else:
+            task_proj = It
+        task_A = task_proj @ task_A
+        task_b = task_proj @ task_b
         if self.split_costs is not None:
             slices = [slice(0, 3), slice(3, 6)]
             for weight_i, slice_i in zip(self.split_costs, slices):
@@ -328,8 +339,12 @@ class QpWithCosts(BaseController):
         edd_c = -gains_p.kp * e - gains_p.kd * ed
         # Same as above, but lower weight.
         weight = self.posture_weight
-        task_A = weight * Iv
-        task_b = weight * edd_c
+        if self.use_torque_weights:
+            task_proj = weight * Nt_T
+        else:
+            task_proj = weight * Iv
+        task_A = task_proj
+        task_b = task_proj @ edd_c
         prog.Add2NormSquaredCost(task_A, task_b, vd_star)
 
         # Solve.
@@ -350,7 +365,7 @@ class QpWithDirConstraint(BaseController):
         plant_limits,
         acceleration_bounds_dt,
         posture_weight,
-        use_natural_weights,
+        use_torque_weights=False,
     ):
         super().__init__(plant, frame_W, frame_G)
         self.gains = gains
@@ -358,7 +373,7 @@ class QpWithDirConstraint(BaseController):
         self.solver, self.solver_options = make_osqp_solver_and_options()
         self.acceleration_bounds_dt = acceleration_bounds_dt
         self.posture_weight = posture_weight
-        self.use_natural_weights = use_natural_weights
+        self.use_torque_weights = use_torque_weights
 
     def calc_control(self, pose_actual, pose_desired, q0):
         q = self.plant.GetPositions(self.context)
@@ -419,7 +434,7 @@ class QpWithDirConstraint(BaseController):
         Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
 
         # Try to optimize towards scale=1.
-        if self.use_natural_weights:
+        if self.use_torque_weights:
             _, s, _ = np.linalg.svd(Mt)
             scale_weight = s[0]
         else:
@@ -437,7 +452,7 @@ class QpWithDirConstraint(BaseController):
         ed = v
         edd_c = -gains_p.kp * e - gains_p.kd * ed
         # Same as above, but lower weight.
-        if self.use_natural_weights:
+        if self.use_torque_weights:
             task_proj = Nt_T
         else:
             task_proj = Iv

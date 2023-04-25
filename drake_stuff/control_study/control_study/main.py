@@ -233,9 +233,9 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
         plant_limits=make_panda_limits(plant),
         acceleration_bounds_dt=CONTROL_DT,
         posture_weight=0.01,
-        use_natural_weights=False,
+        use_torque_weights=False,
         # posture_weight=1.0,
-        # use_natural_weights=True,
+        # use_torque_weights=True,
     )
     # controller.check_limits = False
     return controller
