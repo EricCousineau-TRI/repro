@@ -14,7 +14,8 @@ from pydrake.systems.analysis import Simulator
 from pydrake.systems.framework import DiagramBuilder, LeafSystem
 
 from control_study import debug
-from control_study.controllers import Osc, OscGains
+from control_study.controllers import Osc, OscGains, QpWithCosts
+from control_study.limits import PlantLimits
 from control_study.multibody_extras import (
     get_frame_spatial_velocity,
     simplify_plant,
@@ -132,12 +133,7 @@ def run_spatial_waypoints(
     return qs, Vs
 
 
-def make_controller(plant, frame_W, frame_G):
-    gains = OscGains.critically_damped(100.0, 10.0)
-    return Osc(plant, frame_W, frame_G, gains)
-
-
-def run_rotation_coupling():
+def run_rotation_coupling(make_controller):
     # Rotation only.
     run_spatial_waypoints(
         make_controller=make_controller,
@@ -147,7 +143,7 @@ def run_rotation_coupling():
     )
 
 
-def run_slow_waypoints():
+def run_slow_waypoints(make_controller):
     # Small and slow(er) motion, should stay away from singularities and
     # stay within limits of QP, so all should be (relatively) equivalent.
     run_spatial_waypoints(
@@ -158,7 +154,7 @@ def run_slow_waypoints():
     )
 
 
-def run_fast_waypoints_singular():
+def run_fast_waypoints_singular(make_controller):
     # Fast motions that move beyond our speed limits and move into
     # singularity (elbow lock).
     run_spatial_waypoints(
@@ -169,11 +165,31 @@ def run_fast_waypoints_singular():
     )
 
 
+def make_controller_osc(plant, frame_W, frame_G):
+    gains = OscGains.critically_damped(100.0, 10.0)
+    return Osc(plant, frame_W, frame_G, gains)
+
+
+def make_controller_qp_costs(plant, frame_W, frame_G):
+    gains = OscGains.critically_damped(100.0, 10.0)
+    plant_limits = PlantLimits.from_plant(plant)
+    acceleration_bounds_dt = 10 * CONTROL_DT
+    return QpWithCosts(
+        plant,
+        frame_W,
+        frame_G,
+        gains=gains,
+        plant_limits=plant_limits,
+        acceleration_bounds_dt=acceleration_bounds_dt,
+    )
+
+
 @debug.iex
 def main():
-    run_rotation_coupling()
-    run_slow_waypoints()
-    run_fast_waypoints_singular()
+    make_controller = make_controller_qp_costs
+    run_rotation_coupling(make_controller)
+    run_slow_waypoints(make_controller)
+    run_fast_waypoints_singular(make_controller)
 
 
 if __name__ == "__main__":

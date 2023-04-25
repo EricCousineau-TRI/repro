@@ -26,6 +26,8 @@ from control_study.spaces import declare_spatial_motion_inputs
 from control_study.systems import declare_simple_init
 from control_study.multibody_extras import calc_velocity_jacobian
 
+from control_study.acceleration_bounds import compute_acceleration_bounds
+
 
 class BaseController(LeafSystem):
     def __init__(self, plant, frame_W, frame_G):
@@ -165,4 +167,131 @@ class Osc(BaseController):
 
         # Sum up tasks and cancel gravity + Coriolis terms.
         tau = Jt.T @ Ft + Nt_T @ Fp + C - tau_g
+        return tau
+
+
+def make_osqp_solver_and_options(use_dairlab_settings=False):
+    solver = OsqpSolver()
+    solver_id = solver.solver_id()
+    solver_options = SolverOptions()
+    # https://osqp.org/docs/interfaces/solver_settings.html#solver-settings
+    solver_options_dict = dict(
+        # See https://github.com/RobotLocomotion/drake/issues/18711
+        adaptive_rho=0,
+    )
+    if use_dairlab_settings:
+        # https://github.com/DAIRLab/dairlib/blob/0da42bc2/examples/Cassie/osc_run/osc_running_qp_settings.yaml
+        solver_options_dict.update(
+            rho=0.001,
+            sigma=1e-6,
+            max_iter=250,
+            eps_abs=1e-5,
+            eps_rel=1e-5,
+            eps_prim_inf=1e-5,
+            eps_dual_inf=1e-5,
+            polish=1,
+            polish_refine_iter=1,
+            scaled_termination=1,
+            scaling=1,
+        )
+    for name, value in solver_options_dict.items():
+        solver_options.SetOption(solver_id, name, value)
+    return solver, solver_options
+
+
+class QpWithCosts(BaseController):
+    def __init__(
+        self,
+        plant,
+        frame_W,
+        frame_G,
+        *,
+        gains,
+        plant_limits,
+        acceleration_bounds_dt,
+    ):
+        super().__init__(plant, frame_W, frame_G)
+        self.gains = gains
+        self.plant_limits = plant_limits
+        self.solver, self.solver_options = make_osqp_solver_and_options()
+        self.acceleration_bounds_dt = acceleration_bounds_dt
+
+    def calc_control(self, pose_actual, pose_desired, q0):
+        M, C, tau_g = calc_dynamics(self.plant, self.context)
+
+        # Base QP formulation.
+        Iv = np.eye(self.num_q)
+        zv = np.zeros(self.num_q)
+        prog = MathematicalProgram()
+        vd_star = prog.NewContinuousVariables(self.num_q, "vd_star")
+        u_star = prog.NewContinuousVariables(self.num_q, "u_star")
+
+        # Dynamics constraint.
+        dyn_vars = np.concatenate([vd_star, u_star])
+        dyn_A = np.hstack([M, -Iv])
+        dyn_b = -C + tau_g
+        prog.AddLinearEqualityConstraint(
+            dyn_A, dyn_b, dyn_vars
+        ).evaluator().set_description("dyn")
+
+        # Compute spatial feedback.
+        gains_t = self.gains.task
+        X, V, Jt, Jtdot_v = pose_actual
+        X_des, V_des, A_des = pose_desired
+        V_des = V_des.get_coeffs()
+        A_des = A_des.get_coeffs()
+        e = se3_vector_minus(X, X_des)
+        ed = V - V_des
+        edd_c = A_des - gains_t.kp * e - gains_t.kd * ed
+        # Drive towards desired tracking, |(J*vdot + Jdot*v) - (edd_c)|^2
+        task_A = Jt
+        task_b = -Jtdot_v + edd_c
+        prog.Add2NormSquaredCost(task_A, task_b, vd_star)
+
+        # Compute posture feedback.
+        gains_p = self.gains.posture
+        q = self.plant.GetPositions(self.context)
+        v = self.plant.GetVelocities(self.context)
+        e = q - q0
+        ed = v
+        edd_c = -gains_p.kp * e - gains_p.kd * ed
+        # Same as above, but lower weight.
+        weight = 0.01
+        task_A = weight * Iv
+        task_b = weight * edd_c
+        prog.Add2NormSquaredCost(task_A, task_b, vd_star)
+
+        # Add limits.
+        vd_limits = compute_acceleration_bounds(
+            q=q,
+            v=v,
+            plant_limits=self.plant_limits,
+            dt=self.acceleration_bounds_dt,
+        )
+        if vd_limits.any_finite():
+            vd_min, vd_max = vd_limits
+            prog.AddBoundingBoxConstraint(
+                vd_min, vd_max, vd_star
+            ).evaluator().set_description("accel")
+
+        # - Torque.
+        u_limits = self.plant_limits.u
+        if u_limits.any_finite():
+            u_min, u_max = u_limits
+            prog.AddBoundingBoxConstraint(
+                u_min, u_max, u_star
+            ).evaluator().set_description("torque")
+
+        # Solve.
+        result = self.solver.Solve(prog, solver_options=self.solver_options)
+        if not result.is_success():
+            self.solver_options.SetOption(
+                CommonSolverOption.kPrintToConsole, True
+            )
+            self.solver.Solve(prog, solver_options=self.solver_options)
+            print("\n".join(result.GetInfeasibleConstraintNames(prog)))
+            print(result.get_solution_result())
+            assert False, "Bad solution"
+        tau = result.GetSolution(u_star)
+
         return tau
