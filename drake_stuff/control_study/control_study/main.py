@@ -154,6 +154,16 @@ def run_slow_waypoints(make_controller):
     )
 
 
+def run_fast_waypoints(make_controller):
+    # Small and slow(er) motion, should stay away from singularities and
+    # stay within limits of QP, so all should be (relatively) equivalent.
+    run_spatial_waypoints(
+        make_controller=make_controller,
+        X_extr=RigidTransform([0.05, 0.02, -0.05]),
+        X_intr=xyz_rpy_deg([0, 0, 0], [90.0, 30.0, 45.0]),
+        dT=0.5,
+    )
+
 def run_fast_waypoints_singular(make_controller):
     # Fast motions that move beyond our speed limits and move into
     # singularity (elbow lock).
@@ -191,7 +201,8 @@ def main():
     scenarios = {
         # "rot": run_rotation_coupling,
         # "slow": run_slow_waypoints,
-        "fast": run_fast_waypoints_singular,
+        "fast": run_fast_waypoints,
+        # "fast singular": run_fast_waypoints_singular,
     }
     make_controllers = {
         "osc": make_controller_osc,
