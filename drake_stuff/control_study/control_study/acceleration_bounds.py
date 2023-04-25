@@ -220,9 +220,7 @@ def compute_acceleration_bounds(
     dt,
     check=True,
     bounding_method=BoundingMethod.Naive,
-    # bounding_method=BoundingMethod.Margin,
-    resolution_method=ResolutionMethod.SetInvalidToMax,
-    # resolution_method=ResolutionMethod.SetInvalidToZero,
+    resolution_method=ResolutionMethod.Nothing,
 ):
     """
     Provides acceleration bounds that are modulated according to Algorithm 3

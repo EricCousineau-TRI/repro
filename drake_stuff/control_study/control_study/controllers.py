@@ -295,3 +295,119 @@ class QpWithCosts(BaseController):
         tau = result.GetSolution(u_star)
 
         return tau
+
+
+def solve_or_die(solver, solver_options, prog):
+    result = solver.Solve(prog, solver_options=solver_options)
+    if not result.is_success():
+        solver_options.SetOption(
+            CommonSolverOption.kPrintToConsole, True
+        )
+        solver.Solve(prog, solver_options=solver_options)
+        print("\n".join(result.GetInfeasibleConstraintNames(prog)))
+        print(result.get_solution_result())
+        assert False, "Bad solution"
+    return result
+
+
+def add_simple_limits(plant_limits, dt, q, v, prog, vd_star, u_star):
+    vd_limits = compute_acceleration_bounds(
+        q=q,
+        v=v,
+        plant_limits=plant_limits,
+        dt=dt,
+    )
+    if vd_limits.any_finite():
+        vd_min, vd_max = vd_limits
+        prog.AddBoundingBoxConstraint(
+            vd_min, vd_max, vd_star
+        ).evaluator().set_description("accel")
+
+    # - Torque.
+    if plant_limits.u.any_finite():
+        u_min, u_max = plant_limits.u
+        prog.AddBoundingBoxConstraint(
+            u_min, u_max, u_star
+        ).evaluator().set_description("torque")
+
+
+class QpWithPrimaryConstraint(BaseController):
+    def __init__(
+        self,
+        plant,
+        frame_W,
+        frame_G,
+        *,
+        gains,
+        plant_limits,
+        acceleration_bounds_dt,
+        posture_weight=0.01,
+    ):
+        super().__init__(plant, frame_W, frame_G)
+        self.gains = gains
+        self.plant_limits = plant_limits
+        self.solver, self.solver_options = make_osqp_solver_and_options()
+        self.acceleration_bounds_dt = acceleration_bounds_dt
+        self.posture_weight = posture_weight
+
+    def calc_control(self, pose_actual, pose_desired, q0):
+        q = self.plant.GetPositions(self.context)
+        v = self.plant.GetVelocities(self.context)
+        M, C, tau_g = calc_dynamics(self.plant, self.context)
+
+        # Base QP formulation.
+        Iv = np.eye(self.num_q)
+        zv = np.zeros(self.num_q)
+        prog = MathematicalProgram()
+        vd_star = prog.NewContinuousVariables(self.num_q, "vd_star")
+        u_star = prog.NewContinuousVariables(self.num_q, "u_star")
+
+        # Add limits.
+        add_simple_limits(
+            self.plant_limits,
+            self.acceleration_bounds_dt,
+            q,
+            v,
+            prog,
+            vd_star,
+            u_star,
+        )
+
+        # Dynamics constraint.
+        dyn_vars = np.concatenate([vd_star, u_star])
+        dyn_A = np.hstack([M, -Iv])
+        dyn_b = -C + tau_g
+        prog.AddLinearEqualityConstraint(
+            dyn_A, dyn_b, dyn_vars
+        ).evaluator().set_description("dyn")
+
+        # Compute spatial feedback.
+        gains_t = self.gains.task
+        X, V, Jt, Jtdot_v = pose_actual
+        X_des, V_des, A_des = pose_desired
+        V_des = V_des.get_coeffs()
+        A_des = A_des.get_coeffs()
+        e = se3_vector_minus(X, X_des)
+        ed = V - V_des
+        edd_c = A_des - gains_t.kp * e - gains_t.kd * ed
+        # Drive towards desired tracking, |(J*vdot + Jdot*v) - (edd_c)|^2
+        task_A = Jt
+        task_b = -Jtdot_v + edd_c
+        prog.Add2NormSquaredCost(task_A, task_b, vd_star)
+
+        # Compute posture feedback.
+        gains_p = self.gains.posture
+        e = q - q0
+        ed = v
+        edd_c = -gains_p.kp * e - gains_p.kd * ed
+        # Same as above, but lower weight.
+        weight = self.posture_weight
+        task_A = weight * Iv
+        task_b = weight * edd_c
+        prog.Add2NormSquaredCost(task_A, task_b, vd_star)
+
+        # Solve.
+        result = solve_or_die(self.solver, self.solver_options, prog)
+        tau = result.GetSolution(u_star)
+
+        return tau
