@@ -14,7 +14,12 @@ from pydrake.systems.analysis import Simulator
 from pydrake.systems.framework import DiagramBuilder, LeafSystem
 
 from control_study import debug
-from control_study.controllers import Osc, OscGains, QpWithCosts
+from control_study.controllers import (
+    Osc,
+    OscGains,
+    QpWithCosts,
+    QpWithDirConstraint,
+)
 from control_study.limits import PlantLimits
 from control_study.multibody_extras import (
     get_frame_spatial_velocity,
@@ -175,40 +180,60 @@ def run_fast_waypoints_singular(make_controller):
     )
 
 
+def make_osc_gains():
+    return OscGains.critically_damped(100.0, 10.0)
+
+
 def make_controller_osc(plant, frame_W, frame_G):
-    gains = OscGains.critically_damped(100.0, 10.0)
-    return Osc(plant, frame_W, frame_G, gains)
+    # Great at tracking
+    # Bad at singularities or staying w/in bounds.
+    return Osc(
+        plant,
+        frame_W,
+        frame_G,
+        gains=make_osc_gains(),
+    )
 
 
 def make_controller_qp_costs(plant, frame_W, frame_G):
     # Good with singularity and speed.
     # Bad with rotation / maintaining direction.
-    gains = OscGains.critically_damped(100.0, 10.0)
-    plant_limits = PlantLimits.from_plant(plant)
     return QpWithCosts(
         plant,
         frame_W,
         frame_G,
-        gains=gains,
-        plant_limits=plant_limits,
+        gains=make_osc_gains(),
+        plant_limits=PlantLimits.from_plant(plant),
         acceleration_bounds_dt=CONTROL_DT,
         posture_weight=0.001,
-        # split_weights=[1.0, 1.0],
-        split_weights=None,
+        # split_costs=[1.0, 1.0],
+        split_costs=None,
     )
 
+
+def make_controller_qp_constraints(plant, frame_W, frame_G):
+    return QpWithDirConstraint(
+        plant,
+        frame_W,
+        frame_G,
+        gains=make_osc_gains(),
+        plant_limits=PlantLimits.from_plant(plant),
+        acceleration_bounds_dt=CONTROL_DT,
+        posture_weight=0.01,
+    )
 
 @debug.iex
 def main():
     scenarios = {
         "rot": run_rotation_coupling,
-        # "slow": run_slow_waypoints,
+        "slow": run_slow_waypoints,
         "fast": run_fast_waypoints,
-        # "fast singular": run_fast_waypoints_singular,
+        "fast singular": run_fast_waypoints_singular,
     }
     make_controllers = {
         # "osc": make_controller_osc,
-        "qp costs": make_controller_qp_costs,
+        # "qp costs": make_controller_qp_costs,
+        "qp constr": make_controller_qp_constraints,
     }
     for scenario_name, scenario in scenarios.items():
         print(scenario_name)

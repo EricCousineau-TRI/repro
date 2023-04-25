@@ -244,7 +244,7 @@ class QpWithCosts(BaseController):
         plant_limits,
         acceleration_bounds_dt,
         posture_weight,
-        split_weights=None,
+        split_costs=None,
     ):
         super().__init__(plant, frame_W, frame_G)
         self.gains = gains
@@ -252,7 +252,7 @@ class QpWithCosts(BaseController):
         self.solver, self.solver_options = make_osqp_solver_and_options()
         self.acceleration_bounds_dt = acceleration_bounds_dt
         self.posture_weight = posture_weight
-        self.split_weights = split_weights
+        self.split_costs = split_costs
 
     def calc_control(self, pose_actual, pose_desired, q0):
         M, C, tau_g = calc_dynamics(self.plant, self.context)
@@ -297,9 +297,9 @@ class QpWithCosts(BaseController):
         # Drive towards desired tracking, |(J*vdot + Jdot*v) - (edd_c)|^2
         task_A = Jt
         task_b = -Jtdot_v + edd_c
-        if self.split_weights is not None:
+        if self.split_costs is not None:
             slices = [slice(0, 3), slice(3, 6)]
-            for weight_i, slice_i in zip(self.split_weights, slices):
+            for weight_i, slice_i in zip(self.split_costs, slices):
                 prog.Add2NormSquaredCost(
                     weight_i * task_A[slice_i],
                     weight_i* task_b[slice_i],
@@ -326,7 +326,7 @@ class QpWithCosts(BaseController):
         return tau
 
 
-class QpWithPrimaryConstraint(BaseController):
+class QpWithDirConstraint(BaseController):
     def __init__(
         self,
         plant,
@@ -336,12 +336,14 @@ class QpWithPrimaryConstraint(BaseController):
         gains,
         plant_limits,
         acceleration_bounds_dt,
+        posture_weight,
     ):
         super().__init__(plant, frame_W, frame_G)
         self.gains = gains
         self.plant_limits = plant_limits
         self.solver, self.solver_options = make_osqp_solver_and_options()
         self.acceleration_bounds_dt = acceleration_bounds_dt
+        self.posture_weight = posture_weight
 
     def calc_control(self, pose_actual, pose_desired, q0):
         q = self.plant.GetPositions(self.context)
@@ -376,6 +378,8 @@ class QpWithPrimaryConstraint(BaseController):
 
         # Compute spatial feedback.
         gains_t = self.gains.task
+        num_t = 6
+        It = np.eye(num_t)
         X, V, Jt, Jtdot_v = pose_actual
         X_des, V_des, A_des = pose_desired
         V_des = V_des.get_coeffs()
@@ -383,10 +387,25 @@ class QpWithPrimaryConstraint(BaseController):
         e = se3_vector_minus(X, X_des)
         ed = V - V_des
         edd_c = A_des - gains_t.kp * e - gains_t.kd * ed
-        # Drive towards desired tracking, |(J*vdot + Jdot*v) - (edd_c)|^2
-        task_A = Jt
-        task_b = -Jtdot_v + edd_c
-        prog.Add2NormSquaredCost(task_A, task_b, vd_star)
+
+        # Constrain along desired tracking, J*vdot + Jdot*v = s*edd_c
+        # For simplicity, allow each direction to have its own scaling.
+        num_scales = num_t
+        task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
+        scale_vars = prog.NewContinuousVariables(num_t, "scale")
+        task_vars = np.concatenate([vd_star, scale_vars])
+        task_A = np.hstack([Jt, -It * task_bias_rep])
+        task_b = -Jtdot_v
+        prog.AddLinearEqualityConstraint(
+            task_A, task_b, task_vars
+        ).evaluator().set_description("task")
+        # Try to optimizer towards scale=1.
+        desired_scales = np.ones(num_scales)
+        prog.Add2NormSquaredCost(
+            np.eye(num_scales),
+            desired_scales,
+            scale_vars,
+        )
 
         # Compute posture feedback.
         gains_p = self.gains.posture
