@@ -380,6 +380,7 @@ class QpWithDirConstraint(BaseController):
     def calc_control(self, pose_actual, pose_desired, q0):
         q = self.plant.GetPositions(self.context)
         v = self.plant.GetVelocities(self.context)
+        num_v = len(v)
         M, C, tau_g = calc_dynamics(self.plant, self.context)
         Minv = inv(M)
 
@@ -431,7 +432,6 @@ class QpWithDirConstraint(BaseController):
             [0, 0, 0, 1, 1, 1],
         ]).T
         num_scales = scale_A.shape[1]
-
         task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
         scale_vars = prog.NewContinuousVariables(num_scales, "scale")
         task_vars = np.concatenate([vd_star, scale_vars])
@@ -474,17 +474,32 @@ class QpWithDirConstraint(BaseController):
 
         # TODO(eric.cousineau): Maybe I need to constrain these error dynamics?
 
-        # weight = self.posture_weight
-        # task_proj = weight * task_proj
-        # task_A = task_proj @ Iv
-        # task_b = task_proj @ edd_c
-        # prog.Add2NormSquaredCost(task_A, task_b, vd_star)
+        weight = self.posture_weight
+        task_proj = weight * task_proj
+        task_A = task_proj @ Iv
+        task_b = task_proj @ edd_c
+        prog.Add2NormSquaredCost(task_A, task_b, vd_star)
 
-        prog.AddLinearEqualityConstraint(
-            task_proj @ Iv,
-            task_proj @ edd_c,
-            vd_star,
-        ).evaluator().set_description("posture")
+        # # scale_A = np.ones((num_t, 1))
+        # scale_A = np.eye(num_v)
+        # num_scales = scale_A.shape[1]
+        # task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
+        # scale_vars = prog.NewContinuousVariables(num_scales, "scale")
+        # task_vars = np.concatenate([vd_star, scale_vars])
+        # task_A = np.hstack([Iv, -scale_A * task_bias_rep])
+        # task_b = np.zeros(num_v)
+        # prog.AddLinearEqualityConstraint(
+        #     task_proj @ task_A,
+        #     task_proj @ task_b,
+        #     task_vars,
+        # ).evaluator().set_description("posture")
+        # desired_scales = np.ones(num_scales)
+        # proj = np.eye(num_scales)
+        # prog.Add2NormSquaredCost(
+        #     proj @ np.eye(num_scales),
+        #     proj @ desired_scales,
+        #     scale_vars,
+        # )
 
         # Solve.
         result = solve_or_die(self.solver, self.solver_options, prog)
