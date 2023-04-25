@@ -175,14 +175,14 @@ def make_controller_qp_costs(plant, frame_W, frame_G):
     # Bad with rotation / maintaining direction.
     gains = OscGains.critically_damped(100.0, 10.0)
     plant_limits = PlantLimits.from_plant(plant)
-    acceleration_bounds_dt = 10 * CONTROL_DT
     return QpWithCosts(
         plant,
         frame_W,
         frame_G,
         gains=gains,
         plant_limits=plant_limits,
-        acceleration_bounds_dt=acceleration_bounds_dt,
+        acceleration_bounds_dt=CONTROL_DT,
+        posture_weight=0.1,
     )
 
 
