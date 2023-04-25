@@ -222,11 +222,12 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
         posture_weight=0.01,
     )
 
+
 @debug.iex
 def main():
     scenarios = {
-        "rot": run_rotation_coupling,
         "slow": run_slow_waypoints,
+        "rot": run_rotation_coupling,
         "fast": run_fast_waypoints,
         "fast singular": run_fast_waypoints_singular,
     }
