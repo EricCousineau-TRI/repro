@@ -220,6 +220,7 @@ def compute_acceleration_bounds(
     dt,
     check=True,
     bounding_method=BoundingMethod.Naive,
+    # bounding_method=BoundingMethod.Prete2018,
     resolution_method=ResolutionMethod.Nothing,
 ):
     """

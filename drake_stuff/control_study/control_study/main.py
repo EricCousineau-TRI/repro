@@ -188,8 +188,11 @@ def make_panda_limits(plant):
     plant_limits = PlantLimits.from_plant(plant)
     # Avoid elbow lock.
     plant_limits.q.upper[3] = np.deg2rad(-15.0)
-    # Scale down velocities.
-    plant_limits.v = plant_limits.v.scaled(0.9)
+    plant_limits.v = plant_limits.v.scaled(0.8)
+    # Scale down velocities... a lot.
+    # plant_limits.v = plant_limits.v.scaled(0.5)
+    # plant_limits.vd = plant_limits.vd.scaled(np.inf)
+    # plant_limits.u = plant_limits.u.scaled(np.inf)
     return plant_limits
 
 
@@ -221,7 +224,7 @@ def make_controller_qp_costs(plant, frame_W, frame_G):
 
 
 def make_controller_qp_constraints(plant, frame_W, frame_G):
-    return QpWithDirConstraint(
+    controller = QpWithDirConstraint(
         plant,
         frame_W,
         frame_G,
@@ -232,6 +235,8 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
         posture_weight=1.0,
         use_natural_weights=True,
     )
+    controller.check_limits = False
+    return controller
 
 
 @debug.iex
@@ -244,8 +249,8 @@ def main():
     }
     make_controllers = {
         # "osc": make_controller_osc,
-        # "qp costs": make_controller_qp_costs,
-        "qp constr": make_controller_qp_constraints,
+        "qp costs": make_controller_qp_costs,
+        # "qp constr": make_controller_qp_constraints,
     }
     for scenario_name, scenario in scenarios.items():
         print(scenario_name)
