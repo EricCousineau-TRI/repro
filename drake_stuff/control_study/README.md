@@ -12,7 +12,13 @@ poetry install
 
 ## Running
 
-```
+```sh
+# For each terminal.
 poetry shell
+
+# (Separate terminal) Visualizer
+python -m pydrake.visualization.meldis -w
+
+# (Main terminal) Running
 python -m control_study.main
 ```

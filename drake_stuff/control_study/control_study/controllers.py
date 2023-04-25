@@ -78,19 +78,26 @@ class BaseController(LeafSystem):
 
 @dc.dataclass
 class Gains:
-    # For now, just same value, with critically damped.
-    kp_t: float
-    kp_q: float
+    kp: np.ndarray
+    kd: np.ndarray
 
-    def calc(self, num_q):
-        num_spatial = 6
-        ones_t = np.ones(num_spatial)
-        kp_t = ones_t * self.kp_t
-        kd_t = 2 * np.sqrt(kp_t)
-        ones_q = np.ones(num_q)
-        kp_q = ones_q * self.kp_q
-        kd_q = 2 * np.sqrt(kp_q)
-        return kp_t, kd_t, kp_q, kd_q
+    @staticmethod
+    def critically_damped(kp):
+        kd = 2 * np.sqrt(kp)
+        return Gains(kp, kd)
+
+
+@dc.dataclass
+class OscGains:
+    task: Gains
+    posture: Gains
+
+    @staticmethod
+    def critical_damped(kp_t, kp_p):
+        return OscGains(
+            Gains.critically_damped(kp_t),
+            Gains.critically_damped(kp_p),
+        )
 
 
 def calc_spatial_values(plant, context, frame_W, frame_G):
@@ -129,27 +136,29 @@ class Osc(BaseController):
     """Explicit OSC."""
     def __init__(self, plant, frame_W, frame_G, gains):
         super().__init__(plant, frame_W, frame_G)
-        self.kp_t, self.kd_t, self.kp_q, self.kd_q = gains.calc(self.num_q)
+        self.gains = gains
 
     def calc_control(self, pose_actual, pose_desired, q0):
         M, C, tau_g = calc_dynamics(self.plant, self.context)
         Minv = inv(M)
 
         # Compute spatial feedback.
+        gains_t = self.gains.task
         X, V, Jt, Jtdot_v = pose_actual
         X_des, V_des, A_des = pose_desired
         e = se3_vector_minus(X, X_des)
         ed = (V - V_des).get_coeffs()
-        edd_c = A_des.get_coeffs() - self.kp_t * e - self.kd_t * ed
+        edd_c = A_des.get_coeffs() - gains_t.kp * e - gains_t.kd * ed
         Mt, _, Jt, _, Nt_T = reproject_mass(Minv, Jt)
         Ft = Mt @ (edd_c - Jtdot_v)
 
         # Compute posture feedback.
+        gains_p = self.gains.posture
         q = self.plant.GetPositions(self.context)
         v = self.plant.GetVelocities(self.context)
         e = q - q0
         ed = v
-        edd_c = -self.kp_q * e - self.kd_q * ed
+        edd_c = -gains_p.kp * e - gains_p.kd * ed
         Fp = M @ edd_c
 
         # Sum up tasks and cancel gravity + Coriolis terms.

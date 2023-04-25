@@ -13,6 +13,7 @@ from pydrake.multibody.tree import ModelInstanceIndex
 from pydrake.systems.analysis import Simulator
 from pydrake.systems.framework import DiagramBuilder, LeafSystem
 
+from control_study.controllers import Osc, OscGains
 from control_study.multibody_extras import (
     get_frame_spatial_velocity,
     simplify_plant,
@@ -29,10 +30,10 @@ from control_study.systems import (
 from control_study.trajectories import (
     make_se3_spline_trajectory,
 )
+from control_study.geometry import xyz_rpy_deg
 from control_study.misc import (
     make_sim_setup,
     PoseTraj,
-    xyz_rpy_deg,
     SimpleLogger,
     make_sample_pose_traj,
     unzip,
@@ -124,13 +125,15 @@ def run_spatial_waypoints(
     return qs, Vs
 
 
-def make_controller(plant):
-    pass
+def make_controller(plant, frame_W, frame_G):
+    gains = OscGains.critically_damped(100.0, 10.0)
+    return Osc(plant, frame_W, frame_G, gains)
 
 
 def run_rotation_coupling():
     # Rotation only.
     run_spatial_waypoints(
+        make_controller=make_controller,
         X_extr=RigidTransform([0, 0, 0]),
         X_intr=xyz_rpy_deg([0, 0, 0], [0.0, 0.0, 175.0]),
         dT=1.0,
@@ -141,6 +144,7 @@ def run_slow_waypoints():
     # Small and slow(er) motion, should stay away from singularities and
     # stay within limits of QP, so all should be (relatively) equivalent.
     run_spatial_waypoints(
+        make_controller=make_controller,
         X_extr=RigidTransform([0.05, 0.02, -0.05]),
         X_intr=xyz_rpy_deg([0, 0, 0], [90.0, 30.0, 45.0]),
         dT=2.0,
@@ -151,6 +155,7 @@ def run_fast_waypoints_singular():
     # Fast motions that move beyond our speed limits and move into
     # singularity (elbow lock).
     run_spatial_waypoints(
+        make_controller=make_controller,
         X_extr=RigidTransform([0.5, 0.2, -0.5]),
         X_intr=xyz_rpy_deg([0, 0, 0], [90.0, 30.0, 45.0]),
         dT=1.0,
