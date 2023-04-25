@@ -192,7 +192,9 @@ def make_controller_qp_costs(plant, frame_W, frame_G):
         gains=gains,
         plant_limits=plant_limits,
         acceleration_bounds_dt=CONTROL_DT,
-        posture_weight=0.1,
+        posture_weight=0.001,
+        # split_weights=[1.0, 1.0],
+        split_weights=None,
     )
 
 
@@ -205,7 +207,7 @@ def main():
         # "fast singular": run_fast_waypoints_singular,
     }
     make_controllers = {
-        "osc": make_controller_osc,
+        # "osc": make_controller_osc,
         "qp costs": make_controller_qp_costs,
     }
     for scenario_name, scenario in scenarios.items():

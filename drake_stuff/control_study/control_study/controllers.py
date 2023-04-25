@@ -244,6 +244,7 @@ class QpWithCosts(BaseController):
         plant_limits,
         acceleration_bounds_dt,
         posture_weight,
+        split_weights=None,
     ):
         super().__init__(plant, frame_W, frame_G)
         self.gains = gains
@@ -251,6 +252,7 @@ class QpWithCosts(BaseController):
         self.solver, self.solver_options = make_osqp_solver_and_options()
         self.acceleration_bounds_dt = acceleration_bounds_dt
         self.posture_weight = posture_weight
+        self.split_weights = split_weights
 
     def calc_control(self, pose_actual, pose_desired, q0):
         M, C, tau_g = calc_dynamics(self.plant, self.context)
@@ -295,7 +297,16 @@ class QpWithCosts(BaseController):
         # Drive towards desired tracking, |(J*vdot + Jdot*v) - (edd_c)|^2
         task_A = Jt
         task_b = -Jtdot_v + edd_c
-        prog.Add2NormSquaredCost(task_A, task_b, vd_star)
+        if self.split_weights is not None:
+            slices = [slice(0, 3), slice(3, 6)]
+            for weight_i, slice_i in zip(self.split_weights, slices):
+                prog.Add2NormSquaredCost(
+                    weight_i * task_A[slice_i],
+                    weight_i* task_b[slice_i],
+                    vd_star,
+                )
+        else:
+            prog.Add2NormSquaredCost(task_A, task_b, vd_star)
 
         # Compute posture feedback.
         gains_p = self.gains.posture
