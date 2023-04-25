@@ -25,10 +25,6 @@ from control_study.multibody_extras import (
     get_frame_spatial_velocity,
     simplify_plant,
 )
-from control_study.spaces import (
-    connect_spatial_motion_ports,
-    declare_spatial_motion_outputs,
-)
 from control_study.systems import (
     declare_simple_cache,
     maybe_attach_zoh,
@@ -40,7 +36,6 @@ from control_study.trajectories import (
 from control_study.geometry import xyz_rpy_deg
 from control_study.misc import (
     make_sim_setup,
-    PoseTraj,
     SimpleLogger,
     make_sample_pose_traj,
     unzip,
@@ -79,7 +74,7 @@ def run_spatial_waypoints(
     torques_output = maybe_attach_zoh(
         builder, controller.torques_output, control_dt
     )
-    # Meh
+    # Meh, should fix this,
     model = ModelInstanceIndex(2)
     builder.Connect(
         torques_output,
@@ -88,13 +83,6 @@ def run_spatial_waypoints(
 
     # Simplify plant after controller is constructed.
     simplify_plant(plant, scene_graph)
-
-    traj_sys = builder.AddSystem(PoseTraj(traj=None))
-    connect_spatial_motion_ports(
-        builder,
-        outputs=traj_sys.motion_outputs,
-        inputs=controller.inputs_motion_desired,
-    )
 
     def log_instant(log_context):
         q = plant.GetPositions(context)
@@ -118,8 +106,7 @@ def run_spatial_waypoints(
 
     X_WG = plant.CalcRelativeTransform(context, frame_W, frame_G)
     traj_saturate, t_f = make_sample_pose_traj(dT, X_WG, X_extr, X_intr)
-
-    traj_sys.traj = traj_saturate
+    controller.traj = traj_saturate
 
     simulator = Simulator(diagram, diagram_context)
     simulator_initialize_repeatedly(simulator)

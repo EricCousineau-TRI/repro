@@ -12,9 +12,6 @@ from pydrake.multibody.plant import AddMultibodyPlant, MultibodyPlantConfig
 from pydrake.systems.analysis import Simulator
 from pydrake.systems.framework import DiagramBuilder, LeafSystem
 
-from control_study.spaces import (
-    declare_spatial_motion_outputs,
-)
 from control_study.systems import (
     declare_simple_cache,
 )
@@ -41,33 +38,6 @@ class SimpleLogger(LeafSystem):
             period_sec=period_sec,
             offset_sec=0.0,
             update=on_discrete_update,
-        )
-
-
-class PoseTraj(LeafSystem):
-    def __init__(self, traj):
-        super().__init__()
-        self.traj = traj
-
-        def calc_cache(context, cache):
-            t = context.get_time()
-            cache.X, cache.V, cache.A = self.traj(t)
-
-        cache_entry = declare_simple_cache(self, calc_cache)
-        self.motion_outputs = declare_spatial_motion_outputs(
-            self,
-            name_X="X",
-            calc_X=lambda context, output: (
-                output.set_value(cache_entry.Eval(context).X)
-            ),
-            name_V="V",
-            calc_V=lambda context, output: (
-                output.set_value(cache_entry.Eval(context).V)
-            ),
-            name_A="A",
-            calc_A=lambda context, output: (
-                output.set_value(cache_entry.Eval(context).A)
-            ),
         )
 
 

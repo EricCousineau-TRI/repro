@@ -23,7 +23,6 @@ from pydrake.systems.framework import LeafSystem
 
 from control_study.geometry import se3_vector_minus
 from control_study.limits import PlantLimits
-from control_study.spaces import declare_spatial_motion_inputs
 from control_study.systems import declare_simple_init
 from control_study.multibody_extras import calc_velocity_jacobian
 
@@ -41,12 +40,6 @@ class BaseController(LeafSystem):
         self.num_x = 2 * self.num_q
         assert plant.num_velocities() == self.num_q
         self.state_input = self.DeclareVectorInputPort("state", self.num_x)
-        self.inputs_motion_desired = declare_spatial_motion_inputs(
-            self,
-            name_X="X_des",
-            name_V="V_des",
-            name_A="A_des",
-        )
         self.torques_output = self.DeclareVectorOutputPort(
             "torques",
             size=self.num_q,
@@ -58,6 +51,8 @@ class BaseController(LeafSystem):
         )
         self.check_limits = True
         self.nominal_limits = PlantLimits.from_plant(plant)
+        # Will be set externally.
+        self.traj = None
 
     def on_init(self, sys_context, init):
         x = self.state_input.Eval(sys_context)
@@ -67,19 +62,20 @@ class BaseController(LeafSystem):
 
     def calc_torques(self, sys_context, output):
         x = self.state_input.Eval(sys_context)
-        self.plant.SetPositionsAndVelocities(self.context, x)
+        t = sys_context.get_time()
 
+        self.plant.SetPositionsAndVelocities(self.context, x)
         if self.check_limits:
             q = self.plant.GetPositions(self.context)
             v = self.plant.GetVelocities(self.context)
             self.nominal_limits.assert_values_within_limits(q=q, v=v)
 
+        init = self.get_init_state(sys_context)
+        q0 = init.q
         pose_actual = calc_spatial_values(
             self.plant, self.context, self.frame_W, self.frame_G
         )
-        pose_desired = self.inputs_motion_desired.eval(sys_context)
-        init = self.get_init_state(sys_context)
-        q0 = init.q
+        pose_desired = self.traj(t)
         tau = self.calc_control(pose_actual, pose_desired, q0)
 
         if self.check_limits:
