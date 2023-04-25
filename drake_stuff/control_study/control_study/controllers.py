@@ -191,11 +191,12 @@ def make_osqp_solver_and_options(use_dairlab_settings=False):
     if use_dairlab_settings:
         # https://github.com/DAIRLab/dairlib/blob/0da42bc2/examples/Cassie/osc_run/osc_running_qp_settings.yaml
         solver_options_dict.update(
-            rho=0.001,
+            # rho=0.001,
             sigma=1e-6,
-            max_iter=250,
-            eps_abs=1e-5,
-            eps_rel=1e-5,
+            # max_iter=500,
+            max_iter=10000,
+            # eps_abs=1e-5,
+            # eps_rel=1e-5,
             eps_prim_inf=1e-5,
             eps_dual_inf=1e-5,
             polish=1,
@@ -264,6 +265,7 @@ class QpWithCosts(BaseController):
         self.posture_weight = posture_weight
         self.split_costs = split_costs
         self.use_torque_weights = use_torque_weights
+        self.p
 
     def calc_control(self, pose_actual, pose_desired, q0):
         M, C, tau_g = calc_dynamics(self.plant, self.context)
@@ -422,11 +424,14 @@ class QpWithDirConstraint(BaseController):
 
         # Constrain along desired tracking, J*vdot + Jdot*v = s*edd_c
         # For simplicity, allow each direction to have its own scaling.
-        num_scales = num_t
+        num_t = 6
+        scale_A = np.eye(num_t)
+        num_scales = scale_A.shape[1]
+
         task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
         scale_vars = prog.NewContinuousVariables(num_t, "scale")
         task_vars = np.concatenate([vd_star, scale_vars])
-        task_A = np.hstack([Jt, -It * task_bias_rep])
+        task_A = np.hstack([Jt, -scale_A * task_bias_rep])
         task_b = -Jtdot_v
         prog.AddLinearEqualityConstraint(
             task_A, task_b, task_vars
@@ -436,14 +441,13 @@ class QpWithDirConstraint(BaseController):
 
         # Try to optimize towards scale=1.
         if self.use_torque_weights:
-            _, s, _ = np.linalg.svd(Mt)
-            scale_weight = s[0]
+            proj = Mt @ scale_A
         else:
-            scale_weight = 1.0
+            proj = np.eye(num_scales)
         desired_scales = np.ones(num_scales)
         prog.Add2NormSquaredCost(
-            scale_weight * np.eye(num_scales),
-            scale_weight * desired_scales,
+            proj @ np.eye(num_scales),
+            proj @ desired_scales,
             scale_vars,
         )
 
