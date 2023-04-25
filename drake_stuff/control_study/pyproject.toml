@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "control-study"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "control_study"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+drake = "^1.15.0"
+jupyterlab = "^3.6.3"
+matplotlib = "^3.7.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
