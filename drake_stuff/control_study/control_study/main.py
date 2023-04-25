@@ -155,3 +155,13 @@ def run_fast_waypoints_singular():
         X_intr=xyz_rpy_deg([0, 0, 0], [90.0, 30.0, 45.0]),
         dT=1.0,
     )
+
+
+def main():
+    run_rotation_coupling()
+    run_slow_waypoints()
+    run_fast_waypoints_singular()
+
+
+if __name__ == "__main__":
+    main()
