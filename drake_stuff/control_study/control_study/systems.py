@@ -27,7 +27,7 @@ from pydrake.systems.framework import (
 
 
 def declare_input_port(system, name, model):
-    if isinstance(model, BasicVector):
+    if isinstance(model, (BasicVector, int)):
         return system.DeclareVectorInputPort(name, model)
     else:
         assert isinstance(model, AbstractValue)
@@ -35,7 +35,7 @@ def declare_input_port(system, name, model):
 
 
 def declare_output_port(system, name, model, calc):
-    if isinstance(model, BasicVector):
+    if isinstance(model, (BasicVector, int)):
         system.DeclareVectorOutputPort(name, model, calc)
     else:
         assert isinstance(model, AbstractValue)

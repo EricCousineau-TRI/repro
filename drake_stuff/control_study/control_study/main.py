@@ -62,7 +62,7 @@ def run_spatial_waypoints(
     frame_W = plant.world_frame()
 
     controller = builder.AddSystem(
-        make_controller(plant)
+        make_controller(plant, frame_W, frame_G)
     )
     torques_output = maybe_attach_zoh(controller.torques_output, control_dt)
     # Meh

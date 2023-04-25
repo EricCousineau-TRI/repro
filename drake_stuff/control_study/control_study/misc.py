@@ -128,12 +128,3 @@ def make_sim_setup(time_step):
     frame_G = plant.GetFrameByName("panda_link8")
 
     return builder, plant, scene_graph, frame_G
-
-
-def xyz_rpy(xyz, rpy):
-    """Shorthand to create an isometry from XYZ and RPY."""
-    return RigidTransform(R=RotationMatrix(rpy=RollPitchYaw(rpy)), p=xyz)
-
-
-def xyz_rpy_deg(xyz, rpy_deg):
-    return xyz_rpy(xyz, np.deg2rad(rpy_deg))

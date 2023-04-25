@@ -87,12 +87,11 @@ class SpatialMotionInstant:
         )
 
 
-def declare_spatial_motion_inputs(system, frames, *, name_X, name_V, name_A):
+def declare_spatial_motion_inputs(system, *, name_X, name_V, name_A):
     model_X = Value[RigidTransform]()
     model_V = Value[SpatialVelocity]()
     model_A = Value[SpatialAcceleration]()
     return SpatialMotionInputPorts(
-        frames=frames,
         X=system.DeclareAbstractInputPort(name_X, model_X),
         V=system.DeclareAbstractInputPort(name_V, model_V),
         A=system.DeclareAbstractInputPort(name_A, model_A),
