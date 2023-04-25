@@ -184,6 +184,13 @@ def make_osc_gains():
     return OscGains.critically_damped(100.0, 10.0)
 
 
+def make_panda_limits(plant):
+    plant_limits = PlantLimits.from_plant(plant)
+    # Avoid elbow lock.
+    plant_limits.q.upper[3] = np.deg2rad(-15.0)
+    return plant_limits
+
+
 def make_controller_osc(plant, frame_W, frame_G):
     # Great at tracking
     # Bad at singularities or staying w/in bounds.
@@ -203,9 +210,9 @@ def make_controller_qp_costs(plant, frame_W, frame_G):
         frame_W,
         frame_G,
         gains=make_osc_gains(),
-        plant_limits=PlantLimits.from_plant(plant),
+        plant_limits=make_panda_limits(plant),
         acceleration_bounds_dt=CONTROL_DT,
-        posture_weight=0.001,
+        posture_weight=0.1,
         # split_costs=[1.0, 1.0],
         split_costs=None,
     )
@@ -217,7 +224,7 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
         frame_W,
         frame_G,
         gains=make_osc_gains(),
-        plant_limits=PlantLimits.from_plant(plant),
+        plant_limits=make_panda_limits(plant),
         acceleration_bounds_dt=CONTROL_DT,
         # posture_weight=0.01,
         posture_weight=1.0,
