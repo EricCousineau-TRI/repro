@@ -228,9 +228,9 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
 @debug.iex
 def main():
     scenarios = {
-        # "slow": run_slow_waypoints,
-        # "rot": run_rotation_coupling,
-        # "fast": run_fast_waypoints,
+        "slow": run_slow_waypoints,
+        "rot": run_rotation_coupling,
+        "fast": run_fast_waypoints,
         "fast singular": run_fast_waypoints_singular,
     }
     make_controllers = {

@@ -424,9 +424,10 @@ class QpWithDirConstraint(BaseController):
         ed = v
         edd_c = -gains_p.kp * e - gains_p.kd * ed
         # Same as above, but lower weight.
-        if self.use_natural_weights:
-            task_proj = Nt_T
-        else:
+        # if self.use_natural_weights:
+        #     task_proj = Nt_T
+        # else:
+        if True:
             task_proj = Iv
 
         _, s, _ = np.linalg.svd(task_proj)
