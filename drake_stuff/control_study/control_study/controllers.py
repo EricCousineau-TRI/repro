@@ -407,7 +407,7 @@ class QpWithDirConstraint(BaseController):
 
         # Try to optimizer towards scale=1.
         if self.use_natural_weights:
-            _, s, _ = np.linalg.svd(Jt)
+            _, s, _ = np.linalg.svd(Mt)
             scale_weight = s[0]
         else:
             scale_weight = 1.0
@@ -425,7 +425,7 @@ class QpWithDirConstraint(BaseController):
         edd_c = -gains_p.kp * e - gains_p.kd * ed
         # Same as above, but lower weight.
         if self.use_natural_weights:
-            task_proj = Minv @ Nt_T
+            task_proj = Nt_T
         else:
             task_proj = Iv
 
