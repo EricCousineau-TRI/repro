@@ -22,6 +22,7 @@ from pydrake.solvers import (
 from pydrake.systems.framework import LeafSystem
 
 from control_study.geometry import se3_vector_minus
+from control_study.limits import PlantLimits
 from control_study.spaces import declare_spatial_motion_inputs
 from control_study.systems import declare_simple_init
 from control_study.multibody_extras import calc_velocity_jacobian
@@ -55,6 +56,8 @@ class BaseController(LeafSystem):
             self,
             self.on_init,
         )
+        self.check_limits = True
+        self.nominal_limits = PlantLimits.from_plant(plant)
 
     def on_init(self, sys_context, init):
         x = self.state_input.Eval(sys_context)
@@ -65,6 +68,12 @@ class BaseController(LeafSystem):
     def calc_torques(self, sys_context, output):
         x = self.state_input.Eval(sys_context)
         self.plant.SetPositionsAndVelocities(self.context, x)
+
+        if self.check_limits:
+            q = self.plant.GetPositions(self.context)
+            v = self.plant.GetVelocities(self.context)
+            self.nominal_limits.assert_values_within_limits(q=q, v=v)
+
         pose_actual = calc_spatial_values(
             self.plant, self.context, self.frame_W, self.frame_G
         )
@@ -72,6 +81,10 @@ class BaseController(LeafSystem):
         init = self.get_init_state(sys_context)
         q0 = init.q
         tau = self.calc_control(pose_actual, pose_desired, q0)
+
+        if self.check_limits:
+            self.nominal_limits.assert_values_within_limits(u=tau)
+
         output.set_value(tau)
 
     def calc_control(self, pose_actual, pose_desired, q0):
