@@ -169,7 +169,9 @@ def run_fast_waypoints_singular(make_controller):
 
 def make_osc_gains():
     # return OscGains.critically_damped(10.0, 10.0)  # No elbow sticking
+    # return OscGains.critically_damped(100.0, 100.0)  # No elbow sticking, but loses tracking
     return OscGains.critically_damped(100.0, 10.0)  # Stickier
+    # return OscGains.critically_damped(100.0, 1.0)  # Drifts... hard...
     # return OscGains.critically_damped(100.0, 0.0)  # of course locks
 
 

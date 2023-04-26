@@ -445,16 +445,7 @@ class QpWithDirConstraint(BaseController):
         Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
 
         # Try to optimize towards scale=1.
-        # if False: #self.use_torque_weights:
-        #     # proj = Jt.T @ Mt @ scale_A
-        #     # _, s, _ = np.linalg.svd(Mt)
-        #     # _, s, _ = np.linalg.svd(Jt)
-        #     # proj = s[0] * scale_A
-        #     # proj = Jt.T @ scale_A
-        #     proj = scale_A
-        #     # proj = M @ Jt.T @ scale_A
-        # else:
-        #     proj = np.eye(num_scales)
+        # proj = np.eye(num_scales)
         proj = Jt.T @ Mt @ scale_A
         desired_scales = np.ones(num_scales)
         prog.Add2NormSquaredCost(
@@ -464,7 +455,8 @@ class QpWithDirConstraint(BaseController):
         )
 
         relax_penalty = 1e3
-        # relax_penalty = 5e3
+        # relax_penalty = 1e4
+        # relax_penalty = 1e5
         # relax_penalty = 1e6
         proj = Jt.T @ Mt
         prog.Add2NormSquaredCost(
@@ -516,6 +508,9 @@ class QpWithDirConstraint(BaseController):
             scale_vars,
         )
 
+        # relax_penalty = 0.1
+        # relax_penalty = 1.0
+        # relax_penalty = 100.0
         proj = task_proj
         prog.Add2NormSquaredCost(
             relax_penalty * proj @ Iv,
