@@ -192,12 +192,14 @@ def make_panda_limits(plant):
 def make_controller_osc(plant, frame_W, frame_G):
     # Great at tracking
     # Bad at singularities or staying w/in bounds.
-    return Osc(
+    controller = Osc(
         plant,
         frame_W,
         frame_G,
         gains=make_osc_gains(),
     )
+    controller.check_limits = False
+    return controller
 
 
 def make_controller_qp_costs(plant, frame_W, frame_G):
@@ -227,7 +229,7 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
         frame_G,
         gains=make_osc_gains(),
         plant_limits=make_panda_limits(plant),
-        acceleration_bounds_dt=10 * CONTROL_DT,
+        acceleration_bounds_dt=5 * CONTROL_DT,
         # posture_weight=0.01,
         # use_torque_weights=False,
         posture_weight=1.0,
