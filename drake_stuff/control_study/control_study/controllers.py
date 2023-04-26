@@ -462,7 +462,7 @@ class QpWithDirConstraint(BaseController):
             scale_vars,
         )
 
-        relax_penalty = 100.0
+        relax_penalty = 1e4
         prog.Add2NormSquaredCost(
             relax_penalty * It,
             np.zeros(num_t),
