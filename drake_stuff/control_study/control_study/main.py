@@ -168,7 +168,7 @@ def run_fast_waypoints_singular(make_controller):
 
 
 def make_osc_gains():
-    return OscGains.critically_damped(100.0, 1000.0)
+    return OscGains.critically_damped(10.0, 10.0)
 
 
 def make_panda_limits(plant):
