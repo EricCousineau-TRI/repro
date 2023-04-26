@@ -169,8 +169,9 @@ def run_fast_waypoints_singular(make_controller):
 
 def make_osc_gains():
     # return OscGains.critically_damped(10.0, 10.0)  # No elbow sticking
+    return OscGains.critically_damped(10.0, 1.0)  # No elbow sticking
     # return OscGains.critically_damped(100.0, 100.0)  # No elbow sticking, but loses tracking
-    return OscGains.critically_damped(100.0, 10.0)  # Stickier
+    # return OscGains.critically_damped(100.0, 10.0)  # Stickier
     # return OscGains.critically_damped(100.0, 1.0)  # Drifts... hard...
     # return OscGains.critically_damped(100.0, 0.0)  # of course locks
 
@@ -182,8 +183,9 @@ def make_panda_limits(plant):
     plant_limits.q.upper[3] = np.deg2rad(-20.0)  # Locks...
     # plant_limits.q.upper[3] = np.deg2rad(-25.0)  # Does not lock...
     plant_limits.v = plant_limits.v.scaled(0.95)
+    # plant_limits.v = plant_limits.v.scaled(0.9)
     # plant_limits.vd = plant_limits.vd.scaled(0.95)  # causes issues
-    # plant_limits.u = plant_limits.u.scaled(0.95)  # causes issues
+    # plant_limits.u = plant_limits.u.scaled(0.99)  # causes issues
     # plant_limits.v = plant_limits.v.scaled(0.5)
     # plant_limits.vd = plant_limits.vd.scaled(np.inf)
     # plant_limits.u = plant_limits.u.scaled(0.95)
