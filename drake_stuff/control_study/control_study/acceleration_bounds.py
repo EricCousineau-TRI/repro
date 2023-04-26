@@ -240,7 +240,7 @@ def compute_acceleration_bounds(
     # This may be related to control barrier functions.
     vd_limits_nominal = plant_limits.vd
     if dt2 is None:
-        # dt2 = dt * dt
+        # dt2 = 0.2 * dt * dt
         dt2 = dt * dt
 
     if bounding_method == BoundingMethod.Naive:

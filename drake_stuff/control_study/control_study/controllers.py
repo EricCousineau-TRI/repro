@@ -194,9 +194,12 @@ def make_osqp_solver_and_options(use_dairlab_settings=True):
             # # rho=0.001,
             # sigma=1e-6,
             max_iter=1000,
+            # max_iter=250,
             # max_iter=10000,
-            # # eps_abs=1e-5,
-            # # eps_rel=1e-5,
+            # eps_abs=1e-3,
+            # eps_rel=1e-4,
+            # eps_abs=1e-5,
+            # eps_rel=1e-5,
             eps_prim_inf=1e-5,
             eps_dual_inf=1e-5,
             polish=1,
@@ -507,6 +510,9 @@ class QpWithDirConstraint(BaseController):
             proj @ desired_scales,
             scale_vars,
         )
+
+        # TODO(eric.cousineau): Weigh penalty based on how much feedback we
+        # need?
 
         # relax_penalty = 0.1
         # relax_penalty = 1.0

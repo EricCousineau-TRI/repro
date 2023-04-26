@@ -42,6 +42,9 @@ class VectorLimits:
     def select(self, mask):
         return VectorLimits(lower=self.lower[mask], upper=self.upper[mask])
 
+    def saturate(self, x):
+        return np.clip(x, self.lower, self.upper)
+
     def intersection(self, other):
         return VectorLimits(
             lower=np.maximum(self.lower, other.lower),
