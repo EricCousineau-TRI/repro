@@ -222,7 +222,7 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
         frame_G,
         gains=make_osc_gains(),
         plant_limits=make_panda_limits(plant),
-        acceleration_bounds_dt=CONTROL_DT,
+        acceleration_bounds_dt=10 * CONTROL_DT,
         # posture_weight=0.01,
         # use_torque_weights=False,
         posture_weight=1.0,
