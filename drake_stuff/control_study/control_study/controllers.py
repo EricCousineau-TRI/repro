@@ -536,4 +536,6 @@ class QpWithDirConstraint(BaseController):
             raise
         tau = result.GetSolution(u_star)
 
+        tau = self.plant_limits.u.saturate(tau)
+
         return tau
