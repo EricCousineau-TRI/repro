@@ -465,6 +465,7 @@ class QpWithDirConstraint(BaseController):
 
         relax_penalty = 1e3
         # relax_penalty = 5e3
+        # relax_penalty = 1e6
         proj = Jt.T @ Mt
         prog.Add2NormSquaredCost(
             relax_penalty * proj @ It,
