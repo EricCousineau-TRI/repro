@@ -174,7 +174,8 @@ def make_osc_gains():
 def make_panda_limits(plant):
     plant_limits = PlantLimits.from_plant(plant)
     # Avoid elbow lock.
-    plant_limits.q.upper[3] = np.deg2rad(-15.0)
+    plant_limits.q.upper[3] = np.deg2rad(-20.0)  # Locks...
+    # plant_limits.q.upper[3] = np.deg2rad(-25.0)  # Does not lock...
     # plant_limits.v = plant_limits.v.scaled(0.9)
     # Scale down velocities... a lot.
     # plant_limits.v = plant_limits.v.scaled(0.5)
