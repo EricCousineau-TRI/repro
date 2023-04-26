@@ -191,17 +191,17 @@ def make_osqp_solver_and_options(use_dairlab_settings=True):
     if use_dairlab_settings:
         # https://github.com/DAIRLab/dairlib/blob/0da42bc2/examples/Cassie/osc_run/osc_running_qp_settings.yaml
         solver_options_dict.update(
-            # # rho=0.001,
-            # sigma=1e-6,
+            rho=0.001,
+            sigma=1e-6,
             # max_iter=1000,
-            max_iter=1000,
+            max_iter=10000,
             # max_iter=500,
             # max_iter=250,
             # max_iter=10000,
             # eps_abs=1e-3,
             # eps_rel=1e-4,
             # eps_abs=1e-5,
-            # eps_rel=1e-5,
+            eps_rel=1e-5,
             eps_prim_inf=1e-5,
             eps_dual_inf=1e-5,
             polish=1,
@@ -431,11 +431,11 @@ class QpWithDirConstraint(BaseController):
         # For simplicity, allow each direction to have its own scaling.
         num_t = 6
         # scale_A = np.eye(num_t)
-        # scale_A = np.ones((num_t, 1))
-        scale_A = np.array([
-            [1, 1, 1, 0, 0, 0],
-            [0, 0, 0, 1, 1, 1],
-        ]).T
+        scale_A = np.ones((num_t, 1))
+        # scale_A = np.array([
+        #     [1, 1, 1, 0, 0, 0],
+        #     [0, 0, 0, 1, 1, 1],
+        # ]).T
         num_scales = scale_A.shape[1]
         task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
         scale_vars = prog.NewContinuousVariables(num_scales, "scale")
@@ -479,12 +479,12 @@ class QpWithDirConstraint(BaseController):
         )
         scale_t_vars = scale_vars
 
-        ones = np.ones(num_scales)
-        prog.AddBoundingBoxConstraint(
-            -1.0 * ones,
-            1.0 * ones,
-            scale_vars,
-        )
+        # ones = np.ones(num_scales)
+        # prog.AddBoundingBoxConstraint(
+        #     -1.0 * ones,
+        #     1.0 * ones,
+        #     scale_vars,
+        # )
 
         # Compute posture feedback.
         gains_p = self.gains.posture
@@ -542,12 +542,12 @@ class QpWithDirConstraint(BaseController):
             scale_vars,
         )
 
-        ones = np.ones(num_scales)
-        prog.AddBoundingBoxConstraint(
-            -1.0 * ones,
-            1.0 * ones,
-            scale_vars,
-        )
+        # ones = np.ones(num_scales)
+        # prog.AddBoundingBoxConstraint(
+        #     -1.0 * ones,
+        #     1.0 * ones,
+        #     scale_vars,
+        # )
 
         scale_q_vars = scale_vars
 

@@ -189,7 +189,7 @@ def make_panda_limits(plant):
     # plant_limits.v = plant_limits.v.scaled(0.5)
     # plant_limits.vd = plant_limits.vd.scaled(np.inf)
     # plant_limits.u = plant_limits.u.scaled(0.95)
-    # plant_limits.u = plant_limits.u.scaled(np.inf)
+    plant_limits.u = plant_limits.u.scaled(np.inf)
     return plant_limits
 
 
@@ -240,7 +240,7 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
         posture_weight=1.0,
         use_torque_weights=True,
     )
-    # controller.check_limits = False
+    controller.check_limits = False
     return controller
 
 
