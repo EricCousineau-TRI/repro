@@ -179,7 +179,7 @@ class Osc(BaseController):
         return tau
 
 
-def make_osqp_solver_and_options(use_dairlab_settings=False):
+def make_osqp_solver_and_options(use_dairlab_settings=True):
     solver = OsqpSolver()
     solver_id = solver.solver_id()
     solver_options = SolverOptions()
@@ -191,14 +191,14 @@ def make_osqp_solver_and_options(use_dairlab_settings=False):
     if use_dairlab_settings:
         # https://github.com/DAIRLab/dairlib/blob/0da42bc2/examples/Cassie/osc_run/osc_running_qp_settings.yaml
         solver_options_dict.update(
-            # rho=0.001,
-            sigma=1e-6,
-            # max_iter=500,
-            max_iter=10000,
-            # eps_abs=1e-5,
-            # eps_rel=1e-5,
-            eps_prim_inf=1e-5,
-            eps_dual_inf=1e-5,
+            # # rho=0.001,
+            # sigma=1e-6,
+            # # max_iter=500,
+            # max_iter=10000,
+            # # eps_abs=1e-5,
+            # # eps_rel=1e-5,
+            # eps_prim_inf=1e-5,
+            # eps_dual_inf=1e-5,
             polish=1,
             polish_refine_iter=1,
             scaled_termination=1,
