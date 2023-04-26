@@ -446,7 +446,7 @@ class QpWithDirConstraint(BaseController):
         Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
 
         relax_primary = False
-        relax_secondary = True
+        relax_secondary = False
         # relax_penalty = 1e1
         # relax_penalty = 1e2
         relax_penalty = 1e3
@@ -477,7 +477,14 @@ class QpWithDirConstraint(BaseController):
             proj @ desired_scales,
             scale_vars,
         )
+        scale_t_vars = scale_vars
 
+        ones = np.ones(num_scales)
+        prog.AddBoundingBoxConstraint(
+            -1.0 * ones,
+            1.0 * ones,
+            scale_vars,
+        )
 
         # Compute posture feedback.
         gains_p = self.gains.posture
@@ -535,6 +542,15 @@ class QpWithDirConstraint(BaseController):
             scale_vars,
         )
 
+        ones = np.ones(num_scales)
+        prog.AddBoundingBoxConstraint(
+            -1.0 * ones,
+            1.0 * ones,
+            scale_vars,
+        )
+
+        scale_q_vars = scale_vars
+
         # Solve.
         try:
             result = solve_or_die(self.solver, self.solver_options, prog)
@@ -548,5 +564,9 @@ class QpWithDirConstraint(BaseController):
         tau = result.GetSolution(u_star)
 
         tau = self.plant_limits.u.saturate(tau)
+
+        scale_t = result.GetSolution(scale_t_vars)
+        scale_q = result.GetSolution(scale_q_vars)
+        print(scale_t, scale_q)
 
         return tau
