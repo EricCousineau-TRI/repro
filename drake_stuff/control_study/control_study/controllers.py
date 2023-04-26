@@ -445,7 +445,10 @@ class QpWithDirConstraint(BaseController):
 
         Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
 
-        Nt_T = np.linalg.pinv(Jt)
+        kinematic = True
+        if kinematic:
+            Jtpinv = np.linalg.pinv(Jt)
+            Nt_T = Iv - Jtpinv @ Jt
 
         print(np.linalg.matrix_rank(Jt))
         print(np.linalg.matrix_rank(Nt_T))
@@ -462,7 +465,10 @@ class QpWithDirConstraint(BaseController):
             relax_vars = prog.NewContinuousVariables(num_t, "task.relax")
             task_vars = np.concatenate([task_vars, relax_vars])
             task_A = np.hstack([task_A, -It])
-            proj = Jt.T @ Mt
+            if kinematic:
+                proj = Jtpinv
+            else:
+                proj = Jt.T @ Mt
             prog.Add2NormSquaredCost(
                 relax_penalty * proj @ It,
                 proj @ np.zeros(num_t),
