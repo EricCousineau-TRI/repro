@@ -182,13 +182,15 @@ def make_panda_limits(plant):
     plant_limits.q = plant_limits.q.scaled(0.95)
     plant_limits.q.upper[3] = np.deg2rad(-20.0)  # Locks...
     # plant_limits.q.upper[3] = np.deg2rad(-25.0)  # Does not lock...
-    plant_limits.v = plant_limits.v.scaled(0.95)
+    # plant_limits.v = plant_limits.v.scaled(0.95)
     # plant_limits.v = plant_limits.v.scaled(0.9)
     # plant_limits.vd = plant_limits.vd.scaled(0.95)  # causes issues
     # plant_limits.u = plant_limits.u.scaled(0.99)  # causes issues
     # plant_limits.v = plant_limits.v.scaled(0.5)
     # plant_limits.vd = plant_limits.vd.scaled(np.inf)
     # plant_limits.u = plant_limits.u.scaled(0.95)
+    plant_limits.v = plant_limits.vd.scaled(np.inf)
+    plant_limits.vd = plant_limits.vd.scaled(np.inf)
     plant_limits.u = plant_limits.u.scaled(np.inf)
     return plant_limits
 
@@ -265,6 +267,7 @@ def main():
                 scenario(make_controller)
             except RuntimeError as e:
                 print(e)
+                raise  # wip
 
 
 if __name__ == "__main__":

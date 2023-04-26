@@ -445,6 +445,10 @@ class QpWithDirConstraint(BaseController):
 
         Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
 
+
+        print(np.linalg.matrix_rank(Jt))
+        print(np.linalg.matrix_rank(Nt_T))
+
         relax_primary = False
         relax_secondary = False
         # relax_penalty = 1e1
