@@ -428,7 +428,6 @@ class QpWithDirConstraint(BaseController):
         # Constrain along desired tracking, J*vdot + Jdot*v = s*edd_c
         # For simplicity, allow each direction to have its own scaling.
         num_t = 6
-        relax_vars = prog.NewContinuousVariables(num_t, "task.relax")
         # scale_A = np.eye(num_t)
         # scale_A = np.ones((num_t, 1))
         scale_A = np.array([
@@ -438,14 +437,32 @@ class QpWithDirConstraint(BaseController):
         num_scales = scale_A.shape[1]
         task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
         scale_vars = prog.NewContinuousVariables(num_scales, "scale")
-        task_vars = np.concatenate([vd_star, scale_vars, relax_vars])
-        task_A = np.hstack([Jt, -scale_A * task_bias_rep, -It])
+        task_vars = np.concatenate([vd_star, scale_vars])
+        task_A = np.hstack([Jt, -scale_A * task_bias_rep])
         task_b = -Jtdot_v
+
+        Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
+
+        relax_primary = True
+        relax_secondary = True
+        relax_penalty = 1e3
+        # relax_penalty = 1e4
+        # relax_penalty = 1e5
+        # relax_penalty = 1e6
+        if relax_primary:
+            relax_vars = prog.NewContinuousVariables(num_t, "task.relax")
+            task_vars = np.concatenate([task_vars, relax_vars])
+            task_A = np.hstack([task_A, -It])
+            proj = Jt.T @ Mt
+            prog.Add2NormSquaredCost(
+                relax_penalty * proj @ It,
+                proj @ np.zeros(num_t),
+                relax_vars,
+            )
+
         prog.AddLinearEqualityConstraint(
             task_A, task_b, task_vars
         ).evaluator().set_description("task")
-
-        Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
 
         # Try to optimize towards scale=1.
         # proj = np.eye(num_scales)
@@ -457,16 +474,6 @@ class QpWithDirConstraint(BaseController):
             scale_vars,
         )
 
-        relax_penalty = 1e3
-        # relax_penalty = 1e4
-        # relax_penalty = 1e5
-        # relax_penalty = 1e6
-        proj = Jt.T @ Mt
-        prog.Add2NormSquaredCost(
-            relax_penalty * proj @ It,
-            proj @ np.zeros(num_t),
-            relax_vars,
-        )
 
         # Compute posture feedback.
         gains_p = self.gains.posture
@@ -478,8 +485,6 @@ class QpWithDirConstraint(BaseController):
             task_proj = Nt_T
         else:
             task_proj = Iv
-
-        relax_vars = prog.NewContinuousVariables(num_v, "q relax")
 
         # TODO(eric.cousineau): Maybe I need to constrain these error dynamics?
 
@@ -494,9 +499,24 @@ class QpWithDirConstraint(BaseController):
         num_scales = scale_A.shape[1]
         task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
         scale_vars = prog.NewContinuousVariables(num_scales, "scale")
-        task_vars = np.concatenate([vd_star, scale_vars, relax_vars])
-        task_A = np.hstack([Iv, -scale_A * task_bias_rep, -Iv])
+        task_vars = np.concatenate([vd_star, scale_vars])
+        task_A = np.hstack([Iv, -scale_A * task_bias_rep])
         task_b = np.zeros(num_v)
+
+        # TODO(eric.cousineau): Weigh penalty based on how much feedback we
+        # need?
+
+        if relax_secondary:
+            relax_vars = prog.NewContinuousVariables(num_v, "q relax")
+            task_vars = np.concatenate([task_vars, relax_vars])
+            task_A = np.hstack([task_A, -Iv])
+            proj = task_proj
+            prog.Add2NormSquaredCost(
+                relax_penalty * proj @ Iv,
+                proj @ np.zeros(num_v),
+                relax_vars,
+            )
+
         prog.AddLinearEqualityConstraint(
             task_proj @ task_A,
             task_proj @ task_b,
@@ -504,24 +524,11 @@ class QpWithDirConstraint(BaseController):
         ).evaluator().set_description("posture")
         desired_scales = np.ones(num_scales)
         # proj = np.eye(num_scales)
-        proj = task_proj @ scale_A
+        proj = self.posture_weight * task_proj @ scale_A
         prog.Add2NormSquaredCost(
             proj @ np.eye(num_scales),
             proj @ desired_scales,
             scale_vars,
-        )
-
-        # TODO(eric.cousineau): Weigh penalty based on how much feedback we
-        # need?
-
-        # relax_penalty = 0.1
-        # relax_penalty = 1.0
-        # relax_penalty = 100.0
-        proj = task_proj
-        prog.Add2NormSquaredCost(
-            relax_penalty * proj @ Iv,
-            proj @ np.zeros(num_v),
-            relax_vars,
         )
 
         # Solve.
