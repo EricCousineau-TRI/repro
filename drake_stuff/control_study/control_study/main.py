@@ -177,7 +177,7 @@ def make_panda_limits(plant):
     plant_limits.q.upper[3] = np.deg2rad(-15.0)
     # plant_limits.v = plant_limits.v.scaled(0.9)
     # Scale down velocities... a lot.
-    plant_limits.v = plant_limits.v.scaled(0.5)
+    # plant_limits.v = plant_limits.v.scaled(0.5)
     # plant_limits.vd = plant_limits.vd.scaled(np.inf)
     # plant_limits.u = plant_limits.u.scaled(0.95)
     # plant_limits.u = plant_limits.u.scaled(np.inf)

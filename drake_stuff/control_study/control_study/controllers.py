@@ -518,7 +518,15 @@ class QpWithDirConstraint(BaseController):
         )
 
         # Solve.
-        result = solve_or_die(self.solver, self.solver_options, prog)
+        try:
+            result = solve_or_die(self.solver, self.solver_options, prog)
+        except RuntimeError:
+            print(np.rad2deg(self.plant_limits.q.lower))
+            print(np.rad2deg(self.plant_limits.q.upper))
+            print(np.rad2deg(q))
+            print(self.plant_limits.v)
+            print(v)
+            raise
         tau = result.GetSolution(u_star)
 
         return tau
