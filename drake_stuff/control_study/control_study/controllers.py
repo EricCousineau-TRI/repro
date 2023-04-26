@@ -445,16 +445,17 @@ class QpWithDirConstraint(BaseController):
         Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
 
         # Try to optimize towards scale=1.
-        if False: #self.use_torque_weights:
-            # proj = Jt.T @ Mt @ scale_A
-            # _, s, _ = np.linalg.svd(Mt)
-            # _, s, _ = np.linalg.svd(Jt)
-            # proj = s[0] * scale_A
-            # proj = Jt.T @ scale_A
-            proj = scale_A
-            # proj = M @ Jt.T @ scale_A
-        else:
-            proj = np.eye(num_scales)
+        # if False: #self.use_torque_weights:
+        #     # proj = Jt.T @ Mt @ scale_A
+        #     # _, s, _ = np.linalg.svd(Mt)
+        #     # _, s, _ = np.linalg.svd(Jt)
+        #     # proj = s[0] * scale_A
+        #     # proj = Jt.T @ scale_A
+        #     proj = scale_A
+        #     # proj = M @ Jt.T @ scale_A
+        # else:
+        #     proj = np.eye(num_scales)
+        proj = Jt.T @ Mt @ scale_A
         desired_scales = np.ones(num_scales)
         prog.Add2NormSquaredCost(
             proj @ np.eye(num_scales),
@@ -462,10 +463,12 @@ class QpWithDirConstraint(BaseController):
             scale_vars,
         )
 
-        relax_penalty = 1e4
+        relax_penalty = 1e3
+        # relax_penalty = 5e3
+        proj = Jt.T @ Mt
         prog.Add2NormSquaredCost(
-            relax_penalty * It,
-            np.zeros(num_t),
+            relax_penalty * proj @ It,
+            proj @ np.zeros(num_t),
             relax_vars,
         )
 
@@ -504,16 +507,18 @@ class QpWithDirConstraint(BaseController):
             task_vars,
         ).evaluator().set_description("posture")
         desired_scales = np.ones(num_scales)
-        proj = np.eye(num_scales)
+        # proj = np.eye(num_scales)
+        proj = task_proj @ scale_A
         prog.Add2NormSquaredCost(
             proj @ np.eye(num_scales),
             proj @ desired_scales,
             scale_vars,
         )
 
+        proj = task_proj
         prog.Add2NormSquaredCost(
-            relax_penalty * Iv,
-            np.zeros(num_v),
+            relax_penalty * proj @ Iv,
+            proj @ np.zeros(num_v),
             relax_vars,
         )
 
