@@ -425,6 +425,7 @@ class QpWithDirConstraint(BaseController):
         # Constrain along desired tracking, J*vdot + Jdot*v = s*edd_c
         # For simplicity, allow each direction to have its own scaling.
         num_t = 6
+        relax_vars = prog.NewContinuousVariables(num_t, "task.relax")
         # scale_A = np.eye(num_t)
         # scale_A = np.ones((num_t, 1))
         scale_A = np.array([
@@ -434,8 +435,8 @@ class QpWithDirConstraint(BaseController):
         num_scales = scale_A.shape[1]
         task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
         scale_vars = prog.NewContinuousVariables(num_scales, "scale")
-        task_vars = np.concatenate([vd_star, scale_vars])
-        task_A = np.hstack([Jt, -scale_A * task_bias_rep])
+        task_vars = np.concatenate([vd_star, scale_vars, relax_vars])
+        task_A = np.hstack([Jt, -scale_A * task_bias_rep, -It])
         task_b = -Jtdot_v
         prog.AddLinearEqualityConstraint(
             task_A, task_b, task_vars
@@ -461,6 +462,13 @@ class QpWithDirConstraint(BaseController):
             scale_vars,
         )
 
+        relax_penalty = 1000.0
+        prog.Add2NormSquaredCost(
+            relax_penalty * It,
+            np.zeros(num_t),
+            relax_vars,
+        )
+
         # Compute posture feedback.
         gains_p = self.gains.posture
         e = q - q0
@@ -471,6 +479,8 @@ class QpWithDirConstraint(BaseController):
             task_proj = Nt_T
         else:
             task_proj = Iv
+
+        relax_vars = prog.NewContinuousVariables(num_v, "q relax")
 
         # TODO(eric.cousineau): Maybe I need to constrain these error dynamics?
 
@@ -485,8 +495,8 @@ class QpWithDirConstraint(BaseController):
         num_scales = scale_A.shape[1]
         task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
         scale_vars = prog.NewContinuousVariables(num_scales, "scale")
-        task_vars = np.concatenate([vd_star, scale_vars])
-        task_A = np.hstack([Iv, -scale_A * task_bias_rep])
+        task_vars = np.concatenate([vd_star, scale_vars, relax_vars])
+        task_A = np.hstack([Iv, -scale_A * task_bias_rep, -Iv])
         task_b = np.zeros(num_v)
         prog.AddLinearEqualityConstraint(
             task_proj @ task_A,
@@ -499,6 +509,12 @@ class QpWithDirConstraint(BaseController):
             proj @ np.eye(num_scales),
             proj @ desired_scales,
             scale_vars,
+        )
+
+        prog.Add2NormSquaredCost(
+            relax_penalty * Iv,
+            np.zeros(num_v),
+            relax_vars,
         )
 
         # Solve.
