@@ -179,7 +179,7 @@ class Osc(BaseController):
         return tau
 
 
-def make_osqp_solver_and_options(use_dairlab_settings=True):
+def make_osqp_solver_and_options(use_dairlab_settings=False):
     solver = OsqpSolver()
     solver_id = solver.solver_id()
     solver_options = SolverOptions()
@@ -477,6 +477,8 @@ class QpWithDirConstraint(BaseController):
             proj @ desired_scales,
             scale_vars,
         )
+
+        edd_c_t = edd_c
         scale_t_vars = scale_vars
 
         # ones = np.ones(num_scales)
@@ -549,6 +551,7 @@ class QpWithDirConstraint(BaseController):
         #     scale_vars,
         # )
 
+        edd_c_q = edd_c
         scale_q_vars = scale_vars
 
         # Solve.
@@ -567,6 +570,8 @@ class QpWithDirConstraint(BaseController):
 
         scale_t = result.GetSolution(scale_t_vars)
         scale_q = result.GetSolution(scale_q_vars)
-        print(scale_t, scale_q)
+        print(scale_t, edd_c_t)
+        print(scale_q, edd_c_q)
+        print("---")
 
         return tau
