@@ -193,7 +193,9 @@ def make_osqp_solver_and_options(use_dairlab_settings=True):
         solver_options_dict.update(
             # # rho=0.001,
             # sigma=1e-6,
+            # max_iter=1000,
             max_iter=1000,
+            # max_iter=500,
             # max_iter=250,
             # max_iter=10000,
             # eps_abs=1e-3,
@@ -443,8 +445,10 @@ class QpWithDirConstraint(BaseController):
 
         Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
 
-        relax_primary = True
+        relax_primary = False
         relax_secondary = True
+        # relax_penalty = 1e1
+        # relax_penalty = 1e2
         relax_penalty = 1e3
         # relax_penalty = 1e4
         # relax_penalty = 1e5
