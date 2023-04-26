@@ -196,6 +196,7 @@ def make_panda_limits(plant):
 def make_controller_osc(plant, frame_W, frame_G):
     # Great at tracking
     # Bad at singularities or staying w/in bounds.
+    # TODO(eric.cousineau): Should try out potential fields.
     controller = Osc(
         plant,
         frame_W,
