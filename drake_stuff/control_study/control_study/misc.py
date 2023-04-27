@@ -170,8 +170,9 @@ class EulerAccelPlant(LeafSystem, PlantAccess):
         assert plant.num_velocities() == self.num_q
         self.period_sec = period_sec
 
-        self.diagram_context = diagram.CreateDefaultContext()
-        self.context = plant.GetMyContextFromRoot(self.diagram_context)
+        self.diagram = diagram
+        self.diagram_context = self.diagram.CreateDefaultContext()
+        self.context = self.plant.GetMyContextFromRoot(self.diagram_context)
 
         self.state_index = self.DeclareDiscreteState(2 * self.num_q)
         # N.B. We do not want this to be an initialization event because it
@@ -180,6 +181,11 @@ class EulerAccelPlant(LeafSystem, PlantAccess):
             self.period_sec,
             0.0,
             self.discrete_update,
+        )
+        self.DeclarePeriodicPublishEvent(
+            period_sec=self.period_sec,
+            offset_sec=0.0,
+            publish=self.on_publish,
         )
         self.torque_input_port = self.DeclareVectorInputPort(
             "u", BasicVector(self.num_q)
@@ -205,6 +211,11 @@ class EulerAccelPlant(LeafSystem, PlantAccess):
         x_new = np.concatenate([q_new, v_new])
         # Store result.
         discrete_state.set_value(self.state_index, x_new)
+
+    def on_publish(self, sys_context):
+        x = self.get_state(sys_context)
+        self.plant.SetPositionsAndVelocities(self.context, x)
+        self.diagram.ForcedPublish(self.diagram_context)
 
     def get_state(self, sys_context):
         x_state = sys_context.get_discrete_state(self.state_index)

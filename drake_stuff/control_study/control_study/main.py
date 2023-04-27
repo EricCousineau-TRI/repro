@@ -66,12 +66,12 @@ def run_spatial_waypoints(
     frame_W = plant.world_frame()
 
     builder = DiagramBuilder()
-    access = DirectPlant.AddToBuilder(
-        builder, plant_diagram, plant,
-    )
-    # access = EulerAccelPlant.AddToBuilder(
-    #     builder, plant_diagram, plant, CONTROL_DT
+    # access = DirectPlant.AddToBuilder(
+    #     builder, plant_diagram, plant,
     # )
+    access = EulerAccelPlant.AddToBuilder(
+        builder, plant_diagram, plant, CONTROL_DT
+    )
 
     controller = builder.AddSystem(
         make_controller(plant, frame_W, frame_G)
