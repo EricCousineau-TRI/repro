@@ -182,7 +182,7 @@ class Osc(BaseController):
         return tau
 
 
-def make_osqp_solver_and_options(use_dairlab_settings=False):
+def make_osqp_solver_and_options(use_dairlab_settings=True):
     solver = OsqpSolver()
     solver_id = solver.solver_id()
     solver_options = SolverOptions()
@@ -194,19 +194,19 @@ def make_osqp_solver_and_options(use_dairlab_settings=False):
     if use_dairlab_settings:
         # https://github.com/DAIRLab/dairlib/blob/0da42bc2/examples/Cassie/osc_run/osc_running_qp_settings.yaml
         solver_options_dict.update(
-            rho=0.001,
-            sigma=1e-6,
+            # rho=0.001,
+            # sigma=1e-6,
             # max_iter=1000,
-            max_iter=10000,
+            # max_iter=10000,
             # max_iter=500,
             # max_iter=250,
             # max_iter=10000,
             # eps_abs=1e-3,
             # eps_rel=1e-4,
             # eps_abs=1e-5,
-            eps_rel=1e-5,
-            eps_prim_inf=1e-5,
-            eps_dual_inf=1e-5,
+            # eps_rel=1e-5,
+            # eps_prim_inf=1e-5,
+            # eps_dual_inf=1e-5,
             polish=1,
             polish_refine_iter=1,
             scaled_termination=1,
@@ -217,8 +217,10 @@ def make_osqp_solver_and_options(use_dairlab_settings=False):
     return solver, solver_options
 
 
-def solve_or_die(solver, solver_options, prog):
-    result = solver.Solve(prog, solver_options=solver_options)
+def solve_or_die(solver, solver_options, prog, *, x0=None):
+    result = solver.Solve(
+        prog, solver_options=solver_options, initial_guess=x0
+    )
     if not result.is_success():
         solver_options.SetOption(
             CommonSolverOption.kPrintToConsole, True
@@ -384,6 +386,7 @@ class QpWithDirConstraint(BaseController):
         self.acceleration_bounds_dt = acceleration_bounds_dt
         self.posture_weight = posture_weight
         self.use_torque_weights = use_torque_weights
+        self.prev_sol = None
 
     def calc_control(self, pose_actual, pose_desired, q0):
         q = self.plant.GetPositions(self.context)
@@ -577,7 +580,9 @@ class QpWithDirConstraint(BaseController):
 
         # Solve.
         try:
-            result = solve_or_die(self.solver, self.solver_options, prog)
+            result = solve_or_die(
+                self.solver, self.solver_options, prog, x0=self.prev_sol
+            )
         except RuntimeError:
             print(np.rad2deg(self.plant_limits.q.lower))
             print(np.rad2deg(self.plant_limits.q.upper))
@@ -585,10 +590,12 @@ class QpWithDirConstraint(BaseController):
             print(self.plant_limits.v)
             print(v)
             raise
-        infeas = result.GetInfeasibleConstraintNames(prog)
-        assert len(infeas) == 0
-        tau = result.GetSolution(u_star)
 
+        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-2)
+        assert len(infeas) == 0, "\n".join(infeas)
+        self.prev_sol = result.get_x_val()
+
+        tau = result.GetSolution(u_star)
         tau = self.plant_limits.u.saturate(tau)
 
         scale_t = result.GetSolution(scale_t_vars)
