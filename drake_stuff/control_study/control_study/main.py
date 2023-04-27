@@ -257,9 +257,9 @@ def np_print_more_like_matlab():
 def main():
     np_print_more_like_matlab()
     scenarios = {
-        "slow": run_slow_waypoints,
+        # "slow": run_slow_waypoints,
         # "rot": run_rotation_coupling,
-        "fast": run_fast_waypoints,
+        # "fast": run_fast_waypoints,
         "fast singular": run_fast_waypoints_singular,
     }
     make_controllers = {
