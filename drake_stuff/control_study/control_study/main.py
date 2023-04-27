@@ -1,3 +1,5 @@
+from functools import partial
+
 import numpy as np
 
 from pydrake.math import RigidTransform
@@ -174,14 +176,17 @@ def run_fast_waypoints(make_controller):
         dT=0.5,
     )
 
-def run_fast_waypoints_singular(make_controller):
+def run_fast_waypoints_singular(make_controller, *, rotate):
     # Fast motions that move beyond our speed limits and move into
     # singularity (elbow lock).
+    if rotate:
+        X_intr = xyz_rpy_deg([0, 0, 0], [90.0, 30.0, 45.0])
+    else:
+        X_intr = RigidTransform()
     run_spatial_waypoints(
         make_controller=make_controller,
         X_extr=RigidTransform([0.5, 0.2, -0.5]),
-        # X_intr=xyz_rpy_deg([0, 0, 0], [90.0, 30.0, 45.0]),
-        X_intr=RigidTransform(),
+        X_intr=X_intr,
         dT=1.0,
     )
 
@@ -281,7 +286,8 @@ def main():
         # "slow": run_slow_waypoints,
         # "rot": run_rotation_coupling,
         # "fast": run_fast_waypoints,
-        "fast singular": run_fast_waypoints_singular,
+        # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
+        "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
         # "osc": make_controller_osc,
