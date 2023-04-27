@@ -9,6 +9,7 @@ from pydrake.systems.analysis import (
 from pydrake.systems.framework import DiagramBuilder, LeafSystem
 
 from control_study import debug
+import control_study.controllers as m
 from control_study.controllers import (
     Osc,
     OscGains,
@@ -39,6 +40,7 @@ from control_study.misc import (
 )
 
 CONTROL_DT = 0.002
+# CONTROL_DT = 0.01
 DISCRETE_PLANT_TIME_STEP = 0.0008
 
 
@@ -51,11 +53,11 @@ def run_spatial_waypoints(
     discrete=True,
 ):
     # if discrete:
-        # control_dt = CONTROL_DT
-        # plant_time_step = DISCRETE_PLANT_TIME_STEP
+    #     control_dt = CONTROL_DT
+    #     plant_time_step = DISCRETE_PLANT_TIME_STEP
     # else:
-        # control_dt = None
-        # plant_time_step = 0.0
+    #     control_dt = None
+    #     plant_time_step = 0.0
     plant_time_step = 0.0
     # control_dt = CONTROL_DT
     control_dt = None
@@ -125,6 +127,7 @@ def run_spatial_waypoints(
     )
     ApplySimulatorConfig(config, simulator)
     simulator_initialize_repeatedly(simulator)
+    m.SHOULD_STOP = True
 
     try:
         # Run a bit past the end of trajectory.
@@ -177,7 +180,8 @@ def run_fast_waypoints_singular(make_controller):
     run_spatial_waypoints(
         make_controller=make_controller,
         X_extr=RigidTransform([0.5, 0.2, -0.5]),
-        X_intr=xyz_rpy_deg([0, 0, 0], [90.0, 30.0, 45.0]),
+        # X_intr=xyz_rpy_deg([0, 0, 0], [90.0, 30.0, 45.0]),
+        X_intr=RigidTransform(),
         dT=1.0,
     )
 

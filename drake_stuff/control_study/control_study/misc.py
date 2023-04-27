@@ -33,6 +33,7 @@ from control_study.trajectories import (
     make_se3_spline_trajectory,
 )
 
+
 def unzip(xs):
     return tuple(zip(*xs, strict=True))
 
