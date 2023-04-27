@@ -246,13 +246,21 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
     return controller
 
 
+def np_print_more_like_matlab():
+    np.set_printoptions(
+        formatter={"float_kind": lambda x: f"{x: 06.3f}"},
+        linewidth=150,
+    )
+
+
 @debug.iex
 def main():
+    np_print_more_like_matlab()
     scenarios = {
-        # "slow": run_slow_waypoints,
-        "rot": run_rotation_coupling,
-        # "fast": run_fast_waypoints,
-        # "fast singular": run_fast_waypoints_singular,
+        "slow": run_slow_waypoints,
+        # "rot": run_rotation_coupling,
+        "fast": run_fast_waypoints,
+        "fast singular": run_fast_waypoints_singular,
     }
     make_controllers = {
         # "osc": make_controller_osc,
@@ -271,4 +279,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass

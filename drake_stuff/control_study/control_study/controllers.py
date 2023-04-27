@@ -457,7 +457,7 @@ class QpWithDirConstraint(BaseController):
         relax_secondary = False
         # relax_penalty = 1e1
         # relax_penalty = 1e2
-        relax_penalty = 1e3
+        # relax_penalty = 1e3
         # relax_penalty = 1e4
         # relax_penalty = 1e5
         # relax_penalty = 1e6
@@ -481,8 +481,12 @@ class QpWithDirConstraint(BaseController):
 
         # Try to optimize towards scale=1.
         # proj = np.eye(num_scales)
-        proj = Jt.T @ Mt @ scale_A
-        proj = proj * np.sqrt(num_scales)
+        # proj = Jt.T @ Mt @ scale_A
+        # proj = Mt @ scale_A
+        proj = scale_A
+        # import pdb; pdb.set_trace()
+        # proj *= 100
+        # proj = proj * np.sqrt(num_scales)
         desired_scales = np.ones(num_scales)
         prog.Add2NormSquaredCost(
             proj @ np.eye(num_scales),
@@ -549,20 +553,21 @@ class QpWithDirConstraint(BaseController):
         ).evaluator().set_description("posture")
         desired_scales = np.ones(num_scales)
         # proj = np.eye(num_scales)
-        proj = self.posture_weight * task_proj @ scale_A
-        proj = proj / np.sqrt(num_scales)
+        # proj = self.posture_weight * task_proj @ scale_A
+        proj = self.posture_weight * scale_A
+        # proj = proj #/ np.sqrt(num_scales)
         prog.Add2NormSquaredCost(
             proj @ np.eye(num_scales),
             proj @ desired_scales,
             scale_vars,
         )
 
-        # ones = np.ones(num_scales)
-        # prog.AddBoundingBoxConstraint(
-        #     -1.0 * ones,
-        #     1.0 * ones,
-        #     scale_vars,
-        # )
+        ones = np.ones(num_scales)
+        prog.AddBoundingBoxConstraint(
+            1.0 * ones,
+            1.0 * ones,
+            scale_vars,
+        )
 
         edd_c_q = edd_c
         scale_q_vars = scale_vars
