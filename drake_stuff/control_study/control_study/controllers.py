@@ -430,8 +430,8 @@ class QpWithDirConstraint(BaseController):
         # Constrain along desired tracking, J*vdot + Jdot*v = s*edd_c
         # For simplicity, allow each direction to have its own scaling.
         num_t = 6
-        # scale_A = np.eye(num_t)
-        scale_A = np.ones((num_t, 1))
+        scale_A = np.eye(num_t)
+        # scale_A = np.ones((num_t, 1))
         # scale_A = np.array([
         #     [1, 1, 1, 0, 0, 0],
         #     [0, 0, 0, 1, 1, 1],
@@ -482,6 +482,7 @@ class QpWithDirConstraint(BaseController):
         # Try to optimize towards scale=1.
         # proj = np.eye(num_scales)
         proj = Jt.T @ Mt @ scale_A
+        proj = proj * np.sqrt(num_scales)
         desired_scales = np.ones(num_scales)
         prog.Add2NormSquaredCost(
             proj @ np.eye(num_scales),
@@ -549,6 +550,7 @@ class QpWithDirConstraint(BaseController):
         desired_scales = np.ones(num_scales)
         # proj = np.eye(num_scales)
         proj = self.posture_weight * task_proj @ scale_A
+        proj = proj / np.sqrt(num_scales)
         prog.Add2NormSquaredCost(
             proj @ np.eye(num_scales),
             proj @ desired_scales,
