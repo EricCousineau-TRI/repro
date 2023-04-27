@@ -190,10 +190,10 @@ def make_osc_gains():
 def make_panda_limits(plant):
     plant_limits = PlantLimits.from_plant(plant)
     # Avoid elbow lock.
-    plant_limits.q = plant_limits.q.scaled(0.95)
+    # plant_limits.q = plant_limits.q.scaled(0.95)
     plant_limits.q.upper[3] = np.deg2rad(-20.0)  # Locks...
     # plant_limits.q.upper[3] = np.deg2rad(-25.0)  # Does not lock...
-    plant_limits.v = plant_limits.v.scaled(0.95)
+    # plant_limits.v = plant_limits.v.scaled(0.95)
     # plant_limits.v = plant_limits.v.scaled(0.9)
     # plant_limits.vd = plant_limits.vd.scaled(0.95)  # causes issues
     # plant_limits.u = plant_limits.u.scaled(0.99)  # causes issues
@@ -247,7 +247,8 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
         frame_G,
         gains=make_osc_gains(),
         plant_limits=make_panda_limits(plant),
-        acceleration_bounds_dt=100 * CONTROL_DT,
+        acceleration_bounds_dt=CONTROL_DT,
+        # acceleration_bounds_dt=100 * CONTROL_DT,
         # acceleration_bounds_dt=5 * CONTROL_DT,
         # posture_weight=0.01,
         # use_torque_weights=False,
