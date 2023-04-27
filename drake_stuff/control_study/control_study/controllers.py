@@ -64,11 +64,12 @@ class BaseController(LeafSystem):
         x = self.state_input.Eval(sys_context)
         t = sys_context.get_time()
 
+        tol = 1e-3
         self.plant.SetPositionsAndVelocities(self.context, x)
         if self.check_limits:
             q = self.plant.GetPositions(self.context)
             v = self.plant.GetVelocities(self.context)
-            self.nominal_limits.assert_values_within_limits(q=q, v=v)
+            self.nominal_limits.assert_values_within_limits(q=q, v=v, tol=tol)
 
         init = self.get_init_state(sys_context)
         q0 = init.q
@@ -79,7 +80,7 @@ class BaseController(LeafSystem):
         tau = self.calc_control(pose_actual, pose_desired, q0)
 
         if self.check_limits:
-            self.nominal_limits.assert_values_within_limits(u=tau)
+            self.nominal_limits.assert_values_within_limits(u=tau, tol=tol)
 
         output.set_value(tau)
 

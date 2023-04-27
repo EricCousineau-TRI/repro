@@ -25,9 +25,9 @@ class VectorLimits:
     def any_finite(self):
         return np.isfinite(self.lower).any() or np.isfinite(self.upper).any()
 
-    def assert_value_with_limits(self, value, *, name):
-        too_low = value < self.lower
-        too_high = value > self.upper
+    def assert_value_with_limits(self, value, *, name, tol=0.0):
+        too_low = value < self.lower - tol
+        too_high = value > self.upper + tol
         bad = too_low | too_high
         if bad.any():
             lines = (
@@ -92,15 +92,17 @@ class PlantLimits:
             ),
         )
 
-    def assert_values_within_limits(self, *, q=None, v=None, u=None, vd=None):
+    def assert_values_within_limits(
+        self, *, q=None, v=None, u=None, vd=None, tol=0.0
+    ):
         assert (
             q is not None or v is not None or u is not None or vd is not None
         )
         if q is not None:
-            self.q.assert_value_with_limits(q, name="q")
+            self.q.assert_value_with_limits(q, name="q", tol=tol)
         if v is not None:
-            self.v.assert_value_with_limits(v, name="v")
+            self.v.assert_value_with_limits(v, name="v", tol=tol)
         if u is not None:
-            self.u.assert_value_with_limits(u, name="u")
+            self.u.assert_value_with_limits(u, name="u", tol=tol)
         if vd is not None:
-            self.vd.assert_value_with_limits(vd, name="vd")
+            self.vd.assert_value_with_limits(vd, name="vd", tol=tol)
