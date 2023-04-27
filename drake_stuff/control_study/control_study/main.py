@@ -10,7 +10,11 @@ from pydrake.multibody.math import (
 from pydrake.multibody.parsing import Parser
 from pydrake.multibody.plant import AddMultibodyPlant, MultibodyPlantConfig
 from pydrake.multibody.tree import ModelInstanceIndex
-from pydrake.systems.analysis import Simulator
+from pydrake.systems.analysis import (
+    ApplySimulatorConfig,
+    Simulator,
+    SimulatorConfig,
+)
 from pydrake.systems.framework import DiagramBuilder, LeafSystem
 
 from control_study import debug
@@ -53,13 +57,15 @@ def run_spatial_waypoints(
     dT,
     discrete=True,
 ):
-    if discrete:
-        control_dt = CONTROL_DT
-        plant_time_step = DISCRETE_PLANT_TIME_STEP
-    else:
-        control_dt = None
-        plant_time_step = 0.0
-    control_dt = CONTROL_DT
+    # if discrete:
+        # control_dt = CONTROL_DT
+        # plant_time_step = DISCRETE_PLANT_TIME_STEP
+    # else:
+        # control_dt = None
+        # plant_time_step = 0.0
+    plant_time_step = 0.0
+    # control_dt = CONTROL_DT
+    control_dt = None
 
     builder, plant, scene_graph, frame_G = make_sim_setup(plant_time_step)
     frame_W = plant.world_frame()
@@ -109,6 +115,11 @@ def run_spatial_waypoints(
     controller.traj = traj_saturate
 
     simulator = Simulator(diagram, diagram_context)
+    config = SimulatorConfig(
+        integration_scheme="explicit_euler",
+        max_step_size=CONTROL_DT,
+    )
+    ApplySimulatorConfig(config, simulator)
     simulator_initialize_repeatedly(simulator)
 
     try:
