@@ -18,6 +18,8 @@ from pydrake.solvers import (
     MathematicalProgram,
     OsqpSolver,
     SolverOptions,
+    GurobiSolver,
+    MosekSolver,
 )
 from pydrake.systems.framework import LeafSystem
 
@@ -219,6 +221,24 @@ def make_osqp_solver_and_options(use_dairlab_settings=True):
     return solver, solver_options
 
 
+def make_clp_solver_and_options():
+    solver = ClpSolver()
+    solver_options = SolverOptions()
+    return solver, solver_options
+
+
+def make_gurobi_solver_and_options():
+    solver = GurobiSolver()
+    solver_options = SolverOptions()
+    return solver, solver_options
+
+
+def make_mosek_solver_and_options():
+    solver = MosekSolver()
+    solver_options = SolverOptions()
+    return solver, solver_options
+
+
 def solve_or_die(solver, solver_options, prog, *, x0=None):
     result = solver.Solve(
         prog, solver_options=solver_options, initial_guess=x0
@@ -384,7 +404,10 @@ class QpWithDirConstraint(BaseController):
         super().__init__(plant, frame_W, frame_G)
         self.gains = gains
         self.plant_limits = plant_limits
-        self.solver, self.solver_options = make_osqp_solver_and_options()
+        # self.solver, self.solver_options = make_osqp_solver_and_options()
+        # self.solver, self.solver_options = make_clp_solver_and_options()
+        # self.solver, self.solver_options = make_gurobi_solver_and_options()
+        self.solver, self.solver_options = make_mosek_solver_and_options()
         self.acceleration_bounds_dt = acceleration_bounds_dt
         self.posture_weight = posture_weight
         self.use_torque_weights = use_torque_weights
