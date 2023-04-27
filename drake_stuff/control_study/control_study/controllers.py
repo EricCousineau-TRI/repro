@@ -445,7 +445,7 @@ class QpWithDirConstraint(BaseController):
 
         Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
 
-        kinematic = True
+        kinematic = False
         if kinematic:
             Jtpinv = np.linalg.pinv(Jt)
             Nt_T = Iv - Jtpinv @ Jt
