@@ -443,12 +443,12 @@ class QpWithDirConstraint(BaseController):
         # Constrain along desired tracking, J*vdot + Jdot*v = s*edd_c
         # For simplicity, allow each direction to have its own scaling.
         num_t = 6
-        # scale_A = np.eye(num_t)
+        scale_A = np.eye(num_t)
         # scale_A = np.ones((num_t, 1))
-        scale_A = np.array([
-            [1, 1, 1, 0, 0, 0],
-            [0, 0, 0, 1, 1, 1],
-        ]).T
+        # scale_A = np.array([
+        #     [1, 1, 1, 0, 0, 0],
+        #     [0, 0, 0, 1, 1, 1],
+        # ]).T
         num_scales = scale_A.shape[1]
         task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
         scale_vars = prog.NewContinuousVariables(num_scales, "scale")
