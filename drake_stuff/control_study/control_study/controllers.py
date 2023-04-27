@@ -440,12 +440,12 @@ class QpWithDirConstraint(BaseController):
         # Constrain along desired tracking, J*vdot + Jdot*v = s*edd_c
         # For simplicity, allow each direction to have its own scaling.
         num_t = 6
-        # scale_A = np.eye(num_t)
+        scale_A = np.eye(num_t)
         # scale_A = np.ones((num_t, 1))
-        scale_A = np.array([
-            [1, 1, 1, 0, 0, 0],
-            [0, 0, 0, 1, 1, 1],
-        ]).T
+        # scale_A = np.array([
+        #     [1, 1, 1, 0, 0, 0],
+        #     [0, 0, 0, 1, 1, 1],
+        # ]).T
         num_scales = scale_A.shape[1]
         task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
         scale_vars = prog.NewContinuousVariables(num_scales, "scale")
@@ -523,8 +523,8 @@ class QpWithDirConstraint(BaseController):
         # task_b = task_proj @ edd_c
         # prog.Add2NormSquaredCost(task_A, task_b, vd_star)
 
-        scale_A = np.ones((num_v, 1))
-        # scale_A = np.eye(num_v)
+        # scale_A = np.ones((num_v, 1))
+        scale_A = np.eye(num_v)
         num_scales = scale_A.shape[1]
         task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
         scale_vars = prog.NewContinuousVariables(num_scales, "scale")
@@ -562,12 +562,12 @@ class QpWithDirConstraint(BaseController):
             scale_vars,
         )
 
-        ones = np.ones(num_scales)
-        prog.AddBoundingBoxConstraint(
-            1.0 * ones,
-            1.0 * ones,
-            scale_vars,
-        )
+        # ones = np.ones(num_scales)
+        # prog.AddBoundingBoxConstraint(
+        #     1.0 * ones,
+        #     1.0 * ones,
+        #     scale_vars,
+        # )
 
         edd_c_q = edd_c
         scale_q_vars = scale_vars
