@@ -1,15 +1,6 @@
 import numpy as np
 
-from pydrake.geometry import DrakeVisualizer, DrakeVisualizerParams, Role
-from pydrake.math import RigidTransform, RollPitchYaw, RotationMatrix
-from pydrake.multibody.math import (
-    SpatialAcceleration,
-    SpatialForce,
-    SpatialVelocity,
-)
-from pydrake.multibody.parsing import Parser
-from pydrake.multibody.plant import AddMultibodyPlant, MultibodyPlantConfig
-from pydrake.multibody.tree import ModelInstanceIndex
+from pydrake.math import RigidTransform
 from pydrake.systems.analysis import (
     ApplySimulatorConfig,
     Simulator,
@@ -39,9 +30,11 @@ from control_study.trajectories import (
 )
 from control_study.geometry import xyz_rpy_deg
 from control_study.misc import (
-    make_sim_setup,
+    DirectPlant,
+    EulerAccelPlant,
     SimpleLogger,
     make_sample_pose_traj,
+    make_sim_setup,
     unzip,
 )
 
@@ -67,30 +60,39 @@ def run_spatial_waypoints(
     # control_dt = CONTROL_DT
     control_dt = None
 
-    builder, plant, scene_graph, frame_G = make_sim_setup(plant_time_step)
+    plant_diagram, plant, scene_graph, frame_G = make_sim_setup(
+        plant_time_step
+    )
     frame_W = plant.world_frame()
+
+    builder = DiagramBuilder()
+    access = DirectPlant.AddToBuilder(
+        builder, plant_diagram, plant,
+    )
+    # access = EulerAccelPlant.AddToBuilder(
+    #     builder, plant_diagram, plant, CONTROL_DT
+    # )
 
     controller = builder.AddSystem(
         make_controller(plant, frame_W, frame_G)
     )
     builder.Connect(
-        plant.get_state_output_port(),
+        access.state_output_port,
         controller.state_input,
     )
     torques_output = maybe_attach_zoh(
         builder, controller.torques_output, control_dt
     )
-    # Meh, should fix this,
-    model = ModelInstanceIndex(2)
     builder.Connect(
         torques_output,
-        plant.get_actuation_input_port(model),
+        access.torque_input_port,
     )
 
     # Simplify plant after controller is constructed.
     simplify_plant(plant, scene_graph)
 
     def log_instant(log_context):
+        context = access.read_plant_context(diagram_context)
         q = plant.GetPositions(context)
         V = get_frame_spatial_velocity(
             plant, context, frame_W, frame_G
@@ -104,7 +106,7 @@ def run_spatial_waypoints(
 
     diagram = builder.Build()
     diagram_context = diagram.CreateDefaultContext()
-    context = plant.GetMyContextFromRoot(diagram_context)
+    context = access.read_plant_context(diagram_context)
 
     # Simple bent-elbow and wrist-down pose.
     q0 = np.deg2rad([0.0, 15.0, 0.0, -75.0, 0.0, 90.0, 0.0])
@@ -113,6 +115,8 @@ def run_spatial_waypoints(
     X_WG = plant.CalcRelativeTransform(context, frame_W, frame_G)
     traj_saturate, t_f = make_sample_pose_traj(dT, X_WG, X_extr, X_intr)
     controller.traj = traj_saturate
+
+    access.write_plant_context(diagram_context, context)
 
     simulator = Simulator(diagram, diagram_context)
     config = SimulatorConfig(
