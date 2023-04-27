@@ -215,7 +215,7 @@ def make_panda_limits(plant):
     # plant_limits.u = plant_limits.u.scaled(0.95)
     # plant_limits.v = plant_limits.vd.scaled(np.inf)
     # plant_limits.vd = plant_limits.vd.scaled(np.inf)
-    # plant_limits.u = plant_limits.u.scaled(np.inf)
+    plant_limits.u = plant_limits.u.scaled(np.inf)
     return plant_limits
 
 
@@ -268,7 +268,7 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
         posture_weight=1.0,
         use_torque_weights=True,
     )
-    # controller.check_limits = False
+    controller.check_limits = False
     return controller
 
 
@@ -286,7 +286,7 @@ def main():
         # "slow": run_slow_waypoints,
         # "rot": run_rotation_coupling,
         # "fast": run_fast_waypoints,
-        # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
+        "fast singular": partial(run_fast_waypoints_singular, rotate=False),
         "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
