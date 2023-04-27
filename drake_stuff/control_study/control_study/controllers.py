@@ -427,6 +427,16 @@ class QpWithDirConstraint(BaseController):
         ed = V - V_des
         edd_c = A_des - gains_t.kp * e - gains_t.kd * ed
 
+        Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
+
+        kinematic = False
+        if kinematic:
+            Jtpinv = np.linalg.pinv(Jt)
+            Nt_T = Iv - Jtpinv @ Jt
+
+        print(np.linalg.matrix_rank(Jt))
+        print(np.linalg.matrix_rank(Nt_T))
+
         # Constrain along desired tracking, J*vdot + Jdot*v = s*edd_c
         # For simplicity, allow each direction to have its own scaling.
         num_t = 6
@@ -442,16 +452,6 @@ class QpWithDirConstraint(BaseController):
         task_vars = np.concatenate([vd_star, scale_vars])
         task_A = np.hstack([Jt, -scale_A * task_bias_rep])
         task_b = -Jtdot_v
-
-        Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
-
-        kinematic = False
-        if kinematic:
-            Jtpinv = np.linalg.pinv(Jt)
-            Nt_T = Iv - Jtpinv @ Jt
-
-        print(np.linalg.matrix_rank(Jt))
-        print(np.linalg.matrix_rank(Nt_T))
 
         relax_primary = False
         relax_secondary = False
