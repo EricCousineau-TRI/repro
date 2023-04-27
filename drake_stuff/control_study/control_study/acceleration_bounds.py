@@ -19,6 +19,7 @@ STRICT = False
 
 
 def _acceleration_bounds_from_naive_position_limits(q, v, q_limits, dt, dt2):
+    # q = q0 + v0*dt + 0.5*dt^2*vd
     sub = q + v * dt
     scale = 2 / dt2
     vd_limits = VectorLimits(

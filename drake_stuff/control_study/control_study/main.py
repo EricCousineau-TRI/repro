@@ -272,7 +272,7 @@ def np_print_more_like_matlab():
 
 @debug.iex
 def main():
-    # np_print_more_like_matlab()
+    np_print_more_like_matlab()
     scenarios = {
         # "slow": run_slow_waypoints,
         # "rot": run_rotation_coupling,

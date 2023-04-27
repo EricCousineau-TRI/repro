@@ -435,8 +435,8 @@ class QpWithDirConstraint(BaseController):
             Jtpinv = np.linalg.pinv(Jt)
             Nt_T = Iv - Jtpinv @ Jt
 
-        print(np.linalg.matrix_rank(Jt))
-        print(np.linalg.matrix_rank(Nt_T))
+        # print(np.linalg.matrix_rank(Jt))
+        # print(np.linalg.matrix_rank(Nt_T))
 
         # Constrain along desired tracking, J*vdot + Jdot*v = s*edd_c
         # For simplicity, allow each direction to have its own scaling.
@@ -481,10 +481,10 @@ class QpWithDirConstraint(BaseController):
         ).evaluator().set_description("task")
 
         # Try to optimize towards scale=1.
-        # proj = np.eye(num_scales)
+        proj = np.eye(num_scales)
         # proj = Jt.T @ Mt @ scale_A
         # proj = Mt @ scale_A
-        proj = scale_A
+        # proj = scale_A
         # import pdb; pdb.set_trace()
         # proj *= 100
         # proj = proj * np.sqrt(num_scales)
@@ -553,9 +553,9 @@ class QpWithDirConstraint(BaseController):
             task_vars,
         ).evaluator().set_description("posture")
         desired_scales = np.ones(num_scales)
-        # proj = np.eye(num_scales)
+        proj = self.posture_weight * np.eye(num_scales)
         # proj = self.posture_weight * task_proj @ scale_A
-        proj = self.posture_weight * scale_A
+        # proj = self.posture_weight * scale_A
         # proj = proj #/ np.sqrt(num_scales)
         prog.Add2NormSquaredCost(
             proj @ np.eye(num_scales),
@@ -589,8 +589,8 @@ class QpWithDirConstraint(BaseController):
 
         scale_t = result.GetSolution(scale_t_vars)
         scale_q = result.GetSolution(scale_q_vars)
-        print(scale_t, edd_c_t)
-        print(scale_q, edd_c_q)
+        print(f"{scale_t}\n  {edd_c_t}")
+        print(f"{scale_q}\n  {edd_c_q}")
         print("---")
 
         return tau
