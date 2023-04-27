@@ -585,6 +585,8 @@ class QpWithDirConstraint(BaseController):
             print(self.plant_limits.v)
             print(v)
             raise
+        infeas = result.GetInfeasibleConstraintNames(prog)
+        assert len(infeas) == 0
         tau = result.GetSolution(u_star)
 
         tau = self.plant_limits.u.saturate(tau)
