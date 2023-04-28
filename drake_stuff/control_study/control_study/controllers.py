@@ -255,6 +255,8 @@ def solve_or_die(solver, solver_options, prog, *, x0=None):
 
 
 def intersect_vd_limits(plant_limits, Minv, C, tau_g):
+    if not plant_limits.u.any_finite():
+        return plant_limits.vd
     H = C - tau_g
     vd_tau_limits = VectorLimits(
         lower=Minv @ (plant_limits.u.lower - H),
@@ -458,13 +460,13 @@ class QpWithDirConstraint(BaseController):
         ).evaluator().set_description("dyn")
 
         # Add limits.
-        vd_limits = self.plant_limits.vd
-        # vd_limits = intersect_vd_limits(
-        #     self.plant_limits,
-        #     Minv,
-        #     C,
-        #     tau_g,
-        # )
+        # vd_limits = self.plant_limits.vd
+        vd_limits = intersect_vd_limits(
+            self.plant_limits,
+            Minv,
+            C,
+            tau_g,
+        )
         add_simple_limits(
             self.plant_limits,
             vd_limits,
