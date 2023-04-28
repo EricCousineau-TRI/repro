@@ -262,6 +262,7 @@ def intersect_vd_limits(plant_limits, Minv, C, tau_g):
         lower=Minv @ (plant_limits.u.lower - H),
         upper=Minv @ (plant_limits.u.upper - H),
     )
+    vd_tau_limits = vd_tau_limits.make_valid()
     vd_limits = plant_limits.vd.intersection(vd_tau_limits)
     return vd_limits
 

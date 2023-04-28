@@ -215,7 +215,7 @@ def make_panda_limits(plant):
     # plant_limits.u = plant_limits.u.scaled(0.95)
     # plant_limits.v = plant_limits.vd.scaled(np.inf)
     # plant_limits.vd = plant_limits.vd.scaled(np.inf)
-    plant_limits.u = plant_limits.u.scaled(np.inf)
+    # plant_limits.u = plant_limits.u.scaled(np.inf)
     return plant_limits
 
 
