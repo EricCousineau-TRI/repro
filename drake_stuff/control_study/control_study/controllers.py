@@ -460,6 +460,9 @@ class QpWithDirConstraint(BaseController):
 
         Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
 
+        dup_eq_as_cost = False
+        dup_scale = 0.1
+
         kinematic = False
         if kinematic:
             Jtpinv = np.linalg.pinv(Jt)
@@ -509,6 +512,11 @@ class QpWithDirConstraint(BaseController):
         prog.AddLinearEqualityConstraint(
             task_A, task_b, task_vars
         ).evaluator().set_description("task")
+
+        if dup_eq_as_cost:
+            prog.Add2NormSquaredCost(
+                dup_scale * task_A, dup_scale * task_b, task_vars
+            )
 
         # Try to optimize towards scale=1.
         proj = np.eye(num_scales)
@@ -577,11 +585,16 @@ class QpWithDirConstraint(BaseController):
                 relax_vars,
             )
 
+        task_A = task_proj @ task_A
+        task_b = task_proj @ task_b
         prog.AddLinearEqualityConstraint(
-            task_proj @ task_A,
-            task_proj @ task_b,
-            task_vars,
+            task_A, task_b, task_vars,
         ).evaluator().set_description("posture")
+        if dup_eq_as_cost:
+            prog.Add2NormSquaredCost(
+                dup_scale * task_A, dup_scale * task_b, task_vars,
+            )
+
         desired_scales = np.ones(num_scales)
         proj = self.posture_weight * np.eye(num_scales)
         # proj = self.posture_weight * task_proj @ scale_A
