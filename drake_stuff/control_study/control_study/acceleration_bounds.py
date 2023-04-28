@@ -217,6 +217,7 @@ def compute_acceleration_bounds(
     v,
     plant_limits,
     dt,
+    vd_limits_nominal=None,
     dt2=None,
     check=True,
     bounding_method=BoundingMethod.Naive,
@@ -239,7 +240,8 @@ def compute_acceleration_bounds(
     # Should investigate; possibly, can incorporate by projecting torque limits
     # to acceleration limits, either naively or via incorporation into the QP.
     # This may be related to control barrier functions.
-    vd_limits_nominal = plant_limits.vd
+    if vd_limits_nominal is None:
+        vd_limits_nominal = plant_limits.vd
     if dt2 is None:
         # dt2 = 0.2 * dt * dt
         dt2 = dt * dt

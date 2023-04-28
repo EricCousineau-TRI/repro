@@ -24,7 +24,7 @@ from pydrake.solvers import (
 from pydrake.systems.framework import LeafSystem
 
 from control_study.geometry import se3_vector_minus
-from control_study.limits import PlantLimits
+from control_study.limits import PlantLimits, VectorLimits
 from control_study.systems import declare_simple_init
 from control_study.multibody_extras import calc_velocity_jacobian
 
@@ -184,7 +184,7 @@ class Osc(BaseController):
         return tau
 
 
-def make_osqp_solver_and_options(use_dairlab_settings=True):
+def make_osqp_solver_and_options(use_dairlab_settings=False):
     solver = OsqpSolver()
     solver_id = solver.solver_id()
     solver_options = SolverOptions()
@@ -254,12 +254,25 @@ def solve_or_die(solver, solver_options, prog, *, x0=None):
     return result
 
 
-def add_simple_limits(plant_limits, dt, q, v, prog, vd_star, u_star):
+def intersect_vd_limits(plant_limits, Minv, C, tau_g):
+    H = C - tau_g
+    vd_tau_limits = VectorLimits(
+        lower=Minv @ (plant_limits.u.lower - H),
+        upper=Minv @ (plant_limits.u.upper - H),
+    )
+    vd_limits = plant_limits.vd.intersection(vd_tau_limits)
+    return vd_limits
+
+
+def add_simple_limits(
+    plant_limits, vd_limits, dt, q, v, prog, vd_star, u_star,
+):
     vd_limits = compute_acceleration_bounds(
         q=q,
         v=v,
         plant_limits=plant_limits,
         dt=dt,
+        vd_limits_nominal=vd_limits,
     )
     if vd_limits.any_finite():
         vd_min, vd_max = vd_limits
@@ -300,6 +313,8 @@ class QpWithCosts(BaseController):
 
     def calc_control(self, pose_actual, pose_desired, q0):
         M, C, tau_g = calc_dynamics(self.plant, self.context)
+        Minv = inv(M)
+
         q = self.plant.GetPositions(self.context)
         v = self.plant.GetVelocities(self.context)
 
@@ -319,8 +334,16 @@ class QpWithCosts(BaseController):
         ).evaluator().set_description("dyn")
 
         # Add limits.
+        vd_limits = self.plant_limits.vd
+        # vd_limits = intersect_vd_limits(
+        #     self.plant_limits,
+        #     Minv,
+        #     C,
+        #     tau_g,
+        # )
         add_simple_limits(
             self.plant_limits,
+            vd_limits,
             self.acceleration_bounds_dt,
             q,
             v,
@@ -339,7 +362,6 @@ class QpWithCosts(BaseController):
         ed = V - V_des
         edd_c = A_des - gains_t.kp * e - gains_t.kd * ed
 
-        Minv = inv(M)
         Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
 
         # Drive towards desired tracking, |(J*vdot + Jdot*v) - (edd_c)|^2
@@ -404,10 +426,10 @@ class QpWithDirConstraint(BaseController):
         super().__init__(plant, frame_W, frame_G)
         self.gains = gains
         self.plant_limits = plant_limits
-        # self.solver, self.solver_options = make_osqp_solver_and_options()
+        self.solver, self.solver_options = make_osqp_solver_and_options()
         # self.solver, self.solver_options = make_clp_solver_and_options()
         # self.solver, self.solver_options = make_gurobi_solver_and_options()
-        self.solver, self.solver_options = make_mosek_solver_and_options()
+        # self.solver, self.solver_options = make_mosek_solver_and_options()
         self.acceleration_bounds_dt = acceleration_bounds_dt
         self.posture_weight = posture_weight
         self.use_torque_weights = use_torque_weights
@@ -436,8 +458,16 @@ class QpWithDirConstraint(BaseController):
         ).evaluator().set_description("dyn")
 
         # Add limits.
+        vd_limits = self.plant_limits.vd
+        # vd_limits = intersect_vd_limits(
+        #     self.plant_limits,
+        #     Minv,
+        #     C,
+        #     tau_g,
+        # )
         add_simple_limits(
             self.plant_limits,
+            vd_limits,
             self.acceleration_bounds_dt,
             q,
             v,
