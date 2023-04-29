@@ -184,7 +184,7 @@ class Osc(BaseController):
         return tau
 
 
-def make_osqp_solver_and_options(use_dairlab_settings=False):
+def make_osqp_solver_and_options(use_dairlab_settings=True):
     solver = OsqpSolver()
     solver_id = solver.solver_id()
     solver_options = SolverOptions()
@@ -205,8 +205,8 @@ def make_osqp_solver_and_options(use_dairlab_settings=False):
             # max_iter=10000,
             # eps_abs=1e-3,
             # eps_rel=1e-4,
-            eps_abs=5e-4,
-            eps_rel=5e-4,
+            # eps_abs=5e-4,
+            # eps_rel=5e-4,
             # eps_abs=1e-5,
             # eps_rel=1e-5,
             # eps_prim_inf=1e-5,
@@ -276,7 +276,12 @@ def add_simple_limits(
         plant_limits=plant_limits,
         dt=dt,
         vd_limits_nominal=vd_limits,
+        check=False,
     )
+
+    # HACK - how to fix this?
+    vd_limits = vd_limits.make_valid()
+
     if vd_limits.any_finite():
         vd_min, vd_max = vd_limits
         prog.AddBoundingBoxConstraint(
@@ -662,7 +667,7 @@ class QpWithDirConstraint(BaseController):
             print(v)
             raise
 
-        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-2)
+        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-3)
         assert len(infeas) == 0, "\n".join(infeas)
         self.prev_sol = result.get_x_val()
 

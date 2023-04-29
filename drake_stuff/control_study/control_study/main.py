@@ -281,7 +281,7 @@ def np_print_more_like_matlab():
     )
 
 
-# @debug.iex
+@debug.iex
 def main():
     np_print_more_like_matlab()
     scenarios = {
@@ -304,7 +304,7 @@ def main():
                 scenario(make_controller)
             except (RuntimeError, AssertionError) as e:
                 print(e)
-                # raise  # wip
+                raise  # wip
 
 
 if __name__ == "__main__":
