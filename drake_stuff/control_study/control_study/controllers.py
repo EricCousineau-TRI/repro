@@ -1,4 +1,5 @@
 import dataclasses as dc
+from textwrap import indent
 
 import numpy as np
 from numpy.linalg import inv
@@ -184,7 +185,7 @@ class Osc(BaseController):
         return tau
 
 
-def make_osqp_solver_and_options(use_dairlab_settings=True):
+def make_osqp_solver_and_options(use_dairlab_settings=False):
     solver = OsqpSolver()
     solver_id = solver.solver_id()
     solver_options = SolverOptions()
@@ -667,8 +668,9 @@ class QpWithDirConstraint(BaseController):
             print(v)
             raise
 
-        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-3)
-        assert len(infeas) == 0, "\n".join(infeas)
+        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-4)
+        infeas_text = "\n" + indent("\n".join(infeas), "  ")
+        assert len(infeas) == 0, infeas_text
         self.prev_sol = result.get_x_val()
 
         tau = result.GetSolution(u_star)

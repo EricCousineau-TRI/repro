@@ -60,10 +60,10 @@ def run_spatial_waypoints(
     # else:
     #     control_dt = None
     #     plant_time_step = 0.0
-    # plant_time_step = 0.0
-    plant_time_step = DISCRETE_PLANT_TIME_STEP
-    control_dt = CONTROL_DT
-    # control_dt = None
+    # plant_time_step = DISCRETE_PLANT_TIME_STEP
+    # control_dt = CONTROL_DT
+    plant_time_step = 0.0
+    control_dt = None
 
     plant_diagram, plant, scene_graph, frame_G = make_sim_setup(
         plant_time_step
@@ -71,12 +71,10 @@ def run_spatial_waypoints(
     frame_W = plant.world_frame()
 
     builder = DiagramBuilder()
-    access = DirectPlant.AddToBuilder(
-        builder, plant_diagram, plant,
+    # access = DirectPlant.AddToBuilder(builder, plant_diagram, plant)
+    access = EulerAccelPlant.AddToBuilder(
+        builder, plant_diagram, plant, CONTROL_DT
     )
-    # access = EulerAccelPlant.AddToBuilder(
-    #     builder, plant_diagram, plant, CONTROL_DT
-    # )
 
     controller = builder.AddSystem(
         make_controller(plant, frame_W, frame_G)
@@ -270,7 +268,7 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
         posture_weight=1.0,
         use_torque_weights=True,
     )
-    controller.check_limits = False
+    # controller.check_limits = False
     return controller
 
 
@@ -288,7 +286,7 @@ def main():
         # "slow": run_slow_waypoints,
         # "rot": run_rotation_coupling,
         # "fast": run_fast_waypoints,
-        "fast singular": partial(run_fast_waypoints_singular, rotate=False),
+        # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
         "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
