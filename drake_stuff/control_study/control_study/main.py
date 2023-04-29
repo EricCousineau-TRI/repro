@@ -214,7 +214,8 @@ def make_panda_limits(plant):
     # plant_limits.v = plant_limits.v.scaled(0.5)
     # plant_limits.vd = plant_limits.vd.scaled(np.inf)
     # plant_limits.u = plant_limits.u.scaled(0.95)
-    # plant_limits.v = plant_limits.vd.scaled(np.inf)
+    # plant_limits.q = plant_limits.q.scaled(np.inf)
+    # plant_limits.v = plant_limits.v.scaled(np.inf)
     # plant_limits.vd = plant_limits.vd.scaled(np.inf)
     # plant_limits.u = plant_limits.u.scaled(np.inf)
     return plant_limits
@@ -301,7 +302,7 @@ def main():
             print(f"  {controller_name}")
             try:
                 scenario(make_controller)
-            except RuntimeError as e:
+            except (RuntimeError, AssertionError) as e:
                 print(e)
                 # raise  # wip
 
