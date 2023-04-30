@@ -557,12 +557,12 @@ class QpWithDirConstraint(BaseController):
 
         # Add limits.
         # vd_limits = self.plant_limits.vd
-        # vd_limits = intersect_vd_limits(
-        #     self.plant_limits,
-        #     Minv,
-        #     C,
-        #     tau_g,
-        # )
+        vd_limits = intersect_vd_limits(
+            self.plant_limits,
+            Minv,
+            C,
+            tau_g,
+        )
         # add_simple_limits(
         #     plant_limits=self.plant_limits,
         #     vd_limits=vd_limits,
@@ -575,24 +575,31 @@ class QpWithDirConstraint(BaseController):
         #     bvd=bvd,
         # )
         if expand:
-            # prog.AddBoundingBoxConstraint(
-            #     vd_limits.lower,
-            #     vd_limits.upper,
-            #     vd_star,
-            # )
             prog.AddBoundingBoxConstraint(
                 self.plant_limits.u.lower,
                 self.plant_limits.u.upper,
                 u_star,
-            )
+            ).evaluator().set_description("u direct")
+            # prog.AddBoundingBoxConstraint(
+            #     vd_limits.lower,
+            #     vd_limits.upper,
+            #     vd_star,
+            # ).evaluator().set_description("u via vd")
         else:
-            u_min, u_max = self.plant_limits.u
+            # u_min, u_max = self.plant_limits.u
+            # prog.AddLinearConstraint(
+            #     Au,
+            #     u_min - bu,
+            #     u_max - bu,
+            #     vd_vars,
+            # ).evaluator().set_description("u direct")
+            vd_min, vd_max = vd_limits
             prog.AddLinearConstraint(
-                Au,
-                u_min - bu,
-                u_max - bu,
+                Avd,
+                vd_min - bvd,
+                vd_max - bvd,
                 vd_vars,
-            )
+            ).evaluator().set_description("u via vd")
 
         dup_eq_as_cost = False
         dup_scale = 0.1
