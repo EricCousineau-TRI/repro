@@ -514,16 +514,16 @@ class QpWithDirConstraint(BaseController):
         # For simplicity, allow each direction to have its own scaling.
         num_t = 6
         # scale_A = np.eye(num_t)
-        # scale_A = np.ones((num_t, 1))
-        scale_A = np.array([
-            [1, 1, 1, 0, 0, 0],
-            [0, 0, 0, 1, 1, 1],
-        ]).T
+        scale_A = np.ones((num_t, 1))
+        # scale_A = np.array([
+        #     [1, 1, 1, 0, 0, 0],
+        #     [0, 0, 0, 1, 1, 1],
+        # ]).T
         num_scales = scale_A.shape[1]
-        task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
+        task_bias = edd_c
         scale_vars = prog.NewContinuousVariables(num_scales, "scale")
         task_vars = np.concatenate([vd_star, scale_vars])
-        task_A = np.hstack([Jt, -scale_A * task_bias_rep])
+        task_A = np.hstack([Jt, -np.diag(task_bias) @ scale_A])
         task_b = -Jtdot_v
 
         relax_primary = False
@@ -601,13 +601,14 @@ class QpWithDirConstraint(BaseController):
         # task_b = task_proj @ edd_c
         # prog.Add2NormSquaredCost(task_A, task_b, vd_star)
 
-        # scale_A = np.ones((num_v, 1))
-        scale_A = np.eye(num_v)
+        scale_A = np.ones((num_v, 1))
+        # scale_A = np.eye(num_v)
         num_scales = scale_A.shape[1]
-        task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
+        task_bias = edd_c
+        # task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
         scale_vars = prog.NewContinuousVariables(num_scales, "scale")
         task_vars = np.concatenate([vd_star, scale_vars])
-        task_A = np.hstack([Iv, -scale_A * task_bias_rep])
+        task_A = np.hstack([Iv, -np.diag(task_bias) @ scale_A])
         task_b = np.zeros(num_v)
 
         # TODO(eric.cousineau): Weigh penalty based on how much feedback we
