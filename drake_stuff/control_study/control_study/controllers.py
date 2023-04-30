@@ -521,7 +521,8 @@ class QpWithDirConstraint(BaseController):
         proj_p = Nt_T @ M
         # proj_p = Nt_T
 
-        expand = True
+        # expand = True
+        expand = False
 
         if expand:
             vd_star = prog.NewContinuousVariables(self.num_q, "vd_star")
@@ -707,7 +708,7 @@ class QpWithDirConstraint(BaseController):
             print(v)
             raise
 
-        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-2)
+        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-4)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
         assert len(infeas) == 0, infeas_text
         self.prev_sol = result.get_x_val()
