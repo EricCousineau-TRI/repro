@@ -512,7 +512,7 @@ class QpWithDirConstraint(BaseController):
         scale_vars_t = prog.NewContinuousVariables(num_scales_t, "scale_t")
 
         scale_secondary = False
-        expand = False
+        expand = True
         # expand = False
 
         if scale_secondary:
@@ -563,17 +563,28 @@ class QpWithDirConstraint(BaseController):
             C,
             tau_g,
         )
-        add_simple_limits(
-            plant_limits=self.plant_limits,
-            vd_limits=vd_limits,
-            dt=self.acceleration_bounds_dt,
-            q=q,
-            v=v,
-            prog=prog,
-            vd_vars=vd_vars,
-            Avd=Avd,
-            bvd=bvd,
+        # add_simple_limits(
+        #     plant_limits=self.plant_limits,
+        #     vd_limits=vd_limits,
+        #     dt=self.acceleration_bounds_dt,
+        #     q=q,
+        #     v=v,
+        #     prog=prog,
+        #     vd_vars=vd_vars,
+        #     Avd=Avd,
+        #     bvd=bvd,
+        # )
+        assert expand
+        prog.AddBoundingBoxConstraint(
+            vd_limits.lower,
+            vd_limits.upper,
+            vd_star,
         )
+        # prog.AddBoundingBoxConstraint(
+        #     self.plant_limits.u.lower,
+        #     self.plant_limits.u.upper,
+        #     u_star,
+        # )
 
         dup_eq_as_cost = False
         dup_scale = 0.1
