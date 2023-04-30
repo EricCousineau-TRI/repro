@@ -185,7 +185,7 @@ class Osc(BaseController):
         return tau
 
 
-def make_osqp_solver_and_options(use_dairlab_settings=False):
+def make_osqp_solver_and_options(use_dairlab_settings=True):
     solver = OsqpSolver()
     solver_id = solver.solver_id()
     solver_options = SolverOptions()
@@ -202,7 +202,7 @@ def make_osqp_solver_and_options(use_dairlab_settings=False):
             # max_iter=1000,
             # max_iter=10000,
             # max_iter=500,
-            # max_iter=250,
+            max_iter=250,
             # max_iter=10000,
             # eps_abs=1e-3,
             # eps_rel=1e-4,
