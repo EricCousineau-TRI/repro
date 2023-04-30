@@ -269,7 +269,17 @@ def intersect_vd_limits(plant_limits, Minv, C, tau_g):
 
 
 def add_simple_limits(
-    plant_limits, vd_limits, dt, q, v, prog, vd_star, u_star,
+    *,
+    plant_limits,
+    vd_limits,
+    dt,
+    q,
+    v,
+    prog,
+    vd_vars,
+    # u_star,
+    Avd=None,
+    bvd=None,
 ):
     vd_limits = compute_acceleration_bounds(
         q=q,
@@ -283,10 +293,22 @@ def add_simple_limits(
     # HACK - how to fix this?
     # vd_limits = vd_limits.make_valid()
 
+    if Avd is None:
+        assert bvd is None
+        ndof = len(q)
+        Avd = np.eye(ndof)
+        bvd = np.zeros(ndof)
+
     if vd_limits.any_finite():
         vd_min, vd_max = vd_limits
-        prog.AddBoundingBoxConstraint(
-            vd_min, vd_max, vd_star
+        # prog.AddBoundingBoxConstraint(
+        #     Avd @ vd_min, vd_max, vd_vars
+        # ).evaluator().set_description("accel")
+        prog.AddLinearConstraint(
+            Avd,
+            vd_min - bvd,
+            vd_max - bvd,
+            vd_vars
         ).evaluator().set_description("accel")
 
     # acounted for by torque stuff.
@@ -332,6 +354,7 @@ class QpWithCosts(BaseController):
         Iv = np.eye(self.num_q)
         zv = np.zeros(self.num_q)
         prog = MathematicalProgram()
+
         vd_star = prog.NewContinuousVariables(self.num_q, "vd_star")
         u_star = prog.NewContinuousVariables(self.num_q, "u_star")
 
@@ -451,21 +474,77 @@ class QpWithDirConstraint(BaseController):
         num_v = len(v)
         M, C, tau_g = calc_dynamics(self.plant, self.context)
         Minv = inv(M)
+        H = C - tau_g
 
         # Base QP formulation.
         Iv = np.eye(self.num_q)
         zv = np.zeros(self.num_q)
         prog = MathematicalProgram()
-        vd_star = prog.NewContinuousVariables(self.num_q, "vd_star")
-        u_star = prog.NewContinuousVariables(self.num_q, "u_star")
 
-        # Dynamics constraint.
-        dyn_vars = np.concatenate([vd_star, u_star])
-        dyn_A = np.hstack([M, -Iv])
-        dyn_b = -C + tau_g
-        prog.AddLinearEqualityConstraint(
-            dyn_A, dyn_b, dyn_vars
-        ).evaluator().set_description("dyn")
+        X, V, Jt, Jtdot_v = pose_actual
+        Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
+
+        # Compute spatial feedback.
+        gains_t = self.gains.task
+        num_t = 6
+        It = np.eye(num_t)
+        X_des, V_des, A_des = pose_desired
+        V_des = V_des.get_coeffs()
+        A_des = A_des.get_coeffs()
+        e = se3_vector_minus(X, X_des)
+        ed = V - V_des
+        edd_c_t = A_des - gains_t.kp * e - gains_t.kd * ed
+
+        # Compute posture feedback.
+        gains_p = self.gains.posture
+        e = q - q0
+        ed = v
+        edd_c_p = -gains_p.kp * e - gains_p.kd * ed
+
+        num_t = 6
+        # scale_At = np.eye(num_t)
+        scale_A_t = np.ones((num_t, 1))
+        # scale_A = np.array([
+        #     [1, 1, 1, 0, 0, 0],
+        #     [0, 0, 0, 1, 1, 1],
+        # ]).T
+        num_scales_t = scale_A_t.shape[1]
+        scale_vars_t = prog.NewContinuousVariables(num_scales_t, "scale_t")
+
+        scale_A_p = np.ones((num_v, 1))
+        # scale_A_p = np.eye(num_v)
+        num_scales_p = scale_A_p.shape[1]
+        scale_vars_p = prog.NewContinuousVariables(num_scales_p, "scale_p")
+
+        assert self.use_torque_weights
+        proj_t = Jt.T @ Mt
+        proj_p = Nt_T @ M
+
+        expand = True
+
+        if expand:
+            vd_star = prog.NewContinuousVariables(self.num_q, "vd_star")
+            u_star = prog.NewContinuousVariables(self.num_q, "u_star")
+
+            # Dynamics constraint.
+            dyn_vars = np.concatenate([vd_star, u_star])
+            dyn_A = np.hstack([M, -Iv])
+            dyn_b = -H
+            prog.AddLinearEqualityConstraint(
+                dyn_A, dyn_b, dyn_vars
+            ).evaluator().set_description("dyn")
+
+            vd_vars = vd_star
+            Avd = np.eye(num_v)
+            bvd = np.zeros(num_v)
+        else:
+            Au_t = proj_t @ np.diag(edd_c_t) @ scale_A_t
+            Au_p = proj_p @ np.diag(edd_c_p) @ scale_A_p
+            Au = np.hstack([Au_t, Au_p])
+            vd_vars = np.concatenate([scale_vars_t, scale_vars_p])
+            bu = -proj_t @ Jtdot_v + H
+            Avd = Minv @ Au
+            bvd = Minv @ (bu - H)
 
         # Add limits.
         # vd_limits = self.plant_limits.vd
@@ -476,29 +555,16 @@ class QpWithDirConstraint(BaseController):
             tau_g,
         )
         add_simple_limits(
-            self.plant_limits,
-            vd_limits,
-            self.acceleration_bounds_dt,
-            q,
-            v,
-            prog,
-            vd_star,
-            u_star,
+            plant_limits=self.plant_limits,
+            vd_limits=vd_limits,
+            dt=self.acceleration_bounds_dt,
+            q=q,
+            v=v,
+            prog=prog,
+            vd_vars=vd_vars,
+            Avd=Avd,
+            bvd=bvd,
         )
-
-        # Compute spatial feedback.
-        gains_t = self.gains.task
-        num_t = 6
-        It = np.eye(num_t)
-        X, V, Jt, Jtdot_v = pose_actual
-        X_des, V_des, A_des = pose_desired
-        V_des = V_des.get_coeffs()
-        A_des = A_des.get_coeffs()
-        e = se3_vector_minus(X, X_des)
-        ed = V - V_des
-        edd_c = A_des - gains_t.kp * e - gains_t.kd * ed
-
-        Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
 
         dup_eq_as_cost = False
         dup_scale = 0.1
@@ -513,68 +579,58 @@ class QpWithDirConstraint(BaseController):
 
         # Constrain along desired tracking, J*vdot + Jdot*v = s*edd_c
         # For simplicity, allow each direction to have its own scaling.
-        num_t = 6
-        # scale_A = np.eye(num_t)
-        scale_A = np.ones((num_t, 1))
-        # scale_A = np.array([
-        #     [1, 1, 1, 0, 0, 0],
-        #     [0, 0, 0, 1, 1, 1],
-        # ]).T
-        num_scales = scale_A.shape[1]
-        task_bias = edd_c
-        scale_vars = prog.NewContinuousVariables(num_scales, "scale")
-        task_vars = np.concatenate([vd_star, scale_vars])
-        task_A = np.hstack([Jt, -np.diag(task_bias) @ scale_A])
-        task_b = -Jtdot_v
 
-        relax_primary = False
-        relax_secondary = False
-        # relax_penalty = 1e1
-        # relax_penalty = 1e2
-        # relax_penalty = 1e3
-        # relax_penalty = 1e4
-        # relax_penalty = 1e5
-        # relax_penalty = 1e6
-        if relax_primary:
-            relax_vars = prog.NewContinuousVariables(num_t, "task.relax")
-            task_vars = np.concatenate([task_vars, relax_vars])
-            task_A = np.hstack([task_A, -It])
-            if kinematic:
-                proj = Jtpinv
-            else:
-                proj = Jt.T @ Mt
-            prog.Add2NormSquaredCost(
-                relax_penalty * proj @ It,
-                proj @ np.zeros(num_t),
-                relax_vars,
-            )
+        if expand:
+            task_vars_t = np.concatenate([vd_star, scale_vars_t])
+            task_bias_t = edd_c_t
+            task_A_t = np.hstack([Jt, -np.diag(task_bias_t) @ scale_A_t])
+            task_b_t = -Jtdot_v
 
-        prog.AddLinearEqualityConstraint(
-            task_A, task_b, task_vars
-        ).evaluator().set_description("task")
+            relax_primary = False
+            relax_secondary = False
+            # relax_penalty = 1e1
+            # relax_penalty = 1e2
+            # relax_penalty = 1e3
+            # relax_penalty = 1e4
+            # relax_penalty = 1e5
+            # relax_penalty = 1e6
+            if relax_primary:
+                relax_vars_t = prog.NewContinuousVariables(num_t, "task.relax")
+                task_vars_t = np.concatenate([task_vars_t, relax_vars_t])
+                task_A_t = np.hstack([task_A_t, -It])
+                if kinematic:
+                    proj = Jtpinv
+                else:
+                    proj = Jt.T @ Mt
+                prog.Add2NormSquaredCost(
+                    relax_penalty * proj @ It,
+                    proj @ np.zeros(num_t),
+                    relax_vars_t,
+                )
 
-        if dup_eq_as_cost:
-            prog.Add2NormSquaredCost(
-                dup_scale * task_A, dup_scale * task_b, task_vars
-            )
+            prog.AddLinearEqualityConstraint(
+                task_A_t, task_b_t, task_vars_t
+            ).evaluator().set_description("task")
+
+            if dup_eq_as_cost:
+                prog.Add2NormSquaredCost(
+                    dup_scale * task_A_t, dup_scale * task_b_t, task_vars_t
+                )
 
         # Try to optimize towards scale=1.
-        proj = np.eye(num_scales)
+        proj = np.eye(num_scales_t)
         # proj = Jt.T @ Mt @ scale_A
         # proj = Mt @ scale_A
         # proj = scale_A
         # import pdb; pdb.set_trace()
         # proj *= 100
         # proj = proj * np.sqrt(num_scales)
-        desired_scales = np.ones(num_scales)
+        desired_scales = np.ones(num_scales_t)
         prog.Add2NormSquaredCost(
-            proj @ np.eye(num_scales),
+            proj @ np.eye(num_scales_t),
             proj @ desired_scales,
-            scale_vars,
+            scale_vars_t,
         )
-
-        edd_c_t = edd_c
-        scale_t_vars = scale_vars
 
         # ones = np.ones(num_scales)
         # prog.AddBoundingBoxConstraint(
@@ -582,17 +638,6 @@ class QpWithDirConstraint(BaseController):
         #     1.0 * ones,
         #     scale_vars,
         # )
-
-        # Compute posture feedback.
-        gains_p = self.gains.posture
-        e = q - q0
-        ed = v
-        edd_c = -gains_p.kp * e - gains_p.kd * ed
-        # Same as above, but lower weight.
-        if self.use_torque_weights:
-            task_proj = Nt_T @ M
-        else:
-            task_proj = Iv
 
         # TODO(eric.cousineau): Maybe I need to constrain these error dynamics?
 
@@ -602,49 +647,43 @@ class QpWithDirConstraint(BaseController):
         # task_b = task_proj @ edd_c
         # prog.Add2NormSquaredCost(task_A, task_b, vd_star)
 
-        scale_A = np.ones((num_v, 1))
-        # scale_A = np.eye(num_v)
-        num_scales = scale_A.shape[1]
-        task_bias = edd_c
-        # task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
-        scale_vars = prog.NewContinuousVariables(num_scales, "scale")
-        task_vars = np.concatenate([vd_star, scale_vars])
-        task_A = np.hstack([Iv, -np.diag(task_bias) @ scale_A])
-        task_b = np.zeros(num_v)
+        if expand:
+            task_bias_p = edd_c_p
+            # task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
+            task_vars_p = np.concatenate([vd_star, scale_vars_p])
+            task_A_p = np.hstack([Iv, -np.diag(task_bias_p) @ scale_A_p])
+            task_b_p = np.zeros(num_v)
+            # TODO(eric.cousineau): Weigh penalty based on how much feedback we
+            # need?
+            if relax_secondary:
+                relax_vars_p = prog.NewContinuousVariables(num_v, "q relax")
+                task_vars_p = np.concatenate([task_vars_p, relax_vars_p])
+                task_A_p = np.hstack([task_A_p, -Iv])
+                proj = proj_p
+                prog.Add2NormSquaredCost(
+                    relax_penalty * proj @ Iv,
+                    proj @ np.zeros(num_v),
+                    relax_vars,
+                )
+            task_A_p = proj_p @ task_A_p
+            task_b_p = proj_p @ task_b_p
+            prog.AddLinearEqualityConstraint(
+                task_A_p, task_b_p, task_vars_p,
+            ).evaluator().set_description("posture")
+            if dup_eq_as_cost:
+                prog.Add2NormSquaredCost(
+                    dup_scale * task_A_p, dup_scale * task_b_p, task_vars_p,
+                )
 
-        # TODO(eric.cousineau): Weigh penalty based on how much feedback we
-        # need?
-
-        if relax_secondary:
-            relax_vars = prog.NewContinuousVariables(num_v, "q relax")
-            task_vars = np.concatenate([task_vars, relax_vars])
-            task_A = np.hstack([task_A, -Iv])
-            proj = task_proj
-            prog.Add2NormSquaredCost(
-                relax_penalty * proj @ Iv,
-                proj @ np.zeros(num_v),
-                relax_vars,
-            )
-
-        task_A = task_proj @ task_A
-        task_b = task_proj @ task_b
-        prog.AddLinearEqualityConstraint(
-            task_A, task_b, task_vars,
-        ).evaluator().set_description("posture")
-        if dup_eq_as_cost:
-            prog.Add2NormSquaredCost(
-                dup_scale * task_A, dup_scale * task_b, task_vars,
-            )
-
-        desired_scales = np.ones(num_scales)
-        proj = self.posture_weight * np.eye(num_scales)
+        desired_scales_p = np.ones(num_scales_p)
+        proj = self.posture_weight * np.eye(num_scales_p)
         # proj = self.posture_weight * task_proj @ scale_A
         # proj = self.posture_weight * scale_A
         # proj = proj #/ np.sqrt(num_scales)
         prog.Add2NormSquaredCost(
-            proj @ np.eye(num_scales),
-            proj @ desired_scales,
-            scale_vars,
+            proj @ np.eye(num_scales_p),
+            proj @ desired_scales_p,
+            scale_vars_p,
         )
 
         # ones = np.ones(num_scales)
@@ -653,9 +692,6 @@ class QpWithDirConstraint(BaseController):
         #     1.0 * ones,
         #     scale_vars,
         # )
-
-        edd_c_q = edd_c
-        scale_q_vars = scale_vars
 
         # Solve.
         try:
@@ -675,13 +711,18 @@ class QpWithDirConstraint(BaseController):
         assert len(infeas) == 0, infeas_text
         self.prev_sol = result.get_x_val()
 
-        tau = result.GetSolution(u_star)
-        tau = self.plant_limits.u.saturate(tau)
+        scale_t = result.GetSolution(scale_vars_t)
+        scale_p = result.GetSolution(scale_vars_p)
 
-        scale_t = result.GetSolution(scale_t_vars)
-        scale_q = result.GetSolution(scale_q_vars)
         print(f"{scale_t}\n  {edd_c_t}")
-        print(f"{scale_q}\n  {edd_c_q}")
+        print(f"{scale_p}\n  {edd_c_p}")
         print("---")
+
+        if expand:
+            tau = result.GetSolution(u_star)
+        else:
+            scale = np.concatenate([scale_t, scale_p])
+            tau = Au @ scale + bu
+        tau = self.plant_limits.u.saturate(tau)
 
         return tau
