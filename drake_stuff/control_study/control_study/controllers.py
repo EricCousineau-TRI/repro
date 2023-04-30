@@ -202,14 +202,14 @@ def make_osqp_solver_and_options(use_dairlab_settings=True):
             # max_iter=1000,
             # max_iter=10000,
             # max_iter=500,
-            max_iter=250,
+            # max_iter=250,
             # max_iter=10000,
             # eps_abs=1e-3,
             # eps_rel=1e-4,
             # eps_abs=5e-4,
             # eps_rel=5e-4,
-            eps_abs=1e-5,
-            eps_rel=1e-5,
+            # eps_abs=1e-5,
+            # eps_rel=1e-5,
             # eps_prim_inf=1e-5,
             # eps_dual_inf=1e-5,
             polish=1,
@@ -282,9 +282,11 @@ def add_simple_limits(
     v,
     prog,
     vd_vars,
-    # u_star,
-    Avd=None,
-    bvd=None,
+    Avd,
+    bvd,
+    u_vars,
+    Au,
+    bu,
 ):
     vd_limits = compute_acceleration_bounds(
         q=q,
@@ -298,12 +300,6 @@ def add_simple_limits(
     # HACK - how to fix this?
     # vd_limits = vd_limits.make_valid()
 
-    if Avd is None:
-        assert bvd is None
-        ndof = len(q)
-        Avd = np.eye(ndof)
-        bvd = np.zeros(ndof)
-
     if vd_limits.any_finite():
         vd_min, vd_max = vd_limits
         # prog.AddBoundingBoxConstraint(
@@ -313,16 +309,18 @@ def add_simple_limits(
             Avd,
             vd_min - bvd,
             vd_max - bvd,
-            vd_vars
+            vd_vars,
         ).evaluator().set_description("accel")
 
-    # acounted for by torque stuff.
-    # # - Torque.
-    # if plant_limits.u.any_finite():
-    #     u_min, u_max = plant_limits.u
-    #     prog.AddBoundingBoxConstraint(
-    #         u_min, u_max, u_star
-    #     ).evaluator().set_description("torque")
+    # - Torque.
+    if plant_limits.u.any_finite():
+        u_min, u_max = plant_limits.u
+        prog.AddLinearConstraint(
+            Au,
+            u_min - bu,
+            u_max - bu,
+            u_vars,
+        ).evaluator().set_description("torque")
 
 
 class QpWithCosts(BaseController):
@@ -543,6 +541,9 @@ class QpWithDirConstraint(BaseController):
                 dyn_A, dyn_b, dyn_vars
             ).evaluator().set_description("dyn")
 
+            u_vars = u_star
+            Au = np.eye(num_v)
+            bu = np.zeros(num_v)
             vd_vars = vd_star
             Avd = np.eye(num_v)
             bvd = np.zeros(num_v)
@@ -551,56 +552,62 @@ class QpWithDirConstraint(BaseController):
             bu = -proj_t @ Jtdot_v + H
             if scale_secondary:
                 Au_p = proj_p @ np.diag(edd_c_p) @ scale_A_p
-                vd_vars = np.concatenate([scale_vars_t, scale_vars_p])
+                u_vars = np.concatenate([scale_vars_t, scale_vars_p])
                 Au = np.hstack([Au_t, Au_p])
             else:
                 Au = Au_t
                 bu += proj_p @ edd_c_p
-                vd_vars = scale_vars_t
+                u_vars = scale_vars_t
+            vd_vars = u_vars
             Avd = Minv @ Au
             bvd = Minv @ (bu - H)
 
         # Add limits.
         vd_limits = self.plant_limits.vd
-        vd_tau_limits = vd_limits_from_tau(self.plant_limits.u, Minv, H)
-        vd_limits = vd_limits.intersection(vd_tau_limits)
-        # add_simple_limits(
-        #     plant_limits=self.plant_limits,
-        #     vd_limits=vd_limits,
-        #     dt=self.acceleration_bounds_dt,
-        #     q=q,
-        #     v=v,
-        #     prog=prog,
-        #     vd_vars=vd_vars,
-        #     Avd=Avd,
-        #     bvd=bvd,
-        # )
-        if expand:
-            # prog.AddBoundingBoxConstraint(
-            #     self.plant_limits.u.lower,
-            #     self.plant_limits.u.upper,
-            #     u_star,
-            # ).evaluator().set_description("u direct")
-            prog.AddBoundingBoxConstraint(
-                vd_tau_limits.lower,
-                vd_tau_limits.upper,
-                vd_star,
-            ).evaluator().set_description("u via vd")
-        else:
-            # u_min, u_max = self.plant_limits.u
-            # prog.AddLinearConstraint(
-            #     Au,
-            #     u_min - bu,
-            #     u_max - bu,
-            #     vd_vars,
-            # ).evaluator().set_description("u direct")
-            vd_min, vd_max = vd_tau_limits
-            prog.AddLinearConstraint(
-                Avd,
-                vd_min - bvd,
-                vd_max - bvd,
-                vd_vars,
-            ).evaluator().set_description("u via vd")
+        # TODO(eric.cousineau): How to make this work correctly? Even
+        # conservative estimate?
+        # vd_tau_limits = vd_limits_from_tau(self.plant_limits.u, Minv, H)
+        # vd_limits = vd_limits.intersection(vd_tau_limits)
+        add_simple_limits(
+            plant_limits=self.plant_limits,
+            vd_limits=vd_limits,
+            dt=self.acceleration_bounds_dt,
+            q=q,
+            v=v,
+            prog=prog,
+            vd_vars=vd_vars,
+            Avd=Avd,
+            bvd=bvd,
+            u_vars=u_vars,
+            Au=Au,
+            bu=bu,
+        )
+        # if expand:
+        #     # prog.AddBoundingBoxConstraint(
+        #     #     self.plant_limits.u.lower,
+        #     #     self.plant_limits.u.upper,
+        #     #     u_star,
+        #     # ).evaluator().set_description("u direct")
+        #     prog.AddBoundingBoxConstraint(
+        #         vd_tau_limits.lower,
+        #         vd_tau_limits.upper,
+        #         vd_star,
+        #     ).evaluator().set_description("u via vd")
+        # else:
+        #     # u_min, u_max = self.plant_limits.u
+        #     # prog.AddLinearConstraint(
+        #     #     Au,
+        #     #     u_min - bu,
+        #     #     u_max - bu,
+        #     #     vd_vars,
+        #     # ).evaluator().set_description("u direct")
+        #     vd_min, vd_max = vd_tau_limits
+        #     prog.AddLinearConstraint(
+        #         Avd,
+        #         vd_min - bvd,
+        #         vd_max - bvd,
+        #         vd_vars,
+        #     ).evaluator().set_description("u via vd")
 
         dup_eq_as_cost = False
         dup_scale = 0.1
@@ -751,7 +758,7 @@ class QpWithDirConstraint(BaseController):
             # print(v)
             raise
 
-        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-6)
+        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-5)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
         assert len(infeas) == 0, infeas_text
         self.prev_sol = result.get_x_val()
