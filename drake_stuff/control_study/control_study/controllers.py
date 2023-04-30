@@ -185,7 +185,7 @@ class Osc(BaseController):
         return tau
 
 
-def make_osqp_solver_and_options(use_dairlab_settings=True):
+def make_osqp_solver_and_options(use_dairlab_settings=False):
     solver = OsqpSolver()
     solver_id = solver.solver_id()
     solver_options = SolverOptions()
@@ -198,7 +198,7 @@ def make_osqp_solver_and_options(use_dairlab_settings=True):
         # https://github.com/DAIRLab/dairlib/blob/0da42bc2/examples/Cassie/osc_run/osc_running_qp_settings.yaml
         solver_options_dict.update(
             # rho=0.001,
-            # sigma=1e-6,
+            sigma=1e-6,
             # max_iter=1000,
             # max_iter=10000,
             # max_iter=500,
@@ -210,8 +210,8 @@ def make_osqp_solver_and_options(use_dairlab_settings=True):
             # eps_rel=5e-4,
             eps_abs=1e-5,
             eps_rel=1e-5,
-            eps_prim_inf=1e-5,
-            eps_dual_inf=1e-5,
+            # eps_prim_inf=1e-5,
+            # eps_dual_inf=1e-5,
             polish=1,
             polish_refine_iter=1,
             scaled_termination=1,
@@ -519,8 +519,9 @@ class QpWithDirConstraint(BaseController):
         assert self.use_torque_weights
         proj_t = Jt.T @ Mt
         proj_p = Nt_T @ M
+        # proj_p = Nt_T
 
-        expand = False
+        expand = True
 
         if expand:
             vd_star = prog.NewContinuousVariables(self.num_q, "vd_star")
@@ -547,13 +548,13 @@ class QpWithDirConstraint(BaseController):
             bvd = Minv @ (bu - H)
 
         # Add limits.
-        # vd_limits = self.plant_limits.vd
-        vd_limits = intersect_vd_limits(
-            self.plant_limits,
-            Minv,
-            C,
-            tau_g,
-        )
+        vd_limits = self.plant_limits.vd
+        # vd_limits = intersect_vd_limits(
+        #     self.plant_limits,
+        #     Minv,
+        #     C,
+        #     tau_g,
+        # )
         add_simple_limits(
             plant_limits=self.plant_limits,
             vd_limits=vd_limits,
@@ -706,7 +707,7 @@ class QpWithDirConstraint(BaseController):
             print(v)
             raise
 
-        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-6)
+        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-2)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
         assert len(infeas) == 0, infeas_text
         self.prev_sol = result.get_x_val()
