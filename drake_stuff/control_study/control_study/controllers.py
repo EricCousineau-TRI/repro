@@ -549,13 +549,13 @@ class QpWithDirConstraint(BaseController):
             bvd = Minv @ (bu - H)
 
         # Add limits.
-        vd_limits = self.plant_limits.vd
-        # vd_limits = intersect_vd_limits(
-        #     self.plant_limits,
-        #     Minv,
-        #     C,
-        #     tau_g,
-        # )
+        # vd_limits = self.plant_limits.vd
+        vd_limits = intersect_vd_limits(
+            self.plant_limits,
+            Minv,
+            C,
+            tau_g,
+        )
         add_simple_limits(
             plant_limits=self.plant_limits,
             vd_limits=vd_limits,
@@ -708,7 +708,7 @@ class QpWithDirConstraint(BaseController):
             print(v)
             raise
 
-        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-4)
+        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-6)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
         assert len(infeas) == 0, infeas_text
         self.prev_sol = result.get_x_val()
