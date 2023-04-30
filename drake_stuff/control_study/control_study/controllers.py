@@ -313,7 +313,7 @@ def add_simple_limits(
         ).evaluator().set_description("accel")
 
     # - Torque.
-    if plant_limits.u.any_finite():
+    if u_vars is not None and plant_limits.u.any_finite():
         u_min, u_max = plant_limits.u
         prog.AddLinearConstraint(
             Au,
@@ -505,12 +505,12 @@ class QpWithDirConstraint(BaseController):
         edd_c_p = -gains_p.kp * e - gains_p.kd * ed
 
         num_t = 6
-        scale_A_t = np.eye(num_t)
+        # scale_A_t = np.eye(num_t)
         # scale_A_t = np.ones((num_t, 1))
-        # scale_A_t = np.array([
-        #     [1, 1, 1, 0, 0, 0],
-        #     [0, 0, 0, 1, 1, 1],
-        # ]).T
+        scale_A_t = np.array([
+            [1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1],
+        ]).T
         num_scales_t = scale_A_t.shape[1]
         scale_vars_t = prog.NewContinuousVariables(num_scales_t, "scale_t")
 
@@ -566,8 +566,13 @@ class QpWithDirConstraint(BaseController):
         vd_limits = self.plant_limits.vd
         # TODO(eric.cousineau): How to make this work correctly? Even
         # conservative estimate?
-        # vd_tau_limits = vd_limits_from_tau(self.plant_limits.u, Minv, H)
-        # vd_limits = vd_limits.intersection(vd_tau_limits)
+        torque_direct = False
+        if torque_direct:
+            u_vars = u_vars
+        else:
+            u_vars = None
+            vd_tau_limits = vd_limits_from_tau(self.plant_limits.u, Minv, H)
+            vd_limits = vd_limits.intersection(vd_tau_limits)
         add_simple_limits(
             plant_limits=self.plant_limits,
             vd_limits=vd_limits,
