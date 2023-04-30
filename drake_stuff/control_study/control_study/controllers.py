@@ -511,10 +511,13 @@ class QpWithDirConstraint(BaseController):
         num_scales_t = scale_A_t.shape[1]
         scale_vars_t = prog.NewContinuousVariables(num_scales_t, "scale_t")
 
-        scale_A_p = np.ones((num_v, 1))
-        # scale_A_p = np.eye(num_v)
-        num_scales_p = scale_A_p.shape[1]
-        scale_vars_p = prog.NewContinuousVariables(num_scales_p, "scale_p")
+        scale_secondary = False
+
+        if scale_secondary:
+            scale_A_p = np.ones((num_v, 1))
+            # scale_A_p = np.eye(num_v)
+            num_scales_p = scale_A_p.shape[1]
+            scale_vars_p = prog.NewContinuousVariables(num_scales_p, "scale_p")
 
         assert self.use_torque_weights
         proj_t = Jt.T @ Mt
@@ -541,10 +544,15 @@ class QpWithDirConstraint(BaseController):
             bvd = np.zeros(num_v)
         else:
             Au_t = proj_t @ np.diag(edd_c_t) @ scale_A_t
-            Au_p = proj_p @ np.diag(edd_c_p) @ scale_A_p
-            vd_vars = np.concatenate([scale_vars_t, scale_vars_p])
-            Au = np.hstack([Au_t, Au_p])
             bu = -proj_t @ Jtdot_v + H
+            if scale_secondary:
+                Au_p = proj_p @ np.diag(edd_c_p) @ scale_A_p
+                vd_vars = np.concatenate([scale_vars_t, scale_vars_p])
+                Au = np.hstack([Au_t, Au_p])
+            else:
+                Au = Au_t
+                bu += proj_p @ edd_c_p
+                vd_vars = scale_vars_t
             Avd = Minv @ Au
             bvd = Minv @ (bu - H)
 
@@ -677,16 +685,17 @@ class QpWithDirConstraint(BaseController):
                     dup_scale * task_A_p, dup_scale * task_b_p, task_vars_p,
                 )
 
-        desired_scales_p = np.ones(num_scales_p)
-        proj = self.posture_weight * np.eye(num_scales_p)
-        # proj = self.posture_weight * task_proj @ scale_A
-        # proj = self.posture_weight * scale_A
-        # proj = proj #/ np.sqrt(num_scales)
-        prog.Add2NormSquaredCost(
-            proj @ np.eye(num_scales_p),
-            proj @ desired_scales_p,
-            scale_vars_p,
-        )
+        if scale_secondary:
+            desired_scales_p = np.ones(num_scales_p)
+            proj = self.posture_weight * np.eye(num_scales_p)
+            # proj = self.posture_weight * task_proj @ scale_A
+            # proj = self.posture_weight * scale_A
+            # proj = proj #/ np.sqrt(num_scales)
+            prog.Add2NormSquaredCost(
+                proj @ np.eye(num_scales_p),
+                proj @ desired_scales_p,
+                scale_vars_p,
+            )
 
         # ones = np.ones(num_scales)
         # prog.AddBoundingBoxConstraint(
@@ -714,17 +723,21 @@ class QpWithDirConstraint(BaseController):
         self.prev_sol = result.get_x_val()
 
         scale_t = result.GetSolution(scale_vars_t)
-        scale_p = result.GetSolution(scale_vars_p)
 
         print(v)
         print(f"{scale_t}\n  {edd_c_t}")
-        print(f"{scale_p}\n  {edd_c_p}")
+        if scale_secondary:
+            scale_p = result.GetSolution(scale_vars_p)
+            print(f"{scale_p}\n  {edd_c_p}")
         print("---")
 
         if expand:
             tau = result.GetSolution(u_star)
         else:
-            scale = np.concatenate([scale_t, scale_p])
+            if scale_secondary:
+                scale = np.concatenate([scale_t, scale_p])
+            else:
+                scale = scale_t
             tau = Au @ scale + bu
         tau = self.plant_limits.u.saturate(tau)
 
