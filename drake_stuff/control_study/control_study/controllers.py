@@ -512,6 +512,8 @@ class QpWithDirConstraint(BaseController):
         scale_vars_t = prog.NewContinuousVariables(num_scales_t, "scale_t")
 
         scale_secondary = False
+        expand = False
+        # expand = False
 
         if scale_secondary:
             scale_A_p = np.ones((num_v, 1))
@@ -523,9 +525,6 @@ class QpWithDirConstraint(BaseController):
         proj_t = Jt.T @ Mt
         proj_p = Nt_T @ M
         # proj_p = Nt_T
-
-        # expand = True
-        expand = False
 
         if expand:
             vd_star = prog.NewContinuousVariables(self.num_q, "vd_star")
@@ -658,32 +657,40 @@ class QpWithDirConstraint(BaseController):
         # prog.Add2NormSquaredCost(task_A, task_b, vd_star)
 
         if expand:
-            task_bias_p = edd_c_p
-            # task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
-            task_vars_p = np.concatenate([vd_star, scale_vars_p])
-            task_A_p = np.hstack([Iv, -np.diag(task_bias_p) @ scale_A_p])
-            task_b_p = np.zeros(num_v)
-            # TODO(eric.cousineau): Weigh penalty based on how much feedback we
-            # need?
-            if relax_secondary:
-                relax_vars_p = prog.NewContinuousVariables(num_v, "q relax")
-                task_vars_p = np.concatenate([task_vars_p, relax_vars_p])
-                task_A_p = np.hstack([task_A_p, -Iv])
-                proj = proj_p
-                prog.Add2NormSquaredCost(
-                    relax_penalty * proj @ Iv,
-                    proj @ np.zeros(num_v),
-                    relax_vars,
+            if not scale_secondary:
+                assert not dup_eq_as_cost
+                task_A_p = proj_p
+                task_b_p = proj_p @ edd_c_p
+                prog.AddLinearEqualityConstraint(
+                    task_A_p, task_b_p, vd_star,
                 )
-            task_A_p = proj_p @ task_A_p
-            task_b_p = proj_p @ task_b_p
-            prog.AddLinearEqualityConstraint(
-                task_A_p, task_b_p, task_vars_p,
-            ).evaluator().set_description("posture")
-            if dup_eq_as_cost:
-                prog.Add2NormSquaredCost(
-                    dup_scale * task_A_p, dup_scale * task_b_p, task_vars_p,
-                )
+            else:
+                task_bias_p = edd_c_p
+                # task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
+                task_vars_p = np.concatenate([vd_star, scale_vars_p])
+                task_A_p = np.hstack([Iv, -np.diag(task_bias_p) @ scale_A_p])
+                task_b_p = np.zeros(num_v)
+                # TODO(eric.cousineau): Weigh penalty based on how much feedback we
+                # need?
+                if relax_secondary:
+                    relax_vars_p = prog.NewContinuousVariables(num_v, "q relax")
+                    task_vars_p = np.concatenate([task_vars_p, relax_vars_p])
+                    task_A_p = np.hstack([task_A_p, -Iv])
+                    proj = proj_p
+                    prog.Add2NormSquaredCost(
+                        relax_penalty * proj @ Iv,
+                        proj @ np.zeros(num_v),
+                        relax_vars,
+                    )
+                task_A_p = proj_p @ task_A_p
+                task_b_p = proj_p @ task_b_p
+                prog.AddLinearEqualityConstraint(
+                    task_A_p, task_b_p, task_vars_p,
+                ).evaluator().set_description("posture")
+                if dup_eq_as_cost:
+                    prog.Add2NormSquaredCost(
+                        dup_scale * task_A_p, dup_scale * task_b_p, task_vars_p,
+                    )
 
         if scale_secondary:
             desired_scales_p = np.ones(num_scales_p)
