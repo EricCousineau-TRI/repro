@@ -255,17 +255,22 @@ def solve_or_die(solver, solver_options, prog, *, x0=None):
     return result
 
 
-def intersect_vd_limits(plant_limits, Minv, C, tau_g):
-    if not plant_limits.u.any_finite():
-        return plant_limits.vd
-    H = C - tau_g
+def vd_limits_from_tau(u_limits, Minv, H):
+    num_u = len(H)
+    if not u_limits.isfinite():
+        return VectorLimits(
+            lower=-np.inf * np.ones(num_u),
+            upper=np.inf * np.ones(num_u),
+        )
+    u_min, u_max = u_limits
     vd_tau_limits = VectorLimits(
-        lower=Minv @ (plant_limits.u.lower - H),
-        upper=Minv @ (plant_limits.u.upper - H),
+        lower=Minv @ (u_min - H),
+        upper=Minv @ (u_max - H),
     )
+    # TODO(eric.cousineau): Is this even right? How to handle sign flip?
     vd_tau_limits = vd_tau_limits.make_valid()
-    vd_limits = plant_limits.vd.intersection(vd_tau_limits)
-    return vd_limits
+    # assert vd_tau_limits.is_valid()
+    return vd_tau_limits
 
 
 def add_simple_limits(
@@ -556,13 +561,9 @@ class QpWithDirConstraint(BaseController):
             bvd = Minv @ (bu - H)
 
         # Add limits.
-        # vd_limits = self.plant_limits.vd
-        vd_limits = intersect_vd_limits(
-            self.plant_limits,
-            Minv,
-            C,
-            tau_g,
-        )
+        vd_limits = self.plant_limits.vd
+        vd_tau_limits = vd_limits_from_tau(self.plant_limits.u, Minv, H)
+        vd_limits = vd_limits.intersection(vd_tau_limits)
         # add_simple_limits(
         #     plant_limits=self.plant_limits,
         #     vd_limits=vd_limits,
@@ -575,16 +576,16 @@ class QpWithDirConstraint(BaseController):
         #     bvd=bvd,
         # )
         if expand:
-            prog.AddBoundingBoxConstraint(
-                self.plant_limits.u.lower,
-                self.plant_limits.u.upper,
-                u_star,
-            ).evaluator().set_description("u direct")
             # prog.AddBoundingBoxConstraint(
-            #     vd_limits.lower,
-            #     vd_limits.upper,
-            #     vd_star,
-            # ).evaluator().set_description("u via vd")
+            #     self.plant_limits.u.lower,
+            #     self.plant_limits.u.upper,
+            #     u_star,
+            # ).evaluator().set_description("u direct")
+            prog.AddBoundingBoxConstraint(
+                vd_tau_limits.lower,
+                vd_tau_limits.upper,
+                vd_star,
+            ).evaluator().set_description("u via vd")
         else:
             # u_min, u_max = self.plant_limits.u
             # prog.AddLinearConstraint(
@@ -593,7 +594,7 @@ class QpWithDirConstraint(BaseController):
             #     u_max - bu,
             #     vd_vars,
             # ).evaluator().set_description("u direct")
-            vd_min, vd_max = vd_limits
+            vd_min, vd_max = vd_tau_limits
             prog.AddLinearConstraint(
                 Avd,
                 vd_min - bvd,
