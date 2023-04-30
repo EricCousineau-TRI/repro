@@ -590,7 +590,7 @@ class QpWithDirConstraint(BaseController):
         edd_c = -gains_p.kp * e - gains_p.kd * ed
         # Same as above, but lower weight.
         if self.use_torque_weights:
-            task_proj = Nt_T
+            task_proj = Nt_T @ M
         else:
             task_proj = Iv
 
