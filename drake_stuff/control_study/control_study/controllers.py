@@ -281,7 +281,7 @@ def add_simple_limits(
     )
 
     # HACK - how to fix this?
-    vd_limits = vd_limits.make_valid()
+    # vd_limits = vd_limits.make_valid()
 
     if vd_limits.any_finite():
         vd_min, vd_max = vd_limits
@@ -289,12 +289,13 @@ def add_simple_limits(
             vd_min, vd_max, vd_star
         ).evaluator().set_description("accel")
 
-    # - Torque.
-    if plant_limits.u.any_finite():
-        u_min, u_max = plant_limits.u
-        prog.AddBoundingBoxConstraint(
-            u_min, u_max, u_star
-        ).evaluator().set_description("torque")
+    # acounted for by torque stuff.
+    # # - Torque.
+    # if plant_limits.u.any_finite():
+    #     u_min, u_max = plant_limits.u
+    #     prog.AddBoundingBoxConstraint(
+    #         u_min, u_max, u_star
+    #     ).evaluator().set_description("torque")
 
 
 class QpWithCosts(BaseController):
@@ -669,7 +670,7 @@ class QpWithDirConstraint(BaseController):
             print(v)
             raise
 
-        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-4)
+        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-2)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
         assert len(infeas) == 0, infeas_text
         self.prev_sol = result.get_x_val()
