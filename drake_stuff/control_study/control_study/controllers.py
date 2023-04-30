@@ -542,8 +542,8 @@ class QpWithDirConstraint(BaseController):
         else:
             Au_t = proj_t @ np.diag(edd_c_t) @ scale_A_t
             Au_p = proj_p @ np.diag(edd_c_p) @ scale_A_p
-            Au = np.hstack([Au_t, Au_p])
             vd_vars = np.concatenate([scale_vars_t, scale_vars_p])
+            Au = np.hstack([Au_t, Au_p])
             bu = -proj_t @ Jtdot_v + H
             Avd = Minv @ Au
             bvd = Minv @ (bu - H)
@@ -701,11 +701,11 @@ class QpWithDirConstraint(BaseController):
                 self.solver, self.solver_options, prog, x0=self.prev_sol
             )
         except RuntimeError:
-            print(np.rad2deg(self.plant_limits.q.lower))
-            print(np.rad2deg(self.plant_limits.q.upper))
-            print(np.rad2deg(q))
-            print(self.plant_limits.v)
-            print(v)
+            # print(np.rad2deg(self.plant_limits.q.lower))
+            # print(np.rad2deg(self.plant_limits.q.upper))
+            # print(np.rad2deg(q))
+            # print(self.plant_limits.v)
+            # print(v)
             raise
 
         infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-6)
@@ -716,6 +716,7 @@ class QpWithDirConstraint(BaseController):
         scale_t = result.GetSolution(scale_vars_t)
         scale_p = result.GetSolution(scale_vars_p)
 
+        print(v)
         print(f"{scale_t}\n  {edd_c_t}")
         print(f"{scale_p}\n  {edd_c_p}")
         print("---")
