@@ -268,7 +268,7 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
         posture_weight=1.0,
         use_torque_weights=True,
     )
-    controller.check_limits = False
+    # controller.check_limits = False
     return controller
 
 
