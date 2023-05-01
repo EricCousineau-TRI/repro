@@ -548,8 +548,13 @@ class QpWithDirConstraint(BaseController):
         num_scales_t = scale_A_t.shape[1]
         scale_vars_t = prog.NewContinuousVariables(num_scales_t, "scale_t")
 
+        # If True, will add (vd, tau) as decision variables, and impose
+        # dynamics and task acceleration constraints. If False, will explicitly
+        # project to torques / accelerations.
+        implicit = True
+
+        # If True, will also scale secondary objective (posture).
         scale_secondary = True
-        expand = False
 
         if scale_secondary:
             scale_A_p = np.ones((num_v, 1))
@@ -562,7 +567,7 @@ class QpWithDirConstraint(BaseController):
         proj_p = Nt_T @ M
         # proj_p = Nt_T
 
-        if expand:
+        if implicit:
             vd_star = prog.NewContinuousVariables(self.num_q, "vd_star")
             u_star = prog.NewContinuousVariables(self.num_q, "u_star")
 
@@ -620,7 +625,7 @@ class QpWithDirConstraint(BaseController):
             Au=Au,
             bu=bu,
         )
-        # if expand:
+        # if implicit:
         #     # prog.AddBoundingBoxConstraint(
         #     #     self.plant_limits.u.lower,
         #     #     self.plant_limits.u.upper,
@@ -661,7 +666,7 @@ class QpWithDirConstraint(BaseController):
         # Constrain along desired tracking, J*vdot + Jdot*v = s*edd_c
         # For simplicity, allow each direction to have its own scaling.
 
-        if expand:
+        if implicit:
             task_vars_t = np.concatenate([vd_star, scale_vars_t])
             task_bias_t = edd_c_t
             task_A_t = np.hstack([Jt, -np.diag(task_bias_t) @ scale_A_t])
@@ -728,7 +733,7 @@ class QpWithDirConstraint(BaseController):
         # task_b = task_proj @ edd_c
         # prog.Add2NormSquaredCost(task_A, task_b, vd_star)
 
-        if expand:
+        if implicit:
             if not scale_secondary:
                 assert not dup_eq_as_cost
                 task_A_p = proj_p
@@ -799,12 +804,13 @@ class QpWithDirConstraint(BaseController):
             # print(v)
             raise
 
-        if expand:
+        if implicit:
             # tol = 1e-5
-            tol = 2e-3
+            tol = 1e-6
+            # tol = 2e-3
         else:
-            # tol = 1e-7
-            tol = 1e-1  # HACK
+            tol = 1e-7
+            # tol = 1e-1  # HACK
         infeas = result.GetInfeasibleConstraintNames(prog, tol=tol)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
         assert len(infeas) == 0, infeas_text
@@ -819,7 +825,7 @@ class QpWithDirConstraint(BaseController):
             print(f"{scale_p}") #\n  {edd_c_p}")
         print("---")
 
-        if expand:
+        if implicit:
             tau = result.GetSolution(u_star)
         else:
             if scale_secondary:
