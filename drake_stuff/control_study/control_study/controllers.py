@@ -786,6 +786,9 @@ class QpWithDirConstraint(BaseController):
 
         # Solve.
         try:
+            # TODO(eric.cousineau): OSQP does not currently accept
+            # warm-starting:
+            # https://github.com/RobotLocomotion/drake/blob/v1.15.0/solvers/osqp_solver.cc#L335-L336
             result = solve_or_die(
                 self.solver, self.solver_options, prog, x0=self.prev_sol
             )
