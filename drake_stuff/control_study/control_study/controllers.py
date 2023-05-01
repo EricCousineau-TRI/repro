@@ -496,10 +496,14 @@ class QpWithDirConstraint(BaseController):
         super().__init__(plant, frame_W, frame_G)
         self.gains = gains
         self.plant_limits = plant_limits
+
         self.solver, self.solver_options = make_osqp_solver_and_options()
         # self.solver, self.solver_options = make_clp_solver_and_options()
         # self.solver, self.solver_options = make_gurobi_solver_and_options()
+
+        # Infeasible for implicit=True. Good for implicit=False.
         # self.solver, self.solver_options = make_mosek_solver_and_options()
+
         self.acceleration_bounds_dt = acceleration_bounds_dt
         self.posture_weight = posture_weight
         self.use_torque_weights = use_torque_weights
