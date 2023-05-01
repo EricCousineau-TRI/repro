@@ -830,16 +830,17 @@ class QpWithDirConstraint(BaseController):
             raise
 
         if implicit:
-            tol = 1e-7
-            # tol = 1e-12  # snopt default
+            # tol = 1e-7
+            tol = 1e-12  # snopt default
             # tol = 1e-11  # osqp default
             # tol = 1e-3  # scs default
         else:
             # tol = 1e-14  # osqp, clp default
             # tol = 0  # gurobi default
             # tol = 1e-14  # snopt default
+            tol = 1e-10  # snopt, singular
             # tol = 1e-14  # scs - primal infeasible, dual unbounded?
-            tol = 1e-11  # mosek default
+            # tol = 1e-11  # mosek default
             # tol = 1e-1  # HACK
         infeas = result.GetInfeasibleConstraintNames(prog, tol=tol)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
