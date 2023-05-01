@@ -187,7 +187,7 @@ class Osc(BaseController):
         return tau
 
 
-def make_osqp_solver_and_options(use_dairlab_settings=True):
+def make_osqp_solver_and_options(use_dairlab_settings=False):
     solver = OsqpSolver()
     solver_id = solver.solver_id()
     solver_options = SolverOptions()
@@ -515,12 +515,11 @@ class QpWithDirConstraint(BaseController):
 
         # self.solver, self.solver_options = make_clp_solver_and_options()
 
-        # self.solver, self.solver_options = make_gurobi_solver_and_options()
+        self.solver, self.solver_options = make_gurobi_solver_and_options()
 
         # self.solver, self.solver_options = make_snopt_solver_and_options()
 
-        # # Requires slightly loose tolerance.
-        self.solver, self.solver_options = make_scs_solver_and_options()
+        # self.solver, self.solver_options = make_scs_solver_and_options()
 
         # Infeasible for implicit=True. Good for implicit=False.
         # self.solver, self.solver_options = make_mosek_solver_and_options()
@@ -830,9 +829,10 @@ class QpWithDirConstraint(BaseController):
             raise
 
         if implicit:
-            # tol = 1e-5
-            # tol = 1e-6
-            tol = 2e-3
+            tol = 1e-7
+            # tol = 1e-12  # snopt default
+            # tol = 1e-11  # osqp default
+            # tol = 1e-3  # scs default
         else:
             tol = 1e-7
             # tol = 1e-1  # HACK
