@@ -293,26 +293,28 @@ def add_simple_limits(
     if spell_out_naive:
         # v_next = v + dt*vd
         Av = dt * Avd
+        v_rescale = 1 / dt
         bv = v
         # q_next = q + dt*v + 1/2*dt^2*vd
         Aq = 0.5 * dt * dt * Avd
+        q_rescale = 1 / dt  # 2 / (dt * dt)
         bq = q + dt * v
 
         if plant_limits.q.any_finite():
             q_min, q_max = plant_limits.q
             prog.AddLinearConstraint(
-                Aq,
-                q_min - bq,
-                q_max - bq,
+                q_rescale * Aq,
+                q_rescale * (q_min - bq),
+                q_rescale * (q_max - bq),
                 vd_vars,
             ).evaluator().set_description("pos")
 
         if plant_limits.v.any_finite():
             v_min, v_max = plant_limits.v
             prog.AddLinearConstraint(
-                Av,
-                v_min - bv,
-                v_max - bv,
+                v_rescale * Av,
+                v_rescale * (v_min - bv),
+                v_rescale * (v_max - bv),
                 vd_vars,
             ).evaluator().set_description("vel")
     else:
@@ -330,9 +332,6 @@ def add_simple_limits(
 
     if vd_limits.any_finite():
         vd_min, vd_max = vd_limits
-        # prog.AddBoundingBoxConstraint(
-        #     Avd @ vd_min, vd_max, vd_vars
-        # ).evaluator().set_description("accel")
         prog.AddLinearConstraint(
             Avd,
             vd_min - bvd,
@@ -542,9 +541,8 @@ class QpWithDirConstraint(BaseController):
         num_scales_t = scale_A_t.shape[1]
         scale_vars_t = prog.NewContinuousVariables(num_scales_t, "scale_t")
 
-        scale_secondary = False
+        scale_secondary = True
         expand = False
-        # expand = False
 
         if scale_secondary:
             scale_A_p = np.ones((num_v, 1))
@@ -730,7 +728,7 @@ class QpWithDirConstraint(BaseController):
                 task_b_p = proj_p @ edd_c_p
                 prog.AddLinearEqualityConstraint(
                     task_A_p, task_b_p, vd_star,
-                )
+                ).evaluator().set_description("posture")
             else:
                 task_bias_p = edd_c_p
                 # task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
@@ -791,7 +789,7 @@ class QpWithDirConstraint(BaseController):
             # print(v)
             raise
 
-        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-3)
+        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-5)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
         assert len(infeas) == 0, infeas_text
         self.prev_sol = result.get_x_val()
