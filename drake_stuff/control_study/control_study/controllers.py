@@ -197,13 +197,14 @@ def make_osqp_solver_and_options(use_dairlab_settings=True):
     if use_dairlab_settings:
         # https://github.com/DAIRLab/dairlib/blob/0da42bc2/examples/Cassie/osc_run/osc_running_qp_settings.yaml
         solver_options_dict.update(
-            rho=0.5,
+            rho=1.0,
             sigma=1.0,
+            # alpha=1.9,
             # sigma=100,  # er, int values messes things up?
             # rho=0.1,
             # sigma=1e-6,
-            max_iter=250,
-            # max_iter=500,
+            # max_iter=250,
+            max_iter=500,
             # max_iter=1000,
             # max_iter=2000,
             # max_iter=10000,
@@ -212,8 +213,10 @@ def make_osqp_solver_and_options(use_dairlab_settings=True):
             # eps_rel=1e-4,
             # eps_abs=5e-4,
             # eps_rel=5e-4,
-            eps_abs=1e-5,
-            eps_rel=1e-5,
+            # eps_abs=1e-5,
+            # eps_rel=1e-5,
+            eps_abs=1e-6,
+            eps_rel=1e-6,
             # eps_prim_inf=1e-5,
             # eps_dual_inf=1e-5,
             polish=1,
@@ -794,7 +797,7 @@ class QpWithDirConstraint(BaseController):
             # print(v)
             raise
 
-        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-4)
+        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-5)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
         assert len(infeas) == 0, infeas_text
         self.prev_sol = result.get_x_val()
