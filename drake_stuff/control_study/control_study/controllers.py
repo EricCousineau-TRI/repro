@@ -219,7 +219,7 @@ def make_osqp_solver_and_options(use_dairlab_settings=True):
             # eps_prim_inf=1e-5,
             # eps_dual_inf=1e-5,
             polish=1,
-            polish_refine_iter=1,
+            polish_refine_iter=2,
             scaled_termination=1,
             scaling=1,
         )
