@@ -513,11 +513,12 @@ class QpWithDirConstraint(BaseController):
         # Can be a bit imprecise, but w/ tuning can improve.
         # self.solver, self.solver_options = make_osqp_solver_and_options()
 
+        # Best, it seems like?
+        self.solver, self.solver_options = make_snopt_solver_and_options()
+
         # self.solver, self.solver_options = make_clp_solver_and_options()
 
-        self.solver, self.solver_options = make_gurobi_solver_and_options()
-
-        # self.solver, self.solver_options = make_snopt_solver_and_options()
+        # self.solver, self.solver_options = make_gurobi_solver_and_options()
 
         # self.solver, self.solver_options = make_scs_solver_and_options()
 
@@ -575,7 +576,7 @@ class QpWithDirConstraint(BaseController):
         # If True, will add (vd, tau) as decision variables, and impose
         # dynamics and task acceleration constraints. If False, will explicitly
         # project to torques / accelerations.
-        implicit = True
+        implicit = False
 
         # If True, will also scale secondary objective (posture).
         scale_secondary = True
@@ -834,7 +835,11 @@ class QpWithDirConstraint(BaseController):
             # tol = 1e-11  # osqp default
             # tol = 1e-3  # scs default
         else:
-            tol = 1e-7
+            # tol = 1e-14  # osqp, clp default
+            # tol = 0  # gurobi default
+            # tol = 1e-14  # snopt default
+            # tol = 1e-14  # scs - primal infeasible, dual unbounded?
+            tol = 1e-11  # mosek default
             # tol = 1e-1  # HACK
         infeas = result.GetInfeasibleConstraintNames(prog, tol=tol)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
