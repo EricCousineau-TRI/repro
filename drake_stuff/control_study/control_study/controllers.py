@@ -797,7 +797,7 @@ class QpWithDirConstraint(BaseController):
             # print(v)
             raise
 
-        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-5)
+        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-7)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
         assert len(infeas) == 0, infeas_text
         self.prev_sol = result.get_x_val()
