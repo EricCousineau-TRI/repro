@@ -16,11 +16,13 @@ from pydrake.multibody.tree import JacobianWrtVariable, ModelInstanceIndex
 from pydrake.solvers import (
     ClpSolver,
     CommonSolverOption,
-    MathematicalProgram,
-    OsqpSolver,
-    SolverOptions,
     GurobiSolver,
+    MathematicalProgram,
     MosekSolver,
+    OsqpSolver,
+    ScsSolver,
+    SnoptSolver,
+    SolverOptions,
 )
 from pydrake.systems.framework import LeafSystem
 
@@ -242,6 +244,17 @@ def make_gurobi_solver_and_options():
 
 def make_mosek_solver_and_options():
     solver = MosekSolver()
+    solver_options = SolverOptions()
+    return solver, solver_options
+
+
+def make_snopt_solver_and_options():
+    solver = SnoptSolver()
+    solver_options = SolverOptions()
+    return solver, solver_options
+
+def make_scs_solver_and_options():
+    solver = ScsSolver()
     solver_options = SolverOptions()
     return solver, solver_options
 
@@ -497,9 +510,17 @@ class QpWithDirConstraint(BaseController):
         self.gains = gains
         self.plant_limits = plant_limits
 
-        self.solver, self.solver_options = make_osqp_solver_and_options()
+        # Can be a bit imprecise, but w/ tuning can improve.
+        # self.solver, self.solver_options = make_osqp_solver_and_options()
+
         # self.solver, self.solver_options = make_clp_solver_and_options()
+
         # self.solver, self.solver_options = make_gurobi_solver_and_options()
+
+        # self.solver, self.solver_options = make_snopt_solver_and_options()
+
+        # # Requires slightly loose tolerance.
+        self.solver, self.solver_options = make_scs_solver_and_options()
 
         # Infeasible for implicit=True. Good for implicit=False.
         # self.solver, self.solver_options = make_mosek_solver_and_options()
@@ -810,8 +831,8 @@ class QpWithDirConstraint(BaseController):
 
         if implicit:
             # tol = 1e-5
-            tol = 1e-6
-            # tol = 2e-3
+            # tol = 1e-6
+            tol = 2e-3
         else:
             tol = 1e-7
             # tol = 1e-1  # HACK
