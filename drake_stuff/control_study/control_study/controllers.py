@@ -197,7 +197,7 @@ def make_osqp_solver_and_options(use_dairlab_settings=True):
     if use_dairlab_settings:
         # https://github.com/DAIRLab/dairlib/blob/0da42bc2/examples/Cassie/osc_run/osc_running_qp_settings.yaml
         solver_options_dict.update(
-            rho=1.0,
+            rho=0.5,
             sigma=1.0,
             # sigma=100,  # er, int values messes things up?
             # rho=0.1,
