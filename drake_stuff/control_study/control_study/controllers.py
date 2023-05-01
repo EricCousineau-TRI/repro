@@ -288,7 +288,7 @@ def add_simple_limits(
     Au,
     bu,
 ):
-    spell_out_naive = True
+    spell_out_naive = False
 
     if spell_out_naive:
         # v_next = v + dt*vd
@@ -297,6 +297,7 @@ def add_simple_limits(
         bv = v
         # q_next = q + dt*v + 1/2*dt^2*vd
         Aq = 0.5 * dt * dt * Avd
+        # Aq = 0.1 * 0.5 * dt * dt * Avd  # HACK
         q_rescale = 1 / dt  # 2 / (dt * dt)
         bq = q + dt * v
 
@@ -789,7 +790,7 @@ class QpWithDirConstraint(BaseController):
             # print(v)
             raise
 
-        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-5)
+        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-6)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
         assert len(infeas) == 0, infeas_text
         self.prev_sol = result.get_x_val()
