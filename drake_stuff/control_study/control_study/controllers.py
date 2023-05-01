@@ -812,11 +812,11 @@ class QpWithDirConstraint(BaseController):
 
         scale_t = result.GetSolution(scale_vars_t)
 
-        print(v)
-        print(f"{scale_t}\n  {edd_c_t}")
+        # print(v)
+        print(f"{scale_t}") #\n  {edd_c_t}")
         if scale_secondary:
             scale_p = result.GetSolution(scale_vars_p)
-            print(f"{scale_p}\n  {edd_c_p}")
+            print(f"{scale_p}") #\n  {edd_c_p}")
         print("---")
 
         if expand:
