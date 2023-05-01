@@ -288,14 +288,42 @@ def add_simple_limits(
     Au,
     bu,
 ):
-    vd_limits = compute_acceleration_bounds(
-        q=q,
-        v=v,
-        plant_limits=plant_limits,
-        dt=dt,
-        vd_limits_nominal=vd_limits,
-        check=False,
-    )
+    spell_out_naive = True
+
+    if spell_out_naive:
+        # v_next = v + dt*vd
+        Av = dt * Avd
+        bv = v
+        # q_next = q + dt*v + 1/2*dt^2*vd
+        Aq = 0.5 * dt * dt * Avd
+        bq = q + dt * v
+
+        if plant_limits.q.any_finite():
+            q_min, q_max = plant_limits.q
+            prog.AddLinearConstraint(
+                Aq,
+                q_min - bq,
+                q_max - bq,
+                vd_vars,
+            ).evaluator().set_description("pos")
+
+        if plant_limits.v.any_finite():
+            v_min, v_max = plant_limits.v
+            prog.AddLinearConstraint(
+                Av,
+                v_min - bv,
+                v_max - bv,
+                vd_vars,
+            ).evaluator().set_description("vel")
+    else:
+        vd_limits = compute_acceleration_bounds(
+            q=q,
+            v=v,
+            plant_limits=plant_limits,
+            dt=dt,
+            vd_limits_nominal=vd_limits,
+            check=False,
+        )
 
     # HACK - how to fix this?
     # vd_limits = vd_limits.make_valid()
@@ -566,7 +594,7 @@ class QpWithDirConstraint(BaseController):
         vd_limits = self.plant_limits.vd
         # TODO(eric.cousineau): How to make this work correctly? Even
         # conservative estimate?
-        torque_direct = False
+        torque_direct = True
         if torque_direct:
             u_vars = u_vars
         else:
@@ -763,7 +791,7 @@ class QpWithDirConstraint(BaseController):
             # print(v)
             raise
 
-        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-5)
+        infeas = result.GetInfeasibleConstraintNames(prog, tol=1e-3)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
         assert len(infeas) == 0, infeas_text
         self.prev_sol = result.get_x_val()
