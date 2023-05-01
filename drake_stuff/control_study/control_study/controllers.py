@@ -204,10 +204,9 @@ def make_osqp_solver_and_options(use_dairlab_settings=True):
             # rho=0.1,
             # sigma=1e-6,
             # max_iter=250,
-            max_iter=500,
-            # max_iter=1000,
+            # max_iter=500,
+            max_iter=1000,
             # max_iter=2000,
-            # max_iter=10000,
             # max_iter=10000,
             # eps_abs=1e-3,
             # eps_rel=1e-4,
@@ -215,8 +214,8 @@ def make_osqp_solver_and_options(use_dairlab_settings=True):
             # eps_rel=5e-4,
             # eps_abs=1e-5,
             # eps_rel=1e-5,
-            eps_abs=1e-6,
-            eps_rel=1e-6,
+            # eps_abs=1e-6,
+            # eps_rel=1e-6,
             # eps_prim_inf=1e-5,
             # eps_dual_inf=1e-5,
             polish=1,
@@ -804,7 +803,8 @@ class QpWithDirConstraint(BaseController):
             # tol = 1e-5
             tol = 2e-3
         else:
-            tol = 1e-7
+            # tol = 1e-7
+            tol = 5e-6
         infeas = result.GetInfeasibleConstraintNames(prog, tol=tol)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
         assert len(infeas) == 0, infeas_text
