@@ -42,7 +42,9 @@ bazel run --config=snopt --config=mosek --config=gurobi //:install -- ~/.local/o
 
 # In poetry.
 poetry shell
+fhs_dir=$(poetry env info --path)
 pydrake_dir=$(python -c 'import os; import pydrake as m; print(os.path.dirname(m.__file__))')
 mv ${pydrake_dir} ${pydrake_dir}_old
 ln -s ~/.local/opt/drake/v1.15.0/lib/python3.10/site-packages/pydrake ${pydrake_dir}
+ln -s ~/.local/opt/drake/v1.15.0/share/drake ${fhs_dir}/share/
 ```
