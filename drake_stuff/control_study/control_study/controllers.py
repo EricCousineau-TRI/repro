@@ -617,6 +617,7 @@ class QpWithDirConstraint(BaseController):
         self.edd_ps = []
         self.s_ps = []
         # self.r_ps = []
+        self.limits_infos = []
 
     def calc_control(self, t, pose_actual, pose_desired, q0):
         q = self.plant.GetPositions(self.context)
@@ -747,7 +748,7 @@ class QpWithDirConstraint(BaseController):
             u_vars = None
             vd_tau_limits = vd_limits_from_tau(self.plant_limits.u, Minv, H)
             vd_limits = vd_limits.intersection(vd_tau_limits)
-        add_simple_limits(
+        limit_info = add_simple_limits(
             plant_limits=self.plant_limits,
             vd_limits=vd_limits,
             dt=self.acceleration_bounds_dt,
@@ -985,6 +986,7 @@ class QpWithDirConstraint(BaseController):
         self.r_ts.append(relax_t)
         self.edd_ps.append(edd_c_p)
         self.s_ps.append(scale_p)
+        self.limits_infos.append(limit_info)
 
         return tau
 
@@ -1031,7 +1033,7 @@ class QpWithDirConstraint(BaseController):
         plt.sca(axs[1])
         plt.plot(ts, r_ts)
         legend_for(r_ts)
-        plt.title("r_p")
+        plt.title("r_t")
         plt.sca(axs[2])
         plt.plot(ts, s_ps)
         legend_for(s_ps)
