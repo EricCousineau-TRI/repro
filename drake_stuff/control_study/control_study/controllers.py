@@ -367,10 +367,12 @@ def add_simple_limits(
         kq_2 = 2 / dt
         kv_1 = 1 / dt
 
-        dt_scale = 10
-        kq_1 /= dt_scale**2
+        q_dt_scale = 10
+        v_dt_scale = 5
+        kq_1 /= q_dt_scale**2
         # kq_2 /= dt_scale / 5  # why? helps for discrete case
-        kq_2 /= 2
+        kq_2 /= v_dt_scale
+        kv_1 /= v_dt_scale
         # kv_1 /= dt_scale
 
         # kq_1 /= 400
