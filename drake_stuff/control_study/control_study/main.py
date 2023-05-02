@@ -137,6 +137,8 @@ def run_spatial_waypoints(
     except Exception:
         print(f"Failure at {diagram_context.get_time()}s")
         raise
+    finally:
+        controller.show_plots()
 
     # Return logged values.
     qs, Vs = unzip(logger.log)
@@ -281,7 +283,7 @@ def np_print_more_like_matlab():
     )
 
 
-@debug.iex
+# @debug.iex
 def main():
     np_print_more_like_matlab()
     scenarios = {

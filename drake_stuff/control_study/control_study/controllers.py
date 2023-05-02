@@ -1,6 +1,7 @@
 import dataclasses as dc
 from textwrap import indent
 
+import matplotlib.pyplot as plt
 import numpy as np
 from numpy.linalg import inv
 
@@ -84,15 +85,18 @@ class BaseController(LeafSystem):
             self.plant, self.context, self.frame_W, self.frame_G
         )
         pose_desired = self.traj(t)
-        tau = self.calc_control(pose_actual, pose_desired, q0)
+        tau = self.calc_control(t, pose_actual, pose_desired, q0)
 
         if self.check_limits:
             self.nominal_limits.assert_values_within_limits(u=tau, tol=tol)
 
         output.set_value(tau)
 
-    def calc_control(self, pose_actual, pose_desired, q0):
+    def calc_control(self, t, pose_actual, pose_desired, q0):
         raise NotImplementedError()
+
+    def show_plots(self):
+        pass
 
 
 @dc.dataclass
@@ -157,7 +161,7 @@ class Osc(BaseController):
         super().__init__(plant, frame_W, frame_G)
         self.gains = gains
 
-    def calc_control(self, pose_actual, pose_desired, q0):
+    def calc_control(self, t, pose_actual, pose_desired, q0):
         M, C, tau_g = calc_dynamics(self.plant, self.context)
         Minv = inv(M)
 
@@ -466,7 +470,7 @@ class QpWithCosts(BaseController):
         self.split_costs = split_costs
         self.use_torque_weights = use_torque_weights
 
-    def calc_control(self, pose_actual, pose_desired, q0):
+    def calc_control(self, t, pose_actual, pose_desired, q0):
         M, C, tau_g = calc_dynamics(self.plant, self.context)
         Minv = inv(M)
 
@@ -603,7 +607,18 @@ class QpWithDirConstraint(BaseController):
         self.use_torque_weights = use_torque_weights
         self.prev_sol = None
 
-    def calc_control(self, pose_actual, pose_desired, q0):
+        self.ts = []
+        self.qs = []
+        self.vs = []
+        self.us = []
+        self.edd_ts = []
+        self.s_ts = []
+        self.r_ts = []
+        self.edd_ps = []
+        self.s_ps = []
+        # self.r_ps = []
+
+    def calc_control(self, t, pose_actual, pose_desired, q0):
         q = self.plant.GetPositions(self.context)
         v = self.plant.GetVelocities(self.context)
         num_v = len(v)
@@ -961,4 +976,71 @@ class QpWithDirConstraint(BaseController):
 
         # import pdb; pdb.set_trace()
 
+        self.ts.append(t)
+        self.qs.append(q)
+        self.vs.append(v)
+        self.us.append(tau)
+        self.edd_ts.append(edd_c_t)
+        self.s_ts.append(scale_t)
+        self.r_ts.append(relax_t)
+        self.edd_ps.append(edd_c_p)
+        self.s_ps.append(scale_p)
+
         return tau
+
+    def show_plots(self):
+        ts = np.array(self.ts)
+        qs = np.array(self.qs)
+        vs = np.array(self.vs)
+        us = np.array(self.us)
+        edd_ts = np.array(self.edd_ts)
+        s_ts = np.array(self.s_ts)
+        r_ts = np.array(self.r_ts)
+        edd_ps = np.array(self.edd_ps)
+        s_ps = np.array(self.s_ps)
+
+        _, axs = plt.subplots(num=1, nrows=3)
+        plt.sca(axs[0])
+        plt.plot(ts, qs)
+        legend_for(qs)
+        plt.title("q")
+        plt.sca(axs[1])
+        plt.plot(ts, vs)
+        legend_for(vs)
+        plt.title("v")
+        plt.sca(axs[2])
+        plt.plot(ts, us)
+        legend_for(us)
+        plt.title("u")
+
+        _, axs = plt.subplots(num=2, nrows=2)
+        plt.sca(axs[0])
+        plt.plot(ts, edd_ts)
+        legend_for(edd_ts)
+        plt.title("edd_c_t")
+        plt.sca(axs[1])
+        plt.plot(ts, edd_ps)
+        legend_for(edd_ps)
+        plt.title("edd_c_p")
+
+        _, axs = plt.subplots(num=3, nrows=3)
+        plt.sca(axs[0])
+        plt.plot(ts, s_ts)
+        legend_for(s_ts)
+        plt.title("s_t")
+        plt.sca(axs[1])
+        plt.plot(ts, r_ts)
+        legend_for(r_ts)
+        plt.title("r_p")
+        plt.sca(axs[2])
+        plt.plot(ts, s_ps)
+        legend_for(s_ps)
+        plt.title("s_p")
+
+        plt.show()
+
+
+def legend_for(xs):
+    n = xs.shape[1]
+    labels = [f"{i}" for i in range(1, n + 1)]
+    plt.legend(labels)
