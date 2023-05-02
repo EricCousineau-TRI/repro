@@ -417,14 +417,14 @@ def add_simple_limits(
         # we can pose those as upper bounds (vd <= -b).
         prog.AddLinearConstraint(
             Avd,
-            b_q_min,
-            -b_q_max,
+            b_q_min - bvd,
+            -b_q_max - bvd,
             vd_vars,
         ).evaluator().set_description("pos cbf")
         prog.AddLinearConstraint(
             Avd,
-            b_v_min,
-            -b_v_max,
+            b_v_min - bvd,
+            -b_v_max - bvd,
             vd_vars,
         ).evaluator().set_description("vel cbf")
     elif mode == "intersect":
