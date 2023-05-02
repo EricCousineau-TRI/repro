@@ -646,7 +646,7 @@ class QpWithDirConstraint(BaseController):
         # If True, will add (vd, tau) as decision variables, and impose
         # dynamics and task acceleration constraints. If False, will explicitly
         # project to torques / accelerations.
-        implicit = True
+        implicit = False
 
         # If True, will also scale secondary objective (posture).
         scale_secondary = True

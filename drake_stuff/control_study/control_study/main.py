@@ -60,9 +60,9 @@ def run_spatial_waypoints(
     # else:
     #     control_dt = None
     #     plant_time_step = 0.0
-    plant_time_step = DISCRETE_PLANT_TIME_STEP
+    # plant_time_step = DISCRETE_PLANT_TIME_STEP
     control_dt = CONTROL_DT
-    # plant_time_step = 0.0
+    plant_time_step = 0.0
     # control_dt = None
 
     plant_diagram, plant, scene_graph, frame_G = make_sim_setup(
@@ -202,8 +202,8 @@ def make_osc_gains():
 def make_panda_limits(plant):
     plant_limits = PlantLimits.from_plant(plant)
     # Avoid elbow lock.
-    plant_limits.q = plant_limits.q.scaled(0.8)
-    plant_limits.v = plant_limits.v.scaled(0.8)
+    # plant_limits.q = plant_limits.q.scaled(0.9)
+    # plant_limits.v = plant_limits.v.scaled(0.9)
     plant_limits.q.upper[3] = np.deg2rad(-20.0)
     # plant_limits.q.upper[3] = np.deg2rad(-25.0)  # Does not lock...
     # plant_limits.v = plant_limits.v.scaled(0.9)
