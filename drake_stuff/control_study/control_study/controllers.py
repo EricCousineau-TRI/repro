@@ -307,8 +307,8 @@ def add_simple_limits(
     Au,
     bu,
 ):
-    # mode = "naive"
-    mode = "cbf"
+    mode = "naive"
+    # mode = "cbf"
     # mode = "intersect"
 
     if mode == "naive":
@@ -351,6 +351,7 @@ def add_simple_limits(
 
         # Gains corresponding to naive formulation.
         alpha_1 = lambda x: x
+        # alpha_1 = lambda x: 0.05*x**3
         alpha_2 = alpha_1
         kq_1 = 2 / (dt * dt)
         kq_2 = 2 / dt
@@ -631,7 +632,7 @@ class QpWithDirConstraint(BaseController):
         # If True, will add (vd, tau) as decision variables, and impose
         # dynamics and task acceleration constraints. If False, will explicitly
         # project to torques / accelerations.
-        implicit = True
+        implicit = False
 
         # If True, will also scale secondary objective (posture).
         scale_secondary = True
@@ -898,19 +899,20 @@ class QpWithDirConstraint(BaseController):
             # tol = 1e-14  # scs - primal infeasible, dual unbounded?
             # tol = 1e-11  # mosek default
             # tol = 1e-1  # HACK
-        infeas = result.GetInfeasibleConstraintNames(prog, tol=tol)
-        infeas_text = "\n" + indent("\n".join(infeas), "  ")
-        assert len(infeas) == 0, infeas_text
-        self.prev_sol = result.get_x_val()
 
         scale_t = result.GetSolution(scale_vars_t)
 
         # print(v)
-        print(f"{scale_t}") #\n  {edd_c_t}")
+        print(f"t: {scale_t}\n  {edd_c_t}")
         if scale_secondary:
             scale_p = result.GetSolution(scale_vars_p)
-            print(f"{scale_p}") #\n  {edd_c_p}")
+            print(f"p: {scale_p}\n  {edd_c_p}")
         print("---")
+
+        infeas = result.GetInfeasibleConstraintNames(prog, tol=tol)
+        infeas_text = "\n" + indent("\n".join(infeas), "  ")
+        assert len(infeas) == 0, infeas_text
+        self.prev_sol = result.get_x_val()
 
         if implicit:
             tau = result.GetSolution(u_star)
