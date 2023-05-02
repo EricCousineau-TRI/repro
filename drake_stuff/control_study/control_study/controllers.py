@@ -367,7 +367,7 @@ def add_simple_limits(
         kq_2 = 2 / dt
         kv_1 = 1 / dt
 
-        dt_scale = 1
+        dt_scale = 10
         kq_1 /= dt_scale**2
         kq_2 /= dt_scale
         kv_1 /= dt_scale
@@ -680,12 +680,12 @@ class QpWithDirConstraint(BaseController):
         dup_eq_as_cost = False
         dup_scale = 0.1
 
-        # relax_primary = None
+        relax_primary = None
         # relax_primary = 1.0
         # relax_primary = 5.0
         # relax_primary = 1e1
         # relax_primary = 1e1
-        relax_primary = np.array([100, 100, 100, 50, 50, 50])
+        # relax_primary = np.array([100, 100, 100, 50, 50, 50])
         # relax_primary = np.array([20, 20, 20, 10, 10, 10])
         # relax_primary = 1e2
         # relax_primary = 1e3
@@ -991,7 +991,8 @@ class QpWithDirConstraint(BaseController):
         self.us.append(tau)
         self.edd_ts.append(edd_c_t)
         self.s_ts.append(scale_t)
-        self.r_ts.append(relax_t)
+        if relax_primary is not None:
+            self.r_ts.append(relax_t)
         self.edd_ps.append(edd_c_p)
         self.edd_ps_null.append(edd_c_p_null)
         self.s_ps.append(scale_p)
