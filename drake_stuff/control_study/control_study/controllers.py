@@ -367,16 +367,21 @@ def add_simple_limits(
         kq_2 = 2 / dt
         kv_1 = 1 / dt
 
-        # Hacks
-        # kq_1 /= 100
-        # kq_2 /= 10
-        # kv_1 /= 10
-        kq_1 = 100
-        # kq_1 = 75
-        # kq_1 = 50
-        kq_2 = 50
-        kv_1 = 10
-        # kv_1 = 2
+        dt_scale = 1
+        kq_1 /= dt_scale**2
+        kq_2 /= dt_scale
+        kv_1 /= dt_scale
+
+        # # Hacks
+        # # kq_1 /= 100
+        # # kq_2 /= 10
+        # # kv_1 /= 10
+        # kq_1 = 100
+        # # kq_1 = 75
+        # # kq_1 = 50
+        # kq_2 = 50
+        # kv_1 = 10
+        # # kv_1 = 2
 
         # q_min
         h_q_min = q - q_min
@@ -1006,19 +1011,39 @@ class QpWithDirConstraint(BaseController):
         edd_ps_null = np.array(self.edd_ps_null)
         s_ps = np.array(self.s_ps)
 
+        # sub = slice(3, 4)
+        sub = slice(None, None)
+        sel = (slice(None, None), sub)
+
+        def plot_lim(limits):
+            lower, upper = limits
+            lower = lower[sub]
+            upper = upper[sub]
+            ts_lim = ts[[0, -1]]
+            reset_color_cycle()
+            plt.plot(ts_lim, [lower, lower], ":")
+            reset_color_cycle()
+            plt.plot(ts_lim, [upper, upper], ":")
+
         _, axs = plt.subplots(num=1, nrows=3)
         plt.sca(axs[0])
-        plt.plot(ts, qs)
-        legend_for(qs)
+        plt.plot(ts, qs[sel])
+        legend_for(qs[sel])
+        plot_lim(self.plant_limits.q)
         plt.title("q")
         plt.sca(axs[1])
-        plt.plot(ts, vs)
-        legend_for(vs)
+        plt.plot(ts, vs[sel])
+        legend_for(vs[sel])
+        plot_lim(self.plant_limits.v)
         plt.title("v")
         plt.sca(axs[2])
-        plt.plot(ts, us)
-        legend_for(us)
+        plt.plot(ts, us[sel])
+        legend_for(us[sel])
+        plot_lim(self.plant_limits.u)
         plt.title("u")
+
+        plt.show()
+        return  # HACK
 
         _, axs = plt.subplots(num=2, nrows=3)
         plt.sca(axs[0])
@@ -1055,3 +1080,8 @@ def legend_for(xs):
     n = xs.shape[1]
     labels = [f"{i}" for i in range(1, n + 1)]
     plt.legend(labels)
+
+
+def reset_color_cycle():
+    # https://stackoverflow.com/a/39116381/7829525
+    plt.gca().set_prop_cycle(None)
