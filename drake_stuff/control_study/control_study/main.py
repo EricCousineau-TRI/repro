@@ -285,7 +285,7 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
         acceleration_bounds_dt=CONTROL_DT,
         # acceleration_bounds_dt=100 * CONTROL_DT,
         # acceleration_bounds_dt=2 * CONTROL_DT,
-        # posture_weight=0.1,
+        # posture_weight=0.05,
         # use_torque_weights=False,
         posture_weight=1.0,
         use_torque_weights=True,

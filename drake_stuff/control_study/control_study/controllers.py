@@ -367,8 +367,8 @@ def add_simple_limits(
         kq_2 = 2 / dt
         kv_1 = 1 / dt
 
-        q_dt_scale = 10
-        v_dt_scale = 5
+        q_dt_scale = 20
+        v_dt_scale = 10
         kq_1 /= q_dt_scale**2
         # kq_2 /= dt_scale / 5  # why? helps for discrete case
         kq_2 /= v_dt_scale
@@ -851,7 +851,7 @@ class QpWithDirConstraint(BaseController):
         # proj = Mt @ scale_A
         # proj = scale_A
         # import pdb; pdb.set_trace()
-        # proj *= 100
+        # proj *= 10
         # proj = proj * np.sqrt(num_scales)
         desired_scales = np.ones(num_scales_t)
         prog.Add2NormSquaredCost(
@@ -860,12 +860,12 @@ class QpWithDirConstraint(BaseController):
             scale_vars_t,
         )
 
-        # ones = np.ones(num_scales)
-        # prog.AddBoundingBoxConstraint(
-        #     -1.0 * ones,
-        #     1.0 * ones,
-        #     scale_vars,
-        # )
+        ones = np.ones(num_scales_t)
+        prog.AddBoundingBoxConstraint(
+            -10.0 * ones,
+            10.0 * ones,
+            scale_vars_t,
+        )
 
         # TODO(eric.cousineau): Maybe I need to constrain these error dynamics?
 
@@ -923,12 +923,12 @@ class QpWithDirConstraint(BaseController):
                 scale_vars_p,
             )
 
-        # ones = np.ones(num_scales)
-        # prog.AddBoundingBoxConstraint(
-        #     1.0 * ones,
-        #     1.0 * ones,
-        #     scale_vars,
-        # )
+            ones = np.ones(num_scales_p)
+            prog.AddBoundingBoxConstraint(
+                -10.0 * ones,
+                10.0 * ones,
+                scale_vars_p,
+            )
 
         # Solve.
         try:
@@ -1058,19 +1058,19 @@ class QpWithDirConstraint(BaseController):
         # plt.show()
         # return  # HACK
 
-        # _, axs = plt.subplots(num=2, nrows=3)
-        # plt.sca(axs[0])
-        # plt.plot(ts, edd_ts)
-        # legend_for(edd_ts)
-        # plt.title("edd_c_t")
-        # plt.sca(axs[1])
-        # plt.plot(ts, edd_ps)
-        # legend_for(edd_ps)
-        # plt.title("edd_c_p")
-        # plt.sca(axs[2])
-        # plt.plot(ts, edd_ps_null)
-        # legend_for(edd_ps_null)
-        # plt.title("edd_c_p null")
+        _, axs = plt.subplots(num=2, nrows=3)
+        plt.sca(axs[0])
+        plt.plot(ts, edd_ts)
+        legend_for(edd_ts)
+        plt.title("edd_c_t")
+        plt.sca(axs[1])
+        plt.plot(ts, edd_ps)
+        legend_for(edd_ps)
+        plt.title("edd_c_p")
+        plt.sca(axs[2])
+        plt.plot(ts, edd_ps_null)
+        legend_for(edd_ps_null)
+        plt.title("edd_c_p null")
 
         _, axs = plt.subplots(num=3, nrows=3)
         plt.sca(axs[0])
