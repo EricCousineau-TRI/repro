@@ -682,7 +682,7 @@ class QpWithDirConstraint(BaseController):
         # If True, will add (vd, tau) as decision variables, and impose
         # dynamics and task acceleration constraints. If False, will explicitly
         # project to torques / accelerations.
-        implicit = True
+        implicit = False
 
         # If True, will also scale secondary objective (posture).
         scale_secondary = True
@@ -698,7 +698,7 @@ class QpWithDirConstraint(BaseController):
         # relax_primary = 1e1
         # relax_primary = np.array([100, 100, 100, 50, 50, 50])
         # relax_primary = np.array([20, 20, 20, 10, 10, 10])
-        # relax_primary = 1e2
+        # relax_primary = 5e2
         # relax_primary = 1e3
         # relax_primary = 1e4
         # relax_primary = 1e5
@@ -860,13 +860,6 @@ class QpWithDirConstraint(BaseController):
             scale_vars_t,
         )
 
-        ones = np.ones(num_scales_t)
-        prog.AddBoundingBoxConstraint(
-            -10.0 * ones,
-            10.0 * ones,
-            scale_vars_t,
-        )
-
         # TODO(eric.cousineau): Maybe I need to constrain these error dynamics?
 
         # weight = self.posture_weight
@@ -923,12 +916,23 @@ class QpWithDirConstraint(BaseController):
                 scale_vars_p,
             )
 
-            ones = np.ones(num_scales_p)
-            prog.AddBoundingBoxConstraint(
-                -10.0 * ones,
-                10.0 * ones,
-                scale_vars_p,
-            )
+        # ones = np.ones(num_scales_t)
+        # prog.AddBoundingBoxConstraint(
+        #     -10.0 * ones,
+        #     10.0 * ones,
+        #     scale_vars_t,
+        # )
+        # if scale_secondary:
+        #     ones = np.ones(num_scales_p)
+        #     prog.AddBoundingBoxConstraint(
+        #         -10.0 * ones,
+        #         10.0 * ones,
+        #         scale_vars_p,
+        #     )
+
+        print(f"edd_c_t: {edd_c_t}")
+        if scale_secondary:
+            print(f"  edd_c_p: {edd_c_p}")
 
         # Solve.
         try:
@@ -962,16 +966,17 @@ class QpWithDirConstraint(BaseController):
             # tol = 1e-11  # mosek default
             # tol = 1e-1  # HACK
 
+
         scale_t = result.GetSolution(scale_vars_t)
 
         # print(v)
-        print(f"t: {scale_t}\n  {edd_c_t}")
+        print(f"scale t: {scale_t}")
         if relax_primary is not None:
             relax_t = result.GetSolution(relax_vars_t)
             print(f"  relax: {relax_t}")
         if scale_secondary:
             scale_p = result.GetSolution(scale_vars_p)
-            print(f"p: {scale_p}\n  {edd_c_p}")
+            print(f"scale p: {scale_p}")
         if relax_secondary is not None:
             relax_p = result.GetSolution(relax_vars_p)
             print(f"  relax: {relax_p}")
@@ -1024,8 +1029,8 @@ class QpWithDirConstraint(BaseController):
         edd_ps_null = np.array(self.edd_ps_null)
         s_ps = np.array(self.s_ps)
 
-        # sub = slice(3, 4)
-        sub = slice(None, None)
+        sub = slice(3, 4)
+        # sub = slice(None, None)
         sel = (slice(None, None), sub)
 
         def plot_lim(limits):
@@ -1075,6 +1080,7 @@ class QpWithDirConstraint(BaseController):
         _, axs = plt.subplots(num=3, nrows=3)
         plt.sca(axs[0])
         plt.plot(ts, s_ts)
+        plt.ylim(-5, 5)
         legend_for(s_ts)
         plt.title("s_t")
         plt.sca(axs[1])
@@ -1084,6 +1090,7 @@ class QpWithDirConstraint(BaseController):
         plt.title("r_t")
         plt.sca(axs[2])
         plt.plot(ts, s_ps)
+        plt.ylim(-5, 5)
         legend_for(s_ps)
         plt.title("s_p")
 
