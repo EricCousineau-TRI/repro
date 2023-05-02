@@ -293,7 +293,7 @@ def main():
         # "rot": run_rotation_coupling,
         # "fast": run_fast_waypoints,
         "fast singular": partial(run_fast_waypoints_singular, rotate=False),
-        "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
+        # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
         # "osc": make_controller_osc,
