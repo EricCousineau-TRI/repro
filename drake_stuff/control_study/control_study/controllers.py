@@ -307,17 +307,19 @@ def add_simple_limits(
     Au,
     bu,
 ):
-    spell_out_naive = False
+    mode = "naive"
+    # mode = "cbf"
+    # mode = "intersect"
 
-    if spell_out_naive:
+    if mode == "naive":
         # v_next = v + dt*vd
         Av = dt * Avd
-        v_rescale = 1 / dt
+        v_rescale = 1  # 1 / dt
         bv = v
         # q_next = q + dt*v + 1/2*dt^2*vd
         Aq = 0.5 * dt * dt * Avd
         # Aq = 0.1 * 0.5 * dt * dt * Avd  # HACK
-        q_rescale = 1 / dt  # 2 / (dt * dt)
+        q_rescale = 1  # 1 / dt  # 2 / (dt * dt)
         bq = q + dt * v
 
         if plant_limits.q.any_finite():
@@ -337,7 +339,58 @@ def add_simple_limits(
                 v_rescale * (v_max - bv),
                 vd_vars,
             ).evaluator().set_description("vel")
-    else:
+    elif mode == "cbf":
+        q_min, q_max = plant_limits.q
+        v_min, v_max = plant_limits.v
+
+        num_v = len(v)
+        Iv = np.eye(num_v)
+
+        # CBF formulation.
+        # hdd = c*vd >= -k_1*h -k_2*hd = b
+
+        # Gains corresponding to naive formulation.
+        alpha_1 = lambda x: x
+        alpha_2 = alpha_1
+        kq_1 = 2 / (dt * dt)
+        kq_2 = 1 / dt
+        kv_1 = 1 / dt
+
+        # q_min
+        h_q_min = q - q_min
+        hd_q_min = v
+        c_q_min = 1
+        b_q_min = -kq_1 * alpha_1(h_q_min) - kq_2 * alpha_2(hd_q_min)
+        # q_max
+        h_q_max = q_max - q
+        hd_q_max = -v
+        c_q_max = -1
+        b_q_max = -kq_1 * alpha_1(h_q_max) - kq_2 * alpha_2(hd_q_max)
+        # v_min
+        h_v_min = v - v_min
+        c_v_min = 1
+        b_v_min = -kv_1 * alpha_1(h_v_min)
+        # v_max
+        h_v_max = v_max - v
+        c_v_max = -1
+        b_v_max = -kv_1 * alpha_1(h_v_max)
+
+        # Add constraints.
+        # N.B. Nominal CBFs (c*vd >= b) are lower bounds. For CBFs where c=-1,
+        # we can pose those as upper bounds (vd <= -b).
+        prog.AddLinearConstraint(
+            Avd,
+            b_q_min,
+            -b_q_max,
+            vd_vars,
+        ).evaluator().set_description("pos cbf")
+        prog.AddLinearConstraint(
+            Avd,
+            b_v_min,
+            -b_v_max,
+            vd_vars,
+        ).evaluator().set_description("vel cbf")
+    elif mode == "intersect":
         vd_limits = compute_acceleration_bounds(
             q=q,
             v=v,
@@ -346,6 +399,8 @@ def add_simple_limits(
             vd_limits_nominal=vd_limits,
             check=False,
         )
+    else:
+        assert False
 
     # HACK - how to fix this?
     # vd_limits = vd_limits.make_valid()
