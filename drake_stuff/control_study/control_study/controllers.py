@@ -307,8 +307,8 @@ def add_simple_limits(
     Au,
     bu,
 ):
-    mode = "naive"
-    # mode = "cbf"
+    # mode = "naive"
+    mode = "cbf"
     # mode = "intersect"
 
     if mode == "naive":
@@ -353,7 +353,7 @@ def add_simple_limits(
         alpha_1 = lambda x: x
         alpha_2 = alpha_1
         kq_1 = 2 / (dt * dt)
-        kq_2 = 1 / dt
+        kq_2 = 2 / dt
         kv_1 = 1 / dt
 
         # q_min
