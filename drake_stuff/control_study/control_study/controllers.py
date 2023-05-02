@@ -685,7 +685,7 @@ class QpWithDirConstraint(BaseController):
         implicit = False
 
         # If True, will also scale secondary objective (posture).
-        scale_secondary = True
+        scale_secondary = False
 
         # For implicit formulation.
         dup_eq_as_cost = False
@@ -1012,7 +1012,8 @@ class QpWithDirConstraint(BaseController):
                 self.r_ts.append(relax_t)
             self.edd_ps.append(edd_c_p)
             self.edd_ps_null.append(edd_c_p_null)
-            self.s_ps.append(scale_p)
+            if scale_secondary:
+                self.s_ps.append(scale_p)
             self.limits_infos.append(limit_info)
 
         return tau
@@ -1089,9 +1090,10 @@ class QpWithDirConstraint(BaseController):
             legend_for(r_ts)
         plt.title("r_t")
         plt.sca(axs[2])
-        plt.plot(ts, s_ps)
-        plt.ylim(-5, 5)
-        legend_for(s_ps)
+        if len(s_ps) > 0:
+            plt.plot(ts, s_ps)
+            plt.ylim(-5, 5)
+            legend_for(s_ps)
         plt.title("s_p")
 
         plt.show()

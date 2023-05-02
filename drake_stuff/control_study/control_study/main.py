@@ -146,14 +146,18 @@ def run_spatial_waypoints(
 
     try:
         # Run a bit past the end of trajectory.
-        simulator.AdvanceTo(t_f + dT)
+        # simulator.AdvanceTo(t_f + dT)
+        simulator.AdvanceTo(1.0)
         # simulator.AdvanceTo(1.5)  # HACK
         simulator.AdvancePendingEvents()
-    except Exception:
-        print(f"Failure at {diagram_context.get_time()}s")
+    except (Exception, KeyboardInterrupt) as e:
+        err_name = type(e).__name__
+        print(f"f{err_name} at {diagram_context.get_time()}s")
+        if isinstance(e, (RuntimeError, KeyboardInterrupt)):
+            controller.show_plots()
         raise
-    finally:
-        controller.show_plots()
+
+    controller.show_plots()
 
     # Return logged values.
     qs, Vs = unzip(logger.log)
