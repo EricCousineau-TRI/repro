@@ -60,10 +60,10 @@ def run_spatial_waypoints(
     # else:
     #     control_dt = None
     #     plant_time_step = 0.0
-    # plant_time_step = DISCRETE_PLANT_TIME_STEP
-    # control_dt = CONTROL_DT
-    plant_time_step = 0.0
-    control_dt = None
+    plant_time_step = DISCRETE_PLANT_TIME_STEP
+    control_dt = CONTROL_DT
+    # plant_time_step = 0.0
+    # control_dt = None
 
     plant_diagram, plant, scene_graph, frame_G = make_sim_setup(
         plant_time_step
@@ -71,10 +71,10 @@ def run_spatial_waypoints(
     frame_W = plant.world_frame()
 
     builder = DiagramBuilder()
-    # access = DirectPlant.AddToBuilder(builder, plant_diagram, plant)
-    access = EulerAccelPlant.AddToBuilder(
-        builder, plant_diagram, plant, CONTROL_DT
-    )
+    access = DirectPlant.AddToBuilder(builder, plant_diagram, plant)
+    # access = EulerAccelPlant.AddToBuilder(
+    #     builder, plant_diagram, plant, CONTROL_DT
+    # )
 
     controller = builder.AddSystem(
         make_controller(plant, frame_W, frame_G)
@@ -202,10 +202,10 @@ def make_osc_gains():
 def make_panda_limits(plant):
     plant_limits = PlantLimits.from_plant(plant)
     # Avoid elbow lock.
-    # plant_limits.q = plant_limits.q.scaled(0.95)
-    plant_limits.q.upper[3] = np.deg2rad(-20.0)  # Locks...
+    plant_limits.q = plant_limits.q.scaled(0.8)
+    plant_limits.v = plant_limits.v.scaled(0.8)
+    plant_limits.q.upper[3] = np.deg2rad(-20.0)
     # plant_limits.q.upper[3] = np.deg2rad(-25.0)  # Does not lock...
-    # plant_limits.v = plant_limits.v.scaled(0.95)
     # plant_limits.v = plant_limits.v.scaled(0.9)
     # plant_limits.vd = plant_limits.vd.scaled(0.95)  # causes issues
     # plant_limits.u = plant_limits.u.scaled(0.99)  # causes issues
