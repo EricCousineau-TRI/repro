@@ -657,6 +657,7 @@ class QpWithDirConstraint(BaseController):
 
         # relax_primary = None
         # relax_primary = 1.0
+        # relax_primary = 5.0
         relax_primary = 1e1
         # relax_primary = 1e2
         # relax_primary = 1e3
@@ -698,6 +699,8 @@ class QpWithDirConstraint(BaseController):
             Avd = np.eye(num_v)
             bvd = np.zeros(num_v)
         else:
+            assert relax_primary is None
+            assert relax_secondary is None
             Au_t = proj_t @ np.diag(edd_c_t) @ scale_A_t
             bu = -proj_t @ Jtdot_v + H
             if scale_secondary:
