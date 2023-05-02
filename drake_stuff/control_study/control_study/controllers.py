@@ -307,36 +307,41 @@ def add_simple_limits(
     Au,
     bu,
 ):
-    # mode = "naive"
+    mode = "naive"
     # mode = "cbf"
-    mode = "intersect"
+    # mode = "intersect"
 
     if mode == "naive":
         # v_next = v + dt*vd = Av*vd + bv
-        Av = dt * Avd
-        v_rescale = 1 / dt
-        bv = v
+        # Av = dt * Avd
+        # bv = v
+        # v_rescale = 1 / dt
+        Av = Avd
+        v_to_vd = 1 / dt
+        bv = v_to_vd * v
         # q_next = q + dt*v + 1/2*dt^2*vd = Aq*vd + bq
-        Aq = 0.5 * dt * dt * Avd
-        # Aq = 0.1 * 0.5 * dt * dt * Avd  # HACK
-        q_rescale = 1 / dt  # 2 / (dt * dt)
-        bq = q + dt * v
+        # Aq = 0.5 * dt * dt * Avd
+        # bq = q + dt * v
+        # q_rescale = 1 / dt  # 2 / (dt * dt)
+        Aq = Avd
+        q_to_vd = 2 / (dt * dt)
+        bq = q_to_vd * q + 2 / dt * v
 
         if plant_limits.q.any_finite():
             q_min, q_max = plant_limits.q
             prog.AddLinearConstraint(
-                q_rescale * Aq,
-                q_rescale * (q_min - bq),
-                q_rescale * (q_max - bq),
+                Avd,
+                q_to_vd * q_min - bq,
+                q_to_vd * q_max - bq,
                 vd_vars,
             ).evaluator().set_description("pos")
 
         if plant_limits.v.any_finite():
             v_min, v_max = plant_limits.v
             prog.AddLinearConstraint(
-                v_rescale * Av,
-                v_rescale * (v_min - bv),
-                v_rescale * (v_max - bv),
+                Avd,
+                v_to_vd * v_min - bv,
+                v_to_vd * v_max - bv,
                 vd_vars,
             ).evaluator().set_description("vel")
     elif mode == "cbf":
@@ -632,7 +637,7 @@ class QpWithDirConstraint(BaseController):
         # If True, will add (vd, tau) as decision variables, and impose
         # dynamics and task acceleration constraints. If False, will explicitly
         # project to torques / accelerations.
-        implicit = False
+        implicit = True
 
         # If True, will also scale secondary objective (posture).
         scale_secondary = True
