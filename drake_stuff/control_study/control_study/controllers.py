@@ -658,7 +658,8 @@ class QpWithDirConstraint(BaseController):
         # relax_primary = None
         # relax_primary = 1.0
         # relax_primary = 5.0
-        relax_primary = 1e1
+        # relax_primary = 1e1
+        relax_primary = np.array([100, 100, 100, 50, 50, 50])
         # relax_primary = 1e2
         # relax_primary = 1e3
         # relax_primary = 1e4
@@ -788,11 +789,11 @@ class QpWithDirConstraint(BaseController):
                 task_vars_t = np.concatenate([task_vars_t, relax_vars_t])
                 task_A_t = np.hstack([task_A_t, -It])
                 # proj = proj_t
-                proj = np.eye(num_t)
+                proj = np.diag(np.ones(num_t) * relax_primary)
                 if kinematic:
-                    proj = Jtpinv
+                    proj = Jtpinv @ proj
                 prog.Add2NormSquaredCost(
-                    relax_primary * proj @ It,
+                    proj @ It,
                     proj @ np.zeros(num_t),
                     relax_vars_t,
                 )
