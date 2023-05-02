@@ -307,8 +307,8 @@ def add_simple_limits(
     Au,
     bu,
 ):
-    mode = "naive"
-    # mode = "cbf"
+    # mode = "naive"
+    mode = "cbf"
     # mode = "intersect"
 
     if mode == "naive":
@@ -355,9 +355,9 @@ def add_simple_limits(
         # hdd = c*vd >= -k_1*h -k_2*hd = b
 
         # Gains corresponding to naive formulation.
-        alpha_1 = lambda x: x
-        # alpha_1 = lambda x: 0.05*x**3
-        alpha_2 = alpha_1
+        aq_1 = lambda x: x
+        aq_2 = aq_1
+        av_1 = lambda x: x
         kq_1 = 2 / (dt * dt)
         kq_2 = 2 / dt
         kv_1 = 1 / dt
@@ -366,20 +366,20 @@ def add_simple_limits(
         h_q_min = q - q_min
         hd_q_min = v
         c_q_min = 1
-        b_q_min = -kq_1 * alpha_1(h_q_min) - kq_2 * alpha_2(hd_q_min)
+        b_q_min = -kq_1 * aq_1(h_q_min) - kq_2 * aq_2(hd_q_min)
         # q_max
         h_q_max = q_max - q
         hd_q_max = -v
         c_q_max = -1
-        b_q_max = -kq_1 * alpha_1(h_q_max) - kq_2 * alpha_2(hd_q_max)
+        b_q_max = -kq_1 * aq_1(h_q_max) - kq_2 * aq_2(hd_q_max)
         # v_min
         h_v_min = v - v_min
         c_v_min = 1
-        b_v_min = -kv_1 * alpha_1(h_v_min)
+        b_v_min = -kv_1 * av_1(h_v_min)
         # v_max
         h_v_max = v_max - v
         c_v_max = -1
-        b_v_max = -kv_1 * alpha_1(h_v_max)
+        b_v_max = -kv_1 * av_1(h_v_max)
 
         # Add constraints.
         # N.B. Nominal CBFs (c*vd >= b) are lower bounds. For CBFs where c=-1,
@@ -891,9 +891,9 @@ class QpWithDirConstraint(BaseController):
             raise
 
         if implicit:
-            # tol = 1e-7
+            tol = 1e-3
             # tol = 1e-12  # snopt default
-            tol = 1e-10  # snopt, singular
+            # tol = 1e-10  # snopt, singular
             # tol = 1e-11  # osqp default
             # tol = 1e-3  # scs default
         else:
