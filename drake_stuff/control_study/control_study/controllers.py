@@ -367,10 +367,15 @@ def add_simple_limits(
         kq_2 = 2 / dt
         kv_1 = 1 / dt
 
-        # dt_scale = 20
-        # kq_1 /= dt_scale**2
+        dt_scale = 10
+        kq_1 /= dt_scale**2
         # kq_2 /= dt_scale / 5  # why? helps for discrete case
+        kq_2 /= 2
         # kv_1 /= dt_scale
+
+        # kq_1 /= 400
+        # kq_2 /= 20
+        # kv_1 /= 20
 
         # TODO(eric.cousineau): Have alpha functions modulate gains closer
         # to boundary.
@@ -615,6 +620,7 @@ class QpWithDirConstraint(BaseController):
         self.use_torque_weights = use_torque_weights
         self.prev_sol = None
 
+        self.should_save = False
         self.ts = []
         self.qs = []
         self.vs = []
@@ -988,18 +994,19 @@ class QpWithDirConstraint(BaseController):
 
         edd_c_p_null = Minv @ Nt_T @ M @ edd_c_p
 
-        self.ts.append(t)
-        self.qs.append(q)
-        self.vs.append(v)
-        self.us.append(tau)
-        self.edd_ts.append(edd_c_t)
-        self.s_ts.append(scale_t)
-        if relax_primary is not None:
-            self.r_ts.append(relax_t)
-        self.edd_ps.append(edd_c_p)
-        self.edd_ps_null.append(edd_c_p_null)
-        self.s_ps.append(scale_p)
-        self.limits_infos.append(limit_info)
+        if self.should_save:
+            self.ts.append(t)
+            self.qs.append(q)
+            self.vs.append(v)
+            self.us.append(tau)
+            self.edd_ts.append(edd_c_t)
+            self.s_ts.append(scale_t)
+            if relax_primary is not None:
+                self.r_ts.append(relax_t)
+            self.edd_ps.append(edd_c_p)
+            self.edd_ps_null.append(edd_c_p_null)
+            self.s_ps.append(scale_p)
+            self.limits_infos.append(limit_info)
 
         return tau
 
