@@ -368,8 +368,11 @@ def add_simple_limits(
         # kq_2 /= 10
         # kv_1 /= 10
         kq_1 = 100
+        # kq_1 = 75
+        # kq_1 = 50
         kq_2 = 50
         kv_1 = 10
+        # kv_1 = 2
 
         # q_min
         h_q_min = q - q_min
@@ -659,7 +662,9 @@ class QpWithDirConstraint(BaseController):
         # relax_primary = 1.0
         # relax_primary = 5.0
         # relax_primary = 1e1
+        # relax_primary = 1e1
         relax_primary = np.array([100, 100, 100, 50, 50, 50])
+        # relax_primary = np.array([20, 20, 20, 10, 10, 10])
         # relax_primary = 1e2
         # relax_primary = 1e3
         # relax_primary = 1e4
