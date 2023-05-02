@@ -132,8 +132,8 @@ def run_spatial_waypoints(
 
     try:
         # Run a bit past the end of trajectory.
-        simulator.AdvanceTo(t_f + dT)
-        # simulator.AdvanceTo(1.5)  # HACK
+        # simulator.AdvanceTo(t_f + dT)
+        simulator.AdvanceTo(1.5)  # HACK
         simulator.AdvancePendingEvents()
     except Exception:
         print(f"Failure at {diagram_context.get_time()}s")
@@ -208,8 +208,8 @@ def make_panda_limits(plant):
     # plant_limits.q = plant_limits.q.scaled(0.9)
     # plant_limits.v = plant_limits.v.scaled(0.9)
     # plant_limits.q.upper[3] = np.deg2rad(-10.0)
-    plant_limits.q.lower[6] = np.deg2rad(-30.0)
-    plant_limits.q.upper[6] = np.deg2rad(30.0)
+    # plant_limits.q.lower[6] = np.deg2rad(-30.0)
+    # plant_limits.q.upper[6] = np.deg2rad(30.0)
     # plant_limits.q.upper[3] = np.deg2rad(-15.0)
     # plant_limits.q.upper[3] = np.deg2rad(-20.0)
     # plant_limits.q.upper[3] = np.deg2rad(-25.0)
@@ -291,9 +291,9 @@ def main():
     np_print_more_like_matlab()
     scenarios = {
         # "slow": run_slow_waypoints,
-        "rot": run_rotation_coupling,
+        # "rot": run_rotation_coupling,
         # "fast": run_fast_waypoints,
-        # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
+        "fast singular": partial(run_fast_waypoints_singular, rotate=False),
         # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {

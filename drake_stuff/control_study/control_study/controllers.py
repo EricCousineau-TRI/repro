@@ -367,10 +367,13 @@ def add_simple_limits(
         kq_2 = 2 / dt
         kv_1 = 1 / dt
 
-        dt_scale = 10
-        kq_1 /= dt_scale**2
-        kq_2 /= dt_scale / 5  # why?
-        kv_1 /= dt_scale
+        # dt_scale = 20
+        # kq_1 /= dt_scale**2
+        # kq_2 /= dt_scale / 5  # why? helps for discrete case
+        # kv_1 /= dt_scale
+
+        # TODO(eric.cousineau): Have alpha functions modulate gains closer
+        # to boundary.
 
         # # Hacks
         # # kq_1 /= 100
@@ -1043,22 +1046,22 @@ class QpWithDirConstraint(BaseController):
         plot_lim(self.plant_limits.u)
         plt.title("u")
 
-        plt.show()
-        return  # HACK
+        # plt.show()
+        # return  # HACK
 
-        _, axs = plt.subplots(num=2, nrows=3)
-        plt.sca(axs[0])
-        plt.plot(ts, edd_ts)
-        legend_for(edd_ts)
-        plt.title("edd_c_t")
-        plt.sca(axs[1])
-        plt.plot(ts, edd_ps)
-        legend_for(edd_ps)
-        plt.title("edd_c_p")
-        plt.sca(axs[2])
-        plt.plot(ts, edd_ps_null)
-        legend_for(edd_ps_null)
-        plt.title("edd_c_p null")
+        # _, axs = plt.subplots(num=2, nrows=3)
+        # plt.sca(axs[0])
+        # plt.plot(ts, edd_ts)
+        # legend_for(edd_ts)
+        # plt.title("edd_c_t")
+        # plt.sca(axs[1])
+        # plt.plot(ts, edd_ps)
+        # legend_for(edd_ps)
+        # plt.title("edd_c_p")
+        # plt.sca(axs[2])
+        # plt.plot(ts, edd_ps_null)
+        # legend_for(edd_ps_null)
+        # plt.title("edd_c_p null")
 
         _, axs = plt.subplots(num=3, nrows=3)
         plt.sca(axs[0])
@@ -1066,8 +1069,9 @@ class QpWithDirConstraint(BaseController):
         legend_for(s_ts)
         plt.title("s_t")
         plt.sca(axs[1])
-        plt.plot(ts, r_ts)
-        legend_for(r_ts)
+        if len(r_ts) > 0:
+            plt.plot(ts, r_ts)
+            legend_for(r_ts)
         plt.title("r_t")
         plt.sca(axs[2])
         plt.plot(ts, s_ps)
