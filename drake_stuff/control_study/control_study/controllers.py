@@ -307,19 +307,19 @@ def add_simple_limits(
     Au,
     bu,
 ):
-    mode = "naive"
+    # mode = "naive"
     # mode = "cbf"
-    # mode = "intersect"
+    mode = "intersect"
 
     if mode == "naive":
-        # v_next = v + dt*vd
+        # v_next = v + dt*vd = Av*vd + bv
         Av = dt * Avd
-        v_rescale = 1  # 1 / dt
+        v_rescale = 1 / dt
         bv = v
-        # q_next = q + dt*v + 1/2*dt^2*vd
+        # q_next = q + dt*v + 1/2*dt^2*vd = Aq*vd + bq
         Aq = 0.5 * dt * dt * Avd
         # Aq = 0.1 * 0.5 * dt * dt * Avd  # HACK
-        q_rescale = 1  # 1 / dt  # 2 / (dt * dt)
+        q_rescale = 1 / dt  # 2 / (dt * dt)
         bq = q + dt * v
 
         if plant_limits.q.any_finite():
