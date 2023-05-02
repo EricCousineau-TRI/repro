@@ -71,10 +71,10 @@ def run_spatial_waypoints(
     frame_W = plant.world_frame()
 
     builder = DiagramBuilder()
-    # access = DirectPlant.AddToBuilder(builder, plant_diagram, plant)
-    access = EulerAccelPlant.AddToBuilder(
-        builder, plant_diagram, plant, CONTROL_DT
-    )
+    access = DirectPlant.AddToBuilder(builder, plant_diagram, plant)
+    # access = EulerAccelPlant.AddToBuilder(
+    #     builder, plant_diagram, plant, CONTROL_DT
+    # )
 
     controller = builder.AddSystem(
         make_controller(plant, frame_W, frame_G)
@@ -207,9 +207,9 @@ def make_panda_limits(plant):
     # Avoid elbow lock.
     # plant_limits.q = plant_limits.q.scaled(0.9)
     # plant_limits.v = plant_limits.v.scaled(0.9)
-    plant_limits.q.upper[3] = np.deg2rad(-10.0)
-    # plant_limits.q.lower[6] = np.deg2rad(-30.0)
-    # plant_limits.q.upper[6] = np.deg2rad(30.0)
+    # plant_limits.q.upper[3] = np.deg2rad(-10.0)
+    plant_limits.q.lower[6] = np.deg2rad(-30.0)
+    plant_limits.q.upper[6] = np.deg2rad(30.0)
     # plant_limits.q.upper[3] = np.deg2rad(-15.0)
     # plant_limits.q.upper[3] = np.deg2rad(-20.0)
     # plant_limits.q.upper[3] = np.deg2rad(-25.0)
@@ -291,9 +291,9 @@ def main():
     np_print_more_like_matlab()
     scenarios = {
         # "slow": run_slow_waypoints,
-        # "rot": run_rotation_coupling,
+        "rot": run_rotation_coupling,
         # "fast": run_fast_waypoints,
-        "fast singular": partial(run_fast_waypoints_singular, rotate=False),
+        # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
         # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
