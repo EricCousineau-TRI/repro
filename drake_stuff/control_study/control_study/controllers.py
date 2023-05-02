@@ -655,8 +655,9 @@ class QpWithDirConstraint(BaseController):
         dup_eq_as_cost = False
         dup_scale = 0.1
 
-        relax_primary = None
-        # relax_primary = 1e1
+        # relax_primary = None
+        # relax_primary = 1.0
+        relax_primary = 1e1
         # relax_primary = 1e2
         # relax_primary = 1e3
         # relax_primary = 1e4
@@ -783,7 +784,8 @@ class QpWithDirConstraint(BaseController):
                 relax_vars_t = prog.NewContinuousVariables(num_t, "task.relax")
                 task_vars_t = np.concatenate([task_vars_t, relax_vars_t])
                 task_A_t = np.hstack([task_A_t, -It])
-                proj = proj_t
+                # proj = proj_t
+                proj = np.eye(num_t)
                 if kinematic:
                     proj = Jtpinv
                 prog.Add2NormSquaredCost(
@@ -922,9 +924,15 @@ class QpWithDirConstraint(BaseController):
 
         # print(v)
         print(f"t: {scale_t}\n  {edd_c_t}")
+        if relax_primary is not None:
+            relax_t = result.GetSolution(relax_vars_t)
+            print(f"  relax: {relax_t}")
         if scale_secondary:
             scale_p = result.GetSolution(scale_vars_p)
             print(f"p: {scale_p}\n  {edd_c_p}")
+        if relax_secondary is not None:
+            relax_p = result.GetSolution(relax_vars_p)
+            print(f"  relax: {relax_p}")
         print("---")
 
         infeas = result.GetInfeasibleConstraintNames(prog, tol=tol)
