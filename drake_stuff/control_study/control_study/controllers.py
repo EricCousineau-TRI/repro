@@ -369,7 +369,7 @@ def add_simple_limits(
 
         dt_scale = 10
         kq_1 /= dt_scale**2
-        kq_2 /= dt_scale
+        kq_2 /= dt_scale / 5  # why?
         kv_1 /= dt_scale
 
         # # Hacks
