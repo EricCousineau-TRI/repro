@@ -615,6 +615,7 @@ class QpWithDirConstraint(BaseController):
         self.s_ts = []
         self.r_ts = []
         self.edd_ps = []
+        self.edd_ps_null = []
         self.s_ps = []
         # self.r_ps = []
         self.limits_infos = []
@@ -977,6 +978,8 @@ class QpWithDirConstraint(BaseController):
 
         # import pdb; pdb.set_trace()
 
+        edd_c_p_null = Minv @ Nt_T @ M @ edd_c_p
+
         self.ts.append(t)
         self.qs.append(q)
         self.vs.append(v)
@@ -985,6 +988,7 @@ class QpWithDirConstraint(BaseController):
         self.s_ts.append(scale_t)
         self.r_ts.append(relax_t)
         self.edd_ps.append(edd_c_p)
+        self.edd_ps_null.append(edd_c_p_null)
         self.s_ps.append(scale_p)
         self.limits_infos.append(limit_info)
 
@@ -999,6 +1003,7 @@ class QpWithDirConstraint(BaseController):
         s_ts = np.array(self.s_ts)
         r_ts = np.array(self.r_ts)
         edd_ps = np.array(self.edd_ps)
+        edd_ps_null = np.array(self.edd_ps_null)
         s_ps = np.array(self.s_ps)
 
         _, axs = plt.subplots(num=1, nrows=3)
@@ -1015,7 +1020,7 @@ class QpWithDirConstraint(BaseController):
         legend_for(us)
         plt.title("u")
 
-        _, axs = plt.subplots(num=2, nrows=2)
+        _, axs = plt.subplots(num=2, nrows=3)
         plt.sca(axs[0])
         plt.plot(ts, edd_ts)
         legend_for(edd_ts)
@@ -1024,6 +1029,10 @@ class QpWithDirConstraint(BaseController):
         plt.plot(ts, edd_ps)
         legend_for(edd_ps)
         plt.title("edd_c_p")
+        plt.sca(axs[2])
+        plt.plot(ts, edd_ps_null)
+        legend_for(edd_ps_null)
+        plt.title("edd_c_p null")
 
         _, axs = plt.subplots(num=3, nrows=3)
         plt.sca(axs[0])
