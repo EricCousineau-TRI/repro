@@ -646,10 +646,26 @@ class QpWithDirConstraint(BaseController):
         # If True, will add (vd, tau) as decision variables, and impose
         # dynamics and task acceleration constraints. If False, will explicitly
         # project to torques / accelerations.
-        implicit = False
+        implicit = True
 
         # If True, will also scale secondary objective (posture).
         scale_secondary = True
+
+        # For implicit formulation.
+        dup_eq_as_cost = False
+        dup_scale = 0.1
+
+        relax_primary = None
+        # relax_primary = 1e1
+        # relax_primary = 1e2
+        # relax_primary = 1e3
+        # relax_primary = 1e4
+        # relax_primary = 1e5
+        # relax_primary = 1e6
+        relax_secondary = None
+        # relax_secondary = relax_primary
+
+        kinematic = False
 
         if scale_secondary:
             scale_A_p = np.ones((num_v, 1))
@@ -747,10 +763,6 @@ class QpWithDirConstraint(BaseController):
         #         vd_vars,
         #     ).evaluator().set_description("u via vd")
 
-        dup_eq_as_cost = False
-        dup_scale = 0.1
-
-        kinematic = False
         if kinematic:
             Jtpinv = np.linalg.pinv(Jt)
             Nt_T = Iv - Jtpinv @ Jt
@@ -767,24 +779,15 @@ class QpWithDirConstraint(BaseController):
             task_A_t = np.hstack([Jt, -np.diag(task_bias_t) @ scale_A_t])
             task_b_t = -Jtdot_v
 
-            relax_primary = False
-            relax_secondary = False
-            # relax_penalty = 1e1
-            # relax_penalty = 1e2
-            # relax_penalty = 1e3
-            # relax_penalty = 1e4
-            # relax_penalty = 1e5
-            # relax_penalty = 1e6
-            if relax_primary:
+            if relax_primary is not None:
                 relax_vars_t = prog.NewContinuousVariables(num_t, "task.relax")
                 task_vars_t = np.concatenate([task_vars_t, relax_vars_t])
                 task_A_t = np.hstack([task_A_t, -It])
+                proj = proj_t
                 if kinematic:
                     proj = Jtpinv
-                else:
-                    proj = Jt.T @ Mt
                 prog.Add2NormSquaredCost(
-                    relax_penalty * proj @ It,
+                    relax_primary * proj @ It,
                     proj @ np.zeros(num_t),
                     relax_vars_t,
                 )
@@ -844,15 +847,15 @@ class QpWithDirConstraint(BaseController):
                 task_b_p = np.zeros(num_v)
                 # TODO(eric.cousineau): Weigh penalty based on how much feedback we
                 # need?
-                if relax_secondary:
+                if relax_secondary is not None:
                     relax_vars_p = prog.NewContinuousVariables(num_v, "q relax")
                     task_vars_p = np.concatenate([task_vars_p, relax_vars_p])
                     task_A_p = np.hstack([task_A_p, -Iv])
                     proj = proj_p
                     prog.Add2NormSquaredCost(
-                        relax_penalty * proj @ Iv,
+                        relax_secondary * proj @ Iv,
                         proj @ np.zeros(num_v),
-                        relax_vars,
+                        relax_secondary,
                     )
                 task_A_p = proj_p @ task_A_p
                 task_b_p = proj_p @ task_b_p
