@@ -352,6 +352,7 @@ def add_simple_limits(
         Iv = np.eye(num_v)
 
         # CBF formulation.
+        # Goal: h >= 0 for all admissible states
         # hdd = c*vd >= -k_1*h -k_2*hd = b
 
         # Gains corresponding to naive formulation.
@@ -361,6 +362,14 @@ def add_simple_limits(
         kq_1 = 2 / (dt * dt)
         kq_2 = 2 / dt
         kv_1 = 1 / dt
+
+        # Hacks
+        # kq_1 /= 100
+        # kq_2 /= 10
+        # kv_1 /= 10
+        kq_1 = 100
+        kq_2 = 50
+        kv_1 = 10
 
         # q_min
         h_q_min = q - q_min
@@ -891,9 +900,10 @@ class QpWithDirConstraint(BaseController):
             raise
 
         if implicit:
-            tol = 1e-3
+            # tol = 1e-3
             # tol = 1e-12  # snopt default
             # tol = 1e-10  # snopt, singular
+            tol = 1e-6
             # tol = 1e-11  # osqp default
             # tol = 1e-3  # scs default
         else:
