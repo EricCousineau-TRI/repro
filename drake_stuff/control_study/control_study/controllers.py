@@ -203,15 +203,16 @@ def make_osqp_solver_and_options(use_dairlab_settings=False):
     if use_dairlab_settings:
         # https://github.com/DAIRLab/dairlib/blob/0da42bc2/examples/Cassie/osc_run/osc_running_qp_settings.yaml
         solver_options_dict.update(
-            rho=1.0,
-            sigma=1.0,
+            # rho=3.0,
+            rho=0.5,
+            # sigma=1.0,
             # alpha=1.9,
             # sigma=100,  # er, int values messes things up?
             # rho=0.1,
             # sigma=1e-6,
             # max_iter=250,
             # max_iter=500,
-            max_iter=1000,
+            # max_iter=1000,
             # max_iter=2000,
             # max_iter=10000,
             # eps_abs=1e-3,
@@ -224,10 +225,10 @@ def make_osqp_solver_and_options(use_dairlab_settings=False):
             # eps_rel=1e-6,
             # eps_prim_inf=1e-5,
             # eps_dual_inf=1e-5,
-            polish=1,
-            polish_refine_iter=2,
-            scaled_termination=1,
-            scaling=1,
+            # polish=1,
+            # polish_refine_iter=1,
+            # scaled_termination=1,
+            # scaling=1,
         )
     for name, value in solver_options_dict.items():
         solver_options.SetOption(solver_id, name, value)
@@ -670,10 +671,10 @@ class QpWithDirConstraint(BaseController):
         self.context_ad = self.plant_ad.CreateDefaultContext()
 
         # Can be a bit imprecise, but w/ tuning can improve.
-        # self.solver, self.solver_options = make_osqp_solver_and_options()
+        self.solver, self.solver_options = make_osqp_solver_and_options()
 
         # Best, it seems like?
-        self.solver, self.solver_options = make_snopt_solver_and_options()
+        # self.solver, self.solver_options = make_snopt_solver_and_options()
 
         # self.solver, self.solver_options = make_clp_solver_and_options()
 
@@ -938,7 +939,7 @@ class QpWithDirConstraint(BaseController):
                 [bmu],
                 [np.inf],
                 vd_vars,
-            )
+            ).evaluator().set_description("manip cbf")
 
         # if implicit:
         #     # prog.AddBoundingBoxConstraint(
@@ -1096,9 +1097,9 @@ class QpWithDirConstraint(BaseController):
         #         scale_vars_p,
         #     )
 
-        print(f"edd_c_t: {edd_c_t}")
-        if scale_secondary:
-            print(f"  edd_c_p: {edd_c_p}")
+        # print(f"edd_c_t: {edd_c_t}")
+        # if scale_secondary:
+        #     print(f"  edd_c_p: {edd_c_p}")
 
         # Solve.
         try:
@@ -1106,7 +1107,7 @@ class QpWithDirConstraint(BaseController):
             # warm-starting:
             # https://github.com/RobotLocomotion/drake/blob/v1.15.0/solvers/osqp_solver.cc#L335-L336
             result = solve_or_die(
-                self.solver, self.solver_options, prog, #x0=self.prev_sol
+                self.solver, self.solver_options, prog, x0=self.prev_sol
             )
         except RuntimeError:
             # print(np.rad2deg(self.plant_limits.q.lower))
@@ -1129,10 +1130,10 @@ class QpWithDirConstraint(BaseController):
             # tol = 1e-14  # snopt default
             # tol = 1e-10  # snopt, singular
             # tol = 1e-8
-            tol = 1e-4
+            # tol = 1e-4
             # tol = 1e-14  # scs - primal infeasible, dual unbounded?
             # tol = 1e-11  # mosek default
-            # tol = 1e-1  # HACK
+            tol = 1e-1  # HACK
 
 
         scale_t = result.GetSolution(scale_vars_t)
@@ -1141,16 +1142,16 @@ class QpWithDirConstraint(BaseController):
         print(f"scale t: {scale_t}")
         if relax_primary is not None:
             relax_t = result.GetSolution(relax_vars_t)
-            print(f"  relax: {relax_t}")
+            # print(f"  relax: {relax_t}")
         else:
             relax_t = np.zeros(num_t)
         if scale_secondary:
             scale_p = result.GetSolution(scale_vars_p)
-            print(f"scale p: {scale_p}")
+            # print(f"scale p: {scale_p}")
         if relax_secondary is not None:
             relax_p = result.GetSolution(relax_vars_p)
-            print(f"  relax: {relax_p}")
-        print("---")
+            # print(f"  relax: {relax_p}")
+        # print("---")
 
         infeas = result.GetInfeasibleConstraintNames(prog, tol=tol)
         infeas_text = "\n" + indent("\n".join(infeas), "  ")
