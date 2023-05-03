@@ -866,6 +866,8 @@ class QpWithDirConstraint(BaseController):
         #         vd_vars,
         #     ).evaluator().set_description("u via vd")
 
+        # TODO(eric.cousineau): Add CBF on manip index.
+
         if kinematic:
             Jtpinv = np.linalg.pinv(Jt)
             Nt_T = Iv - Jtpinv @ Jt
