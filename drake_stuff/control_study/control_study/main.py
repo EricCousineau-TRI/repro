@@ -85,7 +85,7 @@ def run_spatial_waypoints(
     )
 
     # Simplify plant after controller is constructed.
-    # simplify_plant(plant, scene_graph)
+    simplify_plant(plant, scene_graph)
 
     def log_instant(log_context):
         context = access.read_plant_context(diagram_context)
@@ -226,7 +226,7 @@ def make_panda_limits(plant):
     # plant_limits.q.upper[3] = np.deg2rad(-20.0)  # vibrates, locks
     # plant_limits.q.upper[3] = np.deg2rad(-25.0)  # vibrates
     # plant_limits.q.upper[3] = np.deg2rad(-30.0)
-    # plant_limits.q.upper[3] = np.deg2rad(-35.0)  # near singular value=0.01
+    plant_limits.q.upper[3] = np.deg2rad(-35.0)  # near singular value=0.01
     # plant_limits.q.upper[3] = np.deg2rad(-45.0)
     # plant_limits.q.lower[6] = np.deg2rad(-30.0)
     # plant_limits.q.upper[6] = np.deg2rad(30.0)
@@ -309,8 +309,8 @@ def main():
     scenarios = {
         # "slow": run_slow_waypoints,
         # "rot": run_rotation_coupling,
-        "fast": run_fast_waypoints,
-        "fast singular": partial(run_fast_waypoints_singular, rotate=False),
+        # "fast": run_fast_waypoints,
+        # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
         "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
