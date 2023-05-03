@@ -585,6 +585,13 @@ class QpWithCosts(BaseController):
         return tau
 
 
+def add_2norm_decoupled(prog, a, b, x):
+    Q = 2 * np.diag(a * a)
+    b = -2 * a * b
+    c = np.sum(b * b)
+    return prog.AddQuadraticCost(Q, b, c, x)
+
+
 class QpWithDirConstraint(BaseController):
     def __init__(
         self,
@@ -671,12 +678,21 @@ class QpWithDirConstraint(BaseController):
         edd_c_p = -gains_p.kp * e - gains_p.kd * ed
 
         num_t = 6
-        scale_A_t = np.eye(num_t)
+
+        # # a bit sloppy looking
+        # scale_A_t = np.eye(num_t)
+
+        # # better, but may need relaxation
         # scale_A_t = np.ones((num_t, 1))
-        # scale_A_t = np.array([
-        #     [1, 1, 1, 0, 0, 0],
-        #     [0, 0, 0, 1, 1, 1],
-        # ]).T
+
+        # can seem "loose" towards end of traj for rotation
+        # (small feedback -> scale a lot). relaxing only necessary for
+        # implicit version.
+        scale_A_t = np.array([
+            [1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 1, 1, 1],
+        ]).T
+
         num_scales_t = scale_A_t.shape[1]
         scale_vars_t = prog.NewContinuousVariables(num_scales_t, "scale_t")
         desired_scales_t = np.ones(num_scales_t)
@@ -700,15 +716,14 @@ class QpWithDirConstraint(BaseController):
         # relax_primary = 1e1
         # relax_primary = np.array([100, 100, 100, 50, 50, 50])
         # relax_primary = np.array([20, 20, 20, 10, 10, 10])
-        # relax_primary = 5e2
+        # relax_primary = 100.0  # OK
+        # relax_primary = 500.0  # maybe good?
         # relax_primary = 1e3
         # relax_primary = 1e4
         # relax_primary = 1e5
         # relax_primary = 1e6
         relax_secondary = None
-        # relax_secondary = relax_primary
 
-        relax_primary = 500.0
         # norm_t = np.linalg.norm(edd_c_t)
         # min_t = 5.0
         # if norm_t < min_t:
@@ -734,7 +749,8 @@ class QpWithDirConstraint(BaseController):
 
         if relax_primary is not None:
             relax_vars_t = prog.NewContinuousVariables(num_t, "task.relax")
-            relax_proj_t = np.diag(np.ones(num_t) * relax_primary)
+            relax_cost_t = np.ones(num_t) * relax_primary
+            relax_proj_t = np.diag(relax_cost_t)
         if relax_secondary is not None:
             relax_vars_p = prog.NewContinuousVariables(num_v, "q relax")
 
@@ -783,6 +799,12 @@ class QpWithDirConstraint(BaseController):
                     np.zeros(num_t),
                     relax_vars_t,
                 )
+                # add_2norm_decoupled(
+                #     prog,
+                #     relax_cost_t,
+                #     np.zeros(num_t),
+                #     relax_vars_t,
+                # )
             assert relax_secondary is None
 
             # Acceleration is just affine transform.
@@ -880,16 +902,23 @@ class QpWithDirConstraint(BaseController):
                 )
 
         # Try to optimize towards scale=1.
-        proj = np.eye(num_scales_t)
         # proj = Jt.T @ Mt @ scale_A
         # proj = Mt @ scale_A
         # proj = scale_A
         # import pdb; pdb.set_trace()
         # proj *= 10
         # proj = proj * np.sqrt(num_scales)
-        prog.Add2NormSquaredCost(
-            proj @ np.eye(num_scales_t),
-            proj @ desired_scales_t,
+
+        # proj = np.eye(num_scales_t)
+        # prog.Add2NormSquaredCost(
+        #     proj @ np.eye(num_scales_t),
+        #     proj @ desired_scales_t,
+        #     scale_vars_t,
+        # )
+        add_2norm_decoupled(
+            prog,
+            np.ones(num_scales_t),
+            desired_scales_t,
             scale_vars_t,
         )
 

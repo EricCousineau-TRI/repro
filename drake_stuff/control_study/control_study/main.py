@@ -157,7 +157,7 @@ def run_spatial_waypoints(
             controller.show_plots()
         raise
 
-    controller.show_plots()
+    # controller.show_plots()
 
     # Return logged values.
     qs, Vs = unzip(logger.log)
@@ -309,11 +309,11 @@ def np_print_more_like_matlab():
 def main():
     np_print_more_like_matlab()
     scenarios = {
-        # "slow": run_slow_waypoints,
-        # "rot": run_rotation_coupling,
-        # "fast": run_fast_waypoints,
+        "slow": run_slow_waypoints,
+        "rot": run_rotation_coupling,
+        "fast": run_fast_waypoints,
         "fast singular": partial(run_fast_waypoints_singular, rotate=False),
-        # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
+        "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
         # "osc": make_controller_osc,
