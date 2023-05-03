@@ -305,7 +305,7 @@ def np_print_more_like_matlab():
     )
 
 
-# @debug.iex
+@debug.iex
 def main():
     np_print_more_like_matlab()
     scenarios = {

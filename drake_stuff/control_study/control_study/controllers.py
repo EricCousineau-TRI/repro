@@ -693,7 +693,7 @@ class QpWithDirConstraint(BaseController):
 
         relax_primary = None
         # relax_primary = 1.0
-        # relax_primary = 5.0
+        # relax_primary = 4.0
         # relax_primary = 1e1
         # relax_primary = 1e1
         # relax_primary = np.array([100, 100, 100, 50, 50, 50])
@@ -713,6 +713,12 @@ class QpWithDirConstraint(BaseController):
             # scale_A_p = np.eye(num_v)
             num_scales_p = scale_A_p.shape[1]
             scale_vars_p = prog.NewContinuousVariables(num_scales_p, "scale_p")
+
+        if relax_primary is not None:
+            relax_vars_t = prog.NewContinuousVariables(num_t, "task.relax")
+            relax_proj_t = np.diag(np.ones(num_t) * relax_primary)
+        if relax_secondary is not None:
+            relax_vars_p = prog.NewContinuousVariables(num_v, "q relax")
 
         assert self.use_torque_weights
         proj_t = Jt.T @ Mt
@@ -738,18 +744,30 @@ class QpWithDirConstraint(BaseController):
             Avd = np.eye(num_v)
             bvd = np.zeros(num_v)
         else:
-            assert relax_primary is None
-            assert relax_secondary is None
-            Au_t = proj_t @ np.diag(edd_c_t) @ scale_A_t
+            # Primary, scale.
+            u_vars = scale_vars_t
+            Au = proj_t @ np.diag(edd_c_t) @ scale_A_t
             bu = -proj_t @ Jtdot_v + H
+
             if scale_secondary:
                 Au_p = proj_p @ np.diag(edd_c_p) @ scale_A_p
-                u_vars = np.concatenate([scale_vars_t, scale_vars_p])
-                Au = np.hstack([Au_t, Au_p])
+                u_vars = np.concatenate([u_vars, scale_vars_p])
+                Au = np.hstack([Au, Au_p])
             else:
-                Au = Au_t
                 bu += proj_p @ edd_c_p
-                u_vars = scale_vars_t
+
+            if relax_primary is not None:
+                Au_rt = proj_t
+                u_vars = np.concatenate([u_vars, relax_vars_t])
+                Au = np.hstack([Au, Au_rt])
+                prog.Add2NormSquaredCost(
+                    relax_proj_t,
+                    np.zeros(num_t),
+                    relax_vars_t,
+                )
+            assert relax_secondary is None
+
+            # Acceleration is just affine transform.
             vd_vars = u_vars
             Avd = Minv @ Au
             bvd = Minv @ (bu - H)
@@ -823,16 +841,14 @@ class QpWithDirConstraint(BaseController):
             task_b_t = -Jtdot_v
 
             if relax_primary is not None:
-                relax_vars_t = prog.NewContinuousVariables(num_t, "task.relax")
                 task_vars_t = np.concatenate([task_vars_t, relax_vars_t])
                 task_A_t = np.hstack([task_A_t, -It])
                 # proj = proj_t
-                proj = np.diag(np.ones(num_t) * relax_primary)
                 if kinematic:
-                    proj = Jtpinv @ proj
+                    relax_proj_t = Jtpinv @ proj
                 prog.Add2NormSquaredCost(
-                    proj @ It,
-                    proj @ np.zeros(num_t),
+                    relax_proj_t @ It,
+                    relax_proj_t @ np.zeros(num_t),
                     relax_vars_t,
                 )
 
@@ -885,7 +901,6 @@ class QpWithDirConstraint(BaseController):
                 # TODO(eric.cousineau): Weigh penalty based on how much feedback we
                 # need?
                 if relax_secondary is not None:
-                    relax_vars_p = prog.NewContinuousVariables(num_v, "q relax")
                     task_vars_p = np.concatenate([task_vars_p, relax_vars_p])
                     task_A_p = np.hstack([task_A_p, -Iv])
                     proj = proj_p
@@ -990,11 +1005,13 @@ class QpWithDirConstraint(BaseController):
         if implicit:
             tau = result.GetSolution(u_star)
         else:
+            u_mul = scale_t
             if scale_secondary:
-                scale = np.concatenate([scale_t, scale_p])
-            else:
-                scale = scale_t
-            tau = Au @ scale + bu
+                u_mul = np.concatenate([u_mul, scale_p])
+            if relax_primary is not None:
+                u_mul = np.concatenate([u_mul, relax_t])
+            tau = Au @ u_mul + bu
+
         tau = self.plant_limits.u.saturate(tau)
 
         # import pdb; pdb.set_trace()
