@@ -60,10 +60,10 @@ def run_spatial_waypoints(
     # else:
     #     control_dt = None
     #     plant_time_step = 0.0
-    # plant_time_step = DISCRETE_PLANT_TIME_STEP
-    # control_dt = CONTROL_DT
-    plant_time_step = 0.0
-    control_dt = None
+    plant_time_step = DISCRETE_PLANT_TIME_STEP
+    control_dt = CONTROL_DT
+    # plant_time_step = 0.0
+    # control_dt = None
 
     plant_diagram, plant, scene_graph, frame_G = make_sim_setup(
         plant_time_step

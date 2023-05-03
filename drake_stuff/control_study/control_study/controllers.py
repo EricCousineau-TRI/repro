@@ -905,7 +905,8 @@ class QpWithDirConstraint(BaseController):
         add_manip_cbf = True
 
         if add_manip_cbf:
-            mu_min = 0.005
+            # mu_min = 0.005
+            mu_min = 0.001
             mu, Jmu = calc_manip_index(
                 self.plant,
                 self.context,
@@ -924,8 +925,8 @@ class QpWithDirConstraint(BaseController):
             kmu_1 = 2 / (dt * dt)
             kmu_2 = 2 / dt
 
-            # kmu_1 /= 20**2
-            # kmu_2 /= 10
+            kmu_1 /= 5**2
+            kmu_2 /= 5
 
             h_mu = mu - mu_min
             hd_mu = Jmu @ v
