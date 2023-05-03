@@ -927,7 +927,8 @@ class QpWithDirConstraint(BaseController):
             kmu_1 = 2 / (dt * dt)
             kmu_2 = 2 / dt
 
-            kmu_1 /= 10**2
+            kmu_1 /= 5**2  # for high feedback gain
+            # kmu_1 /= 10**2  # for low feedback gain
             kmu_2 /= 5
 
             h_mu = mu - mu_min
