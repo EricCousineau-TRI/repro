@@ -671,8 +671,8 @@ class QpWithDirConstraint(BaseController):
         edd_c_p = -gains_p.kp * e - gains_p.kd * ed
 
         num_t = 6
-        # scale_A_t = np.eye(num_t)
-        scale_A_t = np.ones((num_t, 1))
+        scale_A_t = np.eye(num_t)
+        # scale_A_t = np.ones((num_t, 1))
         # scale_A_t = np.array([
         #     [1, 1, 1, 0, 0, 0],
         #     [0, 0, 0, 1, 1, 1],
