@@ -151,7 +151,7 @@ def run_spatial_waypoints(
             pass
         raise
 
-    controller.show_plots()
+    # controller.show_plots()
 
     # Return logged values.
     qs, Vs = unzip(logger.log)
@@ -206,11 +206,11 @@ def run_fast_waypoints_singular(make_controller, *, rotate):
 
 
 def make_osc_gains():
-    # return OscGains.critically_damped(10.0, 10.0)
+    return OscGains.critically_damped(10.0, 10.0)
     # return OscGains.critically_damped(10.0, 1.0)
     # return OscGains.critically_damped(100.0, 100.0)
     # return OscGains.critically_damped(100.0, 10.0)
-    return OscGains.critically_damped(300.0, 30.0)
+    # return OscGains.critically_damped(300.0, 30.0)
     # return OscGains.critically_damped(100.0, 1.0)  # Drifts... hard...
     # return OscGains.critically_damped(100.0, 0.0)  # of course locks
 
@@ -310,8 +310,8 @@ def main():
         # "slow": run_slow_waypoints,
         # "rot": run_rotation_coupling,
         # "fast": run_fast_waypoints,
-        # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
-        "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
+        "fast singular": partial(run_fast_waypoints_singular, rotate=False),
+        # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
         # "osc": make_controller_osc,
