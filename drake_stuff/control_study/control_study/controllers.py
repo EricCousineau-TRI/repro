@@ -905,6 +905,7 @@ class QpWithDirConstraint(BaseController):
         add_manip_cbf = True
 
         if add_manip_cbf:
+            mu_min = 0.005
             mu, Jmu = calc_manip_index(
                 self.plant,
                 self.context,
@@ -918,7 +919,25 @@ class QpWithDirConstraint(BaseController):
             Jmudot = (Jmu - self.Jmu_prev) / dt
             self.Jmu_prev = Jmu
             Jmudot_v = Jmudot @ v
-            import pdb; pdb.set_trace()
+            amu_1 = lambda x: x
+            amu_2 = amu_1
+            kmu_1 = 2 / (dt * dt)
+            kmu_2 = 2 / dt
+
+            # kmu_1 /= 20**2
+            # kmu_2 /= 10
+
+            h_mu = mu - mu_min
+            hd_mu = Jmu @ v
+            # hdd = J*vd + Jd_v >= -∑ Kᵢ h⁽ⁱ⁾
+            Amu = Jmu @ Avd
+            bmu = -Jmudot_v - kmu_1 * amu_1(h_mu) - kmu_2 * amu_2(hd_mu)
+            prog.AddLinearConstraint(
+                [Amu],
+                [bmu],
+                [np.inf],
+                vd_vars,
+            )
 
         # if implicit:
         #     # prog.AddBoundingBoxConstraint(
