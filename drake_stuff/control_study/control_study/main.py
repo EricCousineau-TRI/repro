@@ -154,7 +154,8 @@ def run_spatial_waypoints(
         err_name = type(e).__name__
         print(f"{err_name} at {diagram_context.get_time()}s")
         if isinstance(e, (RuntimeError, KeyboardInterrupt)):
-            controller.show_plots()
+            # controller.show_plots()
+            pass
         raise
 
     # controller.show_plots()
