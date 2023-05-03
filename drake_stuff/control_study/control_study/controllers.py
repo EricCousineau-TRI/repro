@@ -642,6 +642,7 @@ class QpWithDirConstraint(BaseController):
         self.s_ps = []
         # self.r_ps = []
         self.limits_infos = []
+        self.sigmas = []
         self.prev_dir = None
 
     def calc_control(self, t, pose_actual, pose_desired, q0):
@@ -1024,7 +1025,8 @@ class QpWithDirConstraint(BaseController):
             # tol = 0  # gurobi default
             # tol = 1e-14  # snopt default
             # tol = 1e-10  # snopt, singular
-            tol = 1e-8
+            # tol = 1e-8
+            tol = 1e-4
             # tol = 1e-14  # scs - primal infeasible, dual unbounded?
             # tol = 1e-11  # mosek default
             # tol = 1e-1  # HACK
@@ -1067,6 +1069,7 @@ class QpWithDirConstraint(BaseController):
         # import pdb; pdb.set_trace()
 
         edd_c_p_null = Minv @ Nt_T @ M @ edd_c_p
+        _, sigmas, _ = np.linalg.svd(Jt)
 
         if self.should_save:
             self.ts.append(t)
@@ -1081,6 +1084,7 @@ class QpWithDirConstraint(BaseController):
             if scale_secondary:
                 self.s_ps.append(scale_p)
             self.limits_infos.append(limit_info)
+            self.sigmas.append(sigmas)
 
         return tau
 
@@ -1095,6 +1099,7 @@ class QpWithDirConstraint(BaseController):
         edd_ps = np.array(self.edd_ps)
         edd_ps_null = np.array(self.edd_ps_null)
         s_ps = np.array(self.s_ps)
+        sigmas = np.array(self.sigmas)
 
         # sub = slice(3, 4)
         sub = slice(None, None)
@@ -1163,6 +1168,14 @@ class QpWithDirConstraint(BaseController):
             plt.ylim(-5, 5)
             legend_for(s_ps)
         plt.title("s_p")
+        plt.tight_layout()
+
+        _, ax = plt.subplots(num=4, nrows=1)
+        axs = [ax]
+        plt.sca(axs[0])
+        plt.plot(ts, sigmas)
+        legend_for(sigmas)
+        plt.title("singular values")
         plt.tight_layout()
 
         plt.show()

@@ -60,10 +60,10 @@ def run_spatial_waypoints(
     # else:
     #     control_dt = None
     #     plant_time_step = 0.0
-    plant_time_step = DISCRETE_PLANT_TIME_STEP
-    control_dt = CONTROL_DT
-    # plant_time_step = 0.0
-    # control_dt = None
+    # plant_time_step = DISCRETE_PLANT_TIME_STEP
+    # control_dt = CONTROL_DT
+    plant_time_step = 0.0
+    control_dt = None
 
     plant_diagram, plant, scene_graph, frame_G = make_sim_setup(
         plant_time_step
@@ -146,8 +146,8 @@ def run_spatial_waypoints(
 
     try:
         # Run a bit past the end of trajectory.
-        simulator.AdvanceTo(t_f + dT)
-        # simulator.AdvanceTo(1.0)
+        # simulator.AdvanceTo(t_f + dT)
+        simulator.AdvanceTo(1.25)
         # simulator.AdvanceTo(1.5)  # HACK
         simulator.AdvancePendingEvents()
     except (Exception, KeyboardInterrupt) as e:
@@ -232,7 +232,7 @@ def make_panda_limits(plant):
     # plant_limits.q.upper[3] = np.deg2rad(-20.0)  # vibrates, locks
     # plant_limits.q.upper[3] = np.deg2rad(-25.0)  # vibrates
     # plant_limits.q.upper[3] = np.deg2rad(-30.0)
-    # plant_limits.q.upper[3] = np.deg2rad(-35.0)
+    # plant_limits.q.upper[3] = np.deg2rad(-35.0)  # near singular value=0.01
     # plant_limits.q.upper[3] = np.deg2rad(-45.0)
     # plant_limits.q.lower[6] = np.deg2rad(-30.0)
     # plant_limits.q.upper[6] = np.deg2rad(30.0)
