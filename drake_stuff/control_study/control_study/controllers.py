@@ -369,7 +369,7 @@ def add_simple_limits(
         kv_1 = 1 / dt
 
         q_dt_scale = 20
-        v_dt_scale = 15
+        v_dt_scale = 10
         kq_1 /= q_dt_scale**2
         # kq_2 /= dt_scale / 5  # why? helps for discrete case
         kq_2 /= v_dt_scale
@@ -674,9 +674,9 @@ class QpWithDirConstraint(BaseController):
         # self.solver, self.solver_options = make_osqp_solver_and_options()
 
         # Best, it seems like?
-        # self.solver, self.solver_options = make_snopt_solver_and_options()
+        self.solver, self.solver_options = make_snopt_solver_and_options()
 
-        self.solver, self.solver_options = make_clp_solver_and_options()
+        # self.solver, self.solver_options = make_clp_solver_and_options()
 
         # self.solver, self.solver_options = make_gurobi_solver_and_options()
 
@@ -781,7 +781,8 @@ class QpWithDirConstraint(BaseController):
         # relax_primary = np.array([20, 20, 20, 10, 10, 10])
         # relax_primary = 50.0
         # relax_primary = 100.0  # OK
-        relax_primary = 500.0  # maybe good?
+        # relax_primary = 200.0  # OK
+        # relax_primary = 500.0  # maybe good?
         # relax_primary = 1e3
         # relax_primary = 1e4
         # relax_primary = 1e5
