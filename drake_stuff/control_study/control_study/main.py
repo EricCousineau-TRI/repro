@@ -146,8 +146,8 @@ def run_spatial_waypoints(
 
     try:
         # Run a bit past the end of trajectory.
-        # simulator.AdvanceTo(t_f + dT)
-        simulator.AdvanceTo(1.0)
+        simulator.AdvanceTo(t_f + dT)
+        # simulator.AdvanceTo(1.0)
         # simulator.AdvanceTo(1.5)  # HACK
         simulator.AdvancePendingEvents()
     except (Exception, KeyboardInterrupt) as e:
