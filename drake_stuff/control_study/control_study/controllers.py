@@ -635,6 +635,7 @@ class QpWithDirConstraint(BaseController):
         self.s_ps = []
         # self.r_ps = []
         self.limits_infos = []
+        self.prev_dir = None
 
     def calc_control(self, t, pose_actual, pose_desired, q0):
         q = self.plant.GetPositions(self.context)
@@ -678,6 +679,7 @@ class QpWithDirConstraint(BaseController):
         # ]).T
         num_scales_t = scale_A_t.shape[1]
         scale_vars_t = prog.NewContinuousVariables(num_scales_t, "scale_t")
+        desired_scales_t = np.ones(num_scales_t)
 
         # If True, will add (vd, tau) as decision variables, and impose
         # dynamics and task acceleration constraints. If False, will explicitly
@@ -705,6 +707,21 @@ class QpWithDirConstraint(BaseController):
         # relax_primary = 1e6
         relax_secondary = None
         # relax_secondary = relax_primary
+
+        norm_t = np.linalg.norm(edd_c_t)
+        min_t = 0.5
+        if norm_t < min_t:
+            relax_primary = 5.0
+        print(norm_t)
+        # assert num_scales_t == 1  # HACK
+        # if norm_t < min_t:
+        #     if self.prev_dir is not None:
+        #         edd_c_t = min_t * self.prev_dir
+        #         desired_scales_t[:] = norm_t / min_t
+        # else:
+        #     dir_t = edd_c_t / norm_t
+        #     if self.should_save:
+        #         self.prev_dir = dir_t
 
         kinematic = False
 
@@ -869,10 +886,9 @@ class QpWithDirConstraint(BaseController):
         # import pdb; pdb.set_trace()
         # proj *= 10
         # proj = proj * np.sqrt(num_scales)
-        desired_scales = np.ones(num_scales_t)
         prog.Add2NormSquaredCost(
             proj @ np.eye(num_scales_t),
-            proj @ desired_scales,
+            proj @ desired_scales_t,
             scale_vars_t,
         )
 
@@ -955,7 +971,7 @@ class QpWithDirConstraint(BaseController):
             # warm-starting:
             # https://github.com/RobotLocomotion/drake/blob/v1.15.0/solvers/osqp_solver.cc#L335-L336
             result = solve_or_die(
-                self.solver, self.solver_options, prog, x0=self.prev_sol
+                self.solver, self.solver_options, prog, #x0=self.prev_sol
             )
         except RuntimeError:
             # print(np.rad2deg(self.plant_limits.q.lower))
@@ -989,6 +1005,8 @@ class QpWithDirConstraint(BaseController):
         if relax_primary is not None:
             relax_t = result.GetSolution(relax_vars_t)
             print(f"  relax: {relax_t}")
+        else:
+            relax_t = np.zeros(num_t)
         if scale_secondary:
             scale_p = result.GetSolution(scale_vars_p)
             print(f"scale p: {scale_p}")
@@ -1025,8 +1043,7 @@ class QpWithDirConstraint(BaseController):
             self.us.append(tau)
             self.edd_ts.append(edd_c_t)
             self.s_ts.append(scale_t)
-            if relax_primary is not None:
-                self.r_ts.append(relax_t)
+            self.r_ts.append(relax_t)
             self.edd_ps.append(edd_c_p)
             self.edd_ps_null.append(edd_c_p_null)
             if scale_secondary:
