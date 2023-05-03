@@ -152,7 +152,7 @@ def run_spatial_waypoints(
         simulator.AdvancePendingEvents()
     except (Exception, KeyboardInterrupt) as e:
         err_name = type(e).__name__
-        print(f"f{err_name} at {diagram_context.get_time()}s")
+        print(f"{err_name} at {diagram_context.get_time()}s")
         if isinstance(e, (RuntimeError, KeyboardInterrupt)):
             controller.show_plots()
         raise

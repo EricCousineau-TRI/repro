@@ -671,11 +671,11 @@ class QpWithDirConstraint(BaseController):
 
         num_t = 6
         # scale_A_t = np.eye(num_t)
-        # scale_A_t = np.ones((num_t, 1))
-        scale_A_t = np.array([
-            [1, 1, 1, 0, 0, 0],
-            [0, 0, 0, 1, 1, 1],
-        ]).T
+        scale_A_t = np.ones((num_t, 1))
+        # scale_A_t = np.array([
+        #     [1, 1, 1, 0, 0, 0],
+        #     [0, 0, 0, 1, 1, 1],
+        # ]).T
         num_scales_t = scale_A_t.shape[1]
         scale_vars_t = prog.NewContinuousVariables(num_scales_t, "scale_t")
 
@@ -1030,8 +1030,8 @@ class QpWithDirConstraint(BaseController):
         edd_ps_null = np.array(self.edd_ps_null)
         s_ps = np.array(self.s_ps)
 
-        sub = slice(3, 4)
-        # sub = slice(None, None)
+        # sub = slice(3, 4)
+        sub = slice(None, None)
         sel = (slice(None, None), sub)
 
         def plot_lim(limits):
@@ -1060,6 +1060,7 @@ class QpWithDirConstraint(BaseController):
         legend_for(us[sel])
         plot_lim(self.plant_limits.u)
         plt.title("u")
+        plt.tight_layout()
 
         # plt.show()
         # return  # HACK
@@ -1077,6 +1078,7 @@ class QpWithDirConstraint(BaseController):
         plt.plot(ts, edd_ps_null)
         legend_for(edd_ps_null)
         plt.title("edd_c_p null")
+        plt.tight_layout()
 
         _, axs = plt.subplots(num=3, nrows=3)
         plt.sca(axs[0])
@@ -1095,6 +1097,7 @@ class QpWithDirConstraint(BaseController):
             plt.ylim(-5, 5)
             legend_for(s_ps)
         plt.title("s_p")
+        plt.tight_layout()
 
         plt.show()
 
@@ -1102,7 +1105,7 @@ class QpWithDirConstraint(BaseController):
 def legend_for(xs):
     n = xs.shape[1]
     labels = [f"{i}" for i in range(1, n + 1)]
-    plt.legend(labels)
+    plt.legend(labels, loc="center left", bbox_to_anchor=(1, 0.5))
 
 
 def reset_color_cycle():
