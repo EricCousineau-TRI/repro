@@ -766,7 +766,7 @@ class QpWithDirConstraint(BaseController):
         implicit = False
 
         # If True, will also scale secondary objective (posture).
-        scale_secondary = False
+        scale_secondary = True
 
         # For implicit formulation.
         dup_eq_as_cost = False
@@ -780,8 +780,8 @@ class QpWithDirConstraint(BaseController):
         # relax_primary = np.array([100, 100, 100, 50, 50, 50])
         # relax_primary = np.array([20, 20, 20, 10, 10, 10])
         # relax_primary = 50.0
-        relax_primary = 100.0  # OK
-        # relax_primary = 500.0  # maybe good?
+        # relax_primary = 100.0  # OK
+        relax_primary = 500.0  # maybe good?
         # relax_primary = 1e3
         # relax_primary = 1e4
         # relax_primary = 1e5
@@ -1073,13 +1073,19 @@ class QpWithDirConstraint(BaseController):
 
         if scale_secondary:
             desired_scales_p = np.ones(num_scales_p)
-            proj = self.posture_weight * np.eye(num_scales_p)
-            # proj = self.posture_weight * task_proj @ scale_A
-            # proj = self.posture_weight * scale_A
-            # proj = proj #/ np.sqrt(num_scales)
-            prog.Add2NormSquaredCost(
-                proj @ np.eye(num_scales_p),
-                proj @ desired_scales_p,
+            # proj = self.posture_weight * np.eye(num_scales_p)
+            # # proj = self.posture_weight * task_proj @ scale_A
+            # # proj = self.posture_weight * scale_A
+            # # proj = proj #/ np.sqrt(num_scales)
+            # prog.Add2NormSquaredCost(
+            #     proj @ np.eye(num_scales_p),
+            #     proj @ desired_scales_p,
+            #     scale_vars_p,
+            # )
+            add_2norm_decoupled(
+                prog,
+                self.posture_weight * np.ones(num_scales_p),
+                self.posture_weight * desired_scales_p,
                 scale_vars_p,
             )
 
