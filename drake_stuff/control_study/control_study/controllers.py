@@ -297,7 +297,7 @@ def vd_limits_from_tau(u_limits, Minv, H):
     return vd_tau_limits
 
 
-def add_simple_limits(
+def add_plant_limits_to_qp(
     *,
     plant_limits,
     vd_limits,
@@ -517,7 +517,7 @@ class QpWithCosts(BaseController):
         #     C,
         #     tau_g,
         # )
-        add_simple_limits(
+        add_plant_limits_to_qp(
             self.plant_limits,
             vd_limits,
             self.acceleration_bounds_dt,
@@ -889,7 +889,7 @@ class QpWithDirConstraint(BaseController):
             vd_tau_limits = vd_limits_from_tau(self.plant_limits.u, Minv, H)
             vd_limits = vd_limits.intersection(vd_tau_limits)
         dt = self.acceleration_bounds_dt  # HACK
-        limit_info = add_simple_limits(
+        limit_info = add_plant_limits_to_qp(
             plant_limits=self.plant_limits,
             vd_limits=vd_limits,
             dt=dt,
