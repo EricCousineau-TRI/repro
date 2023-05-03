@@ -605,9 +605,17 @@ def ad_value(x):
     return x.value()
 
 
-@np.vectorize
 def ad_grad(x):
-    return x.derivatives()
+    xf = x.reshape(-1)
+    nderiv = max(len(xi.derivatives()) for xi in xf)
+    shape = x.shape + (nderiv,)
+    J = np.zeros(shape)
+    Jf = J.reshape((-1, nderiv))
+    for xi, Ji in zip(xf, Jf):
+        d = xi.derivatives()
+        if len(d) > 0:
+            Ji[:] = d
+    return J
 
 
 def calc_manip_index(
@@ -617,14 +625,13 @@ def calc_manip_index(
     frame_G,
     plant_ad,
     context_ad,
-    Jmu_prev,
-    dt,
 ):
     # Based on:
     # https://github.com/vincekurtz/passivity_cbf_demo/blob/f27d8dc4/controller.py#L656-L659
     q = plant.GetPositions(context)
     v = plant.GetVelocities(context)
     q_ad = InitializeAutoDiff(q)
+    plant_ad.SetPositions(context_ad, q_ad)
     frame_W_ad = plant_ad.get_frame(frame_W.index())
     frame_G_ad = plant_ad.get_frame(frame_G.index())
     J_ad = calc_velocity_jacobian(
@@ -639,9 +646,7 @@ def calc_manip_index(
     Jmu = np.zeros(num_q)
     for i in range(num_q):
         Jmu[i] = np.trace(dJ_dq[:, :, i] @ Jpinv)
-    Jmudot = (Jmu - Jmu_prev) / dt
-    Jmudot_v = Jmudot @ v
-    return mu, Jmu, Jmudot_v
+    return mu, Jmu
 
 
 class QpWithDirConstraint(BaseController):
@@ -699,6 +704,7 @@ class QpWithDirConstraint(BaseController):
         self.limits_infos = []
         self.sigmas = []
         self.prev_dir = None
+        self.Jmu_prev = None
 
     def calc_control(self, t, pose_actual, pose_desired, q0):
         q = self.plant.GetPositions(self.context)
@@ -880,10 +886,11 @@ class QpWithDirConstraint(BaseController):
             u_vars = None
             vd_tau_limits = vd_limits_from_tau(self.plant_limits.u, Minv, H)
             vd_limits = vd_limits.intersection(vd_tau_limits)
+        dt = self.acceleration_bounds_dt  # HACK
         limit_info = add_simple_limits(
             plant_limits=self.plant_limits,
             vd_limits=vd_limits,
-            dt=self.acceleration_bounds_dt,
+            dt=dt,
             q=q,
             v=v,
             prog=prog,
@@ -894,6 +901,25 @@ class QpWithDirConstraint(BaseController):
             Au=Au,
             bu=bu,
         )
+
+        add_manip_cbf = True
+
+        if add_manip_cbf:
+            mu, Jmu = calc_manip_index(
+                self.plant,
+                self.context,
+                self.frame_W,
+                self.frame_G,
+                self.plant_ad,
+                self.context_ad,
+            )
+            if self.Jmu_prev is None:
+                self.Jmu_prev = Jmu
+            Jmudot = (Jmu - self.Jmu_prev) / dt
+            self.Jmu_prev = Jmu
+            Jmudot_v = Jmudot @ v
+            import pdb; pdb.set_trace()
+
         # if implicit:
         #     # prog.AddBoundingBoxConstraint(
         #     #     self.plant_limits.u.lower,
