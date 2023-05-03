@@ -592,6 +592,58 @@ def add_2norm_decoupled(prog, a, b, x):
     return prog.AddQuadraticCost(Q, b, c, x)
 
 
+from pydrake.autodiffutils import (
+    AutoDiffXd,
+    ExtractGradient,
+    ExtractValue,
+    InitializeAutoDiff,
+)
+
+
+@np.vectorize
+def ad_value(x):
+    return x.value()
+
+
+@np.vectorize
+def ad_grad(x):
+    return x.derivatives()
+
+
+def calc_manip_index(
+    plant,
+    context,
+    frame_W,
+    frame_G,
+    plant_ad,
+    context_ad,
+    Jmu_prev,
+    dt,
+):
+    # Based on:
+    # https://github.com/vincekurtz/passivity_cbf_demo/blob/f27d8dc4/controller.py#L656-L659
+    q = plant.GetPositions(context)
+    v = plant.GetVelocities(context)
+    q_ad = InitializeAutoDiff(q)
+    frame_W_ad = plant_ad.get_frame(frame_W.index())
+    frame_G_ad = plant_ad.get_frame(frame_G.index())
+    J_ad = calc_velocity_jacobian(
+        plant_ad, context_ad, frame_W_ad, frame_G_ad
+    )
+    J = ad_value(J_ad)
+    Jpinv = np.linalg.pinv(J)
+    _, s, _ = np.linalg.svd(J)
+    mu = np.prod(s)
+    dJ_dq = ad_grad(J_ad)
+    num_q = len(q)
+    Jmu = np.zeros(num_q)
+    for i in range(num_q):
+        Jmu[i] = np.trace(dJ_dq[:, :, i] @ Jpinv)
+    Jmudot = (Jmu - Jmu_prev) / dt
+    Jmudot_v = Jmudot @ v
+    return mu, Jmu, Jmudot_v
+
+
 class QpWithDirConstraint(BaseController):
     def __init__(
         self,
@@ -608,6 +660,9 @@ class QpWithDirConstraint(BaseController):
         super().__init__(plant, frame_W, frame_G)
         self.gains = gains
         self.plant_limits = plant_limits
+
+        self.plant_ad = self.plant.ToAutoDiffXd()
+        self.context_ad = self.plant_ad.CreateDefaultContext()
 
         # Can be a bit imprecise, but w/ tuning can improve.
         # self.solver, self.solver_options = make_osqp_solver_and_options()
