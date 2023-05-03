@@ -1146,7 +1146,7 @@ class QpWithDirConstraint(BaseController):
         scale_t = result.GetSolution(scale_vars_t)
 
         # print(v)
-        print(f"scale t: {scale_t}")
+        # print(f"scale t: {scale_t}")
         if relax_primary is not None:
             relax_t = result.GetSolution(relax_vars_t)
             # print(f"  relax: {relax_t}")

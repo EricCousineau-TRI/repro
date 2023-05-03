@@ -52,14 +52,7 @@ def run_spatial_waypoints(
     X_extr,
     X_intr,
     dT,
-    discrete=True,
 ):
-    # if discrete:
-    #     control_dt = CONTROL_DT
-    #     plant_time_step = DISCRETE_PLANT_TIME_STEP
-    # else:
-    #     control_dt = None
-    #     plant_time_step = 0.0
     plant_time_step = DISCRETE_PLANT_TIME_STEP
     control_dt = CONTROL_DT
     # plant_time_step = 0.0
@@ -92,7 +85,7 @@ def run_spatial_waypoints(
     )
 
     # Simplify plant after controller is constructed.
-    simplify_plant(plant, scene_graph)
+    # simplify_plant(plant, scene_graph)
 
     def log_instant(log_context):
         context = access.read_plant_context(diagram_context)
