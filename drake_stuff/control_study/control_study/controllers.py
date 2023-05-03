@@ -368,7 +368,7 @@ def add_simple_limits(
         kv_1 = 1 / dt
 
         q_dt_scale = 20
-        v_dt_scale = 10
+        v_dt_scale = 15
         kq_1 /= q_dt_scale**2
         # kq_2 /= dt_scale / 5  # why? helps for discrete case
         kq_2 /= v_dt_scale
@@ -716,6 +716,7 @@ class QpWithDirConstraint(BaseController):
         # relax_primary = 1e1
         # relax_primary = np.array([100, 100, 100, 50, 50, 50])
         # relax_primary = np.array([20, 20, 20, 10, 10, 10])
+        # relax_primary = 50.0
         relax_primary = 100.0  # OK
         # relax_primary = 500.0  # maybe good?
         # relax_primary = 1e3

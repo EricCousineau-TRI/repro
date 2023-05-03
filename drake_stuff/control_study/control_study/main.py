@@ -60,10 +60,10 @@ def run_spatial_waypoints(
     # else:
     #     control_dt = None
     #     plant_time_step = 0.0
-    # plant_time_step = DISCRETE_PLANT_TIME_STEP
-    # control_dt = CONTROL_DT
-    plant_time_step = 0.0
-    control_dt = None
+    plant_time_step = DISCRETE_PLANT_TIME_STEP
+    control_dt = CONTROL_DT
+    # plant_time_step = 0.0
+    # control_dt = None
 
     plant_diagram, plant, scene_graph, frame_G = make_sim_setup(
         plant_time_step
@@ -232,7 +232,7 @@ def make_panda_limits(plant):
     plant_limits.q.upper[3] = np.deg2rad(-45.0)
     # plant_limits.q.lower[6] = np.deg2rad(-30.0)
     # plant_limits.q.upper[6] = np.deg2rad(30.0)
-    # plant_limits.v = plant_limits.v.scaled(0.9)
+    plant_limits.v = plant_limits.v.scaled(0.99)
     # plant_limits.vd = plant_limits.vd.scaled(0.95)  # causes issues
     # plant_limits.u = plant_limits.u.scaled(0.99)  # causes issues
     # plant_limits.v = plant_limits.v.scaled(0.5)
