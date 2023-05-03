@@ -1170,12 +1170,15 @@ class QpWithDirConstraint(BaseController):
         plt.title("s_p")
         plt.tight_layout()
 
-        _, ax = plt.subplots(num=4, nrows=1)
-        axs = [ax]
+        _, axs = plt.subplots(num=4, nrows=2)
         plt.sca(axs[0])
         plt.plot(ts, sigmas)
         legend_for(sigmas)
         plt.title("singular values")
+        plt.sca(axs[1])
+        manips = np.prod(sigmas, axis=-1)
+        plt.plot(ts, manips)
+        plt.title("manip index")
         plt.tight_layout()
 
         plt.show()
