@@ -1136,11 +1136,11 @@ class QpWithDirConstraint(BaseController):
             # tol = 0  # gurobi default
             # tol = 1e-14  # snopt default
             # tol = 1e-10  # snopt, singular
-            # tol = 1e-8
+            tol = 1e-8
             # tol = 1e-4
             # tol = 1e-14  # scs - primal infeasible, dual unbounded?
             # tol = 1e-11  # mosek default
-            tol = 1e-1  # HACK
+            # tol = 1e-1  # HACK
 
 
         scale_t = result.GetSolution(scale_vars_t)
