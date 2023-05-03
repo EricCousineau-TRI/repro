@@ -708,11 +708,12 @@ class QpWithDirConstraint(BaseController):
         relax_secondary = None
         # relax_secondary = relax_primary
 
-        norm_t = np.linalg.norm(edd_c_t)
-        min_t = 0.5
-        if norm_t < min_t:
-            relax_primary = 5.0
-        print(norm_t)
+        relax_primary = 500.0
+        # norm_t = np.linalg.norm(edd_c_t)
+        # min_t = 5.0
+        # if norm_t < min_t:
+        #     relax_primary = 1.0
+        # print(norm_t)
         # assert num_scales_t == 1  # HACK
         # if norm_t < min_t:
         #     if self.prev_dir is not None:
@@ -992,7 +993,8 @@ class QpWithDirConstraint(BaseController):
             # tol = 1e-14  # osqp, clp default
             # tol = 0  # gurobi default
             # tol = 1e-14  # snopt default
-            tol = 1e-10  # snopt, singular
+            # tol = 1e-10  # snopt, singular
+            tol = 1e-8
             # tol = 1e-14  # scs - primal infeasible, dual unbounded?
             # tol = 1e-11  # mosek default
             # tol = 1e-1  # HACK
