@@ -158,7 +158,7 @@ def run_spatial_waypoints(
             pass
         raise
 
-    # controller.show_plots()
+    controller.show_plots()
 
     # Return logged values.
     qs, Vs = unzip(logger.log)
@@ -226,11 +226,12 @@ def make_panda_limits(plant):
     # Avoid elbow lock.
     # plant_limits.q = plant_limits.q.scaled(0.9)
     # plant_limits.v = plant_limits.v.scaled(0.9)
+    plant_limits.q.upper[3] = np.deg2rad(-5.0)
     # plant_limits.q.upper[3] = np.deg2rad(-10.0)
     # plant_limits.q.upper[3] = np.deg2rad(-15.0)
-    # plant_limits.q.upper[3] = np.deg2rad(-20.0)
-    # plant_limits.q.upper[3] = np.deg2rad(-25.0)
-    plant_limits.q.upper[3] = np.deg2rad(-30.0)
+    # plant_limits.q.upper[3] = np.deg2rad(-20.0)  # vibrates, locks
+    # plant_limits.q.upper[3] = np.deg2rad(-25.0)  # vibrates
+    # plant_limits.q.upper[3] = np.deg2rad(-30.0)
     # plant_limits.q.upper[3] = np.deg2rad(-35.0)
     # plant_limits.q.upper[3] = np.deg2rad(-45.0)
     # plant_limits.q.lower[6] = np.deg2rad(-30.0)
@@ -316,7 +317,7 @@ def main():
         # "rot": run_rotation_coupling,
         # "fast": run_fast_waypoints,
         "fast singular": partial(run_fast_waypoints_singular, rotate=False),
-        "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
+        # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
         # "osc": make_controller_osc,
