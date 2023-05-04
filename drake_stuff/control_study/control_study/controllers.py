@@ -904,7 +904,7 @@ class QpWithDirConstraint(BaseController):
             bu=bu,
         )
 
-        add_manip_cbf = False
+        add_manip_cbf = True
 
         if add_manip_cbf:
             # mu_min = 0.005
@@ -935,7 +935,12 @@ class QpWithDirConstraint(BaseController):
             hd_mu = Jmu @ v
             # hdd = J*vd + Jd_v >= -∑ Kᵢ h⁽ⁱ⁾
             Amu = Jmu @ Avd
-            bmu = -Jmudot_v - kmu_1 * amu_1(h_mu) - kmu_2 * amu_2(hd_mu)
+            bmu = (
+                -Jmudot_v
+                -Jmu @ bvd
+                -kmu_1 * amu_1(h_mu)
+                -kmu_2 * amu_2(hd_mu)
+            )
             prog.AddLinearConstraint(
                 [Amu],
                 [bmu],
