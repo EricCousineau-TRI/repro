@@ -206,7 +206,7 @@ class DiffIkAndId(BaseController):
             )
 
         kp_ti = 10.0
-        kp_pi = 0 # 10.0
+        kp_pi = 10.0
 
         # Spatial feedback (integrated, so "ti").
         X, _, Jt, _ = pose_actual
