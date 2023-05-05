@@ -380,7 +380,7 @@ def load_crazy_traj(*, as_spline=True):
                 t = t_f_actual
             return traj_raw(t)
 
-        t_f = t_f_actual * 2
+        t_f = t_f_actual * 1.2
     else:
         t_f = tape[-1].t
         # Only for discretized control!
@@ -400,13 +400,19 @@ def load_crazy_traj(*, as_spline=True):
 
 def log_main():
     q0, traj, t_f = load_crazy_traj(as_spline=True)
-    return run_control(
-        # make_controller=make_controller_osc,
-        make_controller=make_controller_diff_ik,
-        make_traj=lambda X_WG: (traj, t_f),
-        q0=q0,
-        X_WB=RigidTransform([-0.75, 0.0, -0.2]),
-    )
+    make_controllers = {
+        "osc": make_controller_osc,
+        "diff ik": make_controller_diff_ik,
+    }
+
+    for name, make_controller in make_controllers.items():
+        print(name)
+        run_control(
+            make_controller=make_controller,
+            make_traj=lambda X_WG: (traj, t_f),
+            q0=q0,
+            X_WB=RigidTransform([-0.75, 0.0, -0.2]),
+        )
 
 
 @debug.iex
