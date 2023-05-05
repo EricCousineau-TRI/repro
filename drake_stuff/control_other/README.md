@@ -1,5 +1,5 @@
-# TSID / Pinnochio control
+# MuJoCo / Pinnochio control
 
-Basic control to compare against `control_study`
+Attempt to compare against Drake for `control_study`
 
 Separate folder b/c license of `pin` / `tsid` is stated BSD-3, but unclear on some deps...

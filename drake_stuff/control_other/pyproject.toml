@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "tsid-control"
+name = "control-other"
 version = "0.1.0"
 description = ""
 authors = ["Eric Cousineau <eric.cousineau@tri.global>"]
