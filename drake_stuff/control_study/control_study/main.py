@@ -345,7 +345,7 @@ def scenario_main():
         # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
-        # "osc": make_controller_osc,
+        "osc": make_controller_osc,
         "diff ik": make_controller_diff_ik,
         # "qp costs": make_controller_qp_costs,
         # "qp constr": make_controller_qp_constraints,

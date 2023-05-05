@@ -204,16 +204,19 @@ class DiffIkAndId(BaseController):
             pose_actual = calc_spatial_values(
                 self.plant, self.context_integ, self.frame_W, self.frame_G
             )
+
+        kp_ti = 10.0
+        kp_pi = 10.0
+
+        # Spatial feedback (integrated, so "ti").
         X, _, Jt, _ = pose_actual
         X_des, _, _ = pose_desired
         e_ti = se3_vector_minus(X, X_des)
-        kp_ti = 10.0
         ed_ti_c = -kp_ti * e_ti
-        # Null-space driving towards v = ed_pi_c = -k*e_pi in null-space Pt, via
-        # |Pt (v - ed_pi_c)|^2
+        # Posture feedback (integrated, so "pi").
+        # Drive towards v = ed_pi_c = -k*e_pi in null-space Pt.
         Pt = calc_null(Jt)
         e_pi = q_integ - q0
-        kp_pi = 10.0
         ed_pi_c = -kp_pi * e_pi
 
         direct_solve = True
@@ -240,6 +243,7 @@ class DiffIkAndId(BaseController):
                 np.zeros(num_t),
                 np.hstack([v_next, alpha]),
             )
+            # Null-space via cost as |Pt (v - ed_pi_c)|^2
             prog.Add2NormSquaredCost(Pt, Pt @ ed_pi_c, v_next)
             # prog.AddLinearEqualityConstraint(Pt, Pt @ ed_pi_c, v_next)
             # Solve.
@@ -271,31 +275,28 @@ class Osc(BaseController):
     def calc_control(self, t, pose_actual, pose_desired, q0):
         M, C, tau_g = calc_dynamics(self.plant, self.context)
         Minv = inv(M)
+        q = self.plant.GetPositions(self.context)
+        v = self.plant.GetVelocities(self.context)
+
+        (kp_t, kd_t) = self.gains.task
+        (kp_p, kd_p) = self.gains.posture
 
         # Compute spatial feedback.
-        gains_t = self.gains.task
         X, V, Jt, Jtdot_v = pose_actual
+        Mt, _, Jt, _, Nt_T = reproject_mass(Minv, Jt)
         X_des, V_des, A_des = pose_desired
         V_des = V_des.get_coeffs()
         A_des = A_des.get_coeffs()
-        e = se3_vector_minus(X, X_des)
-        ed = V - V_des
-        # # hack
-        # Jtdot_v *= 0
-        # A_des *= 0
-
-        edd_c = A_des - gains_t.kp * e - gains_t.kd * ed
-        Mt, _, Jt, _, Nt_T = reproject_mass(Minv, Jt)
-        Ft = Mt @ (edd_c - Jtdot_v)
+        e_t = se3_vector_minus(X, X_des)
+        ed_t = V - V_des
+        edd_t_c = A_des - kp_t * e_t - kd_t * ed_t
+        Ft = Mt @ (edd_t_c - Jtdot_v)
 
         # Compute posture feedback.
-        gains_p = self.gains.posture
-        q = self.plant.GetPositions(self.context)
-        v = self.plant.GetVelocities(self.context)
-        e = q - q0
-        ed = v
-        edd_c = -gains_p.kp * e - gains_p.kd * ed
-        Fp = M @ edd_c
+        e_p = q - q0
+        ed_p = v
+        edd_p_c = -kp_p * e_p - kd_p * ed_p
+        Fp = M @ edd_p_c
 
         # Sum up tasks and cancel gravity + Coriolis terms.
         tau = Jt.T @ Ft + Nt_T @ Fp + C - tau_g
