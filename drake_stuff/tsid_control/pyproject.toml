@@ -11,6 +11,8 @@ python = "^3.10"
 tsid = "^1.6.2.1"
 drake = "^1.15.0"
 jupyterlab = "^3.6.3"
+pin = "^2.6.18"
+mujoco = "^2.3.5"
 
 
 [build-system]
