@@ -109,6 +109,10 @@ class Gains:
         kd = 2 * np.sqrt(kp)
         return Gains(kp, kd)
 
+    def __iter__(self):
+        as_tuple = (self.kp, self.kd)
+        return iter(as_tuple)
+
 
 @dc.dataclass
 class OscGains:
@@ -121,6 +125,10 @@ class OscGains:
             Gains.critically_damped(kp_t),
             Gains.critically_damped(kp_p),
         )
+
+    def __iter__(self):
+        as_tuple = (self.task, self.posture)
+        return iter(as_tuple)
 
 
 def calc_spatial_values(plant, context, frame_W, frame_G):
@@ -190,7 +198,8 @@ class DiffIkAndId(BaseController):
         )
         X, _, Jt, _ = pose_integ
         X_des, _, _ = pose_desired
-        e_t = se3_vector_minus(X, X_des)
+        e_ti = se3_vector_minus(X, X_des)
+        ed_ti_c = -e_ti
         # Formulate optimization.
         prog = MathematicalProgram()
         num_v = self.plant.num_velocities()
@@ -200,18 +209,19 @@ class DiffIkAndId(BaseController):
         # Scaling.
         prog.AddLinearCost([-100.0], alpha)
         prog.AddBoundingBoxConstraint([0.0], [1.0], alpha)
-        # Jt*v_next = alpha*e_t
+        # Jt*v_next = alpha*ed_ti_c
         prog.AddLinearEqualityConstraint(
-            np.hstack([Jt, -e_t.reshape((-1, 1))]),
+            np.hstack([Jt, -ed_ti_c.reshape((-1, 1))]),
             np.zeros(num_t),
             np.hstack([v_next, alpha]),
         )
-        # Null-space.
+        # Null-space driving towards v = ed_pi_c = -k*e_pi in null-space Pt, via
+        # |Pt (v - ed_pi_c)|^2
         Pt = calc_null(Jt)
-        e_integ_p = q_integ - q0
-        k_p_integ = 1.0
-        ed_p_c = -k_p_integ * e_integ_p
-        prog.Add2NormSquaredCost(Pt, Pt @ ed_p_c, v_next)
+        e_pi = q_integ - q0
+        kp_pi = 100.0
+        ed_pi_c = -kp_pi * e_pi
+        prog.Add2NormSquaredCost(Pt, Pt @ ed_pi_c, v_next)
         # Solve.
         result = solve_or_die(self.solver, self.solver_options, prog)
         v_integ = result.GetSolution(v_next)
@@ -224,12 +234,13 @@ class DiffIkAndId(BaseController):
         q = self.plant.GetPositions(self.context)
         v = self.plant.GetVelocities(self.context)
 
-        # Do basic ID.
+        # Do basic ID, but closing loop on actual (not integrated).
         M, C, tau_g = calc_dynamics(self.plant, self.context)
         H = C - tau_g
         e_p = q - q_integ
         ed_p = v - v_integ
-        edd_c_p = -self.gains_p.kp * e_p - self.gains_p.kd * ed_p
+        kp_p, kd_p = self.gains_p
+        edd_c_p = -kp_p * e_p - kd_p * ed_p
         u = M @ edd_c_p + H
         return u
 

@@ -335,8 +335,8 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
 def scenario_main():
     np_print_more_like_matlab()
     scenarios = {
-        # "slow": run_slow_waypoints,
-        "rot": run_rotation_coupling,
+        "slow": run_slow_waypoints,
+        # "rot": run_rotation_coupling,
         # "fast": run_fast_waypoints,
         # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
         # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
