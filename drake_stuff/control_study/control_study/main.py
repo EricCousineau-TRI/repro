@@ -411,8 +411,8 @@ def log_main():
 
 @debug.iex
 def main():
-    scenario_main()
-    # log_main()
+    # scenario_main()
+    log_main()
 
 
 if __name__ == "__main__":
