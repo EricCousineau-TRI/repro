@@ -227,12 +227,12 @@ def run_fast_waypoints_singular(make_controller, *, rotate):
 
 
 def make_osc_gains():
-    # return OscGains.critically_damped(10.0, 10.0)
+    return OscGains.critically_damped(10.0, 10.0)
     # return OscGains.critically_damped(10.0, 1.0)
     # return OscGains.critically_damped(100.0, 100.0)
     # return OscGains.critically_damped(100.0, 10.0)
     # return OscGains.critically_damped(150.0, 15.0)
-    return OscGains.critically_damped(300.0, 30.0)
+    # return OscGains.critically_damped(300.0, 30.0)
     # return OscGains.critically_damped(100.0, 1.0)  # Drifts... hard...
     # return OscGains.critically_damped(100.0, 0.0)  # of course locks
 
@@ -354,8 +354,15 @@ def load_crazy_traj(*, as_spline=True):
         downsample = slice(None, None, 5)
         ts = ts[downsample]
         Xs = Xs[downsample]
-        traj = make_se3_spline_trajectory(ts, Xs)
-        t_f = ts[-1]
+        traj_raw = make_se3_spline_trajectory(ts, Xs)
+        t_f_actual = ts[-1]
+
+        def traj(t):
+            if t > t_f_actual:
+                t = t_f_actual
+            return traj_raw(t)
+
+        t_f = t_f_actual * 2
     else:
         t_f = tape[-1].t
         # Only for discretized control!
