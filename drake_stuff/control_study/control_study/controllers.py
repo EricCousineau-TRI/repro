@@ -199,7 +199,8 @@ class DiffIkAndId(BaseController):
         X, _, Jt, _ = pose_integ
         X_des, _, _ = pose_desired
         e_ti = se3_vector_minus(X, X_des)
-        ed_ti_c = -e_ti
+        kp_ti = 10.0
+        ed_ti_c = -kp_ti * e_ti
         # Formulate optimization.
         prog = MathematicalProgram()
         num_v = self.plant.num_velocities()
@@ -219,7 +220,7 @@ class DiffIkAndId(BaseController):
         # |Pt (v - ed_pi_c)|^2
         Pt = calc_null(Jt)
         e_pi = q_integ - q0
-        kp_pi = 100.0
+        kp_pi = 10.0
         ed_pi_c = -kp_pi * e_pi
         prog.Add2NormSquaredCost(Pt, Pt @ ed_pi_c, v_next)
         # Solve.
@@ -263,6 +264,10 @@ class Osc(BaseController):
         A_des = A_des.get_coeffs()
         e = se3_vector_minus(X, X_des)
         ed = V - V_des
+        # # hack
+        # Jtdot_v *= 0
+        # A_des *= 0
+
         edd_c = A_des - gains_t.kp * e - gains_t.kd * ed
         Mt, _, Jt, _, Nt_T = reproject_mass(Minv, Jt)
         Ft = Mt @ (edd_c - Jtdot_v)
