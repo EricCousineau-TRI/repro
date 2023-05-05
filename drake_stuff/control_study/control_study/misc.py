@@ -99,9 +99,14 @@ def make_sample_pose_traj(dT, X_WG, X_extr, X_intr):
 
     def traj_saturate(t):
         # Saturate at end.
+        zero_vel = False
         if t >= t_f:
-            t = t_f
-        X, V, A = traj(t)
+            X, _, _ = traj(t_f)
+            V = SpatialVelocity.Zero()
+            A = SpatialAcceleration.Zero()
+        else:
+            # May be discontinuous.
+            X, V, A = traj(t)
         return X, V, A
 
     return traj_saturate, t_f

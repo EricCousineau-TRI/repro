@@ -181,7 +181,7 @@ class DiffIkAndId(BaseController):
 
         # Hacky state.
         self.should_save = False
-        self.open_loop = False
+        self.open_loop = True
         self.context_integ = None
 
     def calc_control(self, t, pose_actual, pose_desired, q0):
@@ -206,7 +206,7 @@ class DiffIkAndId(BaseController):
             )
 
         kp_ti = 10.0
-        kp_pi = 10.0
+        kp_pi = 0 # 10.0
 
         # Spatial feedback (integrated, so "ti").
         X, _, Jt, _ = pose_actual
