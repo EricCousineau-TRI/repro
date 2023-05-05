@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "tsid-control"
+version = "0.1.0"
+description = ""
+authors = ["Eric Cousineau <eric.cousineau@tri.global>"]
+readme = "README.md"
+packages = [{include = "tsid_control"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+tsid = "^1.6.2.1"
+drake = "^1.15.0"
+jupyterlab = "^3.6.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
