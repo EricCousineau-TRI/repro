@@ -55,10 +55,10 @@ def run_control(
     q0,
     X_WB=RigidTransform(),
 ):
-    plant_time_step = DISCRETE_PLANT_TIME_STEP
-    control_dt = CONTROL_DT
-    # plant_time_step = 0.0
-    # control_dt = None
+    # plant_time_step = DISCRETE_PLANT_TIME_STEP
+    # control_dt = CONTROL_DT
+    plant_time_step = 0.0
+    control_dt = None
 
     plant_diagram, plant, scene_graph, frame_G = make_sim_setup(
         plant_time_step, X_WB
@@ -343,23 +343,38 @@ def scenario_main():
                 raise  # wip
 
 
-def log_main():
+def load_crazy_traj(*, as_spline=True):
     data = load_pickle("./data/osc_wrap_sim_panda.pkl")
     tape = data.tape
     q0 = data.q0
 
-    # Only for discretized control!
-    i = 0
-    t_f = tape[-1].t
+    if as_spline:
+        ts = np.array([item.t for item in tape])
+        Xs = np.array([item.X_des for item in tape])
+        downsample = slice(None, None, 5)
+        ts = ts[downsample]
+        Xs = Xs[downsample]
+        traj = make_se3_spline_trajectory(ts, Xs)
+        t_f = ts[-1]
+    else:
+        t_f = tape[-1].t
+        # Only for discretized control!
+        i = 0
 
-    def traj(t):
-        nonlocal i
-        if t > tape[i].t:
-            i += 1
-        item = tape[i]
-        assert item.t == t
-        return item.X_des, item.V_des, item.A_des
+        def traj(t):
+            nonlocal i
+            if t > tape[i].t:
+                i += 1
+            item = tape[i]
+            assert item.t == t
+            return item.X_des, item.V_des, item.A_des
 
+    return q0, traj, t_f
+
+
+
+def log_main():
+    q0, traj, t_f = load_crazy_traj(as_spline=True)
     return run_control(
         make_controller=make_controller_osc,
         make_traj=lambda X_WG: (traj, t_f),
