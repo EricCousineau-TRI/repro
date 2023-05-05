@@ -13,6 +13,8 @@ from pydrake.systems.framework import DiagramBuilder, LeafSystem
 from control_study import debug
 import control_study.controllers as m
 from control_study.controllers import (
+    DiffIkAndId,
+    Gains,
     Osc,
     OscGains,
     QpWithCosts,
@@ -279,6 +281,18 @@ def make_controller_osc(plant, frame_W, frame_G):
     return controller
 
 
+def make_controller_diff_ik(plant, frame_W, frame_G):
+    controller = DiffIkAndId(
+        plant,
+        frame_W,
+        frame_G,
+        dt=CONTROL_DT,
+        gains_p=Gains.critically_damped(100.0),
+    )
+    controller.check_limits = False
+    return controller
+
+
 def make_controller_qp_costs(plant, frame_W, frame_G):
     # Good with singularity and speed.
     # Bad with rotation / maintaining direction.
@@ -383,7 +397,8 @@ def load_crazy_traj(*, as_spline=True):
 def log_main():
     q0, traj, t_f = load_crazy_traj(as_spline=True)
     return run_control(
-        make_controller=make_controller_osc,
+        # make_controller=make_controller_osc,
+        make_controller=make_controller_diff_ik,
         make_traj=lambda X_WG: (traj, t_f),
         q0=q0,
         X_WB=RigidTransform([-0.75, 0.0, -0.2]),
