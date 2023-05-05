@@ -181,22 +181,30 @@ class DiffIkAndId(BaseController):
 
         # Hacky state.
         self.should_save = False
+        self.open_loop = False
         self.context_integ = None
 
     def calc_control(self, t, pose_actual, pose_desired, q0):
-        if self.context_integ is None:
+        if self.open_loop and self.context_integ is None:
             self.context_integ = self.plant.CreateDefaultContext()
             self.plant.SetPositions(self.context_integ, q0)
-        q_integ = self.plant.GetPositions(self.context_integ)
+
+        q = self.plant.GetPositions(self.context)
+        v = self.plant.GetVelocities(self.context)
+
+        if self.open_loop:
+            q_integ = self.plant.GetPositions(self.context_integ)
+        else:
+            q_integ = q
 
         # Compute desired joint velocity from diff ik.
 
         # Compute error in SE(3).
-        # X, _, Jt, _ = pose_actual
-        pose_integ = calc_spatial_values(
-            self.plant, self.context_integ, self.frame_W, self.frame_G
-        )
-        X, _, Jt, _ = pose_integ
+        if self.open_loop:
+            pose_actual = calc_spatial_values(
+                self.plant, self.context_integ, self.frame_W, self.frame_G
+            )
+        X, _, Jt, _ = pose_actual
         X_des, _, _ = pose_desired
         e_ti = se3_vector_minus(X, X_des)
         kp_ti = 10.0
@@ -225,15 +233,12 @@ class DiffIkAndId(BaseController):
         prog.Add2NormSquaredCost(Pt, Pt @ ed_pi_c, v_next)
         # Solve.
         result = solve_or_die(self.solver, self.solver_options, prog)
-        v_integ = result.GetSolution(v_next)
-        q_integ = q_integ + self.dt * v_integ
-
-        if self.should_save:
-            self.plant.SetPositions(self.context_integ, q_integ)
 
         # Internal integration.
-        q = self.plant.GetPositions(self.context)
-        v = self.plant.GetVelocities(self.context)
+        v_integ = result.GetSolution(v_next)
+        q_integ = q_integ + self.dt * v_integ
+        if self.open_loop and self.should_save:
+            self.plant.SetPositions(self.context_integ, q_integ)
 
         # Do basic ID, but closing loop on actual (not integrated).
         M, C, tau_g = calc_dynamics(self.plant, self.context)

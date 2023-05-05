@@ -401,7 +401,7 @@ def load_crazy_traj(*, as_spline=True):
 def log_main():
     q0, traj, t_f = load_crazy_traj(as_spline=True)
     make_controllers = {
-        "osc": make_controller_osc,
+        # "osc": make_controller_osc,
         "diff ik": make_controller_diff_ik,
     }
 
