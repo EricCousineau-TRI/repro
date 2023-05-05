@@ -36,8 +36,10 @@ from control_study.misc import (
     DirectPlant,
     EulerAccelPlant,
     SimpleLogger,
+    load_pickle,
     make_sample_pose_traj,
     make_sim_setup,
+    np_print_more_like_matlab,
     unzip,
 )
 
@@ -46,12 +48,12 @@ CONTROL_DT = 0.002
 DISCRETE_PLANT_TIME_STEP = 0.0008
 
 
-def run_spatial_waypoints(
+def run_control(
     *,
     make_controller,
-    X_extr,
-    X_intr,
-    dT,
+    make_traj,
+    q0,
+    X_WB=RigidTransform(),
 ):
     plant_time_step = DISCRETE_PLANT_TIME_STEP
     control_dt = CONTROL_DT
@@ -59,7 +61,7 @@ def run_spatial_waypoints(
     # control_dt = None
 
     plant_diagram, plant, scene_graph, frame_G = make_sim_setup(
-        plant_time_step
+        plant_time_step, X_WB
     )
     frame_W = plant.world_frame()
 
@@ -104,13 +106,11 @@ def run_spatial_waypoints(
     diagram_context = diagram.CreateDefaultContext()
     context = access.read_plant_context(diagram_context)
 
-    # Simple bent-elbow and wrist-down pose.
-    q0 = np.deg2rad([0.0, 15.0, 0.0, -75.0, 0.0, 90.0, 0.0])
     plant.SetPositions(context, q0)
 
     X_WG = plant.CalcRelativeTransform(context, frame_W, frame_G)
-    traj_saturate, t_f = make_sample_pose_traj(dT, X_WG, X_extr, X_intr)
-    controller.traj = traj_saturate
+    traj, t_f = make_traj(X_WG)
+    controller.traj = traj
 
     access.write_plant_context(diagram_context, context)
 
@@ -139,7 +139,7 @@ def run_spatial_waypoints(
 
     try:
         # Run a bit past the end of trajectory.
-        simulator.AdvanceTo(t_f + dT)
+        simulator.AdvanceTo(t_f)
         # simulator.AdvanceTo(1.25)
         # simulator.AdvanceTo(1.5)  # HACK
         simulator.AdvancePendingEvents()
@@ -157,6 +157,27 @@ def run_spatial_waypoints(
     qs, Vs = unzip(logger.log)
     qs, Vs = map(np.array, (qs, Vs))
     return qs, Vs
+
+
+def run_spatial_waypoints(
+    *,
+    make_controller,
+    X_extr,
+    X_intr,
+    dT,
+):
+    def make_traj(X_WG):
+        traj_saturate, t_f = make_sample_pose_traj(dT, X_WG, X_extr, X_intr)
+        t_f += dT
+        return traj_saturate, t_f
+
+    # Simple bent-elbow and wrist-down pose.
+    q0 = np.deg2rad([0.0, 15.0, 0.0, -75.0, 0.0, 90.0, 0.0])
+    return run_control(
+        make_controller=make_controller,
+        make_traj=make_traj,
+        q0=q0,
+    )
 
 
 def run_rotation_coupling(make_controller):
@@ -297,15 +318,7 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
     return controller
 
 
-def np_print_more_like_matlab():
-    np.set_printoptions(
-        formatter={"float_kind": lambda x: f"{x: 06.3f}"},
-        linewidth=150,
-    )
-
-
-@debug.iex
-def main():
+def scenario_main():
     np_print_more_like_matlab()
     scenarios = {
         # "slow": run_slow_waypoints,
@@ -328,6 +341,37 @@ def main():
             except (RuntimeError, AssertionError) as e:
                 print(e)
                 raise  # wip
+
+
+def log_main():
+    data = load_pickle("./data/osc_wrap_sim_panda.pkl")
+    tape = data.tape
+    q0 = data.q0
+
+    # Only for discretized control!
+    i = 0
+    t_f = tape[-1].t
+
+    def traj(t):
+        nonlocal i
+        if t > tape[i].t:
+            i += 1
+        item = tape[i]
+        assert item.t == t
+        return item.X_des, item.V_des, item.A_des
+
+    return run_control(
+        make_controller=make_controller_osc,
+        make_traj=lambda X_WG: (traj, t_f),
+        q0=q0,
+        X_WB=RigidTransform([-0.75, 0.0, -0.2]),
+    )
+
+
+@debug.iex
+def main():
+    # scenario_main()
+    log_main()
 
 
 if __name__ == "__main__":
