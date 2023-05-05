@@ -57,10 +57,10 @@ def run_control(
     q0,
     X_WB=RigidTransform(),
 ):
-    plant_time_step = DISCRETE_PLANT_TIME_STEP
-    control_dt = CONTROL_DT
-    # plant_time_step = 0.0
-    # control_dt = None
+    # plant_time_step = DISCRETE_PLANT_TIME_STEP
+    # control_dt = CONTROL_DT
+    plant_time_step = 0.0
+    control_dt = None
 
     plant_diagram, plant, scene_graph, frame_G = make_sim_setup(
         plant_time_step, X_WB
@@ -405,7 +405,7 @@ def scenario_main():
     }
     make_controllers = {
         "osc": make_controller_osc,
-        # "diff ik": make_controller_diff_ik,
+        "diff ik": make_controller_diff_ik,
         # "qp costs": make_controller_qp_costs,
         # "qp constr": make_controller_qp_constraints,
     }
@@ -415,7 +415,7 @@ def scenario_main():
             print(f"  {controller_name}")
             try:
                 scenario(make_controller)
-            except (RuntimeError, AssertionError) as e:
+            except (RuntimeError, AssertionError, KeyboardInterrupt) as e:
                 print(e)
                 # raise  # wip
 

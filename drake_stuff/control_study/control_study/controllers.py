@@ -299,7 +299,9 @@ class Osc(BaseController):
         ed_p = v
         edd_p_c = -kp_p * e_p - kd_p * ed_p
         Fp = M @ edd_p_c
-        print(Fp)
+
+        # Nt_T = calc_null(Jt)  # HACK
+        print(Nt_T @ Fp)
 
         # Sum up tasks and cancel gravity + Coriolis terms.
         tau = Jt.T @ Ft + Nt_T @ Fp + C - tau_g
