@@ -166,7 +166,7 @@ def reproject_mass(Minv, Jt):
 def calc_null(J):
     n = J.shape[1]
     I = np.eye(n)
-    N = I - J.T @ np.linalg.pinv(J).T
+    N = I - np.linalg.pinv(J) @ J
     return N
 
 
@@ -181,7 +181,7 @@ class DiffIkAndId(BaseController):
 
         # Hacky state.
         self.should_save = False
-        self.open_loop = True
+        self.open_loop = False
         self.context_integ = None
 
     def calc_control(self, t, pose_actual, pose_desired, q0):
@@ -214,16 +214,18 @@ class DiffIkAndId(BaseController):
         e_ti = se3_vector_minus(X, X_des)
         ed_ti_c = -kp_ti * e_ti
         # Posture feedback (integrated, so "pi").
-        # Drive towards v = ed_pi_c = -k*e_pi in null-space Pt.
-        Pt = calc_null(Jt)
+        # Drive towards v = ed_pi_c = -k*e_pi in null-space Nt.
+        Nt = calc_null(Jt)
         e_pi = q_integ - q0
         ed_pi_c = -kp_pi * e_pi
+        # # hack
+        # ed_pi_c *= -1
 
         direct_solve = True
 
         if direct_solve:
             Jtpinv = np.linalg.pinv(Jt)
-            v_integ = Jtpinv @ ed_ti_c + Pt @ ed_pi_c
+            v_integ = Jtpinv @ ed_ti_c + Nt @ ed_pi_c
         else:
             # Formulate optimization.
             prog = MathematicalProgram()
@@ -233,9 +235,9 @@ class DiffIkAndId(BaseController):
             alpha = prog.NewContinuousVariables(1, "alpha")
             # Scaling.
             weight = 100.0
-            # prog.AddLinearCost([-weight], alpha)
-            weight_s = np.sqrt(weight)
-            prog.Add2NormSquaredCost([weight_s], [weight_s * 1.0], alpha)
+            prog.AddLinearCost([-weight], alpha)
+            # weight_s = np.sqrt(weight)
+            # prog.Add2NormSquaredCost([weight_s], [weight_s * 1.0], alpha)
             prog.AddBoundingBoxConstraint([0.0], [1.0], alpha)
             # Jt*v_next = alpha*ed_ti_c
             prog.AddLinearEqualityConstraint(
@@ -243,9 +245,9 @@ class DiffIkAndId(BaseController):
                 np.zeros(num_t),
                 np.hstack([v_next, alpha]),
             )
-            # Null-space via cost as |Pt (v - ed_pi_c)|^2
-            prog.Add2NormSquaredCost(Pt, Pt @ ed_pi_c, v_next)
-            # prog.AddLinearEqualityConstraint(Pt, Pt @ ed_pi_c, v_next)
+            # Null-space via cost as |Nt (v - ed_pi_c)|^2
+            prog.Add2NormSquaredCost(Nt, Nt @ ed_pi_c, v_next)
+            # prog.AddLinearEqualityConstraint(Nt, Nt @ ed_pi_c, v_next)
             # Solve.
             result = solve_or_die(self.solver, self.solver_options, prog)
             v_integ = result.GetSolution(v_next)

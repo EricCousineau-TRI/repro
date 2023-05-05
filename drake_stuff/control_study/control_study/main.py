@@ -339,7 +339,6 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
 
 
 def scenario_main():
-    np_print_more_like_matlab()
     scenarios = {
         # "slow": run_slow_waypoints,
         # "rot": run_rotation_coupling,
@@ -404,7 +403,7 @@ def load_crazy_traj(*, as_spline=True):
 def log_main():
     q0, traj, t_f = load_crazy_traj(as_spline=True)
     make_controllers = {
-        "osc": make_controller_osc,
+        # "osc": make_controller_osc,
         "diff ik": make_controller_diff_ik,
     }
 
@@ -420,6 +419,7 @@ def log_main():
 
 @debug.iex
 def main():
+    np_print_more_like_matlab()
     # scenario_main()
     log_main()
 
