@@ -57,10 +57,10 @@ def run_control(
     q0,
     X_WB=RigidTransform(),
 ):
-    # plant_time_step = DISCRETE_PLANT_TIME_STEP
-    # control_dt = CONTROL_DT
-    plant_time_step = 0.0
-    control_dt = None
+    plant_time_step = DISCRETE_PLANT_TIME_STEP
+    control_dt = CONTROL_DT
+    # plant_time_step = 0.0
+    # control_dt = None
 
     plant_diagram, plant, scene_graph, frame_G = make_sim_setup(
         plant_time_step, X_WB
@@ -124,7 +124,7 @@ def run_control(
     # ApplySimulatorConfig(config, simulator)
     simulator_initialize_repeatedly(simulator)
 
-    def monitor(_):
+    def continuous_monitor(_):
         controller.should_save = True
         assert torques_output.get_system() is controller
         context = controller.GetMyContextFromRoot(diagram_context)
@@ -132,7 +132,7 @@ def run_control(
         controller.should_save = False
 
     if control_dt is None:
-        simulator.set_monitor(monitor)
+        simulator.set_monitor(continuous_monitor)
     else:
         # ZOH means each step is actual step.
         controller.should_save = True
@@ -153,7 +153,7 @@ def run_control(
             pass
         raise
 
-    controller.show_plots()
+    # controller.show_plots()
 
     # Return logged values.
     qs, Vs = unzip(logger.log)
@@ -336,15 +336,16 @@ def scenario_main():
     np_print_more_like_matlab()
     scenarios = {
         # "slow": run_slow_waypoints,
-        # "rot": run_rotation_coupling,
+        "rot": run_rotation_coupling,
         # "fast": run_fast_waypoints,
-        "fast singular": partial(run_fast_waypoints_singular, rotate=False),
+        # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
         # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
         # "osc": make_controller_osc,
+        "diff ik": make_controller_diff_ik,
         # "qp costs": make_controller_qp_costs,
-        "qp constr": make_controller_qp_constraints,
+        # "qp constr": make_controller_qp_constraints,
     }
     for scenario_name, scenario in scenarios.items():
         print(scenario_name)
@@ -407,8 +408,8 @@ def log_main():
 
 @debug.iex
 def main():
-    # scenario_main()
-    log_main()
+    scenario_main()
+    # log_main()
 
 
 if __name__ == "__main__":

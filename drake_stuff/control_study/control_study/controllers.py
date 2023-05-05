@@ -173,18 +173,22 @@ class DiffIkAndId(BaseController):
 
         # Hacky state.
         self.should_save = False
-        self.q0 = None
-        self.q_integ = None
+        self.context_integ = None
 
     def calc_control(self, t, pose_actual, pose_desired, q0):
-        if self.q_integ is None:
-            self.q0 = q0
-            self.q_integ = q0
+        if self.context_integ is None:
+            self.context_integ = self.plant.CreateDefaultContext()
+            self.plant.SetPositions(self.context_integ, q0)
+        q_integ = self.plant.GetPositions(self.context_integ)
 
         # Compute desired joint velocity from diff ik.
 
         # Compute error in SE(3).
-        X, _, Jt, _ = pose_actual
+        # X, _, Jt, _ = pose_actual
+        pose_integ = calc_spatial_values(
+            self.plant, self.context_integ, self.frame_W, self.frame_G
+        )
+        X, _, Jt, _ = pose_integ
         X_des, _, _ = pose_desired
         e_t = se3_vector_minus(X, X_des)
         # Formulate optimization.
@@ -204,14 +208,17 @@ class DiffIkAndId(BaseController):
         )
         # Null-space.
         Pt = calc_null(Jt)
-        e_integ_p = self.q_integ - self.q0
+        e_integ_p = q_integ - q0
         k_p_integ = 1.0
         ed_p_c = -k_p_integ * e_integ_p
         prog.Add2NormSquaredCost(Pt, Pt @ ed_p_c, v_next)
         # Solve.
         result = solve_or_die(self.solver, self.solver_options, prog)
         v_integ = result.GetSolution(v_next)
-        self.q_integ = self.q_integ + self.dt * v_integ
+        q_integ = q_integ + self.dt * v_integ
+
+        if self.should_save:
+            self.plant.SetPositions(self.context_integ, q_integ)
 
         # Internal integration.
         q = self.plant.GetPositions(self.context)
@@ -220,7 +227,7 @@ class DiffIkAndId(BaseController):
         # Do basic ID.
         M, C, tau_g = calc_dynamics(self.plant, self.context)
         H = C - tau_g
-        e_p = q - self.q_integ
+        e_p = q - q_integ
         ed_p = v - v_integ
         edd_c_p = -self.gains_p.kp * e_p - self.gains_p.kd * ed_p
         u = M @ edd_c_p + H
