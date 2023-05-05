@@ -233,12 +233,17 @@ def make_osc_gains():
     # return OscGains.critically_damped(10.0, 0.0)  # like diff ik
     return OscGains(
         task=Gains.critically_damped(10.0),
-        posture=Gains(kp=-100.0, kd=20.0),
+        # posture=Gains(kp=100.0, kd=20.0),  # unstable (towards end)
+        # posture=Gains(kp=0.0, kd=20.0),  # stable
+        posture=Gains(kp=-100.0, kd=20.0),  # stable?!!!
+        # posture=Gains(kp=-100.0, kd=-20.0),  # unstable
+        # posture=Gains(kp=0.0, kd=-20.0),  # unstable
+        # posture=Gains(kp=100.0, kd=-20.0),  # unstable
     )
     # return OscGains.critically_damped(10.0, 100.0)  # goes crazy
 
     # return OscGains.critically_damped(1.0, 1.0)
-    return OscGains.critically_damped(10.0, 10.0)
+    # return OscGains.critically_damped(10.0, 10.0)
     # return OscGains.critically_damped(10.0, 1.0)
     # return OscGains.critically_damped(100.0, 100.0)
     # return OscGains.critically_damped(100.0, 10.0)
