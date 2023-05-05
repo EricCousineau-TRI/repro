@@ -233,9 +233,10 @@ def make_osc_gains():
     # return OscGains.critically_damped(10.0, 0.0)  # like diff ik
     return OscGains(
         task=Gains.critically_damped(10.0),
-        # posture=Gains(kp=100.0, kd=20.0),  # unstable (towards end)
+        # stability is noted for teleop trajectory case...
+        posture=Gains(kp=100.0, kd=20.0),  # unstable (towards end)
         # posture=Gains(kp=0.0, kd=20.0),  # stable
-        posture=Gains(kp=-100.0, kd=20.0),  # stable?!!!
+        # posture=Gains(kp=-100.0, kd=20.0),  # stable?!!!
         # posture=Gains(kp=-100.0, kd=-20.0),  # unstable
         # posture=Gains(kp=0.0, kd=-20.0),  # unstable
         # posture=Gains(kp=100.0, kd=-20.0),  # unstable
@@ -347,32 +348,7 @@ def make_controller_qp_constraints(plant, frame_W, frame_G):
     return controller
 
 
-def scenario_main():
-    scenarios = {
-        # "slow": run_slow_waypoints,
-        # "rot": run_rotation_coupling,
-        "fast": run_fast_waypoints,
-        # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
-        # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
-    }
-    make_controllers = {
-        "osc": make_controller_osc,
-        "diff ik": make_controller_diff_ik,
-        # "qp costs": make_controller_qp_costs,
-        # "qp constr": make_controller_qp_constraints,
-    }
-    for scenario_name, scenario in scenarios.items():
-        print(scenario_name)
-        for controller_name, make_controller in make_controllers.items():
-            print(f"  {controller_name}")
-            try:
-                scenario(make_controller)
-            except (RuntimeError, AssertionError) as e:
-                print(e)
-                raise  # wip
-
-
-def load_crazy_traj(*, as_spline=True):
+def load_teleop_traj(*, as_spline=True):
     data = load_pickle("./data/osc_wrap_sim_panda.pkl")
     tape = data.tape
     q0 = data.q0
@@ -408,29 +384,46 @@ def load_crazy_traj(*, as_spline=True):
     return q0, traj, t_f
 
 
+def run_teleop_traj(make_controller):
+    q0, traj, t_f = load_teleop_traj(as_spline=True)
+    run_control(
+        make_controller=make_controller,
+        make_traj=lambda X_WG: (traj, t_f),
+        q0=q0,
+        X_WB=RigidTransform([-0.75, 0.0, -0.2]),
+    )
 
-def log_main():
-    q0, traj, t_f = load_crazy_traj(as_spline=True)
+
+def scenario_main():
+    scenarios = {
+        # "slow": run_slow_waypoints,
+        # "rot": run_rotation_coupling,
+        "teleop": run_teleop_traj,
+        "fast": run_fast_waypoints,
+        # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
+        # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
+    }
     make_controllers = {
         "osc": make_controller_osc,
         # "diff ik": make_controller_diff_ik,
+        # "qp costs": make_controller_qp_costs,
+        # "qp constr": make_controller_qp_constraints,
     }
-
-    for name, make_controller in make_controllers.items():
-        print(name)
-        run_control(
-            make_controller=make_controller,
-            make_traj=lambda X_WG: (traj, t_f),
-            q0=q0,
-            X_WB=RigidTransform([-0.75, 0.0, -0.2]),
-        )
+    for scenario_name, scenario in scenarios.items():
+        print(scenario_name)
+        for controller_name, make_controller in make_controllers.items():
+            print(f"  {controller_name}")
+            try:
+                scenario(make_controller)
+            except (RuntimeError, AssertionError) as e:
+                print(e)
+                # raise  # wip
 
 
 @debug.iex
 def main():
     np_print_more_like_matlab()
-    # scenario_main()
-    log_main()
+    scenario_main()
 
 
 if __name__ == "__main__":
