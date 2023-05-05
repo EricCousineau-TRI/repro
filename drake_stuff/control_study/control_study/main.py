@@ -234,9 +234,9 @@ def make_osc_gains():
     return OscGains(
         task=Gains.critically_damped(10.0),
         # stability is noted for teleop trajectory case...
-        # posture=Gains(kp=100.0, kd=20.0),  # unstable (towards end)
+        posture=Gains(kp=100.0, kd=20.0),  # unstable (towards end)
         # posture=Gains(kp=0.0, kd=20.0),  # stable
-        posture=Gains(kp=-100.0, kd=20.0),  # stable?!!!
+        # posture=Gains(kp=-100.0, kd=20.0),  # stable?!!!
         # posture=Gains(kp=-100.0, kd=-20.0),  # unstable
         # posture=Gains(kp=0.0, kd=-20.0),  # unstable
         # posture=Gains(kp=100.0, kd=-20.0),  # unstable
@@ -404,7 +404,7 @@ def scenario_main():
         # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
-        "diff ik": make_controller_diff_ik,
+        # "diff ik": make_controller_diff_ik,
         "osc": make_controller_osc,
         # "qp costs": make_controller_qp_costs,
         # "qp constr": make_controller_qp_constraints,

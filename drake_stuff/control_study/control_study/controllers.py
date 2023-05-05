@@ -155,6 +155,13 @@ def reproject_mass(Minv, Jt):
     Mtinv = Jt @ Minv @ Jt.T
     # Maps from task accelerations to task forces.
     Mt = np.linalg.inv(Mtinv)
+
+    # # HACK
+    # Jtpinv = np.linalg.pinv(Jt)
+    # M = np.linalg.inv(Minv)
+    # Mt = Jtpinv.T @ M @ Jtpinv
+    # Mtinv = np.linalg.inv(Mt)
+
     # Maps from task accelerations to generalized accelerations.
     # Transpose maps from generalized forces to task forces.
     Jtbar = Minv @ Jt.T @ Mt
@@ -276,6 +283,7 @@ class Osc(BaseController):
 
     def calc_control(self, t, pose_actual, pose_desired, q0):
         M, C, tau_g = calc_dynamics(self.plant, self.context)
+        H = C - tau_g
         Minv = inv(M)
         q = self.plant.GetPositions(self.context)
         v = self.plant.GetVelocities(self.context)
@@ -285,13 +293,14 @@ class Osc(BaseController):
 
         # Compute spatial feedback.
         X, V, Jt, Jtdot_v = pose_actual
-        Mt, _, Jt, _, Nt_T = reproject_mass(Minv, Jt)
+        Mt, _, _, _, Nt_T = reproject_mass(Minv, Jt)
         X_des, V_des, A_des = pose_desired
         V_des = V_des.get_coeffs()
         A_des = A_des.get_coeffs()
         e_t = se3_vector_minus(X, X_des)
         ed_t = V - V_des
         edd_t_c = A_des - kp_t * e_t - kd_t * ed_t
+        # edd_t_c = -kp_t * e_t - kd_t * ed_t
         Ft = Mt @ (edd_t_c - Jtdot_v)
 
         # Compute posture feedback.
@@ -301,10 +310,12 @@ class Osc(BaseController):
         Fp = M @ edd_p_c
 
         # Nt_T = calc_null(Jt)  # HACK
-        print(Nt_T @ Fp)
+        # print(Nt_T @ Fp)
+        _, s, _ = np.linalg.svd(Jt)
+        print(s)
 
         # Sum up tasks and cancel gravity + Coriolis terms.
-        tau = Jt.T @ Ft + Nt_T @ Fp + C - tau_g
+        tau = H + Jt.T @ Ft + Nt_T @ Fp
         return tau
 
 
