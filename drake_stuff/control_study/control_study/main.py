@@ -57,10 +57,10 @@ def run_control(
     q0,
     X_WB=RigidTransform(),
 ):
-    # plant_time_step = DISCRETE_PLANT_TIME_STEP
-    # control_dt = CONTROL_DT
-    plant_time_step = 0.0
-    control_dt = None
+    plant_time_step = DISCRETE_PLANT_TIME_STEP
+    control_dt = CONTROL_DT
+    # plant_time_step = 0.0
+    # control_dt = None
 
     plant_diagram, plant, scene_graph, frame_G = make_sim_setup(
         plant_time_step, X_WB
@@ -234,9 +234,9 @@ def make_osc_gains():
     return OscGains(
         task=Gains.critically_damped(10.0),
         # stability is noted for teleop trajectory case...
-        posture=Gains(kp=100.0, kd=20.0),  # unstable (towards end)
+        # posture=Gains(kp=100.0, kd=20.0),  # unstable (towards end)
         # posture=Gains(kp=0.0, kd=20.0),  # stable
-        # posture=Gains(kp=-100.0, kd=20.0),  # stable?!!!
+        posture=Gains(kp=-100.0, kd=20.0),  # stable?!!!
         # posture=Gains(kp=-100.0, kd=-20.0),  # unstable
         # posture=Gains(kp=0.0, kd=-20.0),  # unstable
         # posture=Gains(kp=100.0, kd=-20.0),  # unstable
@@ -398,14 +398,14 @@ def scenario_main():
     scenarios = {
         # "slow": run_slow_waypoints,
         # "rot": run_rotation_coupling,
+        # "fast": run_fast_waypoints,
         "teleop": run_teleop_traj,
-        "fast": run_fast_waypoints,
         # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
         # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
-        "osc": make_controller_osc,
         "diff ik": make_controller_diff_ik,
+        "osc": make_controller_osc,
         # "qp costs": make_controller_qp_costs,
         # "qp constr": make_controller_qp_constraints,
     }
