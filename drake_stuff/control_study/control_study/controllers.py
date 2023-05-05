@@ -170,10 +170,12 @@ def reproject_mass(Minv, Jt):
     return Mt, Mtinv, Jt, Jtbar, Nt_T
 
 
-def calc_null(J):
+def calc_null(J, Jpinv=None):
     n = J.shape[1]
     I = np.eye(n)
-    N = I - np.linalg.pinv(J) @ J
+    if Jpinv is None:
+        Jpinv = np.linalg.pinv(J)
+    N = I - Jpinv @ J
     return N
 
 
@@ -273,6 +275,44 @@ class DiffIkAndId(BaseController):
         edd_c_p = -kp_p * e_p - kd_p * ed_p
         u = M @ edd_c_p + H
         return u
+
+
+class ResolvedAcc(BaseController):
+    """I think resolved accel."""
+    def __init__(self, plant, frame_W, frame_G, gains):
+        super().__init__(plant, frame_W, frame_G)
+        self.gains = gains
+
+    def calc_control(self, t, pose_actual, pose_desired, q0):
+        M, C, tau_g = calc_dynamics(self.plant, self.context)
+        H = C - tau_g
+        q = self.plant.GetPositions(self.context)
+        v = self.plant.GetVelocities(self.context)
+
+        (kp_t, kd_t) = self.gains.task
+        (kp_p, kd_p) = self.gains.posture
+
+        # Compute spatial feedback.
+        X, V, Jt, Jtdot_v = pose_actual
+        X_des, V_des, A_des = pose_desired
+        V_des = V_des.get_coeffs()
+        A_des = A_des.get_coeffs()
+        e_t = se3_vector_minus(X, X_des)
+        ed_t = V - V_des
+        edd_t_c = A_des - kp_t * e_t - kd_t * ed_t
+
+        # Compute posture feedback.
+        e_p = q - q0
+        ed_p = v
+        edd_p_c = -kp_p * e_p - kd_p * ed_p
+
+        Jtpinv = np.linalg.pinv(Jt)
+        Nt = calc_null(Jt, Jtpinv)
+
+        # Sum up tasks and cancel gravity + Coriolis terms.
+        vd_c = Jtpinv @ edd_t_c + Nt @ edd_p_c
+        tau = H + M @ vd_c
+        return tau
 
 
 class Osc(BaseController):

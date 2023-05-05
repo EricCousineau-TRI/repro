@@ -19,6 +19,7 @@ from control_study.controllers import (
     OscGains,
     QpWithCosts,
     QpWithDirConstraint,
+    ResolvedAcc,
 )
 from control_study.limits import PlantLimits
 from control_study.multibody_extras import (
@@ -296,6 +297,17 @@ def make_controller_osc(plant, frame_W, frame_G):
     return controller
 
 
+def make_controller_resolved_acc(plant, frame_W, frame_G):
+    controller = ResolvedAcc(
+        plant,
+        frame_W,
+        frame_G,
+        gains=make_osc_gains(),
+    )
+    controller.check_limits = False
+    return controller
+
+
 def make_controller_diff_ik(plant, frame_W, frame_G):
     controller = DiffIkAndId(
         plant,
@@ -405,6 +417,7 @@ def scenario_main():
     }
     make_controllers = {
         # "diff ik": make_controller_diff_ik,
+        "acc": make_controller_resolved_acc,
         "osc": make_controller_osc,
         # "qp costs": make_controller_qp_costs,
         # "qp constr": make_controller_qp_constraints,
