@@ -216,7 +216,10 @@ class DiffIkAndId(BaseController):
         v_next = prog.NewContinuousVariables(num_v, "v_next")
         alpha = prog.NewContinuousVariables(1, "alpha")
         # Scaling.
-        prog.AddLinearCost([-100.0], alpha)
+        weight = 100.0
+        # prog.AddLinearCost([-weight], alpha)
+        weight_s = np.sqrt(weight)
+        prog.Add2NormSquaredCost([weight_s], [weight_s * 1.0], alpha)
         prog.AddBoundingBoxConstraint([0.0], [1.0], alpha)
         # Jt*v_next = alpha*ed_ti_c
         prog.AddLinearEqualityConstraint(
@@ -231,6 +234,8 @@ class DiffIkAndId(BaseController):
         kp_pi = 10.0
         ed_pi_c = -kp_pi * e_pi
         prog.Add2NormSquaredCost(Pt, Pt @ ed_pi_c, v_next)
+        # prog.AddLinearEqualityConstraint(Pt, Pt @ ed_pi_c, v_next)
+
         # Solve.
         result = solve_or_die(self.solver, self.solver_options, prog)
 

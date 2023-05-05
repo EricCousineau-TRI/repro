@@ -339,13 +339,13 @@ def scenario_main():
     np_print_more_like_matlab()
     scenarios = {
         # "slow": run_slow_waypoints,
-        "rot": run_rotation_coupling,
-        # "fast": run_fast_waypoints,
+        # "rot": run_rotation_coupling,
+        "fast": run_fast_waypoints,
         # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
         # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
-        "osc": make_controller_osc,
+        # "osc": make_controller_osc,
         "diff ik": make_controller_diff_ik,
         # "qp costs": make_controller_qp_costs,
         # "qp constr": make_controller_qp_constraints,
@@ -417,8 +417,8 @@ def log_main():
 
 @debug.iex
 def main():
-    # scenario_main()
-    log_main()
+    scenario_main()
+    # log_main()
 
 
 if __name__ == "__main__":
