@@ -140,6 +140,7 @@ def run_control(
         controller.should_save = True
 
     m.SHOULD_STOP = True
+    do_plot = False
 
     try:
         # Run a bit past the end of trajectory.
@@ -151,11 +152,13 @@ def run_control(
         err_name = type(e).__name__
         print(f"{err_name} at {diagram_context.get_time()}s")
         if isinstance(e, (RuntimeError, KeyboardInterrupt)):
-            controller.show_plots()
+            if do_plot:
+                controller.show_plots()
             pass
         raise
 
-    controller.show_plots()
+    if do_plot:
+        controller.show_plots()
 
     # Return logged values.
     qs, Vs = unzip(logger.log)
@@ -414,16 +417,16 @@ def scenario_main():
         # "slow": run_slow_waypoints,
         # "rot": run_rotation_coupling,
         # "fast": run_fast_waypoints,
-        "teleop": run_teleop_traj,
+        # "teleop": run_teleop_traj,
         # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
-        # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
+        "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
         # "diff ik": make_controller_diff_ik,
         # "acc": make_controller_resolved_acc,
-        "osc": make_controller_osc,
+        # "osc": make_controller_osc,
         # "qp costs": make_controller_qp_costs,
-        # "qp constr": make_controller_qp_constraints,
+        "qp constr": make_controller_qp_constraints,
     }
     for scenario_name, scenario in scenarios.items():
         print(scenario_name)
