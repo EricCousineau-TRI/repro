@@ -367,11 +367,12 @@ class Osc(BaseController):
         e_p_orig = e_p.copy()
         # TODO(eric.cousineau): Find more prinicipled setup?
         e_p_dir = vec_dot_norm(e_p, Nt @ e_p)
-        # e_p = Nt_kin @ e_pq
-        # e_p_dir = vec_dot_norm(Nt_kin @ e_p, Nt @ e_p)
+        e_p *= e_p_dir  # seems ok
+        # e_p = Nt_kin @ e_p  # decent, but more null-space error
+        # e_p = Nt @ e_p  # doesn't help failing case
+        # e_p_dir = vec_dot_norm(Nt_kin @ e_p, Nt @ e_p)  # very... discrete?
         # F_e_p = M @ e_p
         # e_p_dir = vec_dot_norm(F_e_p, Nt_T @ F_e_p)
-        e_p *= e_p_dir
         # e_p *= np.sign(e_p_dir)
         # e_p *= np.sign(e_p * (Nt @ e_p))
 
