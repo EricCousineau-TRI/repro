@@ -315,11 +315,27 @@ class ResolvedAcc(BaseController):
         return tau
 
 
+def vec_dot_norm(a, b, *, tol=1e-8):
+    n = np.linalg.norm(a) * np.linalg.norm(b)
+    if n <= tol:
+        return 0.0
+    else:
+        # arcos of this value gives angle.
+        return a.dot(b) / n
+
+
 class Osc(BaseController):
     """Explicit OSC."""
     def __init__(self, plant, frame_W, frame_G, gains):
         super().__init__(plant, frame_W, frame_G)
         self.gains = gains
+
+        self.should_save = False
+        self.ts = []
+        self.e_p_dirs = []
+        self.e_ps = []
+        self.e_ps_null_acc = []
+        self.e_ps_null_force = []
 
     def calc_control(self, t, pose_actual, pose_desired, q0):
         M, C, tau_g = calc_dynamics(self.plant, self.context)
@@ -334,6 +350,7 @@ class Osc(BaseController):
         # Compute spatial feedback.
         X, V, Jt, Jtdot_v = pose_actual
         Mt, _, _, _, Nt_T = reproject_mass(Minv, Jt)
+        Nt = Nt_T.T
         X_des, V_des, A_des = pose_desired
         V_des = V_des.get_coeffs()
         A_des = A_des.get_coeffs()
@@ -343,20 +360,65 @@ class Osc(BaseController):
         # edd_t_c = -kp_t * e_t - kd_t * ed_t
         Ft = Mt @ (edd_t_c - Jtdot_v)
 
+        Nt_kin = calc_null(Jt)
+
         # Compute posture feedback.
         e_p = q - q0
+        e_p_orig = e_p.copy()
+        # TODO(eric.cousineau): Find more prinicipled setup?
+        e_p_dir = vec_dot_norm(e_p, Nt @ e_p)
+        # e_p = Nt_kin @ e_pq
+        # e_p_dir = vec_dot_norm(Nt_kin @ e_p, Nt @ e_p)
+        # F_e_p = M @ e_p
+        # e_p_dir = vec_dot_norm(F_e_p, Nt_T @ F_e_p)
+        e_p *= e_p_dir
+        # e_p *= np.sign(e_p_dir)
+        # e_p *= np.sign(e_p * (Nt @ e_p))
+
         ed_p = v
         edd_p_c = -kp_p * e_p - kd_p * ed_p
         Fp = M @ edd_p_c
 
-        # Nt_T = calc_null(Jt)  # HACK
-        # print(Nt_T @ Fp)
-        _, s, _ = np.linalg.svd(Jt)
-        print(s)
-
         # Sum up tasks and cancel gravity + Coriolis terms.
         tau = H + Jt.T @ Ft + Nt_T @ Fp
+
+        if self.should_save:
+            self.ts.append(t)
+            self.e_p_dirs.append(e_p_dir)
+            self.e_ps.append(e_p_orig)
+            self.e_ps_null_acc.append(Nt @ e_p)
+            self.e_ps_null_force.append(Nt_T @ M @ e_p)
+
         return tau
+
+    def show_plots(self):
+        ts = np.array(self.ts)
+        e_p_dirs = np.array(self.e_p_dirs)
+        e_ps = np.array(self.e_ps)
+        e_ps_null_acc = np.array(self.e_ps_null_acc)
+        e_ps_null_force = np.array(self.e_ps_null_force)
+        e_p_mags = np.linalg.norm(e_ps, axis=-1)
+
+        _, axs = plt.subplots(num=1, nrows=3)
+        plt.sca(axs[0])
+        plt.plot(ts, e_ps)
+        legend_for(e_ps)
+        plt.sca(axs[1])
+        plt.plot(ts, e_ps_null_acc)
+        plt.sca(axs[2])
+        plt.plot(ts, e_ps_null_force)
+        plt.tight_layout()
+
+        _, axs = plt.subplots(num=2, nrows=3)
+        plt.sca(axs[0])
+        plt.plot(ts, e_p_mags)
+        plt.sca(axs[1])
+        plt.plot(ts, e_p_dirs)
+        plt.sca(axs[2])
+        plt.plot(ts, e_p_mags * e_p_dirs)
+        plt.tight_layout()
+
+        plt.show()
 
 
 def make_osqp_solver_and_options(use_dairlab_settings=False):

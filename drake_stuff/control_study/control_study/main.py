@@ -151,11 +151,11 @@ def run_control(
         err_name = type(e).__name__
         print(f"{err_name} at {diagram_context.get_time()}s")
         if isinstance(e, (RuntimeError, KeyboardInterrupt)):
-            # controller.show_plots()
+            controller.show_plots()
             pass
         raise
 
-    # controller.show_plots()
+    controller.show_plots()
 
     # Return logged values.
     qs, Vs = unzip(logger.log)
@@ -364,6 +364,10 @@ def load_teleop_traj(*, as_spline=True):
     data = load_pickle("./data/osc_wrap_sim_panda.pkl")
     tape = data.tape
     q0 = data.q0
+    # Offset from pose of object in original file, to be removed from traj.
+    p_WB = np.array([-0.75, 0.0, -0.2])
+    for item in tape:
+        item.X_des = RigidTransform(-p_WB) @ item.X_des
 
     if as_spline:
         ts = np.array([item.t for item in tape])
@@ -402,7 +406,6 @@ def run_teleop_traj(make_controller):
         make_controller=make_controller,
         make_traj=lambda X_WG: (traj, t_f),
         q0=q0,
-        X_WB=RigidTransform([-0.75, 0.0, -0.2]),
     )
 
 
@@ -417,7 +420,7 @@ def scenario_main():
     }
     make_controllers = {
         # "diff ik": make_controller_diff_ik,
-        "acc": make_controller_resolved_acc,
+        # "acc": make_controller_resolved_acc,
         "osc": make_controller_osc,
         # "qp costs": make_controller_qp_costs,
         # "qp constr": make_controller_qp_constraints,
