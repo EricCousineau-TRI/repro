@@ -199,8 +199,8 @@ class ThreadSystem(LeafSystem):
         # Process = threading.Thread
         # Lock = threading.Lock
 
-        ctx = mp_dummy
-        # ctx = mp.get_context()
+        # ctx = mp_dummy
+        ctx = mp.get_context("fork")
         Process = ctx.Process
         Lock = ctx.Lock
 
