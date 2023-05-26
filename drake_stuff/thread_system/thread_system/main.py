@@ -14,6 +14,30 @@ from pydrake.all import (
 )
 
 
+def busy_sleep_until(t_next):
+    # busy wait
+    i = 1
+    coeff = 1 + 1e-5
+    while time.time() < t_next:
+        i *= coeff
+
+
+def basic_sleep_until(t_next):
+    dt = t_next - time.time()
+    dt_sleep = max(dt / 10, 1e-6)
+    while time.time() < t_next:
+        time.sleep(dt_sleep)
+
+
+def busy_sleep(dt):
+    t_next = time.time() + dt
+    busy_sleep_until(t_next)
+
+
+def rough_sleep(dt):
+    time.sleep(dt)
+
+
 class ExampleDiscreteSystem(LeafSystem):
     def __init__(self, period_sec=0.01):
         super().__init__()
@@ -21,10 +45,23 @@ class ExampleDiscreteSystem(LeafSystem):
         self.u = self.DeclareAbstractInputPort("u", Value[object]())
         state_index = self.DeclareAbstractState(Value[object]())
 
+        # Hack
+        t_next = None
+
         def on_discrete_update(context, raw_state):
             u = self.u.Eval(context)
+
             # TODO(eric.cousineau): Use more consistent sleep_until().
-            time.sleep(period_sec * 0.75)
+            busy_sleep(period_sec)
+            # nonlocal t_next
+            # if t_next is not None:
+            #     # busy_sleep_until(t_next)
+            #     # basic_sleep_until(t_next)
+            #     # rough_sleep(period_sec * 0.75)
+            #     t_next += period_sec
+            # else:
+            #     t_next = time.time() + period_sec
+
             t = context.get_time()
             print(f"t={t}, u={u}")
             abstract_state = raw_state.get_mutable_abstract_state(state_index)
@@ -137,6 +174,19 @@ def _stop_thread(thread_ref):
     thread = thread_ref()
     if thread is not None:
         thread.running = False
+        thread.join()
+
+
+_custom_atexit_queue = []
+
+
+def custom_atexit_register(func):
+    _custom_atexit_queue.append(func)
+
+
+def custom_atexit_dispatch():
+    for func in _custom_atexit_queue:
+        func()
 
 
 class ThreadSystem(LeafSystem):
@@ -191,19 +241,20 @@ class ThreadSystem(LeafSystem):
             def run(self):
                 with lock:
                     prev_system_t = system_t
-                print("Running")
                 while self.running:
                     with lock:
                         if system_t != prev_system_t:
                             prev_system_t = system_t
                             do_update()
                     time.sleep(1e-6)
-                print("Done")
 
         thread = MyThread()
         thread.daemon = True
         thread.start()
-        atexit.register(_stop_thread, weakref.ref(thread))
+        # atexit.register(_stop_thread, weakref.ref(thread))
+        custom_atexit_register(
+            functools.partial(_stop_thread, weakref.ref(thread))
+        )
 
         def set_inputs(context, raw_state):
             for name, system_input in system_inputs.items():
@@ -254,13 +305,12 @@ def main():
     period_sec = 0.01
 
     my_systems = []
-    for i in range(1):
+    for i in range(10):
         my_system = ExampleDiscreteSystem(period_sec)
         # For thread system, may hit bottleneck when GIL is not released /
         # we're not sleeping?
-        # Segfaults if period is slower than intendend system?
         my_system = builder.AddSystem(
-            wrapper_cls(my_system, period_sec=period_sec * 10)
+            wrapper_cls(my_system, period_sec=period_sec * 0.1)
         )
         builder.Connect(
             clock.get_output_port(),
@@ -283,6 +333,8 @@ def main():
     print(f"Rate: {rate}")
     y = my_system.get_output_port().Eval(my_context)
     print(f"y: {y}")
+
+    custom_atexit_dispatch()
 
 
 if __name__ == "__main__":
