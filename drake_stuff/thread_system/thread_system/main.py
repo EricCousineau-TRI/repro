@@ -166,10 +166,14 @@ class ThreadSystem(LeafSystem):
 
         # state_index = self.DeclareAbstractState(Value[object]())
 
-        def do_update():
-            system_simulator.AdvanceTo(system_t)
+        def read_outputs():
             for name, system_output in system_outputs.items():
                 system_output_values[name] = system_output.Eval(system_context)
+
+        def do_update():
+            # TODO(eric.cousineau): How to handle best-effort running?
+            system_simulator.AdvanceTo(system_t)
+            read_outputs()
 
         class MyThread(threading.Thread):
             def run(self):
@@ -203,6 +207,7 @@ class ThreadSystem(LeafSystem):
             with lock:
                 set_inputs(context, raw_state)
                 system_simulator.Initialize()
+                read_outputs()
 
         self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
 
@@ -210,6 +215,7 @@ class ThreadSystem(LeafSystem):
             nonlocal system_t
             with lock:
                 set_inputs(context, raw_state)
+                # WARNING: This is non-deterministic.
                 system_t = context.get_time()
 
         self.DeclarePeriodicUnrestrictedUpdateEvent(
@@ -237,9 +243,12 @@ def main():
     wrapper_cls = ThreadSystem
 
     my_systems = []
-    for i in range(5):
+    for i in range(1):
         my_system = ExampleDiscreteSystem()
-        my_system = builder.AddSystem(wrapper_cls(my_system, period_sec=0.0001))
+        # For thread system, may hit bottleneck when GIL is not released /
+        # we're not sleeping?
+        # Segfaults if period is slower than intendend system?
+        my_system = builder.AddSystem(wrapper_cls(my_system, period_sec=0.05))
         builder.Connect(
             clock.get_output_port(),
             my_system.get_input_port(),
