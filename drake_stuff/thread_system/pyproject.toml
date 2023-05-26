@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "thread-system"
+version = "0.1.0"
+description = ""
+authors = ["Eric Cousineau <eric.cousineau@tri.global>"]
+readme = "README.md"
+packages = [{include = "thread_system"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+drake = "^1.17.0"
+jupyterlab = "^4.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
