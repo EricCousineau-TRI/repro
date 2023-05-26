@@ -1,5 +1,7 @@
 import atexit
 import functools
+import multiprocessing as mp
+import multiprocessing.dummy as mp_dummy
 import threading
 import time
 import weakref
@@ -194,14 +196,24 @@ class ThreadSystem(LeafSystem):
         super().__init__()
         # Undeclared state!
 
+        # Process = threading.Thread
+        # Lock = threading.Lock
+
+        ctx = mp_dummy
+        # ctx = mp.get_context()
+        Process = ctx.Process
+        Lock = ctx.Lock
+
         # Critical section.
-        lock = threading.Lock()
+        lock = Lock()
+        do_init = False
         system_t = None
         system_context = system.CreateDefaultContext()
         system_simulator = Simulator(system, system_context)
 
         system_inputs = {x.get_name(): x for x in get_input_ports(system)}
         system_outputs = {x.get_name(): x for x in get_output_ports(system)}
+        system_input_values = {}
         system_output_values = {}
 
         self.inputs = {}
@@ -224,16 +236,22 @@ class ThreadSystem(LeafSystem):
 
         # state_index = self.DeclareAbstractState(Value[object]())
 
+        def set_inputs():
+            for name, system_input in system_inputs.items():
+                value = system_input_values[name]
+                system_input.FixValue(system_context, value)
+
         def read_outputs():
             for name, system_output in system_outputs.items():
                 system_output_values[name] = system_output.Eval(system_context)
 
         def do_update():
             # TODO(eric.cousineau): How to handle best-effort running?
+            set_inputs()
             system_simulator.AdvanceTo(system_t)
             read_outputs()
 
-        class MyThread(threading.Thread):
+        class MyThread(Process):
             def __init__(self):
                 super().__init__()
                 self.running = True
@@ -243,6 +261,10 @@ class ThreadSystem(LeafSystem):
                     prev_system_t = system_t
                 while self.running:
                     with lock:
+                        if do_init:
+                            set_inputs()
+                            system_simulator.Initialize()
+                            read_outputs()
                         if system_t != prev_system_t:
                             prev_system_t = system_t
                             do_update()
@@ -256,19 +278,18 @@ class ThreadSystem(LeafSystem):
             functools.partial(_stop_thread, weakref.ref(thread))
         )
 
-        def set_inputs(context, raw_state):
+        def mailbox_inputs(context, raw_state):
             for name, system_input in system_inputs.items():
                 input = self.inputs[name]
-                value = input.Eval(context)
-                system_input.FixValue(system_context, value)
+                system_input_values[name] = input.Eval(context)
 
         def on_init(context, raw_state):
             # abstract_state = raw_state.get_mutable_abstract_state(state_index)
             # abstract_state.set_value(u)
+            nonlocal do_init
             with lock:
-                set_inputs(context, raw_state)
-                system_simulator.Initialize()
-                read_outputs()
+                mailbox_inputs(context, raw_state)
+                do_init = True
 
         self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
 
@@ -276,7 +297,7 @@ class ThreadSystem(LeafSystem):
             nonlocal system_t
             with lock:
                 # WARNING: This is non-deterministic.
-                set_inputs(context, raw_state)
+                mailbox_inputs(context, raw_state)
                 system_t = context.get_time()
 
         self.DeclarePeriodicUnrestrictedUpdateEvent(
