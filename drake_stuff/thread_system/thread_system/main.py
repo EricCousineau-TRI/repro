@@ -1,6 +1,8 @@
+import atexit
 import functools
 import threading
 import time
+import weakref
 
 from pydrake.all import (
     Value,
@@ -104,8 +106,9 @@ class DirectSystem(LeafSystem):
         def set_inputs(context, raw_state):
             for name, system_input in system_inputs.items():
                 input = self.inputs[name]
-                value = input.Eval(context)
-                system_input.FixValue(system_context, value)
+                if input.HasValue(context):
+                    value = input.Eval(context)
+                    system_input.FixValue(system_context, value)
 
         def read_outputs(context, raw_state):
             for name, system_output in system_outputs.items():
@@ -130,6 +133,12 @@ class DirectSystem(LeafSystem):
         )
 
 
+def _stop_thread(thread_ref):
+    thread = thread_ref()
+    if thread is not None:
+        thread.running = False
+
+
 class ThreadSystem(LeafSystem):
     def __init__(self, system, period_sec):
         super().__init__()
@@ -138,7 +147,6 @@ class ThreadSystem(LeafSystem):
         # Critical section.
         lock = threading.Lock()
         system_t = None
-        running = True
         system_context = system.CreateDefaultContext()
         system_simulator = Simulator(system, system_context)
 
@@ -176,24 +184,26 @@ class ThreadSystem(LeafSystem):
             read_outputs()
 
         class MyThread(threading.Thread):
+            def __init__(self):
+                super().__init__()
+                self.running = True
+
             def run(self):
                 with lock:
                     prev_system_t = system_t
-                while running:
+                print("Running")
+                while self.running:
                     with lock:
                         if system_t != prev_system_t:
                             prev_system_t = system_t
                             do_update()
-
                     time.sleep(1e-6)
-
-        def on_exit():
-            nonlocal running
-            running = False
+                print("Done")
 
         thread = MyThread()
         thread.daemon = True
         thread.start()
+        atexit.register(_stop_thread, weakref.ref(thread))
 
         def set_inputs(context, raw_state):
             for name, system_input in system_inputs.items():
@@ -214,8 +224,8 @@ class ThreadSystem(LeafSystem):
         def on_discrete_update(context, raw_state):
             nonlocal system_t
             with lock:
-                set_inputs(context, raw_state)
                 # WARNING: This is non-deterministic.
+                set_inputs(context, raw_state)
                 system_t = context.get_time()
 
         self.DeclarePeriodicUnrestrictedUpdateEvent(
@@ -241,14 +251,17 @@ def main():
 
     # wrapper_cls = DirectSystem
     wrapper_cls = ThreadSystem
+    period_sec = 0.01
 
     my_systems = []
     for i in range(1):
-        my_system = ExampleDiscreteSystem()
+        my_system = ExampleDiscreteSystem(period_sec)
         # For thread system, may hit bottleneck when GIL is not released /
         # we're not sleeping?
         # Segfaults if period is slower than intendend system?
-        my_system = builder.AddSystem(wrapper_cls(my_system, period_sec=0.05))
+        my_system = builder.AddSystem(
+            wrapper_cls(my_system, period_sec=period_sec * 10)
+        )
         builder.Connect(
             clock.get_output_port(),
             my_system.get_input_port(),
