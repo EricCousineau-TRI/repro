@@ -1,4 +1,5 @@
 import functools
+import threading
 import time
 
 from pydrake.all import (
@@ -129,6 +130,93 @@ class DirectSystem(LeafSystem):
         )
 
 
+class ThreadSystem(LeafSystem):
+    def __init__(self, system, period_sec):
+        super().__init__()
+        # Undeclared state!
+
+        # Critical section.
+        lock = threading.Lock()
+        system_t = None
+        running = True
+        system_context = system.CreateDefaultContext()
+        system_simulator = Simulator(system, system_context)
+
+        system_inputs = {x.get_name(): x for x in get_input_ports(system)}
+        system_outputs = {x.get_name(): x for x in get_output_ports(system)}
+        system_output_values = {}
+
+        self.inputs = {}
+        self.outputs = {}
+
+        for name, system_input in system_inputs.items():
+            self.inputs[name] = declare_input_port(
+                self, name, system_input.Allocate()
+            )
+
+        def calc_output(name, context, output):
+            value = system_output_values[name]
+            output.set_value(value)
+
+        for name, system_output in system_outputs.items():
+            calc_output_i = functools.partial(calc_output, name)
+            self.outputs[name] = declare_output_port(
+                self, name, system_output.Allocate(), calc_output_i
+            )
+
+        # state_index = self.DeclareAbstractState(Value[object]())
+
+        def do_update():
+            system_simulator.AdvanceTo(system_t)
+            for name, system_output in system_outputs.items():
+                system_output_values[name] = system_output.Eval(system_context)
+
+        class MyThread(threading.Thread):
+            def run(self):
+                with lock:
+                    prev_system_t = system_t
+                while running:
+                    with lock:
+                        if system_t != prev_system_t:
+                            prev_system_t = system_t
+                            do_update()
+
+                    time.sleep(1e-6)
+
+        def on_exit():
+            nonlocal running
+            running = False
+
+        thread = MyThread()
+        thread.daemon = True
+        thread.start()
+
+        def set_inputs(context, raw_state):
+            for name, system_input in system_inputs.items():
+                input = self.inputs[name]
+                value = input.Eval(context)
+                system_input.FixValue(system_context, value)
+
+        def on_init(context, raw_state):
+            # abstract_state = raw_state.get_mutable_abstract_state(state_index)
+            # abstract_state.set_value(u)
+            with lock:
+                set_inputs(context, raw_state)
+                system_simulator.Initialize()
+
+        self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
+
+        def on_discrete_update(context, raw_state):
+            nonlocal system_t
+            with lock:
+                set_inputs(context, raw_state)
+                system_t = context.get_time()
+
+        self.DeclarePeriodicUnrestrictedUpdateEvent(
+            period_sec, 0.0, on_discrete_update
+        )
+
+
 class AbstractClock(LeafSystem):
     def __init__(self):
         super().__init__()
@@ -140,19 +228,18 @@ class AbstractClock(LeafSystem):
         self.DeclareAbstractOutputPort("t", Value[object], calc_t)
 
 
-# class ThreadSystem(LeafSystem):
-#     def __init__(self, system):
-
-
 def main():
     builder = DiagramBuilder()
 
     clock = builder.AddSystem(AbstractClock())
 
+    # wrapper_cls = DirectSystem
+    wrapper_cls = ThreadSystem
+
     my_systems = []
-    for i in range(2):
+    for i in range(5):
         my_system = ExampleDiscreteSystem()
-        my_system = builder.AddSystem(DirectSystem(my_system, period_sec=0.001))
+        my_system = builder.AddSystem(wrapper_cls(my_system, period_sec=0.0001))
         builder.Connect(
             clock.get_output_port(),
             my_system.get_input_port(),
