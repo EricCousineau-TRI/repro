@@ -1,4 +1,5 @@
 import atexit
+import copy
 import dataclasses as dc
 import functools
 import multiprocessing as mp
@@ -25,48 +26,27 @@ def busy_sleep_until(t_next):
         i *= coeff
 
 
-def basic_sleep_until(t_next):
-    dt = t_next - time.time()
-    dt_sleep = max(dt / 10, 1e-6)
-    while time.time() < t_next:
-        time.sleep(dt_sleep)
-
-
 def busy_sleep(dt):
     t_next = time.time() + dt
     busy_sleep_until(t_next)
 
 
-def rough_sleep(dt):
-    time.sleep(dt)
-
-
-class ExampleDiscreteSystem(LeafSystem):
-    def __init__(self, period_sec=0.01):
+class BusyDiscreteSystem(LeafSystem):
+    def __init__(self, period_sec=0.01, prefix=""):
         super().__init__()
 
         self.u = self.DeclareAbstractInputPort("u", Value[object]())
         state_index = self.DeclareAbstractState(Value[object]())
 
-        # Hack
-        t_next = None
-
         def on_discrete_update(context, raw_state):
             u = self.u.Eval(context)
 
-            # TODO(eric.cousineau): Use more consistent sleep_until().
+            # Simulate Python-based work (something that should lock up the
+            # GIL).
             busy_sleep(period_sec)
-            # nonlocal t_next
-            # if t_next is not None:
-            #     # busy_sleep_until(t_next)
-            #     # basic_sleep_until(t_next)
-            #     # rough_sleep(period_sec * 0.75)
-            #     t_next += period_sec
-            # else:
-            #     t_next = time.time() + period_sec
 
             t = context.get_time()
-            print(f"t={t}, u={u}")
+            print(f"{prefix}t={t:.3g}, u={u:.3g}")
             abstract_state = raw_state.get_mutable_abstract_state(state_index)
             abstract_state.set_value(u)
 
@@ -111,76 +91,6 @@ def get_output_ports(system):
     return out
 
 
-class DirectSystem(LeafSystem):
-    def __init__(self, system, period_sec):
-        super().__init__()
-        # Undeclared state!
-
-        system_context = system.CreateDefaultContext()
-        system_simulator = Simulator(system, system_context)
-
-        system_inputs = {x.get_name(): x for x in get_input_ports(system)}
-        system_outputs = {x.get_name(): x for x in get_output_ports(system)}
-        system_output_values = {}
-
-        self.inputs = {}
-        self.outputs = {}
-
-        for name, system_input in system_inputs.items():
-            self.inputs[name] = declare_input_port(
-                self, name, system_input.Allocate()
-            )
-
-        def calc_output(name, context, output):
-            value = system_output_values[name]
-            output.set_value(value)
-
-        for name, system_output in system_outputs.items():
-            calc_output_i = functools.partial(calc_output, name)
-            self.outputs[name] = declare_output_port(
-                self, name, system_output.Allocate(), calc_output_i
-            )
-
-        # state_index = self.DeclareAbstractState(Value[object]())
-
-        def set_inputs(context, raw_state):
-            for name, system_input in system_inputs.items():
-                input = self.inputs[name]
-                if input.HasValue(context):
-                    value = input.Eval(context)
-                    system_input.FixValue(system_context, value)
-
-        def read_outputs(context, raw_state):
-            for name, system_output in system_outputs.items():
-                system_output_values[name] = system_output.Eval(system_context)
-
-        def on_init(context, raw_state):
-            # abstract_state = raw_state.get_mutable_abstract_state(state_index)
-            # abstract_state.set_value(u)
-            set_inputs(context, raw_state)
-            system_simulator.Initialize()
-            read_outputs(context, raw_state)
-
-        self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
-
-        def on_discrete_update(context, raw_state):
-            # Simulator ZOH.
-            read_outputs(context, raw_state)
-            set_inputs(context, raw_state)
-            system_simulator.AdvanceTo(context.get_time())
-
-        self.DeclarePeriodicUnrestrictedUpdateEvent(
-            period_sec, 0.0, on_discrete_update
-        )
-
-
-def _stop_thread(thread_ref):
-    thread = thread_ref()
-    if thread is not None:
-        thread.running = False
-        thread.join()
-
-
 _custom_atexit_queue = []
 
 
@@ -191,119 +101,6 @@ def custom_atexit_register(func):
 def custom_atexit_dispatch():
     for func in _custom_atexit_queue:
         func()
-
-
-class ThreadSystem(LeafSystem):
-    def __init__(self, system, period_sec):
-        super().__init__()
-        # Undeclared state!
-        # Non-deterministic!
-
-        Process = threading.Thread
-        Lock = threading.Lock
-
-        # Critical section.
-        lock = Lock()
-        do_init = False
-        system_t = None
-        system_context = system.CreateDefaultContext()
-        system_simulator = Simulator(system, system_context)
-
-        system_inputs = {x.get_name(): x for x in get_input_ports(system)}
-        system_outputs = {x.get_name(): x for x in get_output_ports(system)}
-        system_input_values = {}
-        system_output_values = {}
-
-        self.inputs = {}
-        self.outputs = {}
-
-        for name, system_input in system_inputs.items():
-            self.inputs[name] = declare_input_port(
-                self, name, system_input.Allocate()
-            )
-
-        def calc_output(name, context, output):
-            value = system_output_values[name]
-            output.set_value(value)
-
-        for name, system_output in system_outputs.items():
-            calc_output_i = functools.partial(calc_output, name)
-            self.outputs[name] = declare_output_port(
-                self, name, system_output.Allocate(), calc_output_i
-            )
-
-        # state_index = self.DeclareAbstractState(Value[object]())
-
-        def set_inputs():
-            for name, system_input in system_inputs.items():
-                value = system_input_values[name]
-                system_input.FixValue(system_context, value)
-
-        def read_outputs():
-            for name, system_output in system_outputs.items():
-                system_output_values[name] = system_output.Eval(system_context)
-
-        def do_update():
-            # TODO(eric.cousineau): How to handle best-effort running?
-            set_inputs()
-            system_simulator.AdvanceTo(system_t)
-            read_outputs()
-
-        class MyThread(Process):
-            def __init__(self):
-                super().__init__()
-                self.running = True
-
-            def run(self):
-                with lock:
-                    prev_system_t = system_t
-                while self.running:
-                    with lock:
-                        if do_init:
-                            set_inputs()
-                            system_simulator.Initialize()
-                            read_outputs()
-                        if system_t != prev_system_t:
-                            prev_system_t = system_t
-                            do_update()
-                    time.sleep(1e-6)
-
-        thread = MyThread()
-        thread.daemon = True
-        thread.start()
-        # atexit.register(_stop_thread, weakref.ref(thread))
-        custom_atexit_register(
-            functools.partial(_stop_thread, weakref.ref(thread))
-        )
-
-        def mailbox_inputs(context, raw_state):
-            for name, system_input in system_inputs.items():
-                input = self.inputs[name]
-                system_input_values[name] = input.Eval(context)
-
-        def on_init(context, raw_state):
-            # abstract_state = raw_state.get_mutable_abstract_state(state_index)
-            # abstract_state.set_value(u)
-            nonlocal do_init
-            with lock:
-                mailbox_inputs(context, raw_state)
-                do_init = True
-
-        self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
-
-        def on_discrete_update(context, raw_state):
-            nonlocal system_t
-            with lock:
-                # WARNING: This is non-deterministic.
-                mailbox_inputs(context, raw_state)
-                system_t = context.get_time()
-
-        self.DeclarePeriodicUnrestrictedUpdateEvent(
-            period_sec, 0.0, on_discrete_update
-        )
-
-
-ctx = mp.get_context("fork")
 
 
 @dc.dataclass
@@ -318,13 +115,140 @@ class Outputs:
     system_output_values: dict
 
 
-class MpProcess(ctx.Process):
-    def __init__(self, system, system_inputs, system_outputs):
-        super().__init__()
+class SystemWorker:
+    def __init__(self, system):
         self.system = system
-        self.system_inputs = system_inputs
-        self.system_outputs = system_outputs
+        self.system_inputs = {
+            x.get_name(): x for x in get_input_ports(system)
+        }
+        self.system_outputs = {
+            x.get_name(): x for x in get_output_ports(system)
+        }
+        self.system_simulator = Simulator(system)
 
+    def start(self):
+        raise NotImplemented()
+
+    def stop(self):
+        raise NotImplemented()
+
+    def put_inputs(self, inputs):
+        raise NotImplemented()
+
+    def get_latest_outputs(self):
+        raise NotImplemented()
+
+    def maybe_get_latest_outputs(self):
+        raise NotImplemented()
+
+    def process(self, inputs):
+        system_simulator = self.system_simulator
+        system_context = system_simulator.get_context()
+        for name, system_input in self.system_inputs.items():
+            value = inputs.system_input_values[name]
+            system_input.FixValue(system_context, value)
+        if inputs.is_init:
+            system_context.SetTime(inputs.system_t)
+            system_simulator.Initialize()
+        else:
+            # TODO(eric.cousineau): How handle slowdowns / clock drift?
+            # Perhaps step a few times and put items into queue?
+            system_simulator.AdvanceTo(inputs.system_t)
+        system_output_values = {}
+        for name, system_output in self.system_outputs.items():
+            system_output_values[name] = system_output.Eval(system_context)
+        return system_output_values
+
+
+class DirectWorker(SystemWorker):
+    def __init__(self, system):
+        super().__init__(system)
+        self.inputs = None
+
+    def start(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def put_inputs(self, inputs):
+        self.inputs = copy.deepcopy(inputs)
+
+    def get_latest_outputs(self):
+        return self.maybe_get_latest_outputs()
+
+    def maybe_get_latest_outputs(self):
+        outputs = self.process(self.inputs)
+        outputs = copy.deepcopy(outputs)
+        return outputs
+
+
+class ThreadWorker(threading.Thread, SystemWorker):
+    def __init__(self, system):
+        threading.Thread.__init__(self)
+        SystemWorker.__init__(self, system)
+        self.lock = threading.Lock()
+        self.should_stop = threading.Event()
+        self.inputs = None
+        self.outputs = None
+
+    @staticmethod
+    def _atexit(self_ref):
+        self = self_ref()
+        if self is not None:
+            self.stop()
+
+    def start(self):
+        cleanup = functools.partial(ThreadWorker._atexit, weakref.ref(self))
+        custom_atexit_register(cleanup)
+        super().start()
+
+    def stop(self):
+        self.should_stop.set()
+        self.join()
+
+    def put_inputs(self, inputs):
+        with self.lock:
+            self.inputs = copy.deepcopy(inputs)
+
+    def get_latest_outputs(self):
+        while True:
+            outputs = self.maybe_get_latest_outputs()
+            if outputs is not None:
+                return outputs
+            else:
+                time.sleep(1e-6)
+
+    def maybe_get_latest_outputs(self):
+        with self.lock:
+            outputs = self.outputs
+            self.outputs = None
+        return outputs
+
+    def run(self):
+        while True:
+            if self.should_stop.is_set():
+                break
+            with self.lock:
+                inputs = copy.deepcopy(self.inputs)
+                self.inputs = None
+            if inputs is None:
+                time.sleep(1e-6)
+                continue
+            outputs = self.process(inputs)
+            with self.lock:
+                self.outputs = copy.deepcopy(outputs)
+
+
+ctx = mp.get_context("fork")
+# ctx = mp_dummy
+
+
+class MpWorker(ctx.Process, SystemWorker):
+    def __init__(self, system):
+        ctx.Process.__init__(self)
+        SystemWorker.__init__(self, system)
+        # This seems to make performance a ton easier.
         # See https://stackoverflow.com/a/56118981/7829525
         self.manager = ctx.Manager()
         self.should_stop = self.manager.Event()
@@ -337,75 +261,63 @@ class MpProcess(ctx.Process):
         if self is not None:
             self.stop()
 
-    def make_atexit_callback(self):
-        return functools.partial(MpProcess._atexit, weakref.ref(self))
+    def start(self):
+        cleanup = functools.partial(MpWorker._atexit, weakref.ref(self))
+        custom_atexit_register(cleanup)
+        ctx.Process.start(self)
 
     def stop(self):
         self.should_stop.set()
         self.join()
 
-    def put(self, inputs):
+    def put_inputs(self, inputs):
         self.inputs.put(inputs)
 
-    def get(self):
-        return self.outputs.get()
+    def get_latest_outputs(self):
+        # Block on first.
+        outputs = self.outputs.get()
+        # Once flushed, try to consume more.
+        latest = self.maybe_get_latest_outputs()
+        if latest is not None:
+            outputs = latest
+        return outputs
 
-    def maybe_get_latest(self):
+    def maybe_get_latest_outputs(self):
         output = None
         while not self.outputs.empty():
             output = self.outputs.get()
         return output
 
     def run(self):
-        system = self.system
-        system_inputs = self.system_inputs
-        system_outputs = self.system_outputs
-
-        system_context = system.CreateDefaultContext()
-        system_simulator = Simulator(system, system_context)
-
-        system_input_values = {}
-        system_output_values = {}
-
-        def set_inputs():
-            for name, system_input in system_inputs.items():
-                value = system_input_values[name]
-                system_input.FixValue(system_context, value)
-
-        def read_outputs():
-            for name, system_output in system_outputs.items():
-                system_output_values[name] = system_output.Eval(system_context)
-
         while True:
             if self.should_stop.is_set():
                 break
-            if self.inputs.empty():
-                continue
+            inputs = None
             while not self.inputs.empty():
                 # Drain the queue.
                 inputs = self.inputs.get()
-            system_input_values = inputs.system_input_values
-            set_inputs()
-
-            if inputs.is_init:
-                system_context.SetTime(inputs.system_t)
-                system_simulator.Initialize()
-            else:
-                # TODO(eric.cousineau): How handle slowdowns?
-                system_simulator.AdvanceTo(inputs.system_t)
-
-            read_outputs()
+            if inputs is None:
+                time.sleep(1e-6)
+                continue
+            system_output_values = self.process(inputs)
             self.outputs.put(system_output_values)
 
 
-class MultiprocessSystem(LeafSystem):
-    def __init__(self, system, period_sec, deterministic=True):
+class WorkerSystem(LeafSystem):
+    def __init__(
+        self,
+        worker,
+        period_sec,
+        deterministic=True,
+    ):
         super().__init__()
+        worker.start()
+        system_inputs = worker.system_inputs
+        system_outputs = worker.system_outputs
+
         # Undeclared state!
-        system_inputs = {x.get_name(): x for x in get_input_ports(system)}
-        system_outputs = {x.get_name(): x for x in get_output_ports(system)}
-        system_input_values = {}
-        system_output_values = {}
+        self._system_input_values = {}
+        self._system_output_values = {}
 
         self.inputs = {}
         self.outputs = {}
@@ -416,7 +328,7 @@ class MultiprocessSystem(LeafSystem):
             )
 
         def calc_output(name, context, output):
-            value = system_output_values[name]
+            value = self._system_output_values[name]
             output.set_value(value)
 
         for name, system_output in system_outputs.items():
@@ -425,62 +337,44 @@ class MultiprocessSystem(LeafSystem):
                 self, name, system_output.Allocate(), calc_output_i
             )
 
-        thread = MpProcess(system, system_inputs, system_outputs)
-        thread.start()
-        atexit.register(thread.make_atexit_callback())
-        # custom_atexit_register(thread.make_atexit_callback())
-
-        def mailbox_inputs(context):
-            for name, system_input in system_inputs.items():
-                input = self.inputs[name]
-                system_input_values[name] = input.Eval(context)
+        def make_inputs_value(context):
+            for name, input in self.inputs.items():
+                self._system_input_values[name] = input.Eval(context)
+            return Inputs(
+                system_t=context.get_time(),
+                system_input_values=self._system_input_values,
+            )
 
         def on_init(context, raw_state):
-            nonlocal system_output_values
-            mailbox_inputs(context)
-            inputs = Inputs(
-                system_t=context.get_time(),
-                system_input_values=system_input_values,
-                is_init=True,
-            )
-            thread.put(inputs)
-            system_output_values = thread.get()
+            inputs = make_inputs_value(context)
+            inputs.is_init = True
+            worker.put_inputs(inputs)
+            self._system_output_values = worker.get_latest_outputs()
 
             if deterministic:
                 # Place once more for next update to consume.
-                inputs = Inputs(
-                    system_t=context.get_time(),
-                    system_input_values=system_input_values,
-                )
-                thread.put(inputs)
+                inputs = copy.copy(inputs)
+                inputs.is_init = False
+                worker.put_inputs(inputs)
 
         self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
 
         def on_discrete_update(context, raw_state):
-            nonlocal system_output_values
-
-            # WARNING: This is non-deterministic.
-            # new_system_output_values = thread.maybe_get()
-            # if new_system_output_values is not None:
-            #     new_system_output_values = system_output_values
-
             if deterministic:
-                system_output_values = thread.get()
+                self._system_output_values = worker.get_latest_outputs()
             else:
-                maybe = thread.maybe_get_latest()
+                maybe = worker.maybe_get_latest_outputs()
                 if maybe is not None:
-                    system_output_values = maybe
+                    self._system_output_values = maybe
 
-            mailbox_inputs(context)
-            inputs = Inputs(
-                system_t=context.get_time(),
-                system_input_values=system_input_values,
-            )
-            thread.put(inputs)
+            inputs = make_inputs_value(context)
+            worker.put_inputs(inputs)
 
         self.DeclarePeriodicUnrestrictedUpdateEvent(
             period_sec, 0.0, on_discrete_update
         )
+
+        # TODO(eric.cousineau): Publish events?
 
 
 class AbstractClock(LeafSystem):
@@ -495,50 +389,57 @@ class AbstractClock(LeafSystem):
 
 
 def main():
+    # run(DirectWorker, num_systems=2, deterministic=False)
+    # run(ThreadWorker, num_systems=2, deterministic=True)
+    run(ThreadWorker, num_systems=20, deterministic=False)
+    # run(MpWorker, num_systems=2, deterministic=True)
+    run(MpWorker, num_systems=20, deterministic=False)
+
+
+def run(worker_cls, *, num_systems, deterministic=False):
+    print()
+    print(f"{worker_cls}, deterministic={deterministic}")
+
+    # sometimes there are weird startup transients...
+
     builder = DiagramBuilder()
 
     clock = builder.AddSystem(AbstractClock())
 
-    t_sim = 0.1
-    period_sec = t_sim / 10
+    t_sim = 0.5
+    period_sec = t_sim / 5
     wrapper_period_sec = period_sec
     # wrapper_period_sec = period_sec / 10
 
-    # wrapper_cls = DirectSystem
-    # wrapper_cls = ThreadSystem
-    # wrapper_cls = MultiprocessSystem
-    wrapper_cls = functools.partial(MultiprocessSystem, deterministic=False)
-
-    # sometimes there are weird startup transients...
-
-    my_systems = []
-    for i in range(1):
-        my_system = ExampleDiscreteSystem(period_sec)
-        my_system = builder.AddSystem(
-            wrapper_cls(my_system, period_sec=wrapper_period_sec)
+    worker_systems = []
+    for i in range(num_systems):
+        busy_system = BusyDiscreteSystem(period_sec, prefix=f"[{i}] ")
+        worker = worker_cls(busy_system)
+        worker_system = builder.AddSystem(
+            WorkerSystem(worker, period_sec=wrapper_period_sec)
         )
         builder.Connect(
             clock.get_output_port(),
-            my_system.get_input_port(),
+            worker_system.get_input_port(),
         )
-        my_systems.append(my_system)
+        worker_systems.append(worker_system)
 
     diagram = builder.Build()
     simulator = Simulator(diagram)
-    simulator.Initialize()
     simulator.set_target_realtime_rate(1.0)
+    simulator.Initialize()
 
     t_start = time.time()
     simulator.AdvanceTo(t_sim)
     t_wall = time.time() - t_start
     rate = t_sim / t_wall
-    print(f"Rate: {rate}")
+    print(f"Rate: {rate:.3g}")
 
-    my_context = my_system.GetMyContextFromRoot(simulator.get_context())
-    y = my_system.get_output_port().Eval(my_context)
-    print(f"y: {y}")
+    context = worker_system.GetMyContextFromRoot(simulator.get_context())
+    y = worker_system.get_output_port().Eval(context)
+    print(f"y: {y:.3g}")
 
-    # custom_atexit_dispatch()
+    custom_atexit_dispatch()
 
 
 if __name__ == "__main__":
