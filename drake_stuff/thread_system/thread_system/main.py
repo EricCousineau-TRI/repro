@@ -446,13 +446,15 @@ class WorkerSystem(LeafSystem):
 
 
 def main():
-    run(DirectWorker, num_systems=1, deterministic=True, do_print=True)
-    run(ThreadWorker, num_systems=1, deterministic=True, do_print=True)
-    run(MultiprocessWorker, num_systems=1, deterministic=True, do_print=True)
+    # run(DirectWorker, num_systems=1, deterministic=True, do_print=True)
+    # run(ThreadWorker, num_systems=1, deterministic=True, do_print=True)
+    # run(MultiprocessWorker, num_systems=1, deterministic=True, do_print=True)
 
-    run(DirectWorker, num_systems=5, deterministic=True)
-    run(ThreadWorker, num_systems=5, deterministic=True)
-    run(MultiprocessWorker, num_systems=5, deterministic=True)
+    # run(DirectWorker, num_systems=1, deterministic=True)
+
+    # run(DirectWorker, num_systems=5, deterministic=True)
+    # run(ThreadWorker, num_systems=5, deterministic=True)
+    run(MultiprocessWorker, num_systems=1, deterministic=True)
     # run(ThreadWorker, num_systems=5, deterministic=False)
     # run(MultiprocessWorker, num_systems=5, deterministic=False)
 
@@ -475,8 +477,12 @@ def run(
 
     clock = builder.AddSystem(AbstractClock())
 
-    period_sec = 0.1
-    t_sim = period_sec * 4
+    if do_print:
+        period_sec = 0.1
+        t_sim = period_sec * 4
+    else:
+        period_sec = 0.002
+        t_sim = 1.0
     wrapper_period_sec = period_sec
     # wrapper_period_sec = period_sec / 10
 
