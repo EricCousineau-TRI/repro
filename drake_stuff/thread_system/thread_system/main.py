@@ -18,6 +18,25 @@ from pydrake.all import (
 )
 
 
+_custom_atexit_queue = []
+
+
+def custom_atexit_register(func):
+    # N.B. multiprocessing / threading does not always seem to play happily
+    # with `atexit`?
+    _custom_atexit_queue.append(func)
+
+
+def custom_atexit_dispatch():
+    for func in _custom_atexit_queue:
+        func()
+    _custom_atexit_queue.clear()
+
+
+# Just in case.
+atexit.register(custom_atexit_dispatch)
+
+
 class AbstractClock(LeafSystem):
     def __init__(self):
         super().__init__()
@@ -27,6 +46,23 @@ class AbstractClock(LeafSystem):
             output.set_value(t)
 
         self.DeclareAbstractOutputPort("t", Value[object], calc_t)
+
+
+class PrintSystem(LeafSystem):
+    def __init__(self, period_sec, *, prefix=""):
+        super().__init__()
+
+        self.DeclareAbstractInputPort("t", Value[object]())
+
+        def on_discrete_update(context, raw_state):
+            t = context.get_time()
+            u = self.get_input_port().Eval(context)
+            print(f"{prefix}t={t}, y={u}")
+
+        # TODO: Make publish.
+        self.DeclarePeriodicUnrestrictedUpdateEvent(
+            period_sec, 0.0, on_discrete_update
+        )
 
 
 def busy_sleep_until(t_next):
@@ -48,9 +84,21 @@ class BusyDiscreteSystem(LeafSystem):
 
         self.u = self.DeclareAbstractInputPort("u", Value[object]())
         state_index = self.DeclareAbstractState(Value[object]())
+        offset = 1.0
+
+        def on_init(context, raw_state):
+            u = self.u.Eval(context)
+            x = u + offset
+            if do_print:
+                print(f"{prefix}init,   x={x:.3g}")
+            abstract_state = raw_state.get_mutable_abstract_state(state_index)
+            abstract_state.set_value(x)
+
+        self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
 
         def on_discrete_update(context, raw_state):
             u = self.u.Eval(context)
+            x = u + offset
 
             # Simulate Python-based work (something that should lock up the
             # GIL).
@@ -58,9 +106,9 @@ class BusyDiscreteSystem(LeafSystem):
 
             t = context.get_time()
             if do_print:
-                print(f"{prefix}t={t:.3g}, u={u:.3g}")
+                print(f"{prefix}update, t={t:.3g}, x={u:.3g}")
             abstract_state = raw_state.get_mutable_abstract_state(state_index)
-            abstract_state.set_value(u)
+            abstract_state.set_value(x)
 
         self.DeclarePeriodicUnrestrictedUpdateEvent(
             period_sec, 0.0, on_discrete_update
@@ -101,18 +149,6 @@ def get_output_ports(system):
     for i in range(system.num_output_ports()):
         out.append(system.get_output_port(i))
     return out
-
-
-_custom_atexit_queue = []
-
-
-def custom_atexit_register(func):
-    _custom_atexit_queue.append(func)
-
-
-def custom_atexit_dispatch():
-    for func in _custom_atexit_queue:
-        func()
 
 
 @dc.dataclass
@@ -166,6 +202,7 @@ class SystemWorker:
             # TODO(eric.cousineau): How handle slowdowns / clock drift?
             # Perhaps step a few times and put items into queue?
             system_simulator.AdvanceTo(inputs.system_t)
+            system_simulator.AdvancePendingEvents()
         system_output_values = {}
         for name, system_output in self.system_outputs.items():
             system_output_values[name] = system_output.Eval(system_context)
@@ -333,6 +370,7 @@ class WorkerSystem(LeafSystem):
         # Undeclared state!
         self._system_input_values = {}
         self._system_output_values = {}
+        self._has_inputs = False
 
         self.inputs = {}
         self.outputs = {}
@@ -366,15 +404,10 @@ class WorkerSystem(LeafSystem):
             worker.put_inputs(inputs)
             self._system_output_values = worker.get_latest_outputs()
 
-            # Place once more for next update to consume.
-            inputs = copy.copy(inputs)
-            inputs.is_init = False
-            worker.put_inputs(inputs)
-
         self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
 
         def on_discrete_update(context, raw_state):
-            if deterministic:
+            if deterministic and self._has_inputs:
                 self._system_output_values = worker.get_latest_outputs()
             else:
                 maybe = worker.maybe_get_latest_outputs()
@@ -383,6 +416,7 @@ class WorkerSystem(LeafSystem):
 
             inputs = make_inputs_value(context)
             worker.put_inputs(inputs)
+            self._has_inputs = True
 
         self.DeclarePeriodicUnrestrictedUpdateEvent(
             period_sec, 0.0, on_discrete_update
@@ -402,14 +436,19 @@ def main():
     # run(MpWorker, num_systems=5, deterministic=False)
 
 
-def run(worker_cls, *, num_systems, deterministic=True, do_print=False):
+def run(
+    worker_cls,
+    *,
+    num_systems,
+    deterministic=True,
+    do_print=False,
+    verbose=False,
+):
     print()
     print(
         f"{worker_cls.__name__}, num_systems={num_systems}, "
         f"deterministic={deterministic}"
     )
-
-    # sometimes there are weird startup transients...
 
     builder = DiagramBuilder()
 
@@ -423,16 +462,23 @@ def run(worker_cls, *, num_systems, deterministic=True, do_print=False):
     worker_systems = []
     for i in range(num_systems):
         busy_system = BusyDiscreteSystem(
-            period_sec, prefix=f"[{i}] ", do_print=do_print,
+            period_sec, prefix=f"[{i} busy ] ", do_print=False,
         )
         worker = worker_cls(busy_system)
         worker_system = builder.AddSystem(
             WorkerSystem(worker, period_sec=wrapper_period_sec)
         )
         builder.Connect(
-            clock.get_output_port(),
-            worker_system.get_input_port(),
+            clock.get_output_port(), worker_system.get_input_port()
         )
+        if do_print:
+            print_system = builder.AddSystem(
+                PrintSystem(period_sec, prefix=f"[{i} print] ")
+            )
+            builder.Connect(
+                worker_system.get_output_port(), print_system.get_input_port()
+            )
+
         worker_systems.append(worker_system)
 
     diagram = builder.Build()
