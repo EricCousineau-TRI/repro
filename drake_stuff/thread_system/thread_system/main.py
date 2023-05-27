@@ -178,6 +178,16 @@ class Outputs:
     t_system: float
 
 
+class Stepper:
+    def __init__(self, input_models, output_models):
+        self.input_models = input_models
+        self.output_models = output_models
+        self.period_lag_max = None
+
+    def process(self, inputs):
+        raise NotImplementedError()
+
+
 def make_simulator(system):
     config = SimulatorConfig(
         integration_scheme="explicit_euler",
@@ -188,32 +198,24 @@ def make_simulator(system):
     return simulator
 
 
-class SystemWorker:
+class SystemStepper(Stepper):
     def __init__(self, system, *, make_simulator=make_simulator):
-        self.system = system
-        self.system_inputs = {
+        system_inputs = {
             x.get_name(): x for x in get_input_ports(system)
         }
-        self.system_outputs = {
+        system_outputs = {
             x.get_name(): x for x in get_output_ports(system)
         }
+        input_models = {
+            name: port.Allocate() for name, port in system_inputs.items()
+        }
+        output_models = {
+            name: port.Allocate() for name, port in system_outputs.items()
+        }
+        super().__init__(input_models, output_models)
+        self.system_inputs = system_inputs
+        self.system_outputs = system_outputs
         self.system_simulator = make_simulator(system)
-        self.period_lag_max = None
-
-    def start(self):
-        raise NotImplemented()
-
-    def stop(self):
-        raise NotImplemented()
-
-    def put_inputs(self, inputs):
-        raise NotImplemented()
-
-    def get_latest_outputs(self):
-        raise NotImplemented()
-
-    def maybe_get_latest_outputs(self):
-        raise NotImplemented()
 
     def process(self, inputs):
         system_simulator = self.system_simulator
@@ -247,9 +249,29 @@ class SystemWorker:
         return outputs
 
 
+class SystemWorker:
+    def __init__(self, stepper):
+        self.stepper = stepper
+
+    def start(self):
+        raise NotImplemented()
+
+    def stop(self):
+        raise NotImplemented()
+
+    def put_inputs(self, inputs):
+        raise NotImplemented()
+
+    def get_latest_outputs(self):
+        raise NotImplemented()
+
+    def maybe_get_latest_outputs(self):
+        raise NotImplemented()
+
+
 class DirectWorker(SystemWorker):
-    def __init__(self, system):
-        super().__init__(system)
+    def __init__(self, stepper):
+        super().__init__(stepper)
         self.inputs = None
 
     def start(self):
@@ -265,15 +287,15 @@ class DirectWorker(SystemWorker):
         return self.maybe_get_latest_outputs()
 
     def maybe_get_latest_outputs(self):
-        outputs = self.process(self.inputs)
+        outputs = self.stepper.process(self.inputs)
         outputs = copy.deepcopy(outputs)
         return outputs
 
 
 class ThreadWorker(threading.Thread, SystemWorker):
-    def __init__(self, system):
+    def __init__(self, stepper):
         threading.Thread.__init__(self)
-        SystemWorker.__init__(self, system)
+        SystemWorker.__init__(self, stepper)
         self.should_stop = threading.Event()
         self.inputs = queue.SimpleQueue()
         self.outputs = queue.SimpleQueue()
@@ -322,7 +344,7 @@ class ThreadWorker(threading.Thread, SystemWorker):
             if inputs is None:
                 time.sleep(1e-6)
                 continue
-            outputs = self.process(inputs)
+            outputs = self.stepper.process(inputs)
             self.outputs.put(outputs)
 
 
@@ -334,9 +356,9 @@ ctx = mp.get_context("fork")
 
 
 class MultiprocessWorker(ctx.Process, SystemWorker):
-    def __init__(self, system):
+    def __init__(self, stepper):
         ctx.Process.__init__(self)
-        SystemWorker.__init__(self, system)
+        SystemWorker.__init__(self, stepper)
 
         # This seems to be simplest and maybe fastest?
         self.should_stop = ctx.Event()
@@ -401,7 +423,7 @@ class MultiprocessWorker(ctx.Process, SystemWorker):
             if inputs is None:
                 time.sleep(1e-6)
                 continue
-            outputs = self.process(inputs)
+            outputs = self.stepper.process(inputs)
             self.outputs.put(outputs)
 
 
@@ -414,8 +436,9 @@ class WorkerSystem(LeafSystem):
     ):
         super().__init__()
         worker.start()
-        system_inputs = worker.system_inputs
-        system_outputs = worker.system_outputs
+        stepper = worker.stepper
+        input_models = stepper.input_models
+        output_models = stepper.output_models
 
         self.inputs = {}
         self.outputs = {}
@@ -427,19 +450,17 @@ class WorkerSystem(LeafSystem):
         # hack
         self.t_final = 0.0
 
-        for name, system_input in system_inputs.items():
-            self.inputs[name] = declare_input_port(
-                self, name, system_input.Allocate()
-            )
+        for name, model in input_models.items():
+            self.inputs[name] = declare_input_port(self, name, model.Clone())
 
         def calc_output(name, context, output):
             value = self._system_output_values[name]
             output.set_value(value)
 
-        for name, system_output in system_outputs.items():
+        for name, model in output_models.items():
             calc_output_i = functools.partial(calc_output, name)
             self.outputs[name] = declare_output_port(
-                self, name, system_output.Allocate(), calc_output_i
+                self, name, model.Clone(), calc_output_i
             )
 
         def put_inputs(context, *, is_init=False):
@@ -557,7 +578,7 @@ def run(
         busy_system = BusyDiscreteSystem(
             period_sec, prefix=f"[{i} busy ] ", do_print=False,
         )
-        worker = worker_cls(busy_system)
+        worker = worker_cls(SystemStepper(busy_system))
 
         if not deterministic:
             # Hack :(
