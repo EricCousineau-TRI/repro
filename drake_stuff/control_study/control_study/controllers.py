@@ -712,6 +712,7 @@ class QpWithCosts(BaseController):
         self.gains = gains
         self.plant_limits = plant_limits
         self.solver, self.solver_options = make_osqp_solver_and_options()
+        # self.solver, self.solver_options = make_snopt_solver_and_options()
         self.acceleration_bounds_dt = acceleration_bounds_dt
         self.posture_weight = posture_weight
         self.split_costs = split_costs
@@ -749,14 +750,18 @@ class QpWithCosts(BaseController):
         #     tau_g,
         # )
         add_plant_limits_to_qp(
-            self.plant_limits,
-            vd_limits,
-            self.acceleration_bounds_dt,
-            q,
-            v,
-            prog,
-            vd_star,
-            u_star,
+            plant_limits=self.plant_limits,
+            vd_limits=vd_limits,
+            dt=self.acceleration_bounds_dt,
+            q=q,
+            v=v,
+            prog=prog,
+            vd_vars=vd_star,
+            Avd=np.eye(self.num_q),
+            bvd=np.zeros(self.num_q),
+            u_vars=u_star,
+            Au=np.eye(self.num_q),
+            bu=np.zeros(self.num_q),
         )
 
         # Compute spatial feedback.
@@ -777,23 +782,24 @@ class QpWithCosts(BaseController):
 
         num_t = 6
         It = np.eye(num_t)
-        if self.use_torque_weights:
+        if False:  # self.use_torque_weights:
             # task_proj = Jt.T @ Mt
             task_proj = Mt
         else:
             task_proj = It
         task_A = task_proj @ task_A
         task_b = task_proj @ task_b
-        if self.split_costs is None:
-            prog.Add2NormSquaredCost(task_A, task_b, vd_star)
-        else:
-            slices = [slice(0, 3), slice(3, 6)]
-            for weight_i, slice_i in zip(self.split_costs, slices):
-                prog.Add2NormSquaredCost(
-                    weight_i * task_A[slice_i],
-                    weight_i* task_b[slice_i],
-                    vd_star,
-                )
+        # if self.split_costs is None:
+        # prog.Add2NormSquaredCost(task_A, task_b, vd_star)
+        add_2norm_row_decoupled(prog, task_A, task_b, vd_star)
+        # else:
+        #     slices = [slice(0, 3), slice(3, 6)]
+        #     for weight_i, slice_i in zip(self.split_costs, slices):
+        #         prog.Add2NormSquaredCost(
+        #             weight_i * task_A[slice_i],
+        #             weight_i* task_b[slice_i],
+        #             vd_star,
+        #         )
 
         # Compute posture feedback.
         gains_p = self.gains.posture
@@ -802,13 +808,14 @@ class QpWithCosts(BaseController):
         edd_c = -gains_p.kp * e - gains_p.kd * ed
         # Same as above, but lower weight.
         weight = self.posture_weight
-        if self.use_torque_weights:
+        if False:  # self.use_torque_weights:
             task_proj = weight * Nt_T
         else:
             task_proj = weight * Iv
         task_A = task_proj
         task_b = task_proj @ edd_c
-        prog.Add2NormSquaredCost(task_A, task_b, vd_star)
+        # prog.Add2NormSquaredCost(task_A, task_b, vd_star)
+        add_2norm_row_decoupled(prog, task_A, task_b, vd_star)
 
         # Solve.
         result = solve_or_die(self.solver, self.solver_options, prog)
@@ -822,6 +829,11 @@ def add_2norm_decoupled(prog, a, b, x):
     b = -2 * a * b
     c = np.sum(b * b)
     return prog.AddQuadraticCost(Q, b, c, x)
+
+
+def add_2norm_row_decoupled(prog, A, b, x):
+    for i in range(A.shape[0]):
+        prog.Add2NormSquaredCost(A[i:i + 1, :], b[i:i + 1], x)
 
 
 from pydrake.autodiffutils import (

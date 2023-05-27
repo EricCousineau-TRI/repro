@@ -415,18 +415,18 @@ def run_teleop_traj(make_controller):
 def scenario_main():
     scenarios = {
         # "slow": run_slow_waypoints,
-        # "rot": run_rotation_coupling,
+        "rot": run_rotation_coupling,
         # "fast": run_fast_waypoints,
         # "teleop": run_teleop_traj,
         # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
-        "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
+        # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
         # "diff ik": make_controller_diff_ik,
         # "acc": make_controller_resolved_acc,
         # "osc": make_controller_osc,
-        # "qp costs": make_controller_qp_costs,
-        "qp constr": make_controller_qp_constraints,
+        "qp costs": make_controller_qp_costs,
+        # "qp constr": make_controller_qp_constraints,
     }
     for scenario_name, scenario in scenarios.items():
         print(scenario_name)
