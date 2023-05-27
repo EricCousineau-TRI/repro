@@ -164,9 +164,10 @@ class DirectSystem(LeafSystem):
         self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
 
         def on_discrete_update(context, raw_state):
+            # Simulator ZOH.
+            read_outputs(context, raw_state)
             set_inputs(context, raw_state)
             system_simulator.AdvanceTo(context.get_time())
-            read_outputs(context, raw_state)
 
         self.DeclarePeriodicUnrestrictedUpdateEvent(
             period_sec, 0.0, on_discrete_update
@@ -196,6 +197,7 @@ class ThreadSystem(LeafSystem):
     def __init__(self, system, period_sec):
         super().__init__()
         # Undeclared state!
+        # Non-deterministic!
 
         Process = threading.Thread
         Lock = threading.Lock
@@ -323,9 +325,11 @@ class MpProcess(ctx.Process):
         self.system_inputs = system_inputs
         self.system_outputs = system_outputs
 
-        self.should_stop = ctx.Event()
-        self.inputs = ctx.Queue()
-        self.outputs = ctx.Queue()
+        # See https://stackoverflow.com/a/56118981/7829525
+        self.manager = ctx.Manager()
+        self.should_stop = self.manager.Event()
+        self.inputs = self.manager.Queue()
+        self.outputs = self.manager.Queue()
 
     @staticmethod
     def _atexit(self_ref):
@@ -423,7 +427,8 @@ class MultiprocessSystem(LeafSystem):
 
         thread = MpProcess(system, system_inputs, system_outputs)
         thread.start()
-        custom_atexit_register(thread.make_atexit_callback())
+        atexit.register(thread.make_atexit_callback())
+        # custom_atexit_register(thread.make_atexit_callback())
 
         def mailbox_inputs(context):
             for name, system_input in system_inputs.items():
@@ -494,9 +499,10 @@ def main():
 
     clock = builder.AddSystem(AbstractClock())
 
-    period_sec = 0.01
     t_sim = 0.1
-    wrapper_period_sec = period_sec * 0.1
+    period_sec = t_sim / 10
+    wrapper_period_sec = period_sec
+    # wrapper_period_sec = period_sec / 10
 
     # wrapper_cls = DirectSystem
     # wrapper_cls = ThreadSystem
@@ -506,7 +512,7 @@ def main():
     # sometimes there are weird startup transients...
 
     my_systems = []
-    for i in range(10):
+    for i in range(1):
         my_system = ExampleDiscreteSystem(period_sec)
         my_system = builder.AddSystem(
             wrapper_cls(my_system, period_sec=wrapper_period_sec)
@@ -532,7 +538,7 @@ def main():
     y = my_system.get_output_port().Eval(my_context)
     print(f"y: {y}")
 
-    custom_atexit_dispatch()
+    # custom_atexit_dispatch()
 
 
 if __name__ == "__main__":
