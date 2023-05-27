@@ -506,7 +506,7 @@ def main():
     # sometimes there are weird startup transients...
 
     my_systems = []
-    for i in range(1):
+    for i in range(10):
         my_system = ExampleDiscreteSystem(period_sec)
         my_system = builder.AddSystem(
             wrapper_cls(my_system, period_sec=wrapper_period_sec)
@@ -520,16 +520,15 @@ def main():
     diagram = builder.Build()
     simulator = Simulator(diagram)
     simulator.Initialize()
-
-    my_context = my_system.GetMyContextFromRoot(simulator.get_context())
+    simulator.set_target_realtime_rate(1.0)
 
     t_start = time.time()
-    simulator.set_target_realtime_rate(1.0)
     simulator.AdvanceTo(t_sim)
     t_wall = time.time() - t_start
     rate = t_sim / t_wall
     print(f"Rate: {rate}")
 
+    my_context = my_system.GetMyContextFromRoot(simulator.get_context())
     y = my_system.get_output_port().Eval(my_context)
     print(f"y: {y}")
 
