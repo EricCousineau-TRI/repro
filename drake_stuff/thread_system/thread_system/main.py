@@ -346,6 +346,12 @@ class MpProcess(ctx.Process):
     def get(self):
         return self.outputs.get()
 
+    def maybe_get_latest(self):
+        output = None
+        while not self.outputs.empty():
+            output = self.outputs.get()
+        return output
+
     def run(self):
         system = self.system
         system_inputs = self.system_inputs
@@ -371,7 +377,9 @@ class MpProcess(ctx.Process):
                 break
             if self.inputs.empty():
                 continue
-            inputs = self.inputs.get()
+            while not self.inputs.empty():
+                # Drain the queue.
+                inputs = self.inputs.get()
             system_input_values = inputs.system_input_values
             set_inputs()
 
@@ -387,7 +395,7 @@ class MpProcess(ctx.Process):
 
 
 class MultiprocessSystem(LeafSystem):
-    def __init__(self, system, period_sec):
+    def __init__(self, system, period_sec, deterministic=True):
         super().__init__()
         # Undeclared state!
         system_inputs = {x.get_name(): x for x in get_input_ports(system)}
@@ -433,12 +441,13 @@ class MultiprocessSystem(LeafSystem):
             thread.put(inputs)
             system_output_values = thread.get()
 
-            # Place once more, but let next update consume it.
-            inputs = Inputs(
-                system_t=context.get_time(),
-                system_input_values=system_input_values,
-            )
-            thread.put(inputs)
+            if deterministic:
+                # Place once more for next update to consume.
+                inputs = Inputs(
+                    system_t=context.get_time(),
+                    system_input_values=system_input_values,
+                )
+                thread.put(inputs)
 
         self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
 
@@ -449,8 +458,15 @@ class MultiprocessSystem(LeafSystem):
             # new_system_output_values = thread.maybe_get()
             # if new_system_output_values is not None:
             #     new_system_output_values = system_output_values
-            system_output_values = thread.get()
 
+            if deterministic:
+                system_output_values = thread.get()
+            else:
+                maybe = thread.maybe_get_latest()
+                if maybe is not None:
+                    system_output_values = maybe
+
+            mailbox_inputs(context)
             inputs = Inputs(
                 system_t=context.get_time(),
                 system_input_values=system_input_values,
@@ -478,18 +494,22 @@ def main():
 
     clock = builder.AddSystem(AbstractClock())
 
+    period_sec = 0.01
+    t_sim = 0.1
+    wrapper_period_sec = period_sec * 0.1
+
     # wrapper_cls = DirectSystem
     # wrapper_cls = ThreadSystem
-    wrapper_cls = MultiprocessSystem
-    period_sec = 0.01
+    # wrapper_cls = MultiprocessSystem
+    wrapper_cls = functools.partial(MultiprocessSystem, deterministic=False)
+
+    # sometimes there are weird startup transients...
 
     my_systems = []
     for i in range(1):
         my_system = ExampleDiscreteSystem(period_sec)
-        # For thread system, may hit bottleneck when GIL is not released /
-        # we're not sleeping?
         my_system = builder.AddSystem(
-            wrapper_cls(my_system, period_sec=period_sec * 0.1)
+            wrapper_cls(my_system, period_sec=wrapper_period_sec)
         )
         builder.Connect(
             clock.get_output_port(),
@@ -499,17 +519,17 @@ def main():
 
     diagram = builder.Build()
     simulator = Simulator(diagram)
+    simulator.Initialize()
 
     my_context = my_system.GetMyContextFromRoot(simulator.get_context())
 
-    t_sim = 0.1
     t_start = time.time()
     simulator.set_target_realtime_rate(1.0)
-
     simulator.AdvanceTo(t_sim)
     t_wall = time.time() - t_start
     rate = t_sim / t_wall
     print(f"Rate: {rate}")
+
     y = my_system.get_output_port().Eval(my_context)
     print(f"y: {y}")
 
