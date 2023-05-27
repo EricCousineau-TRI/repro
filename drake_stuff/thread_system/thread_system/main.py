@@ -496,10 +496,10 @@ def main():
     # run(MultiprocessWorker, num_systems=1, deterministic=False)
     # run(MultiprocessWorker, num_systems=1, deterministic=False)
 
-    run(ThreadWorker, num_systems=5, deterministic=True)
-    # run(MultiprocessWorker, num_systems=5, deterministic=True)
-    run(ThreadWorker, num_systems=5, deterministic=False)
-    # run(MultiprocessWorker, num_systems=5, deterministic=False)
+    # run(ThreadWorker, num_systems=5, deterministic=True)
+    run(MultiprocessWorker, num_systems=5, deterministic=True)
+    # run(ThreadWorker, num_systems=5, deterministic=False)
+    run(MultiprocessWorker, num_systems=5, deterministic=False)
 
     # run(DirectWorker, num_systems=5, deterministic=True)
     # run(ThreadWorker, num_systems=5, deterministic=True)
@@ -537,8 +537,7 @@ def run(
 
     clock = builder.AddSystem(AbstractClock())
 
-    # if do_print:
-    if True:
+    if do_print:
         period_sec = 0.1
         t_sim = period_sec * 10
     else:
