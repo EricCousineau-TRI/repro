@@ -12,6 +12,7 @@ import dataclasses as dc
 import functools
 import multiprocessing as mp
 import multiprocessing.dummy as mp_dummy
+import queue
 import threading
 import time
 import weakref
@@ -273,10 +274,9 @@ class ThreadWorker(threading.Thread, SystemWorker):
     def __init__(self, system):
         threading.Thread.__init__(self)
         SystemWorker.__init__(self, system)
-        self.lock = threading.Lock()
         self.should_stop = threading.Event()
-        self.inputs = None
-        self.outputs = None
+        self.inputs = queue.SimpleQueue()
+        self.outputs = queue.SimpleQueue()
 
     @staticmethod
     def _atexit(self_ref):
@@ -294,36 +294,36 @@ class ThreadWorker(threading.Thread, SystemWorker):
         self.join()
 
     def put_inputs(self, inputs):
-        with self.lock:
-            self.inputs = copy.deepcopy(inputs)
+        self.inputs.put(inputs)
 
     def get_latest_outputs(self):
-        while True:
-            outputs = self.maybe_get_latest_outputs()
-            if outputs is not None:
-                return outputs
-            else:
-                time.sleep(1e-4)
+        # Block on first.
+        outputs = self.outputs.get()
+        # Once flushed, try to consume more.
+        latest = self.maybe_get_latest_outputs()
+        if latest is not None:
+            outputs = latest
+        return outputs
 
     def maybe_get_latest_outputs(self):
-        with self.lock:
-            outputs = self.outputs
-            self.outputs = None
-        return outputs
+        output = None
+        while not self.outputs.empty():
+            output = self.outputs.get()
+        return output
 
     def run(self):
         while True:
             if self.should_stop.is_set():
                 break
-            with self.lock:
-                inputs = copy.deepcopy(self.inputs)
-                self.inputs = None
+            inputs = None
+            while not self.inputs.empty():
+                # Drain the queue.
+                inputs = self.inputs.get()
             if inputs is None:
-                time.sleep(1e-4)
+                time.sleep(1e-6)
                 continue
             outputs = self.process(inputs)
-            with self.lock:
-                self.outputs = copy.deepcopy(outputs)
+            self.outputs.put(outputs)
 
 
 # N.B. We must use `fork` so we can pass in an already constructed system.
@@ -345,7 +345,7 @@ class MultiprocessWorker(ctx.Process, SystemWorker):
 
         # # This was sloppy for earlier bencharmks.
         # self.inputs = ctx.Queue()
-        # self.outputs = ctx.Queue())
+        # self.outputs = ctx.Queue()
 
         # # This seems to make performance a ton easier than just ctx.Queue().
         # # However, may be worse than SimpleQueue()?
@@ -454,7 +454,9 @@ class WorkerSystem(LeafSystem):
 
         def on_init(context, raw_state):
             put_inputs(context, is_init=True)
-            self._system_output_values = worker.get_latest_outputs()
+            outputs = worker.get_latest_outputs()
+            self._system_output_values = outputs.system_output_values
+            self.t_final = outputs.t_system
             self._has_discrete_update_inputs = False
 
         self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
@@ -495,9 +497,9 @@ def main():
     # run(MultiprocessWorker, num_systems=1, deterministic=False)
 
     run(ThreadWorker, num_systems=5, deterministic=True)
-    run(MultiprocessWorker, num_systems=5, deterministic=True)
+    # run(MultiprocessWorker, num_systems=5, deterministic=True)
     run(ThreadWorker, num_systems=5, deterministic=False)
-    run(MultiprocessWorker, num_systems=5, deterministic=False)
+    # run(MultiprocessWorker, num_systems=5, deterministic=False)
 
     # run(DirectWorker, num_systems=5, deterministic=True)
     # run(ThreadWorker, num_systems=5, deterministic=True)
@@ -535,9 +537,10 @@ def run(
 
     clock = builder.AddSystem(AbstractClock())
 
-    if do_print:
+    # if do_print:
+    if True:
         period_sec = 0.1
-        t_sim = period_sec * 4
+        t_sim = period_sec * 10
     else:
         period_sec = 0.002
         t_sim = 1.0
