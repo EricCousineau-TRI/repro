@@ -252,8 +252,11 @@ class ThreadWorker(threading.Thread, SystemWorker):
                 self.outputs = copy.deepcopy(outputs)
 
 
+# N.B. We must use `fork` so we can pass in an already constructed system.
+# The alternative is to make systems pickleable, or add a pickleable factory
+# method.
 ctx = mp.get_context("fork")
-# ctx = mp_dummy
+# ctx = mp_dummy  # This should be about the same as the ThreadWorker version.
 
 
 class MpWorker(ctx.Process, SystemWorker):
@@ -442,7 +445,7 @@ def run(worker_cls, *, num_systems, deterministic=True, do_print=False):
 
     simulator.AdvanceTo(t_sim)
 
-    dt_sim = simulator.get_context().get_time()
+    dt_sim = simulator.get_context().get_time() - t_sim_start
     dt_wall = time.time() - t_wall_start
     rate = dt_sim / dt_wall
     print(f"Rate: {rate:.3g}")
