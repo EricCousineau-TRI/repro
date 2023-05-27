@@ -323,10 +323,8 @@ class MpProcess(ctx.Process):
         self.system_inputs = system_inputs
         self.system_outputs = system_outputs
 
-        self.lock = ctx.Lock()
-        self.ready_event = ctx.Event()
-        self.inputs = ctx.Queue(maxsize=1)
         self.should_stop = ctx.Event()
+        self.inputs = ctx.Queue()
         self.outputs = ctx.Queue()
 
     @staticmethod
@@ -339,13 +337,11 @@ class MpProcess(ctx.Process):
         return functools.partial(MpProcess._atexit, weakref.ref(self))
 
     def stop(self):
-        print("STOP")
         self.should_stop.set()
         self.join()
 
     def put(self, inputs):
         self.inputs.put(inputs)
-        self.ready_event.set()
 
     def get(self):
         return self.outputs.get()
@@ -373,9 +369,8 @@ class MpProcess(ctx.Process):
         while True:
             if self.should_stop.is_set():
                 break
-            if not self.ready_event.wait(timeout=0.5):
+            if self.inputs.empty():
                 continue
-            self.ready_event.clear()
             inputs = self.inputs.get()
             system_input_values = inputs.system_input_values
             set_inputs()
@@ -428,6 +423,7 @@ class MultiprocessSystem(LeafSystem):
                 system_input_values[name] = input.Eval(context)
 
         def on_init(context, raw_state):
+            nonlocal system_output_values
             mailbox_inputs(context)
             inputs = Inputs(
                 system_t=context.get_time(),
@@ -435,18 +431,31 @@ class MultiprocessSystem(LeafSystem):
                 is_init=True,
             )
             thread.put(inputs)
+            system_output_values = thread.get()
 
-        self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
-
-        def on_discrete_update(context, raw_state):
-            nonlocal system_output_values
-            # WARNING: This is non-deterministic.
+            # Place once more, but let next update consume it.
             inputs = Inputs(
                 system_t=context.get_time(),
                 system_input_values=system_input_values,
             )
             thread.put(inputs)
+
+        self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
+
+        def on_discrete_update(context, raw_state):
+            nonlocal system_output_values
+
+            # WARNING: This is non-deterministic.
+            # new_system_output_values = thread.maybe_get()
+            # if new_system_output_values is not None:
+            #     new_system_output_values = system_output_values
             system_output_values = thread.get()
+
+            inputs = Inputs(
+                system_t=context.get_time(),
+                system_input_values=system_input_values,
+            )
+            thread.put(inputs)
 
         self.DeclarePeriodicUnrestrictedUpdateEvent(
             period_sec, 0.0, on_discrete_update
@@ -475,7 +484,7 @@ def main():
     period_sec = 0.01
 
     my_systems = []
-    for i in range(10):
+    for i in range(1):
         my_system = ExampleDiscreteSystem(period_sec)
         # For thread system, may hit bottleneck when GIL is not released /
         # we're not sleeping?
