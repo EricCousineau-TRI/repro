@@ -339,10 +339,14 @@ class MultiprocessWorker(ctx.Process, SystemWorker):
         SystemWorker.__init__(self, system)
         # This seems to make performance a ton easier.
         # See https://stackoverflow.com/a/56118981/7829525
-        self.manager = ctx.Manager()
-        self.should_stop = self.manager.Event()
-        self.inputs = self.manager.Queue()
-        self.outputs = self.manager.Queue()
+        # self.manager = ctx.Manager()
+        # self.should_stop = self.manager.Event()
+        # self.inputs = self.manager.Queue()
+        # self.outputs = self.manager.Queue()
+
+        self.should_stop = ctx.Event()
+        self.inputs = ctx.SimpleQueue()
+        self.outputs = ctx.SimpleQueue()
 
     @staticmethod
     def _atexit(self_ref):
@@ -483,7 +487,8 @@ def main():
     # run(MultiprocessWorker, num_systems=1, deterministic=False)
     # run(MultiprocessWorker, num_systems=1, deterministic=False)
 
-    # run(ThreadWorker, num_systems=5, deterministic=True)
+    # run(ThreadWorker, num_systems=3, deterministic=True)
+    run(MultiprocessWorker, num_systems=5, deterministic=True)
     run(MultiprocessWorker, num_systems=5, deterministic=False)
 
     # run(DirectWorker, num_systems=5, deterministic=True)
