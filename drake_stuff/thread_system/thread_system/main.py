@@ -1,3 +1,10 @@
+"""
+Python example of offloading discrete system work to a separate thread /
+process.
+
+See README for more info.
+"""
+
 import atexit
 import copy
 import dataclasses as dc
@@ -10,10 +17,12 @@ import weakref
 
 from pydrake.all import (
     AbstractValue,
+    ApplySimulatorConfig,
     BasicVector,
     DiagramBuilder,
     LeafSystem,
     Simulator,
+    SimulatorConfig,
     Value,
 )
 
@@ -57,7 +66,7 @@ class PrintSystem(LeafSystem):
         def on_discrete_update(context, raw_state):
             t = context.get_time()
             u = self.get_input_port().Eval(context)
-            print(f"{prefix}t={t}, y={u}")
+            print(f"{prefix}t={t:.3g}, y={u:.3g}")
 
         # TODO: Make publish.
         self.DeclarePeriodicUnrestrictedUpdateEvent(
@@ -163,8 +172,18 @@ class Outputs:
     system_output_values: dict
 
 
+def make_simulator(system):
+    config = SimulatorConfig(
+        integration_scheme="explicit_euler",
+        max_step_size=0.1,
+    )
+    simulator = Simulator(system)
+    ApplySimulatorConfig(config, simulator)
+    return simulator
+
+
 class SystemWorker:
-    def __init__(self, system):
+    def __init__(self, system, *, make_simulator=make_simulator):
         self.system = system
         self.system_inputs = {
             x.get_name(): x for x in get_input_ports(system)
@@ -172,7 +191,7 @@ class SystemWorker:
         self.system_outputs = {
             x.get_name(): x for x in get_output_ports(system)
         }
-        self.system_simulator = Simulator(system)
+        self.system_simulator = make_simulator(system)
 
     def start(self):
         raise NotImplemented()
@@ -296,7 +315,7 @@ ctx = mp.get_context("fork")
 # ctx = mp_dummy  # This should be about the same as the ThreadWorker version.
 
 
-class MpWorker(ctx.Process, SystemWorker):
+class MultiprocessWorker(ctx.Process, SystemWorker):
     def __init__(self, system):
         ctx.Process.__init__(self)
         SystemWorker.__init__(self, system)
@@ -314,7 +333,7 @@ class MpWorker(ctx.Process, SystemWorker):
             self.stop()
 
     def start(self):
-        cleanup = functools.partial(MpWorker._atexit, weakref.ref(self))
+        cleanup = functools.partial(MultiprocessWorker._atexit, weakref.ref(self))
         custom_atexit_register(cleanup)
         ctx.Process.start(self)
 
@@ -367,13 +386,13 @@ class WorkerSystem(LeafSystem):
         system_inputs = worker.system_inputs
         system_outputs = worker.system_outputs
 
+        self.inputs = {}
+        self.outputs = {}
+
         # Undeclared state!
         self._system_input_values = {}
         self._system_output_values = {}
-        self._has_inputs = False
-
-        self.inputs = {}
-        self.outputs = {}
+        self._has_discrete_update_inputs = False
 
         for name, system_input in system_inputs.items():
             self.inputs[name] = declare_input_port(
@@ -390,33 +409,35 @@ class WorkerSystem(LeafSystem):
                 self, name, system_output.Allocate(), calc_output_i
             )
 
-        def make_inputs_value(context):
+        def put_inputs(context, *, is_init=False):
             for name, input in self.inputs.items():
                 self._system_input_values[name] = input.Eval(context)
-            return Inputs(
+            inputs = Inputs(
                 system_t=context.get_time(),
                 system_input_values=self._system_input_values,
+                is_init=is_init,
             )
+            worker.put_inputs(inputs)
 
         def on_init(context, raw_state):
-            inputs = make_inputs_value(context)
-            inputs.is_init = True
-            worker.put_inputs(inputs)
+            put_inputs(context, is_init=True)
             self._system_output_values = worker.get_latest_outputs()
+            self._has_discrete_update_inputs = False
 
         self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
 
-        def on_discrete_update(context, raw_state):
-            if deterministic and self._has_inputs:
+        def get_discrete_update_outputs(context):
+            if deterministic and self._has_discrete_update_inputs:
                 self._system_output_values = worker.get_latest_outputs()
             else:
                 maybe = worker.maybe_get_latest_outputs()
                 if maybe is not None:
                     self._system_output_values = maybe
 
-            inputs = make_inputs_value(context)
-            worker.put_inputs(inputs)
-            self._has_inputs = True
+        def on_discrete_update(context, raw_state):
+            get_discrete_update_outputs(context)
+            put_inputs(context)
+            self._has_discrete_update_inputs = True
 
         self.DeclarePeriodicUnrestrictedUpdateEvent(
             period_sec, 0.0, on_discrete_update
@@ -427,13 +448,13 @@ class WorkerSystem(LeafSystem):
 def main():
     run(DirectWorker, num_systems=1, deterministic=True, do_print=True)
     run(ThreadWorker, num_systems=1, deterministic=True, do_print=True)
-    run(MpWorker, num_systems=1, deterministic=True, do_print=True)
+    run(MultiprocessWorker, num_systems=1, deterministic=True, do_print=True)
 
     run(DirectWorker, num_systems=5, deterministic=True)
     run(ThreadWorker, num_systems=5, deterministic=True)
-    run(MpWorker, num_systems=5, deterministic=True)
+    run(MultiprocessWorker, num_systems=5, deterministic=True)
     # run(ThreadWorker, num_systems=5, deterministic=False)
-    # run(MpWorker, num_systems=5, deterministic=False)
+    # run(MultiprocessWorker, num_systems=5, deterministic=False)
 
 
 def run(
@@ -454,8 +475,8 @@ def run(
 
     clock = builder.AddSystem(AbstractClock())
 
-    t_sim = 0.1
-    period_sec = t_sim / 10
+    period_sec = 0.1
+    t_sim = period_sec * 4
     wrapper_period_sec = period_sec
     # wrapper_period_sec = period_sec / 10
 
