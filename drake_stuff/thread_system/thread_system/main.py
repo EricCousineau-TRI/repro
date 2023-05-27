@@ -484,7 +484,7 @@ def main():
     # run(MultiprocessWorker, num_systems=1, deterministic=False)
 
     # run(ThreadWorker, num_systems=5, deterministic=True)
-    run(MultiprocessWorker, num_systems=4, deterministic=True)
+    run(MultiprocessWorker, num_systems=5, deterministic=False)
 
     # run(DirectWorker, num_systems=5, deterministic=True)
     # run(ThreadWorker, num_systems=5, deterministic=True)
