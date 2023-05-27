@@ -29,9 +29,9 @@ Based on results below
   should approximate a zero-order hold.
 - Care is taken to only initialize at initialization events, and *not* perform any
   extra updates during initialization.
-- Rate for single-system case is 1x across the board
-- Rate for 5x system case is 1/5x for direct, 1/2x - 3/4x for threaded, and
-  ~1x for multiprocess worker.
+- Rate for single-system + 10 Hz case is ~1x across the board
+- Rate for 5x system + 500 Hz case is 1/5x for direct, 1/5x for threaded, and
+  ~4/5x for multiprocess worker.
 - Threading may get bottlenecked by busy Python work locking up the GIL
 - I (Eric) am not sure why multiprocess setup seems to run faster than
   realtime...
@@ -45,6 +45,7 @@ Example
 $ python -m thread_system.main
 
 DirectWorker, num_systems=1, deterministic=True
+  period_sec=0.1, t_sim=0.4
 [0 print] t=0, y=1
 [0 print] t=0.1, y=1
 [0 print] t=0.2, y=1.1
@@ -53,6 +54,7 @@ Rate: 0.998
 y: 1.2
 
 ThreadWorker, num_systems=1, deterministic=True
+  period_sec=0.1, t_sim=0.4
 [0 print] t=0, y=1
 [0 print] t=0.1, y=1
 [0 print] t=0.2, y=1.1
@@ -61,6 +63,7 @@ Rate: 0.985
 y: 1.2
 
 MultiprocessWorker, num_systems=1, deterministic=True
+  period_sec=0.1, t_sim=0.4
 [0 print] t=0, y=1
 [0 print] t=0.1, y=1
 [0 print] t=0.2, y=1.1
@@ -69,14 +72,17 @@ Rate: 1.32
 y: 1.2
 
 DirectWorker, num_systems=5, deterministic=True
-Rate: 0.25
-y: 1.2
+  period_sec=0.002, t_sim=1
+Rate: 0.193
+y: 2
 
 ThreadWorker, num_systems=5, deterministic=True
-Rate: 0.758
-y: 1.2
+  period_sec=0.002, t_sim=1
+Rate: 0.163
+y: 2
 
 MultiprocessWorker, num_systems=5, deterministic=True
-Rate: 1.3
-y: 1.2
+  period_sec=0.002, t_sim=1
+Rate: 0.825
+y: 2
 ```

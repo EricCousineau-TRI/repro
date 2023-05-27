@@ -10,6 +10,8 @@ packages = [{include = "thread_system"}]
 python = "^3.10"
 drake = "^1.17.0"
 jupyterlab = "^4.0.0"
+py-spy = "^0.3.14"
+pyinstrument = "^4.4.0"
 
 
 [build-system]

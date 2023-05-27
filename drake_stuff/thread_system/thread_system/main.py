@@ -6,11 +6,13 @@ See README for more info.
 """
 
 import atexit
+from contextlib import contextmanager
 import copy
 import dataclasses as dc
 import functools
 import multiprocessing as mp
 import multiprocessing.dummy as mp_dummy
+import queue
 import threading
 import time
 import weakref
@@ -25,6 +27,9 @@ from pydrake.all import (
     SimulatorConfig,
     Value,
 )
+
+import pyinstrument
+from thread_system.py_spy_lib import use_py_spy
 
 
 _custom_atexit_queue = []
@@ -162,7 +167,7 @@ def get_output_ports(system):
 
 @dc.dataclass
 class Inputs:
-    system_t: float
+    t_system: float
     system_input_values: dict
     is_init: bool = False
 
@@ -170,6 +175,7 @@ class Inputs:
 @dc.dataclass
 class Outputs:
     system_output_values: dict
+    t_system: float
 
 
 def make_simulator(system):
@@ -192,6 +198,7 @@ class SystemWorker:
             x.get_name(): x for x in get_output_ports(system)
         }
         self.system_simulator = make_simulator(system)
+        self.period_lag_max = None
 
     def start(self):
         raise NotImplemented()
@@ -215,17 +222,29 @@ class SystemWorker:
             value = inputs.system_input_values[name]
             system_input.FixValue(system_context, value)
         if inputs.is_init:
-            system_context.SetTime(inputs.system_t)
+            system_context.SetTime(inputs.t_system)
             system_simulator.Initialize()
         else:
             # TODO(eric.cousineau): How handle slowdowns / clock drift?
             # Perhaps step a few times and put items into queue?
-            system_simulator.AdvanceTo(inputs.system_t)
+            t = system_context.get_time()
+            t_next = inputs.t_system
+
+            if self.period_lag_max is not None:
+                period_lag = t_next - t
+                if period_lag > self.period_lag_max:
+                    t_next = t + self.period_lag_max
+
+            system_simulator.AdvanceTo(t_next)
             system_simulator.AdvancePendingEvents()
         system_output_values = {}
         for name, system_output in self.system_outputs.items():
             system_output_values[name] = system_output.Eval(system_context)
-        return system_output_values
+        outputs = Outputs(
+            system_output_values=system_output_values,
+            t_system=system_context.get_time(),
+        )
+        return outputs
 
 
 class DirectWorker(SystemWorker):
@@ -255,10 +274,9 @@ class ThreadWorker(threading.Thread, SystemWorker):
     def __init__(self, system):
         threading.Thread.__init__(self)
         SystemWorker.__init__(self, system)
-        self.lock = threading.Lock()
         self.should_stop = threading.Event()
-        self.inputs = None
-        self.outputs = None
+        self.inputs = queue.SimpleQueue()
+        self.outputs = queue.SimpleQueue()
 
     @staticmethod
     def _atexit(self_ref):
@@ -276,36 +294,36 @@ class ThreadWorker(threading.Thread, SystemWorker):
         self.join()
 
     def put_inputs(self, inputs):
-        with self.lock:
-            self.inputs = copy.deepcopy(inputs)
+        self.inputs.put(inputs)
 
     def get_latest_outputs(self):
-        while True:
-            outputs = self.maybe_get_latest_outputs()
-            if outputs is not None:
-                return outputs
-            else:
-                time.sleep(1e-6)
+        # Block on first.
+        outputs = self.outputs.get()
+        # Once flushed, try to consume more.
+        latest = self.maybe_get_latest_outputs()
+        if latest is not None:
+            outputs = latest
+        return outputs
 
     def maybe_get_latest_outputs(self):
-        with self.lock:
-            outputs = self.outputs
-            self.outputs = None
-        return outputs
+        output = None
+        while not self.outputs.empty():
+            output = self.outputs.get()
+        return output
 
     def run(self):
         while True:
             if self.should_stop.is_set():
                 break
-            with self.lock:
-                inputs = copy.deepcopy(self.inputs)
-                self.inputs = None
+            inputs = None
+            while not self.inputs.empty():
+                # Drain the queue.
+                inputs = self.inputs.get()
             if inputs is None:
                 time.sleep(1e-6)
                 continue
             outputs = self.process(inputs)
-            with self.lock:
-                self.outputs = copy.deepcopy(outputs)
+            self.outputs.put(outputs)
 
 
 # N.B. We must use `fork` so we can pass in an already constructed system.
@@ -319,12 +337,23 @@ class MultiprocessWorker(ctx.Process, SystemWorker):
     def __init__(self, system):
         ctx.Process.__init__(self)
         SystemWorker.__init__(self, system)
-        # This seems to make performance a ton easier.
-        # See https://stackoverflow.com/a/56118981/7829525
-        self.manager = ctx.Manager()
-        self.should_stop = self.manager.Event()
-        self.inputs = self.manager.Queue()
-        self.outputs = self.manager.Queue()
+
+        # This seems to be simplest and maybe fastest?
+        self.should_stop = ctx.Event()
+        self.inputs = ctx.SimpleQueue()
+        self.outputs = ctx.SimpleQueue()
+
+        # # This was sloppy for earlier bencharmks.
+        # self.inputs = ctx.Queue()
+        # self.outputs = ctx.Queue()
+
+        # # This seems to make performance a ton easier than just ctx.Queue().
+        # # However, may be worse than SimpleQueue()?
+        # # See https://stackoverflow.com/a/56118981/7829525
+        # self.manager = ctx.Manager()
+        # self.should_stop = self.manager.Event()
+        # self.inputs = self.manager.Queue()
+        # self.outputs = self.manager.Queue()
 
     @staticmethod
     def _atexit(self_ref):
@@ -333,7 +362,9 @@ class MultiprocessWorker(ctx.Process, SystemWorker):
             self.stop()
 
     def start(self):
-        cleanup = functools.partial(MultiprocessWorker._atexit, weakref.ref(self))
+        cleanup = functools.partial(
+            MultiprocessWorker._atexit, weakref.ref(self)
+        )
         custom_atexit_register(cleanup)
         ctx.Process.start(self)
 
@@ -370,8 +401,8 @@ class MultiprocessWorker(ctx.Process, SystemWorker):
             if inputs is None:
                 time.sleep(1e-6)
                 continue
-            system_output_values = self.process(inputs)
-            self.outputs.put(system_output_values)
+            outputs = self.process(inputs)
+            self.outputs.put(outputs)
 
 
 class WorkerSystem(LeafSystem):
@@ -393,6 +424,8 @@ class WorkerSystem(LeafSystem):
         self._system_input_values = {}
         self._system_output_values = {}
         self._has_discrete_update_inputs = False
+        # hack
+        self.t_final = 0.0
 
         for name, system_input in system_inputs.items():
             self.inputs[name] = declare_input_port(
@@ -413,7 +446,7 @@ class WorkerSystem(LeafSystem):
             for name, input in self.inputs.items():
                 self._system_input_values[name] = input.Eval(context)
             inputs = Inputs(
-                system_t=context.get_time(),
+                t_system=context.get_time(),
                 system_input_values=self._system_input_values,
                 is_init=is_init,
             )
@@ -421,18 +454,25 @@ class WorkerSystem(LeafSystem):
 
         def on_init(context, raw_state):
             put_inputs(context, is_init=True)
-            self._system_output_values = worker.get_latest_outputs()
+            outputs = worker.get_latest_outputs()
+            self._system_output_values = outputs.system_output_values
+            self.t_final = outputs.t_system
             self._has_discrete_update_inputs = False
 
         self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
 
         def get_discrete_update_outputs(context):
-            if deterministic and self._has_discrete_update_inputs:
-                self._system_output_values = worker.get_latest_outputs()
+            outputs = None
+            if deterministic:
+                if self._has_discrete_update_inputs:
+                    outputs = worker.get_latest_outputs()
+                    assert outputs is not None
             else:
-                maybe = worker.maybe_get_latest_outputs()
-                if maybe is not None:
-                    self._system_output_values = maybe
+                outputs = worker.maybe_get_latest_outputs()
+
+            if outputs is not None:
+                self._system_output_values = outputs.system_output_values
+                self.t_final = outputs.t_system
 
         def on_discrete_update(context, raw_state):
             get_discrete_update_outputs(context)
@@ -450,11 +490,37 @@ def main():
     run(ThreadWorker, num_systems=1, deterministic=True, do_print=True)
     run(MultiprocessWorker, num_systems=1, deterministic=True, do_print=True)
 
+    # run(DirectWorker, num_systems=1, deterministic=True)
+    # run(ThreadWorker, num_systems=1, deterministic=True)
+    # run(ThreadWorker, num_systems=1, deterministic=False)
+    # run(MultiprocessWorker, num_systems=1, deterministic=False)
+    # run(MultiprocessWorker, num_systems=1, deterministic=False)
+
     run(DirectWorker, num_systems=5, deterministic=True)
     run(ThreadWorker, num_systems=5, deterministic=True)
     run(MultiprocessWorker, num_systems=5, deterministic=True)
+
+    # run(ThreadWorker, num_systems=5, deterministic=True)
+    # run(MultiprocessWorker, num_systems=5, deterministic=True)
     # run(ThreadWorker, num_systems=5, deterministic=False)
     # run(MultiprocessWorker, num_systems=5, deterministic=False)
+
+    # run(DirectWorker, num_systems=5, deterministic=True)
+    # run(ThreadWorker, num_systems=5, deterministic=True)
+    # run(MultiprocessWorker, num_systems=5, deterministic=True)
+
+    # run(ThreadWorker, num_systems=20, deterministic=False)
+    # run(MultiprocessWorker, num_systems=5, deterministic=False)
+
+
+@contextmanager
+def use_pyinstrument(output_file):
+    p = pyinstrument.Profiler()
+    with p:
+        yield
+    r = pyinstrument.renderers.SpeedscopeRenderer()
+    with open(output_file, "w") as f:
+        f.write(p.output(r))
 
 
 def run(
@@ -475,10 +541,16 @@ def run(
 
     clock = builder.AddSystem(AbstractClock())
 
-    period_sec = 0.1
-    t_sim = period_sec * 4
+    if do_print:
+        period_sec = 0.1
+        t_sim = period_sec * 4
+    else:
+        period_sec = 0.002
+        t_sim = 1.0
     wrapper_period_sec = period_sec
     # wrapper_period_sec = period_sec / 10
+
+    print(f"  period_sec={period_sec:.4g}, t_sim={t_sim:.2g}")
 
     worker_systems = []
     for i in range(num_systems):
@@ -486,8 +558,17 @@ def run(
             period_sec, prefix=f"[{i} busy ] ", do_print=False,
         )
         worker = worker_cls(busy_system)
+
+        if not deterministic:
+            # Hack :(
+            worker.period_lag_max = period_sec * 2
+
         worker_system = builder.AddSystem(
-            WorkerSystem(worker, period_sec=wrapper_period_sec)
+            WorkerSystem(
+                worker,
+                period_sec=wrapper_period_sec,
+                deterministic=deterministic,
+            )
         )
         builder.Connect(
             clock.get_output_port(), worker_system.get_input_port()
@@ -511,11 +592,20 @@ def run(
     t_wall_start = time.time()
 
     simulator.AdvanceTo(t_sim)
+    # with use_py_spy("./profile.svg"):
+    # with use_pyinstrument("./speedscope.json"):
+    #     simulator.AdvanceTo(t_sim)
 
     dt_sim = simulator.get_context().get_time() - t_sim_start
     dt_wall = time.time() - t_wall_start
     rate = dt_sim / dt_wall
     print(f"Rate: {rate:.3g}")
+
+    if not deterministic:
+        dt_lag_final = (
+            simulator.get_context().get_time() - worker_system.t_final
+        )
+        print(f"Final lag: {dt_lag_final:.3g}s")
 
     context = worker_system.GetMyContextFromRoot(simulator.get_context())
     y = worker_system.get_output_port().Eval(context)
