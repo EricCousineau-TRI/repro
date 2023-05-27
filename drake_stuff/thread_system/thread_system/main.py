@@ -9,13 +9,24 @@ import time
 import weakref
 
 from pydrake.all import (
-    Value,
-    LeafSystem,
     AbstractValue,
     BasicVector,
     DiagramBuilder,
+    LeafSystem,
     Simulator,
+    Value,
 )
+
+
+class AbstractClock(LeafSystem):
+    def __init__(self):
+        super().__init__()
+
+        def calc_t(context, output):
+            t = context.get_time()
+            output.set_value(t)
+
+        self.DeclareAbstractOutputPort("t", Value[object], calc_t)
 
 
 def busy_sleep_until(t_next):
@@ -32,7 +43,7 @@ def busy_sleep(dt):
 
 
 class BusyDiscreteSystem(LeafSystem):
-    def __init__(self, period_sec=0.01, prefix=""):
+    def __init__(self, period_sec=0.01, prefix="", do_print=True):
         super().__init__()
 
         self.u = self.DeclareAbstractInputPort("u", Value[object]())
@@ -46,7 +57,8 @@ class BusyDiscreteSystem(LeafSystem):
             busy_sleep(period_sec)
 
             t = context.get_time()
-            print(f"{prefix}t={t:.3g}, u={u:.3g}")
+            if do_print:
+                print(f"{prefix}t={t:.3g}, u={u:.3g}")
             abstract_state = raw_state.get_mutable_abstract_state(state_index)
             abstract_state.set_value(u)
 
@@ -351,11 +363,10 @@ class WorkerSystem(LeafSystem):
             worker.put_inputs(inputs)
             self._system_output_values = worker.get_latest_outputs()
 
-            if deterministic:
-                # Place once more for next update to consume.
-                inputs = copy.copy(inputs)
-                inputs.is_init = False
-                worker.put_inputs(inputs)
+            # Place once more for next update to consume.
+            inputs = copy.copy(inputs)
+            inputs.is_init = False
+            worker.put_inputs(inputs)
 
         self.DeclareInitializationUnrestrictedUpdateEvent(on_init)
 
@@ -373,32 +384,27 @@ class WorkerSystem(LeafSystem):
         self.DeclarePeriodicUnrestrictedUpdateEvent(
             period_sec, 0.0, on_discrete_update
         )
-
         # TODO(eric.cousineau): Publish events?
 
 
-class AbstractClock(LeafSystem):
-    def __init__(self):
-        super().__init__()
-
-        def calc_t(context, output):
-            t = context.get_time()
-            output.set_value(t)
-
-        self.DeclareAbstractOutputPort("t", Value[object], calc_t)
-
-
 def main():
-    # run(DirectWorker, num_systems=2, deterministic=False)
-    # run(ThreadWorker, num_systems=2, deterministic=True)
-    run(ThreadWorker, num_systems=20, deterministic=False)
-    # run(MpWorker, num_systems=2, deterministic=True)
-    run(MpWorker, num_systems=20, deterministic=False)
+    run(DirectWorker, num_systems=1, deterministic=True, do_print=True)
+    run(ThreadWorker, num_systems=1, deterministic=True, do_print=True)
+    run(MpWorker, num_systems=1, deterministic=True, do_print=True)
+
+    run(DirectWorker, num_systems=5, deterministic=True)
+    run(ThreadWorker, num_systems=5, deterministic=True)
+    run(MpWorker, num_systems=5, deterministic=True)
+    # run(ThreadWorker, num_systems=5, deterministic=False)
+    # run(MpWorker, num_systems=5, deterministic=False)
 
 
-def run(worker_cls, *, num_systems, deterministic=False):
+def run(worker_cls, *, num_systems, deterministic=True, do_print=False):
     print()
-    print(f"{worker_cls}, deterministic={deterministic}")
+    print(
+        f"{worker_cls.__name__}, num_systems={num_systems}, "
+        f"deterministic={deterministic}"
+    )
 
     # sometimes there are weird startup transients...
 
@@ -406,14 +412,16 @@ def run(worker_cls, *, num_systems, deterministic=False):
 
     clock = builder.AddSystem(AbstractClock())
 
-    t_sim = 0.5
-    period_sec = t_sim / 5
+    t_sim = 0.1
+    period_sec = t_sim / 10
     wrapper_period_sec = period_sec
     # wrapper_period_sec = period_sec / 10
 
     worker_systems = []
     for i in range(num_systems):
-        busy_system = BusyDiscreteSystem(period_sec, prefix=f"[{i}] ")
+        busy_system = BusyDiscreteSystem(
+            period_sec, prefix=f"[{i}] ", do_print=do_print,
+        )
         worker = worker_cls(busy_system)
         worker_system = builder.AddSystem(
             WorkerSystem(worker, period_sec=wrapper_period_sec)
@@ -429,10 +437,14 @@ def run(worker_cls, *, num_systems, deterministic=False):
     simulator.set_target_realtime_rate(1.0)
     simulator.Initialize()
 
-    t_start = time.time()
+    t_sim_start = simulator.get_context().get_time()
+    t_wall_start = time.time()
+
     simulator.AdvanceTo(t_sim)
-    t_wall = time.time() - t_start
-    rate = t_sim / t_wall
+
+    dt_sim = simulator.get_context().get_time()
+    dt_wall = time.time() - t_wall_start
+    rate = dt_sim / dt_wall
     print(f"Rate: {rate:.3g}")
 
     context = worker_system.GetMyContextFromRoot(simulator.get_context())
