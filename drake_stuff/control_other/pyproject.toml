@@ -1,17 +1,19 @@
 [tool.poetry]
-name = "control-study"
+name = "control-other"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["Eric Cousineau <eric.cousineau@tri.global>"]
 readme = "README.md"
-packages = [{include = "control_study"}]
+packages = [{include = "tsid_control"}]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"  # for scipy
+python = "^3.10"
+tsid = "^1.6.2.1"
 drake = "^1.15.0"
 jupyterlab = "^3.6.3"
-matplotlib = "^3.7.1"
-scipy = "^1.10.1"
+pin = "^2.6.18"
+mujoco = "^2.3.5"
+
 
 [build-system]
 requires = ["poetry-core"]

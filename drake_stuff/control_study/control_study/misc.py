@@ -1,3 +1,5 @@
+import pickle
+
 import numpy as np
 
 from pydrake.geometry import DrakeVisualizer, DrakeVisualizerParams, Role
@@ -36,6 +38,23 @@ from control_study.trajectories import (
 
 def unzip(xs):
     return tuple(zip(*xs, strict=True))
+
+
+def save_pickle(data, *, filename):
+    with open(filename, "wb") as f:
+        pickle.dump(data, f)
+
+
+def load_pickle(filename):
+    with open(filename, "rb") as f:
+        return pickle.load(f)
+
+
+def np_print_more_like_matlab():
+    np.set_printoptions(
+        formatter={"float_kind": lambda x: f"{x: 06.3f}"},
+        linewidth=150,
+    )
 
 
 class SimpleLogger(LeafSystem):
@@ -80,15 +99,20 @@ def make_sample_pose_traj(dT, X_WG, X_extr, X_intr):
 
     def traj_saturate(t):
         # Saturate at end.
+        zero_vel = False
         if t >= t_f:
-            t = t_f
-        X, V, A = traj(t)
+            X, _, _ = traj(t_f)
+            V = SpatialVelocity.Zero()
+            A = SpatialAcceleration.Zero()
+        else:
+            # May be discontinuous.
+            X, V, A = traj(t)
         return X, V, A
 
     return traj_saturate, t_f
 
 
-def make_sim_setup(time_step):
+def make_sim_setup(time_step, X_WB):
     builder = DiagramBuilder()
     config = MultibodyPlantConfig(
         time_step=time_step,
@@ -107,6 +131,7 @@ def make_sim_setup(time_step):
     plant.WeldFrames(
         plant.world_frame(),
         plant.GetFrameByName("panda_link0"),
+        X_WB,
     )
     plant.Finalize()
 

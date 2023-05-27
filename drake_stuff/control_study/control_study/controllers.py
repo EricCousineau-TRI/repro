@@ -109,6 +109,10 @@ class Gains:
         kd = 2 * np.sqrt(kp)
         return Gains(kp, kd)
 
+    def __iter__(self):
+        as_tuple = (self.kp, self.kd)
+        return iter(as_tuple)
+
 
 @dc.dataclass
 class OscGains:
@@ -121,6 +125,10 @@ class OscGains:
             Gains.critically_damped(kp_t),
             Gains.critically_damped(kp_p),
         )
+
+    def __iter__(self):
+        as_tuple = (self.task, self.posture)
+        return iter(as_tuple)
 
 
 def calc_spatial_values(plant, context, frame_W, frame_G):
@@ -147,6 +155,13 @@ def reproject_mass(Minv, Jt):
     Mtinv = Jt @ Minv @ Jt.T
     # Maps from task accelerations to task forces.
     Mt = np.linalg.inv(Mtinv)
+
+    # # HACK
+    # Jtpinv = np.linalg.pinv(Jt)
+    # M = np.linalg.inv(Minv)
+    # Mt = Jtpinv.T @ M @ Jtpinv
+    # Mtinv = np.linalg.inv(Mt)
+
     # Maps from task accelerations to generalized accelerations.
     # Transpose maps from generalized forces to task forces.
     Jtbar = Minv @ Jt.T @ Mt
@@ -155,40 +170,256 @@ def reproject_mass(Minv, Jt):
     return Mt, Mtinv, Jt, Jtbar, Nt_T
 
 
-class Osc(BaseController):
-    """Explicit OSC."""
+def calc_null(J, Jpinv=None):
+    n = J.shape[1]
+    I = np.eye(n)
+    if Jpinv is None:
+        Jpinv = np.linalg.pinv(J)
+    N = I - Jpinv @ J
+    return N
+
+
+class DiffIkAndId(BaseController):
+    """Open loop diff ik + inverse dynamics."""
+    def __init__(self, plant, frame_W, frame_G, dt, gains_p):
+        super().__init__(plant, frame_W, frame_G)
+        self.dt = dt
+        self.solver = OsqpSolver()
+        self.solver_options = SolverOptions()
+        self.gains_p = gains_p
+
+        # Hacky state.
+        self.should_save = False
+        self.open_loop = False
+        self.context_integ = None
+
+    def calc_control(self, t, pose_actual, pose_desired, q0):
+        if self.open_loop and self.context_integ is None:
+            self.context_integ = self.plant.CreateDefaultContext()
+            self.plant.SetPositions(self.context_integ, q0)
+
+        q = self.plant.GetPositions(self.context)
+        v = self.plant.GetVelocities(self.context)
+
+        if self.open_loop:
+            q_integ = self.plant.GetPositions(self.context_integ)
+        else:
+            q_integ = q
+
+        # Compute desired joint velocity from diff ik.
+
+        # Compute error in SE(3).
+        if self.open_loop:
+            pose_actual = calc_spatial_values(
+                self.plant, self.context_integ, self.frame_W, self.frame_G
+            )
+
+        kp_ti = 10.0
+        kp_pi = 10.0
+
+        # Spatial feedback (integrated, so "ti").
+        X, _, Jt, _ = pose_actual
+        X_des, _, _ = pose_desired
+        e_ti = se3_vector_minus(X, X_des)
+        ed_ti_c = -kp_ti * e_ti
+        # Posture feedback (integrated, so "pi").
+        # Drive towards v = ed_pi_c = -k*e_pi in null-space Nt.
+        Nt = calc_null(Jt)
+        e_pi = q_integ - q0
+        ed_pi_c = -kp_pi * e_pi
+        # # hack
+        # ed_pi_c *= -1
+
+        direct_solve = True
+
+        if direct_solve:
+            Jtpinv = np.linalg.pinv(Jt)
+            v_integ = Jtpinv @ ed_ti_c + Nt @ ed_pi_c
+        else:
+            # Formulate optimization.
+            prog = MathematicalProgram()
+            num_v = self.plant.num_velocities()
+            num_t = 6
+            v_next = prog.NewContinuousVariables(num_v, "v_next")
+            alpha = prog.NewContinuousVariables(1, "alpha")
+            # Scaling.
+            weight = 100.0
+            prog.AddLinearCost([-weight], alpha)
+            # weight_s = np.sqrt(weight)
+            # prog.Add2NormSquaredCost([weight_s], [weight_s * 1.0], alpha)
+            prog.AddBoundingBoxConstraint([0.0], [1.0], alpha)
+            # Jt*v_next = alpha*ed_ti_c
+            prog.AddLinearEqualityConstraint(
+                np.hstack([Jt, -ed_ti_c.reshape((-1, 1))]),
+                np.zeros(num_t),
+                np.hstack([v_next, alpha]),
+            )
+            # Null-space via cost as |Nt (v - ed_pi_c)|^2
+            prog.Add2NormSquaredCost(Nt, Nt @ ed_pi_c, v_next)
+            # prog.AddLinearEqualityConstraint(Nt, Nt @ ed_pi_c, v_next)
+            # Solve.
+            result = solve_or_die(self.solver, self.solver_options, prog)
+            v_integ = result.GetSolution(v_next)
+
+        # Internal integration.
+        q_integ = q_integ + self.dt * v_integ
+        if self.open_loop and self.should_save:
+            self.plant.SetPositions(self.context_integ, q_integ)
+
+        # Do basic ID, but closing loop on actual (not integrated).
+        M, C, tau_g = calc_dynamics(self.plant, self.context)
+        H = C - tau_g
+        e_p = q - q_integ
+        ed_p = v - v_integ
+        kp_p, kd_p = self.gains_p
+        edd_p_c = -kp_p * e_p - kd_p * ed_p
+        u = M @ edd_p_c + H
+        return u
+
+
+class ResolvedAcc(BaseController):
+    """I think resolved accel."""
     def __init__(self, plant, frame_W, frame_G, gains):
         super().__init__(plant, frame_W, frame_G)
         self.gains = gains
 
     def calc_control(self, t, pose_actual, pose_desired, q0):
         M, C, tau_g = calc_dynamics(self.plant, self.context)
-        Minv = inv(M)
+        H = C - tau_g
+        q = self.plant.GetPositions(self.context)
+        v = self.plant.GetVelocities(self.context)
+
+        (kp_t, kd_t) = self.gains.task
+        (kp_p, kd_p) = self.gains.posture
 
         # Compute spatial feedback.
-        gains_t = self.gains.task
         X, V, Jt, Jtdot_v = pose_actual
         X_des, V_des, A_des = pose_desired
         V_des = V_des.get_coeffs()
         A_des = A_des.get_coeffs()
-        e = se3_vector_minus(X, X_des)
-        ed = V - V_des
-        edd_c = A_des - gains_t.kp * e - gains_t.kd * ed
-        Mt, _, Jt, _, Nt_T = reproject_mass(Minv, Jt)
-        Ft = Mt @ (edd_c - Jtdot_v)
+        e_t = se3_vector_minus(X, X_des)
+        ed_t = V - V_des
+        edd_t_c = A_des - kp_t * e_t - kd_t * ed_t
 
         # Compute posture feedback.
-        gains_p = self.gains.posture
-        q = self.plant.GetPositions(self.context)
-        v = self.plant.GetVelocities(self.context)
-        e = q - q0
-        ed = v
-        edd_c = -gains_p.kp * e - gains_p.kd * ed
-        Fp = M @ edd_c
+        e_p = q - q0
+        ed_p = v
+        edd_p_c = -kp_p * e_p - kd_p * ed_p
+
+        Jtpinv = np.linalg.pinv(Jt)
+        Nt = calc_null(Jt, Jtpinv)
 
         # Sum up tasks and cancel gravity + Coriolis terms.
-        tau = Jt.T @ Ft + Nt_T @ Fp + C - tau_g
+        vd_c = Jtpinv @ edd_t_c + Nt @ edd_p_c
+        tau = H + M @ vd_c
         return tau
+
+
+def vec_dot_norm(a, b, *, tol=1e-8):
+    n = np.linalg.norm(a) * np.linalg.norm(b)
+    if n <= tol:
+        return 0.0
+    else:
+        # arcos of this value gives angle.
+        return a.dot(b) / n
+
+
+class Osc(BaseController):
+    """Explicit OSC."""
+    def __init__(self, plant, frame_W, frame_G, gains):
+        super().__init__(plant, frame_W, frame_G)
+        self.gains = gains
+
+        self.should_save = False
+        self.ts = []
+        self.e_p_dirs = []
+        self.e_ps = []
+        self.e_ps_null_acc = []
+        self.e_ps_null_force = []
+
+    def calc_control(self, t, pose_actual, pose_desired, q0):
+        M, C, tau_g = calc_dynamics(self.plant, self.context)
+        H = C - tau_g
+        Minv = inv(M)
+        q = self.plant.GetPositions(self.context)
+        v = self.plant.GetVelocities(self.context)
+
+        (kp_t, kd_t) = self.gains.task
+        (kp_p, kd_p) = self.gains.posture
+
+        # Compute spatial feedback.
+        X, V, Jt, Jtdot_v = pose_actual
+        Mt, _, _, _, Nt_T = reproject_mass(Minv, Jt)
+        Nt = Nt_T.T
+        X_des, V_des, A_des = pose_desired
+        V_des = V_des.get_coeffs()
+        A_des = A_des.get_coeffs()
+        e_t = se3_vector_minus(X, X_des)
+        ed_t = V - V_des
+        edd_t_c = A_des - kp_t * e_t - kd_t * ed_t
+        # edd_t_c = -kp_t * e_t - kd_t * ed_t
+        Ft = Mt @ (edd_t_c - Jtdot_v)
+
+        Nt_kin = calc_null(Jt)
+
+        # Compute posture feedback.
+        e_p = q - q0
+        e_p_orig = e_p.copy()
+        # TODO(eric.cousineau): Find more prinicipled setup?
+        e_p_dir = vec_dot_norm(e_p, Nt @ e_p)
+        e_p *= e_p_dir  # seems ok
+        # e_p = Nt_kin @ e_p  # decent, but more null-space error
+        # e_p = Nt @ e_p  # doesn't help failing case
+        # e_p_dir = vec_dot_norm(Nt_kin @ e_p, Nt @ e_p)  # very... discrete?
+        # F_e_p = M @ e_p
+        # e_p_dir = vec_dot_norm(F_e_p, Nt_T @ F_e_p)
+        # e_p *= np.sign(e_p_dir)
+        # e_p *= np.sign(e_p * (Nt @ e_p))
+
+        ed_p = v
+        edd_p_c = -kp_p * e_p - kd_p * ed_p
+        Fp = M @ edd_p_c
+
+        # Sum up tasks and cancel gravity + Coriolis terms.
+        tau = H + Jt.T @ Ft + Nt_T @ Fp
+
+        if self.should_save:
+            self.ts.append(t)
+            self.e_p_dirs.append(e_p_dir)
+            self.e_ps.append(e_p_orig)
+            self.e_ps_null_acc.append(Nt @ e_p)
+            self.e_ps_null_force.append(Nt_T @ M @ e_p)
+
+        return tau
+
+    def show_plots(self):
+        ts = np.array(self.ts)
+        e_p_dirs = np.array(self.e_p_dirs)
+        e_ps = np.array(self.e_ps)
+        e_ps_null_acc = np.array(self.e_ps_null_acc)
+        e_ps_null_force = np.array(self.e_ps_null_force)
+        e_p_mags = np.linalg.norm(e_ps, axis=-1)
+
+        _, axs = plt.subplots(num=1, nrows=3)
+        plt.sca(axs[0])
+        plt.plot(ts, e_ps)
+        legend_for(e_ps)
+        plt.sca(axs[1])
+        plt.plot(ts, e_ps_null_acc)
+        plt.sca(axs[2])
+        plt.plot(ts, e_ps_null_force)
+        plt.tight_layout()
+
+        _, axs = plt.subplots(num=2, nrows=3)
+        plt.sca(axs[0])
+        plt.plot(ts, e_p_mags)
+        plt.sca(axs[1])
+        plt.plot(ts, e_p_dirs)
+        plt.sca(axs[2])
+        plt.plot(ts, e_p_mags * e_p_dirs)
+        plt.tight_layout()
+
+        plt.show()
 
 
 def make_osqp_solver_and_options(use_dairlab_settings=False):
@@ -297,7 +528,7 @@ def vd_limits_from_tau(u_limits, Minv, H):
     return vd_tau_limits
 
 
-def add_simple_limits(
+def add_plant_limits_to_qp(
     *,
     plant_limits,
     vd_limits,
@@ -481,6 +712,7 @@ class QpWithCosts(BaseController):
         self.gains = gains
         self.plant_limits = plant_limits
         self.solver, self.solver_options = make_osqp_solver_and_options()
+        # self.solver, self.solver_options = make_snopt_solver_and_options()
         self.acceleration_bounds_dt = acceleration_bounds_dt
         self.posture_weight = posture_weight
         self.split_costs = split_costs
@@ -517,15 +749,19 @@ class QpWithCosts(BaseController):
         #     C,
         #     tau_g,
         # )
-        add_simple_limits(
-            self.plant_limits,
-            vd_limits,
-            self.acceleration_bounds_dt,
-            q,
-            v,
-            prog,
-            vd_star,
-            u_star,
+        add_plant_limits_to_qp(
+            plant_limits=self.plant_limits,
+            vd_limits=vd_limits,
+            dt=self.acceleration_bounds_dt,
+            q=q,
+            v=v,
+            prog=prog,
+            vd_vars=vd_star,
+            Avd=np.eye(self.num_q),
+            bvd=np.zeros(self.num_q),
+            u_vars=u_star,
+            Au=np.eye(self.num_q),
+            bu=np.zeros(self.num_q),
         )
 
         # Compute spatial feedback.
@@ -546,23 +782,24 @@ class QpWithCosts(BaseController):
 
         num_t = 6
         It = np.eye(num_t)
-        if self.use_torque_weights:
+        if False:  # self.use_torque_weights:
             # task_proj = Jt.T @ Mt
             task_proj = Mt
         else:
             task_proj = It
         task_A = task_proj @ task_A
         task_b = task_proj @ task_b
-        if self.split_costs is None:
-            prog.Add2NormSquaredCost(task_A, task_b, vd_star)
-        else:
-            slices = [slice(0, 3), slice(3, 6)]
-            for weight_i, slice_i in zip(self.split_costs, slices):
-                prog.Add2NormSquaredCost(
-                    weight_i * task_A[slice_i],
-                    weight_i* task_b[slice_i],
-                    vd_star,
-                )
+        # if self.split_costs is None:
+        # prog.Add2NormSquaredCost(task_A, task_b, vd_star)
+        add_2norm_row_decoupled(prog, task_A, task_b, vd_star)
+        # else:
+        #     slices = [slice(0, 3), slice(3, 6)]
+        #     for weight_i, slice_i in zip(self.split_costs, slices):
+        #         prog.Add2NormSquaredCost(
+        #             weight_i * task_A[slice_i],
+        #             weight_i* task_b[slice_i],
+        #             vd_star,
+        #         )
 
         # Compute posture feedback.
         gains_p = self.gains.posture
@@ -571,13 +808,14 @@ class QpWithCosts(BaseController):
         edd_c = -gains_p.kp * e - gains_p.kd * ed
         # Same as above, but lower weight.
         weight = self.posture_weight
-        if self.use_torque_weights:
+        if False:  # self.use_torque_weights:
             task_proj = weight * Nt_T
         else:
             task_proj = weight * Iv
         task_A = task_proj
         task_b = task_proj @ edd_c
-        prog.Add2NormSquaredCost(task_A, task_b, vd_star)
+        # prog.Add2NormSquaredCost(task_A, task_b, vd_star)
+        add_2norm_row_decoupled(prog, task_A, task_b, vd_star)
 
         # Solve.
         result = solve_or_die(self.solver, self.solver_options, prog)
@@ -591,6 +829,11 @@ def add_2norm_decoupled(prog, a, b, x):
     b = -2 * a * b
     c = np.sum(b * b)
     return prog.AddQuadraticCost(Q, b, c, x)
+
+
+def add_2norm_row_decoupled(prog, A, b, x):
+    for i in range(A.shape[0]):
+        prog.Add2NormSquaredCost(A[i:i + 1, :], b[i:i + 1], x)
 
 
 from pydrake.autodiffutils import (
@@ -722,23 +965,26 @@ class QpWithDirConstraint(BaseController):
 
         X, V, Jt, Jtdot_v = pose_actual
         Mt, Mtinv, Jt, Jtbar, Nt_T = reproject_mass(Minv, Jt)
+        Nt = Nt_T.T
 
         # Compute spatial feedback.
-        gains_t = self.gains.task
+        kp_t, kd_t = self.gains.task
         num_t = 6
         It = np.eye(num_t)
         X_des, V_des, A_des = pose_desired
         V_des = V_des.get_coeffs()
         A_des = A_des.get_coeffs()
-        e = se3_vector_minus(X, X_des)
-        ed = V - V_des
-        edd_c_t = A_des - gains_t.kp * e - gains_t.kd * ed
+        e_t = se3_vector_minus(X, X_des)
+        ed_t = V - V_des
+        edd_t_c = A_des - kp_t * e_t - kd_t * ed_t
 
         # Compute posture feedback.
-        gains_p = self.gains.posture
-        e = q - q0
-        ed = v
-        edd_c_p = -gains_p.kp * e - gains_p.kd * ed
+        kp_p, kd_p = self.gains.posture
+        e_p = q - q0
+        e_p_dir = vec_dot_norm(e_p, Nt @ e_p)
+        e_p *= e_p_dir  # From OSC hacking.
+        ed_p = v
+        edd_p_c = -kp_p * e_p - kd_p * ed_p
 
         num_t = 6
 
@@ -789,7 +1035,7 @@ class QpWithDirConstraint(BaseController):
         # relax_primary = 1e6
         relax_secondary = None
 
-        # norm_t = np.linalg.norm(edd_c_t)
+        # norm_t = np.linalg.norm(edd_t_c)
         # min_t = 5.0
         # if norm_t < min_t:
         #     relax_primary = 1.0
@@ -797,10 +1043,10 @@ class QpWithDirConstraint(BaseController):
         # assert num_scales_t == 1  # HACK
         # if norm_t < min_t:
         #     if self.prev_dir is not None:
-        #         edd_c_t = min_t * self.prev_dir
+        #         edd_t_c = min_t * self.prev_dir
         #         desired_scales_t[:] = norm_t / min_t
         # else:
-        #     dir_t = edd_c_t / norm_t
+        #     dir_t = edd_t_c / norm_t
         #     if self.should_save:
         #         self.prev_dir = dir_t
 
@@ -845,15 +1091,15 @@ class QpWithDirConstraint(BaseController):
         else:
             # Primary, scale.
             u_vars = scale_vars_t
-            Au = proj_t @ np.diag(edd_c_t) @ scale_A_t
+            Au = proj_t @ np.diag(edd_t_c) @ scale_A_t
             bu = -proj_t @ Jtdot_v + H
 
             if scale_secondary:
-                Au_p = proj_p @ np.diag(edd_c_p) @ scale_A_p
+                Au_p = proj_p @ np.diag(edd_p_c) @ scale_A_p
                 u_vars = np.concatenate([u_vars, scale_vars_p])
                 Au = np.hstack([Au, Au_p])
             else:
-                bu += proj_p @ edd_c_p
+                bu += proj_p @ edd_p_c
 
             if relax_primary is not None:
                 Au_rt = proj_t
@@ -889,7 +1135,7 @@ class QpWithDirConstraint(BaseController):
             vd_tau_limits = vd_limits_from_tau(self.plant_limits.u, Minv, H)
             vd_limits = vd_limits.intersection(vd_tau_limits)
         dt = self.acceleration_bounds_dt  # HACK
-        limit_info = add_simple_limits(
+        limit_info = add_plant_limits_to_qp(
             plant_limits=self.plant_limits,
             vd_limits=vd_limits,
             dt=dt,
@@ -927,14 +1173,20 @@ class QpWithDirConstraint(BaseController):
             kmu_1 = 2 / (dt * dt)
             kmu_2 = 2 / dt
 
-            kmu_1 /= 5**2
+            kmu_1 /= 5**2  # for high feedback gain
+            # kmu_1 /= 10**2  # for low feedback gain
             kmu_2 /= 5
 
             h_mu = mu - mu_min
             hd_mu = Jmu @ v
             # hdd = J*vd + Jd_v >= -∑ Kᵢ h⁽ⁱ⁾
             Amu = Jmu @ Avd
-            bmu = -Jmudot_v - kmu_1 * amu_1(h_mu) - kmu_2 * amu_2(hd_mu)
+            bmu = (
+                -Jmudot_v
+                -Jmu @ bvd
+                -kmu_1 * amu_1(h_mu)
+                -kmu_2 * amu_2(hd_mu)
+            )
             prog.AddLinearConstraint(
                 [Amu],
                 [bmu],
@@ -983,7 +1235,7 @@ class QpWithDirConstraint(BaseController):
 
         if implicit:
             task_vars_t = np.concatenate([vd_star, scale_vars_t])
-            task_bias_t = edd_c_t
+            task_bias_t = edd_t_c
             task_A_t = np.hstack([Jt, -np.diag(task_bias_t) @ scale_A_t])
             task_b_t = -Jtdot_v
 
@@ -1041,12 +1293,12 @@ class QpWithDirConstraint(BaseController):
             if not scale_secondary:
                 assert not dup_eq_as_cost
                 task_A_p = proj_p
-                task_b_p = proj_p @ edd_c_p
+                task_b_p = proj_p @ edd_p_c
                 prog.AddLinearEqualityConstraint(
                     task_A_p, task_b_p, vd_star,
                 ).evaluator().set_description("posture")
             else:
-                task_bias_p = edd_c_p
+                task_bias_p = edd_p_c
                 # task_bias_rep = np.tile(edd_c, (num_scales, 1)).T
                 task_vars_p = np.concatenate([vd_star, scale_vars_p])
                 task_A_p = np.hstack([Iv, -np.diag(task_bias_p) @ scale_A_p])
@@ -1104,9 +1356,9 @@ class QpWithDirConstraint(BaseController):
         #         scale_vars_p,
         #     )
 
-        # print(f"edd_c_t: {edd_c_t}")
+        # print(f"edd_t_c: {edd_t_c}")
         # if scale_secondary:
-        #     print(f"  edd_c_p: {edd_c_p}")
+        #     print(f"  edd_p_c: {edd_p_c}")
 
         # Solve.
         try:
@@ -1136,11 +1388,11 @@ class QpWithDirConstraint(BaseController):
             # tol = 0  # gurobi default
             # tol = 1e-14  # snopt default
             # tol = 1e-10  # snopt, singular
-            # tol = 1e-8
+            tol = 1e-8
             # tol = 1e-4
             # tol = 1e-14  # scs - primal infeasible, dual unbounded?
             # tol = 1e-11  # mosek default
-            tol = 1e-1  # HACK
+            # tol = 1e-1  # HACK
 
 
         scale_t = result.GetSolution(scale_vars_t)
@@ -1179,7 +1431,7 @@ class QpWithDirConstraint(BaseController):
 
         # import pdb; pdb.set_trace()
 
-        edd_c_p_null = Minv @ Nt_T @ M @ edd_c_p
+        edd_c_p_null = Minv @ Nt_T @ M @ edd_p_c
         _, sigmas, _ = np.linalg.svd(Jt)
 
         if self.should_save:
@@ -1187,10 +1439,10 @@ class QpWithDirConstraint(BaseController):
             self.qs.append(q)
             self.vs.append(v)
             self.us.append(tau)
-            self.edd_ts.append(edd_c_t)
+            self.edd_ts.append(edd_t_c)
             self.s_ts.append(scale_t)
             self.r_ts.append(relax_t)
-            self.edd_ps.append(edd_c_p)
+            self.edd_ps.append(edd_p_c)
             self.edd_ps_null.append(edd_c_p_null)
             if scale_secondary:
                 self.s_ps.append(scale_p)
@@ -1251,15 +1503,15 @@ class QpWithDirConstraint(BaseController):
         plt.sca(axs[0])
         plt.plot(ts, edd_ts)
         legend_for(edd_ts)
-        plt.title("edd_c_t")
+        plt.title("edd_t_c")
         plt.sca(axs[1])
         plt.plot(ts, edd_ps)
         legend_for(edd_ps)
-        plt.title("edd_c_p")
+        plt.title("edd_p_c")
         plt.sca(axs[2])
         plt.plot(ts, edd_ps_null)
         legend_for(edd_ps_null)
-        plt.title("edd_c_p null")
+        plt.title("edd_p_c null")
         plt.tight_layout()
 
         _, axs = plt.subplots(num=3, nrows=3)
