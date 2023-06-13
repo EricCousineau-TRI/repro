@@ -5,6 +5,11 @@ From: ros:noetic-ros-core
   ./fake_sudo.sh /usr/bin/sudo
 
 %post
+  export DEBIAN_FRONTEND=noninteractive
+
+  apt update
+  apt install -y build-essential
+
   export expected_user=@USER@
   ln -s /root /home/${expected_user}
 
