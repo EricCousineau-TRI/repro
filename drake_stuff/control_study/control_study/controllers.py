@@ -180,7 +180,7 @@ def calc_null(J, Jpinv=None):
 
 
 class DiffIkAndId(BaseController):
-    """Open loop diff ik + inverse dynamics."""
+    """Open/closed loop diff ik + inverse dynamics."""
     def __init__(self, plant, frame_W, frame_G, dt, gains_p):
         super().__init__(plant, frame_W, frame_G)
         self.dt = dt

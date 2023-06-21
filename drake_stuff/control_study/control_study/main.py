@@ -320,7 +320,7 @@ def make_controller_diff_ik(plant, frame_W, frame_G):
         # A bit high, but eh.
         gains_p=Gains.critically_damped(100.0),
     )
-    controller.check_limits = False
+    controller.check_limits = True
     return controller
 
 
@@ -422,11 +422,11 @@ def scenario_main():
         # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
-        # "diff ik": make_controller_diff_ik,
+        "diff ik": make_controller_diff_ik,
         # "acc": make_controller_resolved_acc,
         # "osc": make_controller_osc,
-        "qp costs": make_controller_qp_costs,
-        # "qp constr": make_controller_qp_constraints,
+        # "qp costs": make_controller_qp_costs,
+        "qp constr": make_controller_qp_constraints,
     }
     for scenario_name, scenario in scenarios.items():
         print(scenario_name)
