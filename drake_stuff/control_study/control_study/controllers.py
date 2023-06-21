@@ -914,10 +914,10 @@ class QpWithDirConstraint(BaseController):
         self.context_ad = self.plant_ad.CreateDefaultContext()
 
         # Can be a bit imprecise, but w/ tuning can improve.
-        # self.solver, self.solver_options = make_osqp_solver_and_options()
+        self.solver, self.solver_options = make_osqp_solver_and_options()
 
         # Best, it seems like?
-        self.solver, self.solver_options = make_snopt_solver_and_options()
+        # self.solver, self.solver_options = make_snopt_solver_and_options()
 
         # self.solver, self.solver_options = make_clp_solver_and_options()
 

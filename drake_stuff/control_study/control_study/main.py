@@ -233,6 +233,15 @@ def run_fast_waypoints_singular(make_controller, *, rotate):
     )
 
 
+def run_fast_waypoints_x(make_controller):
+    run_spatial_waypoints(
+        make_controller=make_controller,
+        X_extr=RigidTransform([0.5, 0.0,-1.0]),
+        X_intr=RigidTransform(),
+        dT=1.0,
+    )
+
+
 def make_osc_gains():
     # return OscGains.critically_damped(10.0, 0.0)  # like diff ik
     return OscGains(
@@ -415,14 +424,15 @@ def run_teleop_traj(make_controller):
 def scenario_main():
     scenarios = {
         # "slow": run_slow_waypoints,
-        "rot": run_rotation_coupling,
+        # "rot": run_rotation_coupling,
         # "fast": run_fast_waypoints,
         # "teleop": run_teleop_traj,
         # "fast singular": partial(run_fast_waypoints_singular, rotate=False),
+        "fast x": run_fast_waypoints_x,
         # "fast singular rot": partial(run_fast_waypoints_singular, rotate=True),
     }
     make_controllers = {
-        "diff ik": make_controller_diff_ik,
+        # "diff ik": make_controller_diff_ik,
         # "acc": make_controller_resolved_acc,
         # "osc": make_controller_osc,
         # "qp costs": make_controller_qp_costs,
