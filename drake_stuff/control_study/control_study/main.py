@@ -243,28 +243,30 @@ def run_fast_waypoints_x(make_controller):
 
 
 def make_osc_gains():
-    # return OscGains.critically_damped(10.0, 0.0)  # like diff ik
+    # return OscGains.via_damping_ratio(10.0, 0.0)  # like diff ik
     return OscGains(
-        task=Gains.critically_damped(10.0),
+        # task=Gains.via_damping_ratio(10.0),
+        task=Gains.via_damping_ratio(10.0, ratio=0.3),
         # stability is noted for teleop trajectory case...
-        posture=Gains(kp=100.0, kd=20.0),  # unstable (towards end)
+        # posture=Gains(kp=100.0, kd=20.0),  # unstable (towards end)
+        posture=Gains.via_damping_ratio(kp=10.0),
         # posture=Gains(kp=0.0, kd=20.0),  # stable
         # posture=Gains(kp=-100.0, kd=20.0),  # stable?!!!
         # posture=Gains(kp=-100.0, kd=-20.0),  # unstable
         # posture=Gains(kp=0.0, kd=-20.0),  # unstable
         # posture=Gains(kp=100.0, kd=-20.0),  # unstable
     )
-    # return OscGains.critically_damped(10.0, 100.0)  # goes crazy
+    # return OscGains.via_damping_ratio(10.0, 100.0)  # goes crazy
 
-    # return OscGains.critically_damped(1.0, 1.0)
-    # return OscGains.critically_damped(10.0, 10.0)
-    # return OscGains.critically_damped(10.0, 1.0)
-    # return OscGains.critically_damped(100.0, 100.0)
-    # return OscGains.critically_damped(100.0, 10.0)
-    # return OscGains.critically_damped(150.0, 15.0)
-    # return OscGains.critically_damped(300.0, 30.0)
-    # return OscGains.critically_damped(100.0, 1.0)  # Drifts... hard...
-    # return OscGains.critically_damped(100.0, 0.0)  # of course locks
+    # return OscGains.via_damping_ratio(1.0, 1.0)
+    # return OscGains.via_damping_ratio(10.0, 10.0)
+    # return OscGains.via_damping_ratio(10.0, 1.0)
+    # return OscGains.via_damping_ratio(100.0, 100.0)
+    # return OscGains.via_damping_ratio(100.0, 10.0)
+    # return OscGains.via_damping_ratio(150.0, 15.0)
+    # return OscGains.via_damping_ratio(300.0, 30.0)
+    # return OscGains.via_damping_ratio(100.0, 1.0)  # Drifts... hard...
+    # return OscGains.via_damping_ratio(100.0, 0.0)  # of course locks
 
 
 def make_panda_limits(plant):
@@ -327,7 +329,7 @@ def make_controller_diff_ik(plant, frame_W, frame_G):
         frame_G,
         dt=CONTROL_DT,
         # A bit high, but eh.
-        gains_p=Gains.critically_damped(100.0),
+        gains_p=Gains.via_damping_ratio(100.0),
     )
     controller.check_limits = True
     return controller

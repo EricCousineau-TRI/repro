@@ -105,8 +105,8 @@ class Gains:
     kd: np.ndarray
 
     @staticmethod
-    def critically_damped(kp):
-        kd = 2 * np.sqrt(kp)
+    def via_damping_ratio(kp, *, ratio=1.0):
+        kd = ratio * 2 * np.sqrt(kp)
         return Gains(kp, kd)
 
     def __iter__(self):
@@ -120,10 +120,10 @@ class OscGains:
     posture: Gains
 
     @staticmethod
-    def critically_damped(kp_t, kp_p):
+    def via_damping_ratio(kp_t, kp_p, *, ratio_t=1.0, ratio_p=1.0):
         return OscGains(
-            Gains.critically_damped(kp_t),
-            Gains.critically_damped(kp_p),
+            Gains.via_damping_ratio(kp_t, ratio=ratio_t),
+            Gains.via_damping_ratio(kp_p, ratio=ratio_p),
         )
 
     def __iter__(self):
