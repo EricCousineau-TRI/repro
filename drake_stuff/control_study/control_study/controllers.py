@@ -988,7 +988,7 @@ class QpWithDirConstraint(BaseController):
 
         num_t = 6
 
-        # # a bit sloppy looking
+        # # *very* sloppy looking
         # scale_A_t = np.eye(num_t)
 
         # # better, but may need relaxation
@@ -1150,7 +1150,7 @@ class QpWithDirConstraint(BaseController):
             bu=bu,
         )
 
-        add_manip_cbf = True
+        add_manip_cbf = False
 
         if add_manip_cbf:
             # mu_min = 0.005
