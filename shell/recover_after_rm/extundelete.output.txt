@@ -1,0 +1,41 @@
++ which extundelete
+/usr/bin/extundelete
+++ dirname ./extundelete.sh
++ cd .
++ sudo umount -f ./mnt
+umount: ./mnt: not mounted.
++ :
++ sudo rm -rf ./mnt ./mnt.fs
++ rm -rf ./output
++ dd if=/dev/zero of=mnt.fs bs=1024 count=10240
+10240+0 records in
+10240+0 records out
+10485760 bytes (10 MB, 10 MiB) copied, 0.0263439 s, 398 MB/s
++ mkfs.ext4 ./mnt.fs
+mke2fs 1.46.5 (30-Dec-2021)
+Discarding device blocks:    0/2560         done                            
+Creating filesystem with 2560 4k blocks and 2560 inodes
+
+Allocating group tables: 0/1   done                            
+Writing inode tables: 0/1   done                            
+Creating journal (1024 blocks): done
+Writing superblocks and filesystem accounting information: 0/1   done
+
++ mkdir mnt
++ sudo mount ./mnt.fs ./mnt
++ sudo chown -R eacousineau:eacousineau ./mnt
++ echo 'This is a file'
++ gzip -c ./mnt/file.txt
++ rm ./mnt/file.txt
++ rm ./mnt/file.txt.gz
++ sudo umount -f ./mnt
++ extundelete --restore-all ./mnt.fs
+NOTICE: Extended attributes are not restored.
+Loading filesystem metadata ... 1 groups loaded.
+Loading journal descriptors ... 6 descriptors loaded.
+Searching for recoverable inodes in directory / ... 
+0 recoverable inodes found.
+Looking through the directory structure for deleted files ... 
+0 recoverable inodes still lost.
+No files were undeleted.
++ ls ./RECOVERED_FILES/

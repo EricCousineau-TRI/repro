@@ -6,5 +6,11 @@ Attempt to recover post `rm`
 ## Trying `foremost`
 
 ```sh
-./run.sh 2>&1 | tee run.output.txt
+./foremost.sh 2>&1 | tee foremost.output.txt
+```
+
+## Trying `extundelete`
+
+```sh
+./extundelete.sh 2>&1 | tee extundelete.output.txt
 ```
