@@ -1,0 +1,23 @@
+# -*- mode: python -*-
+
+cc_binary(
+    name = "footswitch",
+    srcs = [
+        "footswitch.c",
+        "common.c",
+        "common.h",
+        "debug.c",
+        "debug.h",
+    ],
+    copts = ["-I/usr/include/hidapi"],
+    linkopts = ["-lhidapi-libusb"],
+)
+
+filegroup(
+    name = "build_as_simple_test",
+    data = [
+        ":footswitch",
+    ],
+    testonly = 1,
+    visibility = ["//visibility:public"],
+)

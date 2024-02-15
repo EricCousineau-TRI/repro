@@ -1,0 +1,10 @@
+py_library(
+    name = "footswitch_py",
+    srcs = ["footswitch.py"],
+)
+
+py_binary(
+    name = "footswitch_demo",
+    srcs = ["footswitch_demo.py"],
+    deps = [":footswitch_py"],
+)

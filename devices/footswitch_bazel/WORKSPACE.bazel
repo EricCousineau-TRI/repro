@@ -1,0 +1,6 @@
+workspace(name = "footswitch_bazel")
+
+load("//tools/workspace/footswitch:repository.bzl", "footswitch_repository")
+footswitch_repository(
+    name = "footswitch",
+)
