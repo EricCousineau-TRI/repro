@@ -1,3 +1,1 @@
-Exported from Anzu
-
-See [tools/workspace/footswitch/README.md](tools/workspace/footswitch/README.md)
+Moved to <https://github.com/EricCousineau-TRI/footswitch_bazel>
