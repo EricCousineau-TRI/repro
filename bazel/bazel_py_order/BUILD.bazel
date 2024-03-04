@@ -1,0 +1,19 @@
+py_binary(
+    name = "import_order_1",
+    srcs = ["import_order.py"],
+    main = "import_order.py",
+    deps = [
+        "//pkg_1:my_lib_py",
+        "//pkg_2:my_lib_py",
+    ],
+)
+
+py_binary(
+    name = "import_order_2",
+    srcs = ["import_order.py"],
+    main = "import_order.py",
+    deps = [
+        "//pkg_2:my_lib_py",
+        "//pkg_1:my_lib_py",
+    ],
+)

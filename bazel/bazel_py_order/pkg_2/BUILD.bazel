@@ -1,0 +1,6 @@
+py_library(
+    name = "my_lib_py",
+    srcs = ["my_lib.py"],
+    imports = ["."],
+    visibility = ["//visibility:public"],
+)
