@@ -5,6 +5,7 @@ load(
     ":jupyter_py.bzl",
     "jupyter_py_binary",
 )
+load("@pip_deps//:requirements.bzl", pip = "requirement")
 
 py_library(
     name = "runfiles_py",
@@ -17,7 +18,10 @@ py_library(
 py_library(
     name = "jupyter_bazel_py",
     srcs = ["jupyter_bazel.py"],
-    deps = [":runfiles_py"],
+    deps = [
+        ":runfiles_py",
+        pip("jupyterlab"),
+    ],
     imports = ["."],
     visibility = ["//visibility:public"],
     # N.B. Implicit system dep on Jupyter. Can make this explicit if you care.
