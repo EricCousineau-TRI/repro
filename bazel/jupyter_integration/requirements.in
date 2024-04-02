@@ -1,5 +1,0 @@
-# Compile using
-#   bazel run //:requirements.update
-
-jupyterlab <= 3.5
-ipywidgets
