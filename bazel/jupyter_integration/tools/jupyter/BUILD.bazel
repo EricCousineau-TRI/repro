@@ -7,8 +7,17 @@ load(
 )
 
 py_library(
+    name = "runfiles_py",
+    srcs = ["runfiles.py"],
+    deps = [
+        "@bazel_tools//tools/python/runfiles",
+    ],
+)
+
+py_library(
     name = "jupyter_bazel_py",
     srcs = ["jupyter_bazel.py"],
+    deps = [":runfiles_py"],
     imports = ["."],
     visibility = ["//visibility:public"],
     # N.B. Implicit system dep on Jupyter. Can make this explicit if you care.
