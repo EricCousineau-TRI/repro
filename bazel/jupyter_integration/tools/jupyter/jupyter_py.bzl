@@ -8,12 +8,10 @@ import sys
 
 from jupyter_bazel import _jupyter_bazel_notebook_main
 
-cur_dir = os.path.dirname(__file__)
-notebook_file = {notebook_file}
-use_lab = "--lab" in sys.argv
-if use_lab:
-    sys.argv.remove("--lab")
-_jupyter_bazel_notebook_main(cur_dir, notebook_file, use_lab)
+from runfiles import SubstituteMakeVariableLocation
+
+notebook_path = SubstituteMakeVariableLocation({notebook_target})
+_jupyter_bazel_notebook_main(notebook_path, sys.argv[1:])
 """.lstrip()
 
 def _jupyter_py_target(
@@ -27,10 +25,15 @@ def _jupyter_py_target(
     if target == None:
         fail("Must supply `target`")
     impl_file = "{}_run_notebook.py".format(name)
+    notebook_target = "$(location {}//{}:{})".format(
+        native.repository_name(),
+        native.package_name(),
+        notebook,
+    )
     generate_file(
         name = impl_file,
         content = _JUPYTER_PY_TEMPLATE.format(
-            notebook_file = repr(notebook),
+            notebook_target = repr(notebook_target),
         ),
         is_executable = False,
     )
@@ -72,7 +75,7 @@ def jupyter_py_binary(name, notebook = None, add_test_rule = 0, **kwargs):
             **kwargs
         )
 
-def jupyter_py_test(name, notebook = None, tags = [], **kwargs):
+def jupyter_py_test(name, notebook = None, tags = [], args = [], **kwargs):
     """Creates a target to test a Jupyter/IPython notebook.
 
     Please see `//tools/jupyter:README.md` for examples.
@@ -86,6 +89,7 @@ def jupyter_py_test(name, notebook = None, tags = [], **kwargs):
         name = name,
         tags = tags + ["jupyter"],
         target = native.py_test,
+        args = ["--test"] + args,
         notebook = notebook,
         **kwargs
     )

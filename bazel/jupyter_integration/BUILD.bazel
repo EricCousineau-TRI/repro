@@ -1,3 +1,12 @@
+load("@rules_python//python:pip.bzl", "compile_pip_requirements")
+
+compile_pip_requirements(
+    name = "requirements",
+    requirements_in = "requirements.in",
+    requirements_txt = "requirements.txt",
+    tags = ["manual"],
+)
+
 # N.B. Relies on Bazel magic to make the package `jupyter_integration`
 # discoverable :(
 py_library(

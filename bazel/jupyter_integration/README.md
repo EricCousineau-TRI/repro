@@ -1,5 +1,12 @@
 # Bazel-Jupyter Stuff
 
+Example of using JupyterLab with Bazel's `rules_python`.
+
+Known issues:
+
+- Dunno how to make `jupyterlab-widgets` actually install correctly. See coarse
+  notes in `/notes.md`.
+
 See [tools/jupyter README](./tools/jupyter/README.md) for usage and examples.
 
 ## Setup
