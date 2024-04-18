@@ -58,6 +58,29 @@ t = 0.91
   dt: 0.09
   overrun: 0.01
 
+[ CatchupMode.GridStrict ]
+t = 0.1
+  dt: 0.1
+  overrun: 0
+t = 0.2
+  dt: 0.1
+  overrun: 0
+t = 0.3
+  dt: 0.1
+  overrun: 0
+t = 0.64
+  dt: 0.34
+  overrun: 0.24
+t = 0.8
+  dt: 0.16
+  overrun: 0
+t = 0.9
+  dt: 0.1
+  overrun: 0
+t = 1
+  dt: 0.1
+  overrun: 0
+
 [ CatchupMode.Reset ]
 t = 0.1
   dt: 0.1

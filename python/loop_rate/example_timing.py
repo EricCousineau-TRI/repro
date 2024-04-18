@@ -3,7 +3,18 @@ import math
 import time
 
 
-class WallClock:
+class Clock:
+    def now(self):
+        raise NotImplementedError()
+
+    def sleep(self, dt):
+        raise NotImplementedError()
+
+    def sleep_until(self, t, *, poll=None):
+        raise NotImplementedError()
+
+
+class WallClock(Clock):
     def __init__(self, *, dt_sleep=1e-4):
         self._dt_sleep = dt_sleep
         self._t_start = time.perf_counter()
@@ -23,7 +34,7 @@ class WallClock:
                 poll()
 
 
-class FakeClock:
+class FakeClock(Clock):
     def __init__(self):
         self._time = 0.0
 
@@ -47,10 +58,13 @@ class CatchupMode(Enum):
     # Stick to grid of timing... but this costs more time, and allows
     # for some skew.
     Grid = 1
+    # Grid timing, but strictly slow - will wait the post-sleep time is on the
+    # grid, whereas the above will not require strict on-grid timing.
+    GridStrict = 2
     # This has better inter-step timing, but allows for "misalignment" with
     # original timings - only a problem if we have slow things where aliasing
     # can hurt us.
-    Reset = 2
+    Reset = 3
 
 
 class LoopRate:
@@ -73,6 +87,13 @@ class LoopRate:
         elif self._catchup_mode == CatchupMode.Grid:
             while self.t_next < self._clock.now():
                 self.t_next += self.dt
+        elif self._catchup_mode == CatchupMode.GridStrict:
+            while self.t_next < self._clock.now():
+                self.t_next += self.dt
+            budget = self.t_next - self._clock.now()
+            ratio = 0.95
+            if budget < self.dt * ratio:
+                self.t_next += self.dt
         elif self._catchup_mode == CatchupMode.Reset:
             if self.t_next < self._clock.now():
                 self.t_next = self._clock.now() + self.dt
@@ -83,6 +104,7 @@ class LoopRate:
 def run(catchup_mode):
     dt = 0.1
 
+    # clock = WallClock()
     clock = FakeClock()
     loop_rate = LoopRate(dt, clock=clock, catchup_mode=catchup_mode)
 
