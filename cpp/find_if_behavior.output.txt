@@ -1,0 +1,12 @@
+index: 0
+index: 1
+index: 0
+{
+  Item{.stamp=10, .id=6},
+  Item{.stamp=2, .id=4},
+  Item{.stamp=0, .id=5},
+  Item{.stamp=0, .id=0},
+  Item{.stamp=1, .id=1},
+  Item{.stamp=1, .id=2},
+  Item{.stamp=2, .id=3},
+}

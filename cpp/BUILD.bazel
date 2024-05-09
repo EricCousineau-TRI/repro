@@ -502,3 +502,9 @@ cc_binary(
     name = "lambda_const_this_capture",
     srcs = ["lambda_const_this_capture.cc"],
 )
+
+cc_binary(
+    name = "find_if_behavior",
+    srcs = ["find_if_behavior.cc"],
+    linkopts = ["-lfmt"],
+)
