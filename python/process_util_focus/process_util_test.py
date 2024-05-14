@@ -10,7 +10,6 @@ import unittest
 
 from process_util import (
     CapturedProcess,
-    CapturedProcessGroup,
     on_context_exit,
     print_prefixed,
     signal_processes,
@@ -40,24 +39,23 @@ class Test(unittest.TestCase):
                 p.output.clear()
                 p.proc.stdin.write("\n")
 
-    def _run_captured_process_group(self, *args, **kwargs):
-        procs = CapturedProcessGroup()
-        with closing(procs):
-            procs.add(*args, **kwargs)
+    def _run_captured_process(self, *args, **kwargs):
+        proc = CapturedProcess(*args, **kwargs)
+        with closing(proc):
             t_next = time.time() + 0.5
             while time.time() < t_next:
-                assert procs.poll() == {}
+                assert proc.poll() is None
                 time.sleep(0.1)
             print("Exiting")
         print("  Done")
 
-    def test_captured_process_group_shell(self):
-        self._run_captured_process_group(
-            "sleep", ["sleep", "1d"], shell=False, verbose=True
+    def test_captured_process_shell(self):
+        self._run_captured_process(
+            ["sleep", "1d"], shell=False, verbose=True
         )
         # Why does this hang?!!!
-        self._run_captured_process_group(
-            "sleep", "sleep 1d", shell=True, verbose=True
+        self._run_captured_process(
+            "sleep 1d", shell=True, verbose=True
         )
 
 
