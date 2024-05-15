@@ -15,13 +15,9 @@ def load_pickle(filename):
         return pickle.load(f)
 
 
-def take_first(xs):
-    return next(iter(xs))
-
-
 def check(adaptive_rho):
     print(f"[ adaptive_rho={adaptive_rho} ]")
-    workspace = load_pickle("./workspace.pkl")
+    workspace = load_pickle("./workspace_min.pkl")
     u_set = set()
 
     for k in range(100):
@@ -46,7 +42,7 @@ def check(adaptive_rho):
         )
 
         # For sake of brevity, only add one task, and ignore adding limits.
-        task = take_first(workspace["tasks"].values())
+        task = workspace["task"]
         task_cost_A, task_cost_b, task_cost_proj = map(
             task.get, ("task_cost_A", "task_cost_b", "task_cost_proj")
         )
