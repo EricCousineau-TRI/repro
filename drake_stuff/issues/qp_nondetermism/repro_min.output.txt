@@ -1,0 +1,57 @@
+[ adaptive_rho=1 ]
+num unique: 2
+[ 4.19115054e-09 -4.44176976e-07 -1.03921849e-08  3.09620702e-08
+  1.87071070e-09 -8.32469249e-09  1.42922008e-10]
+[ adaptive_rho=1 ]
+num unique: 1
+[ adaptive_rho=1 ]
+num unique: 2
+[ 4.19115054e-09 -4.44176976e-07 -1.03921849e-08  3.09620702e-08
+  1.87071070e-09 -8.32469249e-09  1.42922008e-10]
+[ adaptive_rho=1 ]
+num unique: 2
+[ 4.19115054e-09 -4.44176976e-07 -1.03921849e-08  3.09620702e-08
+  1.87071070e-09 -8.32469249e-09  1.42922008e-10]
+[ adaptive_rho=1 ]
+num unique: 2
+[ 4.19115054e-09 -4.44176976e-07 -1.03921849e-08  3.09620702e-08
+  1.87071070e-09 -8.32469249e-09  1.42922008e-10]
+[ adaptive_rho=1 ]
+num unique: 2
+[ 4.19115054e-09 -4.44176976e-07 -1.03921849e-08  3.09620702e-08
+  1.87071070e-09 -8.32469249e-09  1.42922008e-10]
+[ adaptive_rho=1 ]
+num unique: 2
+[ 4.19115054e-09 -4.44176976e-07 -1.03921849e-08  3.09620702e-08
+  1.87071070e-09 -8.32469249e-09  1.42922008e-10]
+[ adaptive_rho=1 ]
+num unique: 1
+[ adaptive_rho=1 ]
+num unique: 2
+[ 4.19115054e-09 -4.44176976e-07 -1.03921849e-08  3.09620702e-08
+  1.87071070e-09 -8.32469249e-09  1.42922008e-10]
+[ adaptive_rho=1 ]
+num unique: 2
+[ 4.19115054e-09 -4.44176976e-07 -1.03921849e-08  3.09620702e-08
+  1.87071070e-09 -8.32469249e-09  1.42922008e-10]
+
+[ adaptive_rho=0 ]
+num unique: 1
+[ adaptive_rho=0 ]
+num unique: 1
+[ adaptive_rho=0 ]
+num unique: 1
+[ adaptive_rho=0 ]
+num unique: 1
+[ adaptive_rho=0 ]
+num unique: 1
+[ adaptive_rho=0 ]
+num unique: 1
+[ adaptive_rho=0 ]
+num unique: 1
+[ adaptive_rho=0 ]
+num unique: 1
+[ adaptive_rho=0 ]
+num unique: 1
+[ adaptive_rho=0 ]
+num unique: 1
