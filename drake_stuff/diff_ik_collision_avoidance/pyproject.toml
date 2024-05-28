@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "diff-ik-collision-avoidance"
+version = "0.1.0"
+description = ""
+authors = ["Eric Cousineau <eric.cousineau@tri.global>"]
+readme = "README.md"
+packages = [{include = "diff_ik_collision_avoidance"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+drake = "^1.29.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
