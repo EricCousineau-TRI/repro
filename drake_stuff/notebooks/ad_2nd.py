@@ -159,3 +159,23 @@ def make_min_jerk_sinusoid(*, As, Ts, T0_ratios=None, y0=None):
         return y
 
     return func
+
+
+def normalize_2nd(rt, *, tol=1e-10):
+    r, rd, rdd = rt
+    # Let s = norm(r), s2 = s*s
+    s2 = r.dot(r)
+    assert s2 > tol
+    s = np.sqrt(s2)
+    q = r / s
+    # First derivative.
+    sd = q.dot(rd)
+    a = rd * s - r * sd
+    b = s2
+    qd = a / b
+    # Second derivative.
+    sdd = qd.dot(rd) + q.dot(rdd)
+    ad = rdd * s - r * sdd
+    bd = 2 * s * sd
+    qdd = (ad * b - a * bd) / (b * b)
+    return (q, qd, qdd)
