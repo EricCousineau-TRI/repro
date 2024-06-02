@@ -4,6 +4,8 @@ from pydrake.all import (
     DiagramBuilder,
     Integrator,
     LeafSystem,
+    Quaternion,
+    RotationMatrix,
     Simulator,
 )
 
@@ -251,3 +253,27 @@ def so3_dist(R_a, R_b):
 def assert_so3(R, *, tol):
     err = R @ R.T - np.eye(3)
     assert maxabs(err) < tol, err
+
+
+def rot_to_quat(R):
+    quat = RotationMatrix(R).ToQuaternion().wxyz()
+    return quat
+
+def quat_to_rot(quat):
+    return RotationMatrix(Quaternion(wxyz=quat)).matrix()
+
+
+def angular_to_quat_dot(q):
+    qw, qx, qy, qz = q
+    Ninv = 0.5 * np.array([
+        [-qx, -qy, -qz],
+        [qw, qz, -qy],
+        [-qz, qw, qx],
+        [qy, -qx, qw]])
+    return Ninv
+
+
+def quat_dot_to_angular(q):
+    Ninv = angular_to_quat_dot(q)
+    N = 4 * Ninv.T
+    return N
