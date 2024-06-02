@@ -277,3 +277,29 @@ def quat_dot_to_angular(q):
     Ninv = angular_to_quat_dot(q)
     N = 4 * Ninv.T
     return N
+
+def quat_conj(q):
+    qw, qx, qy, qz = q
+    return np.array([qw, -qx, -qy, -qz])
+
+def quat_prod(p, q):
+    pw, px, py, pz = p
+    qw, qx, qy, qz = q
+    return np.array([
+        pw*qw - px*qx - py*qy - pz*qz,
+        pw*qx + px*qw + py*qz - pz*qy,
+        pw*qy - px*qz + py*qw + pz*qx,
+        pw*qz + px*qy - py*qx + pz*qw,
+    ])
+
+
+def quat_to_axang(q, *, tol=1e-10):
+    qw = q[0]
+    qv = q[1:]
+    qvn = np.linalg.norm(qv)
+    phi = 2 * np.arctan2(qvn, qw)
+    if qvn > tol:
+        u = qv / qvn
+        return phi * u
+    else:
+        return np.zeros(3)
