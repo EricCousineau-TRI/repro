@@ -1,4 +1,4 @@
-drake == 1.19.0
+drake == 1.29.0
 
 sympy
 scipy
