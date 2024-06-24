@@ -508,3 +508,8 @@ cc_binary(
     srcs = ["find_if_behavior.cc"],
     linkopts = ["-lfmt"],
 )
+
+cc_binary(
+    name = "busy_wait",
+    srcs = ["busy_wait.cc"],
+)
