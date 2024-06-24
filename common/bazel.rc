@@ -3,3 +3,6 @@ build -c opt
 
 # Default test options.
 test --test_output=errors
+
+# Don't use bzlmod (yet); eventually we'll want to enable this.
+common --enable_bzlmod=false
