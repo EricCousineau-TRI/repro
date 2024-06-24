@@ -3,6 +3,8 @@ import signal
 from threading import Thread
 import time
 
+import numpy as np
+
 DONE = False
 READY = False
 
@@ -16,9 +18,13 @@ def busy_wait():
     print("Start")
     while not READY:
         time.sleep(0.01)
-    count = 0
+
+    x = np.zeros((100, 100))
     while not DONE:
-        count += 1
+        for i in range(x.shape[0]):
+            for j in range(x.shape[1]):
+                x[i, j] += i + j
+
     print("Finish")
 
 
