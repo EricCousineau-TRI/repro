@@ -1,0 +1,4 @@
+# Compile using
+#   bazel run //:requirements.update
+
+rerun-sdk

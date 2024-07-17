@@ -1,0 +1,17 @@
+load("@rules_python//python:pip.bzl", "compile_pip_requirements")
+load("@pip_deps//:requirements.bzl", pip = "requirement")
+
+compile_pip_requirements(
+    name = "requirements",
+    requirements_in = "requirements.in",
+    requirements_txt = "requirements.txt",
+    tags = ["manual"],
+)
+
+py_binary(
+    name = "example",
+    srcs = ["example.py"],
+    deps = [
+        pip("rerun-sdk"),
+    ],
+)
