@@ -9,9 +9,29 @@ compile_pip_requirements(
 )
 
 py_binary(
-    name = "example",
-    srcs = ["example.py"],
+    name = "bin/rerun",
+    srcs = ["bin/rerun.py"],
     deps = [
         pip("rerun-sdk"),
+    ],
+)
+
+py_binary(
+    name = "example",
+    srcs = ["example.py"],
+    data = [":bin/rerun"],
+    deps = [
+        pip("rerun-sdk"),
+        "@bazel_tools//tools/python/runfiles"
+    ],
+)
+
+py_binary(
+    name = "example_workaround",
+    main = "example.py",
+    srcs = ["example.py"],
+    deps = [
+        ":example",
+        "@pip_deps_rerun_sdk//:fix_imports",
     ],
 )

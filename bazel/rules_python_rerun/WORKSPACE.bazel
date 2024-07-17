@@ -1,4 +1,4 @@
-workspace(name = "meshcat_stuff")
+workspace(name = "rules_python_rerun")
 
 # Copied from docs.
 
@@ -22,13 +22,25 @@ load("@rules_python//python:repositories.bzl", "py_repositories")
 
 py_repositories()
 
-load("@rules_python//python:pip.bzl", "pip_parse")
+load("@rules_python//python:pip.bzl", "package_annotation", "pip_parse")
+
+_RERUN_BUILD_EXTRA = """
+py_library(
+    name = "fix_imports",
+    imports = ["site-packages/rerun_sdk"],
+)
+"""
 
 # Create a central repo that knows about the dependencies needed from
 # requirements_lock.txt.
 pip_parse(
-   name = "pip_deps",
-   requirements_lock = "//:requirements.txt",
+    name = "pip_deps",
+    requirements_lock = "//:requirements.txt",
+    annotations = {
+        "rerun-sdk": package_annotation(
+            additive_build_content = _RERUN_BUILD_EXTRA,
+        ),
+    },
 )
 # Load the starlark macro, which will define your dependencies.
 load("@pip_deps//:requirements.bzl", "install_deps")

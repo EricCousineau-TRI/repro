@@ -1,6 +1,8 @@
+from pathlib import Path
 import os
 import re
 import sys
+import subprocess
 
 
 def reformat_path(text):
@@ -15,8 +17,22 @@ def print_paths():
         print(reformat_path(p))
 
 
+def prepend_paths(var, ps):
+    paths = os.environ.get(var, "").split(":")
+    os.environ[var] = ":".join(ps + paths)
+
+
+def fix_rerun_path():
+    from bazel_tools.tools.python.runfiles import runfiles
+    Rlocation = runfiles.Create().Rlocation
+    bin = Path(Rlocation("rules_python_rerun/bin/rerun"))
+    prepend_paths("PATH", [str(bin.parent)])
+
+
 def main():
     print_paths()
+
+    fix_rerun_path()
 
     import rerun as rr
     rr.init("test", spawn=True)
