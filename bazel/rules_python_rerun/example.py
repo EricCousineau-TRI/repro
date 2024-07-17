@@ -29,15 +29,31 @@ def fix_rerun_path():
     prepend_paths("PATH", [str(bin.parent)])
 
 
-def main():
-    print_paths()
-
-    fix_rerun_path()
-
+def rerun_example():
+    import numpy as np
     import rerun as rr
+
     rr.init("test", spawn=True)
     rr.spawn()
-    rr.set_time_sequence("frame", 42)
+
+    SIZE = 10
+
+    pos_grid = np.meshgrid(*[np.linspace(-10, 10, SIZE)]*3)
+    positions = np.vstack([d.reshape(-1) for d in pos_grid]).T
+
+    col_grid = np.meshgrid(*[np.linspace(0, 255, SIZE)]*3)
+    colors = np.vstack([c.reshape(-1) for c in col_grid]).astype(np.uint8).T
+
+    rr.log(
+        "my_points",
+        rr.Points3D(positions, colors=colors, radii=0.5)
+    )
+
+
+def main():
+    print_paths()
+    fix_rerun_path()
+    rerun_example()
 
 
 if __name__ == "__main__":
