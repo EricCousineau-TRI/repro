@@ -41,7 +41,8 @@ def pub_main():
         ExampleCommand, "/command", 1
     )
 
-    rate = node.create_rate(RATE_HZ)
+    # rate = node.create_rate(RATE_HZ)
+    rate = LoopRate(RATE_HZ)
     print("Pub running")
     try:
         while rclpy.ok():
@@ -71,7 +72,8 @@ def sub_main():
         ExampleCommand, "/command", command_callback, 1
     )
 
-    rate = node.create_rate(RATE_HZ)
+    # rate = node.create_rate(RATE_HZ)
+    rate = LoopRate(RATE_HZ)
     print("Sub running")
     try:
         while rclpy.ok():
@@ -79,6 +81,25 @@ def sub_main():
             rate.sleep()
     finally:
         print("Sub done")
+
+
+class LoopRate:
+    def __init__(self, hz):
+        self.dt = 1.0 / hz
+        self.reset()
+
+    def reset(self):
+        self.t_start = time.perf_counter()
+        self.t_next = self.t_start + self.dt
+
+    def sleep(self, *, dt_sleep=1e-4):
+        while time.perf_counter() < self.t_next:
+            time.sleep(dt_sleep)
+        # Choose next dt.
+        self.t_next += self.dt
+        if self.t_next < time.perf_counter():
+            # Reset if we miss any ticks.
+            self.t_next = time.perf_counter() + self.dt
 
 
 def main():
