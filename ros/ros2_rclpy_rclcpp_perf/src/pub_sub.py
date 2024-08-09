@@ -1,4 +1,6 @@
 import multiprocessing as mp
+import os
+import signal
 import time
 
 import rclpy
@@ -25,7 +27,6 @@ def wrap_rclpy(main):
         pass
     finally:
         rclpy.shutdown()
-        print("del")
 
 
 def pub_main():
@@ -100,8 +101,7 @@ def main():
     finally:
         for proc in procs:
             if proc.is_alive():
-                print("kill")
-                proc.kill()
+                os.kill(proc.pid, signal.SIGINT)
                 proc.join()
 
 
