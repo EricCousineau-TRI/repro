@@ -1,3 +1,4 @@
+import argparse
 import ctypes
 import functools
 import multiprocessing as mp
@@ -27,7 +28,7 @@ def wrap_rclpy(func, *args, **kwargs):
             rclpy.shutdown()
 
 
-def pub_main(count=1, ready_flag=None):
+def pub_main(rate_hz, count, ready_flag):
     node = rclpy.create_node("pub")
     executor = rclpy.executors.SingleThreadedExecutor()
     executor.add_node(node)
@@ -38,14 +39,15 @@ def pub_main(count=1, ready_flag=None):
         pub[i] = node.create_publisher(Message, f"/message_{i}", 1)
         stats[i] = TimingStats()
 
-    rate = LoopRate(RATE_HZ)
-    print(f"Pub running, target rate: {1 / RATE_HZ}")
+    rate = LoopRate(rate_hz)
+    print(f"Pub running, target rate: {rate_hz}")
     t_total_start = time.perf_counter()
-    if ready_flag is not None:
-        ready_flag.value = 1
-        # Wait for ack.
-        while ready_flag.value == 1:
-            time.sleep(0.001)
+
+    ready_flag.value = 1
+    # Wait for ack.
+    while ready_flag.value == 1:
+        time.sleep(DEFAULT_TIMERSLACK)
+
     try:
         while rclpy.ok():
             for i in range(count):
@@ -65,7 +67,7 @@ def pub_main(count=1, ready_flag=None):
         node.destroy_node()
 
 
-def sub_main(count=1, ready_flag=None):
+def sub_main(count, ready_flag):
     node = rclpy.create_node("sub")
     executor = rclpy.executors.SingleThreadedExecutor()
     executor.add_node(node)
@@ -85,11 +87,12 @@ def sub_main(count=1, ready_flag=None):
 
     print(f"Sub running")
     t_total_start = time.perf_counter()
-    if ready_flag is not None:
-        ready_flag.value = 1
-        # Wait for ack.
-        while ready_flag.value == 1:
-            time.sleep(0.001)
+
+    ready_flag.value = 1
+    # Wait for ack.
+    while ready_flag.value == 1:
+        time.sleep(DEFAULT_TIMERSLACK)
+
     try:
         while rclpy.ok():
             executor.spin_once(timeout_sec=DEFAULT_TIMERSLACK)
@@ -155,33 +158,52 @@ class MpProcessGroup:
             if proc.is_alive():
                 os.kill(proc.pid, signal.SIGINT)
         for proc in self.procs:
-            # pass
             # Can hang here?
-            proc.join(timeout=0.01)
+            proc.join(timeout=DEFAULT_TIMERSLACK)
 
 
 def main():
-    count = 7
-    duration_sec = 1.0
-    dt_rate = 1 / RATE_HZ
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--count", default=5, help="Num pubs / subs"
+    )
+    parser.add_argument(
+        "--duration_sec", default=1.0, help="Seconds to run pub + sub"
+    )
+    parser.add_argument(
+        "--rate_hz", default=2000.0, help="Rate (hz)"
+    )
+    args = parser.parse_args()
+
+    count = args.count
+    duration_sec = args.duration_sec
+    rate_hz = args.rate_hz
 
     pub_ready = mp.Value(ctypes.c_int)
     pub_ready.value = 0
     sub_ready = mp.Value(ctypes.c_int)
     sub_ready.value = 0
 
+    # Use multi-processing so that we can ensure ROS pubs don't try to
+    # use shared mem (I think).
     procs = MpProcessGroup([
-        mp.Process(target=wrap_rclpy, args=[pub_main, count, pub_ready]),
-        mp.Process(target=wrap_rclpy, args=[sub_main, count, sub_ready]),
+        mp.Process(
+            target=wrap_rclpy, args=[pub_main, rate_hz, count, pub_ready]
+        ),
+        mp.Process(
+            target=wrap_rclpy, args=[sub_main, count, sub_ready]
+        ),
     ])
     for proc in procs:
         proc.daemon = True
     procs.start()
 
+    rate = LoopRate(rate_hz)
     while True:
         if pub_ready.value != 0 and sub_ready.value != 0:
             break
-        time.sleep(dt_rate)
+        rate.sleep()
+    # Ack we're ready.
     pub_ready.value += 1
     sub_ready.value += 1
 
@@ -189,10 +211,11 @@ def main():
     print()
 
     t_end = time.time() + duration_sec
+    rate.reset()
     try:
         while time.time() < t_end:
             procs.poll()
-            time.sleep(dt_rate)
+            rate.sleep()
     except KeyboardInterrupt:
         pass
     finally:

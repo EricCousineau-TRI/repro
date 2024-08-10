@@ -92,7 +92,7 @@ class TimingStats:
 def header_timing_stats():
     fmt_string_title = "{:>15}{:>15}{:>10}{:>15}{:>15}"
     header_text = fmt_string_title.format(
-        "Mean Time (s)",
+        "Mean Freq (hz)",
         "Stddev (s)",
         "Samples",
         "Min (s)",
@@ -102,9 +102,12 @@ def header_timing_stats():
 
 
 def format_timing_stats(stats):
-    fmt_string = "{:>15.7f}{:>15.7f}{:>10}{:>15.7f}{:>15.7f}"
+    fmt_string = "{:>15.3f}{:>15.7f}{:>10}{:>15.7f}{:>15.7f}"
+    mean_hz = 0.0
+    if stats.mean() != 0.0:
+        mean_hz = 1 / stats.mean()
     return fmt_string.format(
-        stats.mean(),
+        mean_hz,
         stats.stddev(),
         stats.count(),
         stats.min(),
