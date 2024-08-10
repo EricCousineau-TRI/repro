@@ -14,7 +14,6 @@ from geometry_msgs.msg import PoseStamped as Message
 
 from running_stats import TimingStats, header_timing_stats, format_timing_stats
 
-RATE_HZ = 2000.0
 # https://stackoverflow.com/a/60153370/7829525
 DEFAULT_TIMERSLACK = 50e-6
 
@@ -45,9 +44,10 @@ def pub_main(rate_hz, count, ready_flag):
     print(f"Pub running, target rate: {rate_hz}")
     t_total_start = time.perf_counter()
 
-    ready_flag.value = 1
+    cur = ready_flag.value + 1
+    ready_flag.value = cur
     # Wait for ack.
-    while ready_flag.value == 1:
+    while ready_flag.value == cur:
         time.sleep(DEFAULT_TIMERSLACK)
 
     try:
@@ -60,12 +60,17 @@ def pub_main(rate_hz, count, ready_flag):
             rate.sleep()
     finally:
         dt_total = time.perf_counter() - t_total_start
+        # Wait for signal to print and finish.
+        cur = ready_flag.value
+        while ready_flag.value == cur:
+            time.sleep(DEFAULT_TIMERSLACK)
         lines = [
             f"Pub done after {dt_total:.5f} sec",
             format_stats("pub.", stats),
             "",
         ]
         print("\n".join(lines), file=sys.stderr)
+        ready_flag.value += 1
         node.destroy_node()
 
 
@@ -90,9 +95,10 @@ def sub_main(count, ready_flag):
     print(f"Sub running")
     t_total_start = time.perf_counter()
 
-    ready_flag.value = 1
+    cur = ready_flag.value + 1
+    ready_flag.value = cur
     # Wait for ack.
-    while ready_flag.value == 1:
+    while ready_flag.value == cur:
         time.sleep(DEFAULT_TIMERSLACK)
 
     try:
@@ -100,12 +106,17 @@ def sub_main(count, ready_flag):
             executor.spin_once(timeout_sec=DEFAULT_TIMERSLACK)
     finally:
         dt_total = time.perf_counter() - t_total_start
+        # Wait for signal to print and finish.
+        cur = ready_flag.value
+        while ready_flag.value == cur:
+            time.sleep(DEFAULT_TIMERSLACK)
         lines = [
             f"Sub done after {dt_total:.5f} sec",
             format_stats("sub.", stats),
             "",
         ]
         print("\n".join(lines), file=sys.stderr)
+        ready_flag.value += 1
         node.destroy_node()
 
 
@@ -141,8 +152,10 @@ def format_stats(prefix, stats):
 
 
 class MpProcessGroup:
-    def __init__(self, procs):
+    def __init__(self, procs, *, daemon=True):
         self.procs = procs
+        for proc in self.procs:
+            proc.daemon = daemon
 
     def __iter__(self):
         return iter(self.procs)
@@ -155,12 +168,12 @@ class MpProcessGroup:
         for proc in self.procs:
             assert proc.is_alive()
 
-    def close(self):
+    def close(self, *, sig=signal.SIGINT):
         for proc in self.procs:
             if proc.is_alive():
                 os.kill(proc.pid, signal.SIGINT)
         for proc in self.procs:
-            # Can hang here?
+            # Er, not sure if this does anything.
             proc.join(timeout=DEFAULT_TIMERSLACK)
 
 
@@ -202,15 +215,11 @@ def main():
             target=wrap_rclpy, args=[sub_main, count, sub_ready]
         ),
     ])
-    for proc in procs:
-        proc.daemon = True
     procs.start()
 
     rate = LoopRate(rate_hz)
     # Ensure we wait until both are ready to start.
-    while True:
-        if pub_ready.value != 0 and sub_ready.value != 0:
-            break
+    while pub_ready.value == 0 or sub_ready.value == 0:
         rate.sleep()
     # Ack we're ready.
     pub_ready.value += 1
@@ -229,6 +238,20 @@ def main():
         pass
     finally:
         procs.close()
+
+        cur = pub_ready.value + 1
+        pub_ready.value = cur
+        rate.reset()
+        while pub_ready.value == cur:
+            rate.sleep()
+
+        cur = sub_ready.value + 1
+        sub_ready.value = cur
+        rate.reset()
+        while sub_ready.value == cur:
+            rate.sleep()
+
+        print()
 
 
 if __name__ == "__main__":
