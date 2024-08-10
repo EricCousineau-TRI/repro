@@ -199,6 +199,7 @@ def main():
     procs.start()
 
     rate = LoopRate(rate_hz)
+    # Ensure we wait until both are ready to start.
     while True:
         if pub_ready.value != 0 and sub_ready.value != 0:
             break
