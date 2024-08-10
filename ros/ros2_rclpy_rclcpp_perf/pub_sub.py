@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import ctypes
 import functools
@@ -165,13 +167,19 @@ class MpProcessGroup:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--count", default=5, help="Num pubs / subs"
+        "--count", type=int, default=5, help="Num pubs / subs"
     )
     parser.add_argument(
-        "--duration_sec", default=1.0, help="Seconds to run pub + sub"
+        "--duration_sec",
+        type=float,
+        default=1.0,
+        help="Seconds to run pub + sub",
     )
     parser.add_argument(
-        "--rate_hz", default=2000.0, help="Rate (hz)"
+        "--rate_hz",
+        type=float,
+        default=2000.0,
+        help="Rate (hz)",
     )
     args = parser.parse_args()
 
