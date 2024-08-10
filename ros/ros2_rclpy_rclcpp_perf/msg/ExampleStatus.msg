@@ -6,7 +6,7 @@ geometry_msgs/Wrench wrench
 
 geometry_msgs/Pose raw_pose
 
-float64[] joint_angles
+# float64[] joint_angles
 
 float64 trigger_value
 

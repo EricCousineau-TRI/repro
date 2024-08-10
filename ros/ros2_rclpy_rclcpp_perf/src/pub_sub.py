@@ -3,6 +3,7 @@ import functools
 import multiprocessing as mp
 import os
 import signal
+import sys
 import time
 
 import rclpy
@@ -11,6 +12,8 @@ from ros2_rclpy_rclcpp_perf.msg import ExampleStatus, ExampleCommand
 from running_stats import TimingStats, header_timing_stats, format_timing_stats
 
 RATE_HZ = 1000.0
+# https://stackoverflow.com/a/60153370/7829525
+DEFAULT_TIMERSLACK = 50e-6
 
 
 def make_status():
@@ -30,7 +33,8 @@ def wrap_rclpy(func, *args, **kwargs):
     except KeyboardInterrupt:
         pass
     finally:
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 def pub_main(count=1, ready_flag=None):
@@ -53,10 +57,13 @@ def pub_main(count=1, ready_flag=None):
         stats_command[i] = TimingStats()
 
     rate = LoopRate(RATE_HZ)
-    print("Pub running")
+    print(f"Pub running, target rate: {1 / RATE_HZ}")
     t_total_start = time.perf_counter()
     if ready_flag is not None:
         ready_flag.value = 1
+        # Wait for ack.
+        while ready_flag.value == 1:
+            time.sleep(0.001)
     try:
         while rclpy.ok():
             for i in range(count):
@@ -64,13 +71,17 @@ def pub_main(count=1, ready_flag=None):
                 stats_status[i].tick()
                 pub_command[i].publish(make_command())
                 stats_command[i].tick()
-            executor.spin_once(timeout_sec=50e-6)
+            executor.spin_once(timeout_sec=DEFAULT_TIMERSLACK)
             rate.sleep()
     finally:
         dt_total = time.perf_counter() - t_total_start
-        print(f"Pub done after {dt_total:.3g} sec")
-        print_stats_status_and_command("pub.", stats_status, stats_command)
-        print()
+        lines = [
+            f"Pub done after {dt_total:.3g} sec",
+            format_stats_status_and_command("pub.", stats_status, stats_command),
+            "",
+        ]
+        print("\n".join(lines), file=sys.stderr)
+        node.destroy_node()
 
 
 def sub_main(count=1, ready_flag=None):
@@ -101,20 +112,26 @@ def sub_main(count=1, ready_flag=None):
             ExampleCommand, f"/command_{i}", callback_command_i, 1
         )
 
-    rate = LoopRate(RATE_HZ)
-    print("Sub running")
+    print(f"Sub running")
     t_total_start = time.perf_counter()
     if ready_flag is not None:
         ready_flag.value = 1
+        # Wait for ack.
+        while ready_flag.value == 1:
+            time.sleep(0.001)
     try:
         while rclpy.ok():
-            executor.spin_once(timeout_sec=50e-6)
-            rate.sleep()
+            # Er, node.spin_some() ?
+            executor.spin_once(timeout_sec=DEFAULT_TIMERSLACK)
     finally:
         dt_total = time.perf_counter() - t_total_start
-        print(f"Sub done after {dt_total:.3g} sec")
-        print_stats_status_and_command("sub.", stats_status, stats_command)
-        print()
+        lines = [
+            f"Sub done after {dt_total:.3g} sec",
+            format_stats_status_and_command("sub.", stats_status, stats_command),
+            "",
+        ]
+        print("\n".join(lines), file=sys.stderr)
+        node.destroy_node()
 
 
 class LoopRate:
@@ -136,10 +153,10 @@ class LoopRate:
             self.t_next = time.perf_counter() + self.dt
 
 
-def print_stats_status_and_command(prefix, stats_status, stats_command):
+def format_stats_status_and_command(prefix, stats_status, stats_command):
     count = len(stats_status)
     assert len(stats_command) == count
-    fmt_stats = "{:>10}{}"
+    fmt_stats = "{:>15}{}"
     header_text = header_timing_stats()
     lines = []
     lines.append(fmt_stats.format("", header_text))
@@ -148,12 +165,15 @@ def print_stats_status_and_command(prefix, stats_status, stats_command):
         lines.append(fmt_stats.format(f"{prefix}status[{i}]", status_text))
         command_text = format_timing_stats(stats_command[i].stats)
         lines.append(fmt_stats.format(f"{prefix}command[{i}]", command_text))
-    print("\n".join(lines))
+    return "\n".join(lines)
 
 
 class MpProcessGroup:
     def __init__(self, procs):
         self.procs = procs
+
+    def __iter__(self):
+        return iter(self.procs)
 
     def start(self):
         for proc in self.procs:
@@ -167,12 +187,14 @@ class MpProcessGroup:
         for proc in self.procs:
             if proc.is_alive():
                 os.kill(proc.pid, signal.SIGINT)
-                # Can hang here.
-                proc.join()
+        for proc in self.procs:
+            # pass
+            # Can hang here?
+            proc.join(timeout=0.01)
 
 
 def main():
-    count = 5
+    count = 10
     duration_sec = 1.0
 
     pub_ready = mp.Value(ctypes.c_int)
@@ -184,12 +206,16 @@ def main():
         mp.Process(target=wrap_rclpy, args=[pub_main, count, pub_ready]),
         mp.Process(target=wrap_rclpy, args=[sub_main, count, sub_ready]),
     ])
+    for proc in procs:
+        proc.daemon = True
     procs.start()
 
     while True:
         if pub_ready.value != 0 and sub_ready.value != 0:
             break
         time.sleep(0.001)
+    pub_ready.value += 1
+    sub_ready.value += 1
 
     print(f"Pub + sub ready. Stopping after {duration_sec}")
     print()

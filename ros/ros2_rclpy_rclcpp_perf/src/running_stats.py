@@ -93,7 +93,7 @@ def header_timing_stats():
     fmt_string_title = "{:>15}{:>15}{:>10}{:>15}{:>15}"
     header_text = fmt_string_title.format(
         "Mean Time (s)",
-        "Norm stddev",
+        "Stddev (s)",
         "Samples",
         "Min (s)",
         "Max (s)",
@@ -103,12 +103,9 @@ def header_timing_stats():
 
 def format_timing_stats(stats):
     fmt_string = "{:>15.7g}{:>15.7g}{:>10}{:>15.7g}{:>15.7g}"
-    norm_stddev = stats.stddev()
-    if stats.mean() != 0.0:
-        norm_stddev /= stats.mean()
     return fmt_string.format(
         stats.mean(),
-        norm_stddev,
+        stats.stddev(),
         stats.count(),
         stats.min(),
         stats.max(),
