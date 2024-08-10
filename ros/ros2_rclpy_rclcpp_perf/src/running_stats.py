@@ -102,7 +102,7 @@ def header_timing_stats():
 
 
 def format_timing_stats(stats):
-    fmt_string = "{:>15.7g}{:>15.7g}{:>10}{:>15.7g}{:>15.7g}"
+    fmt_string = "{:>15.7f}{:>15.7f}{:>10}{:>15.7f}{:>15.7f}"
     return fmt_string.format(
         stats.mean(),
         stats.stddev(),

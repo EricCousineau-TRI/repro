@@ -7,23 +7,13 @@ import sys
 import time
 
 import rclpy
-from ros2_rclpy_rclcpp_perf.msg import ExampleStatus, ExampleCommand
+from geometry_msgs.msg import PoseStamped as Message
 
 from running_stats import TimingStats, header_timing_stats, format_timing_stats
 
-RATE_HZ = 1000.0
+RATE_HZ = 2000.0
 # https://stackoverflow.com/a/60153370/7829525
 DEFAULT_TIMERSLACK = 50e-6
-
-
-def make_status():
-    msg = ExampleStatus()
-    return msg
-
-
-def make_command():
-    msg = ExampleCommand()
-    return msg
 
 
 def wrap_rclpy(func, *args, **kwargs):
@@ -42,19 +32,11 @@ def pub_main(count=1, ready_flag=None):
     executor = rclpy.executors.SingleThreadedExecutor()
     executor.add_node(node)
 
-    pub_status = [None] * count
-    stats_status = [None] * count
-    pub_command = [None] * count
-    stats_command = [None] * count
+    pub = [None] * count
+    stats = [None] * count
     for i in range(count):
-        pub_status[i] = node.create_publisher(
-            ExampleStatus, f"/status_{i}", 1
-        )
-        stats_status[i] = TimingStats()
-        pub_command[i] = node.create_publisher(
-            ExampleCommand, f"/command_{i}", 1
-        )
-        stats_command[i] = TimingStats()
+        pub[i] = node.create_publisher(Message, f"/message_{i}", 1)
+        stats[i] = TimingStats()
 
     rate = LoopRate(RATE_HZ)
     print(f"Pub running, target rate: {1 / RATE_HZ}")
@@ -67,17 +49,16 @@ def pub_main(count=1, ready_flag=None):
     try:
         while rclpy.ok():
             for i in range(count):
-                pub_status[i].publish(make_status())
-                stats_status[i].tick()
-                pub_command[i].publish(make_command())
-                stats_command[i].tick()
-            executor.spin_once(timeout_sec=DEFAULT_TIMERSLACK)
+                pub[i].publish(Message())
+                stats[i].tick()
+            # # N.B. Uncommenting this impacts performance, even if just for 50us?
+            # executor.spin_once(timeout_sec=DEFAULT_TIMERSLACK)
             rate.sleep()
     finally:
         dt_total = time.perf_counter() - t_total_start
         lines = [
-            f"Pub done after {dt_total:.3g} sec",
-            format_stats_status_and_command("pub.", stats_status, stats_command),
+            f"Pub done after {dt_total:.5f} sec",
+            format_stats("pub.", stats),
             "",
         ]
         print("\n".join(lines), file=sys.stderr)
@@ -89,27 +70,17 @@ def sub_main(count=1, ready_flag=None):
     executor = rclpy.executors.SingleThreadedExecutor()
     executor.add_node(node)
 
-    stats_status = [None] * count
-    stats_command = [None] * count
+    stats = [None] * count
+    sub = [None] * count
 
-    def callback_status(i, msg):
-        stats_status[i].tick()
+    def callback(i, msg):
+        stats[i].tick()
 
-    def callback_command(i, msg):
-        stats_command[i].tick()
-
-    sub_status = [None] * count
-    sub_command = [None] * count
     for i in range(count):
-        callback_status_i = functools.partial(callback_status, i)
-        stats_status[i] = TimingStats()
-        sub_status[i] = node.create_subscription(
-            ExampleStatus, f"/status_{i}", callback_status_i, 1
-        )
-        callback_command_i = functools.partial(callback_command, i)
-        stats_command[i] = TimingStats()
-        sub_command[i] = node.create_subscription(
-            ExampleCommand, f"/command_{i}", callback_command_i, 1
+        stats[i] = TimingStats()
+        callback_i = functools.partial(callback, i)
+        sub[i] = node.create_subscription(
+            Message, f"/message_{i}", callback_i, 1
         )
 
     print(f"Sub running")
@@ -121,13 +92,12 @@ def sub_main(count=1, ready_flag=None):
             time.sleep(0.001)
     try:
         while rclpy.ok():
-            # Er, node.spin_some() ?
             executor.spin_once(timeout_sec=DEFAULT_TIMERSLACK)
     finally:
         dt_total = time.perf_counter() - t_total_start
         lines = [
-            f"Sub done after {dt_total:.3g} sec",
-            format_stats_status_and_command("sub.", stats_status, stats_command),
+            f"Sub done after {dt_total:.5f} sec",
+            format_stats("sub.", stats),
             "",
         ]
         print("\n".join(lines), file=sys.stderr)
@@ -143,7 +113,7 @@ class LoopRate:
         self.t_start = time.perf_counter()
         self.t_next = self.t_start + self.dt
 
-    def sleep(self, *, dt_sleep=1e-4):
+    def sleep(self, *, dt_sleep=DEFAULT_TIMERSLACK):
         while time.perf_counter() < self.t_next:
             time.sleep(dt_sleep)
         # Choose next dt.
@@ -153,18 +123,15 @@ class LoopRate:
             self.t_next = time.perf_counter() + self.dt
 
 
-def format_stats_status_and_command(prefix, stats_status, stats_command):
-    count = len(stats_status)
-    assert len(stats_command) == count
-    fmt_stats = "{:>15}{}"
+def format_stats(prefix, stats):
+    count = len(stats)
+    fmt_stats = "{:<15}{}"
     header_text = header_timing_stats()
     lines = []
     lines.append(fmt_stats.format("", header_text))
     for i in range(count):
-        status_text = format_timing_stats(stats_status[i].stats)
-        lines.append(fmt_stats.format(f"{prefix}status[{i}]", status_text))
-        command_text = format_timing_stats(stats_command[i].stats)
-        lines.append(fmt_stats.format(f"{prefix}command[{i}]", command_text))
+        text = format_timing_stats(stats[i].stats)
+        lines.append(fmt_stats.format(f"{prefix}message_{i}", text))
     return "\n".join(lines)
 
 
@@ -194,8 +161,9 @@ class MpProcessGroup:
 
 
 def main():
-    count = 10
+    count = 7
     duration_sec = 1.0
+    dt_rate = 1 / RATE_HZ
 
     pub_ready = mp.Value(ctypes.c_int)
     pub_ready.value = 0
@@ -213,7 +181,7 @@ def main():
     while True:
         if pub_ready.value != 0 and sub_ready.value != 0:
             break
-        time.sleep(0.001)
+        time.sleep(dt_rate)
     pub_ready.value += 1
     sub_ready.value += 1
 
@@ -221,11 +189,10 @@ def main():
     print()
 
     t_end = time.time() + duration_sec
-
     try:
         while time.time() < t_end:
             procs.poll()
-            time.sleep(1 / RATE_HZ)
+            time.sleep(dt_rate)
     except KeyboardInterrupt:
         pass
     finally:
