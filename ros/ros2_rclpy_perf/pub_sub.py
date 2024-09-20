@@ -74,6 +74,19 @@ def pub_main(rate_hz, count, ready_flag):
         node.destroy_node()
 
 
+def spin_some(executor, timeout_sec=None):
+    try:
+        cb_iter = executor._wait_for_ready_callbacks(timeout_sec=timeout_sec)
+        for handler, _, _ in cb_iter:
+            handler()
+            if handler.exception() is not None:
+                raise handler.exception()
+    except rclpy.executors.ShutdownException:
+        pass
+    except rclpy.executors.TimeoutException:
+        pass
+
+
 def sub_main(count, ready_flag):
     node = rclpy.create_node("sub")
     executor = rclpy.executors.SingleThreadedExecutor()
@@ -103,7 +116,8 @@ def sub_main(count, ready_flag):
 
     try:
         while rclpy.ok():
-            executor.spin_once(timeout_sec=DEFAULT_TIMERSLACK)
+            spin_some(executor, timeout_sec=DEFAULT_TIMERSLACK)
+            # executor.spin_once(timeout_sec=DEFAULT_TIMERSLACK)
     finally:
         dt_total = time.perf_counter() - t_total_start
         # Wait for signal to print and finish.
