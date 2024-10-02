@@ -1,0 +1,55 @@
+# Don't use bzlmod (yet); eventually we'll want to enable this.
+common --enable_bzlmod=false
+
+# Default test options to match Drake.
+build --test_output=errors
+build --test_summary=terse
+
+# my_proj tests require a real Xorg server, so we must plumb it through.
+build --test_env=DISPLAY
+build --sandbox_add_mount_pair=/tmp/.X11-unix
+
+# Make tests consistently fail if they require data from `$HOME`, or if they
+# try to write to it.
+# Alternatives:
+# - The tests have default behavior if they can't access home (great!).
+# - The test chooses a tempdir for home (great!).
+build --test_env=HOME=/do_not_read_or_write_to_home
+
+# Set CUDA_HOME to ensure CUDA-based tests are hermetic.
+# https://github.shared-services.aws.tri.global/robotics/my_proj/pull/6485#issuecomment-15479
+build --test_env=CUDA_HOME=/no/such/cuda_home
+
+# Set a default for our available GPU RAM.  This is equivalent to what
+# setup/gen_dotfiles_bazelrc.sh gives on a Manipulation-configured gen1 puget.
+#
+# NOTE:  Per #13826, we do not fully understand how inheritance works for this
+# value; do not disturb it.
+build --local_resources=gpu_ram=8448
+
+# Use Python 3.
+build --python_path=/usr/bin/python3
+build --action_env=DRAKE_PYTHON_BIN_PATH=/usr/bin/python3
+
+# Disable python imports from ~/.local (pip -U) during build and test.
+# https://github.com/bazelbuild/bazel/issues/4939
+# https://github.com/RobotLocomotion/drake/issues/8475
+build --action_env=PYTHONNOUSERSITE=1
+build --test_env=PYTHONNOUSERSITE=1
+
+# The legacy __init__.py causes runfiles test flakes with Bazel >= 7, and
+# in any case we don't want this feature in the first place. We should
+# create all __init__.py files ourselves by hand anywhere we need them.
+build --incompatible_default_to_explicit_init_py
+
+# Remove any LD_LIBRARY_PATH setting; we never need it, and using it can
+# corrupt the build steps or test results.
+build --action_env=LD_LIBRARY_PATH=
+build --test_env=LD_LIBRARY_PATH=
+
+# Run tests to check for flakyness and timing. See #1961 for example usage.
+# N.B. Be sure to set `--jobs` if your `--runs_per_test` is large!
+build:flaky_check --flaky_test_attempts=1
+build:flaky_check --test_sharding_strategy=disabled
+build:flaky_check --test_summary=short
+build:flaky_check --runs_per_test=5  # Default. Override as desired.

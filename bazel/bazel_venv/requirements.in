@@ -1,0 +1,59 @@
+# PyPI packages to make available as bazel repositories; this file is
+# in pip requirements.txt format, except that all dependencies must have
+# names.
+
+# WARNING: If you change this file, then it is up to you to regenerate
+# the "locked" requirements.txt file via:
+#
+#     tools/workspace/venv/upgrade
+#
+# If regenerating the locked requirements results in errors not related to
+# your specific change, typically this means that the most recent version of
+# a package without a version specifier is not compatible and you must add a
+# version limit to that package below; that is, replace `foo` with
+# `foo < whatever.incompatible.version` *and comment it* with the reason.
+#
+
+# Packages that we are happy to take the most recent version any time we
+# update requirements.  The versions of these packages are "locked" in the
+# requirements.txt file and change any time it updates.  This should be
+# the overwhelming majority of our requirements.
+boto3
+jupyter
+zarr
+
+# The following are constrained or pinned version of packages.
+
+# Normally, we would want pinned numpy == 1.21.5 (to use/match the Ubuntu
+# version), but this is overconstrained for `rerun` and other libraries.
+# We try to use as old as possible to split the difference between Ubuntu
+# and PyPI needs.
+numpy < 1.24.0
+
+# Any upgrades to the torch suite of packages should always be done carefully.
+# N.B. This must be synchronized with `my_proj/common/transformers_pre_import_mods.py`.
+# TODO(eric.cousineau): Remove torchdata pin when we upgrade this version.
+--find-links https://download.pytorch.org/whl/torch/
+torch==2.2.0+cu121
+
+# Ubuntu Packages
+#
+# These packages are provided by Ubuntu. This should only be necessary where
+# the Ubuntu library has platform-specific changes, i.e., where the system
+# package has "ubuntu" or "dfsg" in its package version. This typically is due
+# to an interaction with the system GUI or with a hardware bus.
+#
+# Keep this list in sync with the uninstall list in tools/workspace/venv/sync.
+#
+# TODO(ggould) maintain this list automatically.
+# TODO(eric.cousineau):  # Per discussion in #11923, we cannot pin `hid` to
+# same version as what the system has.
+hid
+matplotlib == 3.5.1
+# Per my_proj#11957, some packages provided by @rules_python may be redundant
+# and/or conflict with each other. As a simple fix, and to ensure we have
+# good coordination with Ubuntu-provided C++ OpenCV, we use the system version.
+opencv-contrib-python-headless == 4.5.4.60
+opencv-python == 4.5.4.60
+opencv-contrib-python == 4.5.4.60
+opencv-python-headless == 4.5.4.60

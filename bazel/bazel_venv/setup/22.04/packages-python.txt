@@ -1,0 +1,11 @@
+# -*- sh -*-
+
+# List of python apt packages used by Anzu that come from Ubuntu.  These
+# are distinct from packages-ubuntu.txt for historical reasons.
+
+python3-hid
+python3-matplotlib
+python3-numpy
+python3-opencv
+python3-venv
+python3-virtualenv
