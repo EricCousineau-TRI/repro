@@ -1,0 +1,10 @@
+# Unpinned.
+HolisticTraceAnalysis
+jupyterlab
+py-spy
+pillow
+
+# Pinned for debugging.
+--find-links https://download.pytorch.org/whl/torch/
+torch==2.2.0+cu121
+numpy < 1.24.0
