@@ -1,5 +1,41 @@
 import subprocess
 
+
+_process_error_fmt = """
+Command '{cmd}' died with {returncode}.
+stdout:
+
+{stdout}
+
+stderr:
+
+{stderr}
+"""
+
+
+class CalledProcessErrorBetterFormat(subprocess.SubprocessError):
+    """
+    In at least Python 3.10, CalledProcessError.__str__() does not include
+    captured stdout or stderr in its formatted output.
+    
+    This wraps the instance with __repr__() to include it.
+    """
+
+    def __init__(self, e: subprocess.CalledProcessError):
+        self.e = e
+    
+    def __repr__(self):
+        return _process_error_fmt.format(
+            cmd=self.e.cmd,
+            returncode=self.e.returncode,
+            stdout=str(self.e.output).rstrip(),
+            stderr=str(self.e.stderr).rstrip(),
+        )
+      
+    def __str__(self):
+        return repr(self)
+
+
 def main():
   try:
     subprocess.run(
@@ -10,11 +46,8 @@ def main():
       stderr=subprocess.STDOUT,
       check=True,
     )
-  except Exception as e:
-    print(e)
-    print(e.stdout.strip())
-    if e.stderr is not None:
-      print(e.stderr)
+  except subprocess.CalledProcessError as e:
+    raise CalledProcessErrorBetterFormat(e)
 
 if __name__ == "__main__":
     main()
