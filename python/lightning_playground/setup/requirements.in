@@ -1,0 +1,5 @@
+pytorch-lightning==2.1.0
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==2.0.1+cu118
+numpy < 2.0.0
+wandb
