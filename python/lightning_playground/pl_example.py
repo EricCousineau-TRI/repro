@@ -24,6 +24,13 @@ class ConstantMultiply(pl.LightningModule):
         self.log(f"{phase}/my_loss", loss)
         return loss
 
+    def on_before_batch_transfer(self, batch, dataloader_idx):
+        rz_print(f"\n{self.trainer.training} {self.trainer.validating}\n", flush=True)
+        return batch
+
+    def on_validation_epoch_end(self):
+        breakpoint()
+
     def training_step(self, batch, batch_idx):
         return self._step("train", batch, batch_idx)
 
