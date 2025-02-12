@@ -1,0 +1,5 @@
+defaults:
+  - base: default
+  - example_template
+  - override component: stuff
+  - _self_
