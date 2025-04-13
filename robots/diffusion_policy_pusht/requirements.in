@@ -1,0 +1,15 @@
+torch
+torchvision
+diffusers
+scikit-image
+scikit-video
+zarr<3
+numcodecs
+pygame
+pymunk
+gym==0.26.2
+shapely==1.8.4
+jupyterlab
+opencv-python
+gdown
+ipywidgets

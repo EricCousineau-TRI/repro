@@ -1,0 +1,4 @@
+/venv/
+*.ckpt
+*.zip
+*.mp4
