@@ -4,7 +4,7 @@ set -eux
 # Only tested on Ubuntu 18.04.
 
 # Install prereqs.
-sudo apt-GET install \
+sudo apt-get install \
     gir1.2-gtk-3.0 \
     python3-cairo \
     python3-gi \
